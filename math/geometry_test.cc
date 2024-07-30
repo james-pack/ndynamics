@@ -33,7 +33,9 @@ TEST(GeometryTest, CanMultiplyComplexNumbers) {
   static constexpr auto v{u.multiply(u)};                               // (1 + i)^2 = 2i
   static constexpr auto w{v.multiply(v)};                               // (2i)^2 = -4
 
-  static_assert(v.scalar() == 0,
+  static_assert(v.scalar() == 0.f,
+                "Verifying that we can do multivector operations in constexpr contexts");
+  static_assert(w.scalar() == -4.f,
                 "Verifying that we can do multivector operations in constexpr contexts");
 
   ASSERT_EQ(1.f, u.scalar());
