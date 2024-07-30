@@ -1,7 +1,6 @@
 #include "math/caley.h"
 
 #include "gtest/gtest.h"
-#include "math/geometry.h"
 
 namespace ndyn::math {
 
