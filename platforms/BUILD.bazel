@@ -1,0 +1,158 @@
+package(default_visibility = ["//visibility:public"])
+
+# General development platform. Not intended for embedded components.
+platform(
+    name = "linux_x86_64_general",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        ":std_cpp",
+        ":no_gpio",
+        ":no_spi",
+        ":no_eeprom",
+        ":os_networking",
+    ],
+)
+
+# Ground station platform. Relatively powerful SBC with a full OS and bus support for embedded
+# components.
+platform(
+    name = "odroid_m1",
+    constraint_values = [
+        "@platforms//cpu:arm64",
+        "@platforms//os:linux",
+        ":std_cpp",
+        ":wiring_pi_gpio",
+        ":spidev_spi",
+        ":no_eeprom",
+        ":os_networking",
+        ":odroid_m1_board",
+    ],
+)
+
+# Vehicle platforms. Powerful CPU without an OS, but with bus support for embedded components.
+platform(
+    name = "teensy40",
+    constraint_values = [
+        "@platforms//cpu:armv7e-mf",
+        "@platforms//os:none",
+        ":teensyduino_core",
+        ":teensyduino_gpio",
+        ":teensyduino_spi",
+        ":teensyduino_eeprom",
+        ":no_networking",
+        ":teensy40_board",
+    ],
+)
+
+platform(
+    name = "teensy41",
+    constraint_values = [
+        "@platforms//cpu:armv7e-mf",
+        "@platforms//os:none",
+        ":teensyduino_core",
+        ":teensyduino_gpio",
+        ":teensyduino_spi",
+        ":teensyduino_eeprom",
+        ":no_networking",
+        ":teensy41_board",
+    ],
+)
+
+# Core functionality. This constraint is a catch-all for general functionality including sleep &
+# time functions, printing & logging, random number generation, etc. If we need more specific
+# details on any given category, it should be broken out to its own constraint_setting.
+constraint_setting(name = "core_functionality")
+
+# These platforms have a fully implemented C++17 (or later) standard library.
+constraint_value(
+    name = "std_cpp",
+    constraint_setting = "core_functionality",
+)
+
+# These platforms depend on the Teensyduino Arduino implementation to provide core functions.
+constraint_value(
+    name = "teensyduino_core",
+    constraint_setting = "core_functionality",
+)
+
+# GPIO support.
+constraint_setting(name = "gpio")
+
+constraint_value(
+    name = "teensyduino_gpio",
+    constraint_setting = "gpio",
+)
+
+constraint_value(
+    name = "wiring_pi_gpio",
+    constraint_setting = "gpio",
+)
+
+constraint_value(
+    name = "no_gpio",
+    constraint_setting = "gpio",
+)
+
+# SPI support.
+constraint_setting(name = "spi")
+
+constraint_value(
+    name = "teensyduino_spi",
+    constraint_setting = "spi",
+)
+
+constraint_value(
+    name = "spidev_spi",
+    constraint_setting = "spi",
+)
+
+constraint_value(
+    name = "no_spi",
+    constraint_setting = "spi",
+)
+
+# EEPROM support.
+constraint_setting(name = "eeprom")
+
+constraint_value(
+    name = "teensyduino_eeprom",
+    constraint_setting = "eeprom",
+)
+
+constraint_value(
+    name = "no_eeprom",
+    constraint_setting = "eeprom",
+)
+
+# Networking support, particularly TCP/IP.
+constraint_setting(name = "networking_implementation")
+
+constraint_value(
+    name = "os_networking",
+    constraint_setting = "networking_implementation",
+)
+
+constraint_value(
+    name = "no_networking",
+    constraint_setting = "networking_implementation",
+)
+
+# Board-specific constraints. Some things are just directly dependent on the exact board
+# configuration, for example, the wiring of signals to pins.
+constraint_setting(name = "board_type")
+
+constraint_value(
+    name = "teensy40_board",
+    constraint_setting = "board_type",
+)
+
+constraint_value(
+    name = "teensy41_board",
+    constraint_setting = "board_type",
+)
+
+constraint_value(
+    name = "odroid_m1_board",
+    constraint_setting = "board_type",
+)

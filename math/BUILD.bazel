@@ -1,0 +1,38 @@
+load("//platforms:hex.bzl", "hex")
+
+cc_library(
+    name = "math",
+    hdrs = [
+        "bitset.h",
+        "caley.h",
+        "geometry.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "bitset_test",
+    srcs = ["bitset_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "caley_test",
+    srcs = ["caley_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "geometry_test",
+    srcs = ["geometry_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
