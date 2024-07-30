@@ -10,7 +10,7 @@
 
 namespace ndyn::math {
 
-template <typename T, size_t NEGATIVE_BASES, size_t ZERO_BASES, size_t POSITIVE_BASES>
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class Multivector final {
  public:
   static constexpr size_t SCALAR_BASES{1};
@@ -21,7 +21,7 @@ class Multivector final {
   static constexpr size_t grade_count() { return 1UL << bases_count(); }
 
  private:
-  static constexpr CaleyTable<T, NEGATIVE_BASES, ZERO_BASES, POSITIVE_BASES> caley_table_{};
+  static constexpr CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> caley_table_{};
 
   std::array<T, grade_count()> coefficients_{};
 
@@ -87,15 +87,15 @@ template <typename T>
 using ScalarMultivector = Multivector<T, 0, 0, 0>;
 
 template <typename T>
-using ComplexMultivector = Multivector<T, 1, 0, 0>;
+using ComplexMultivector = Multivector<T, 0, 1, 0>;
 
 template <typename T>
-using DualMultivector = Multivector<T, 0, 1, 0>;
+using DualMultivector = Multivector<T, 0, 0, 1>;
 
 template <typename T>
-using SplitComplexMultivector = Multivector<T, 0, 0, 1>;
+using SplitComplexMultivector = Multivector<T, 1, 0, 0>;
 
 template <typename T>
-using QuaternionMultivector = Multivector<T, 3, 0, 0>;
+using QuaternionMultivector = Multivector<T, 0, 3, 0>;
 
 }  // namespace ndyn::math

@@ -75,7 +75,7 @@ class TableEntry final {
   T quadratic_multiplier{};
 };
 
-template <typename T, size_t NEGATIVE_BASES, size_t ZERO_BASES, size_t POSITIVE_BASES>
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CaleyTable final {
  public:
   static constexpr size_t BASES_COUNT{NEGATIVE_BASES + ZERO_BASES + POSITIVE_BASES};
@@ -148,15 +148,15 @@ template <typename T>
 using ScalarCaleyTable = CaleyTable<T, 0, 0, 0>;
 
 template <typename T>
-using ComplexCaleyTable = CaleyTable<T, 1, 0, 0>;
+using ComplexCaleyTable = CaleyTable<T, 0, 1, 0>;
 
 template <typename T>
-using DualCaleyTable = CaleyTable<T, 0, 1, 0>;
+using DualCaleyTable = CaleyTable<T, 0, 0, 1>;
 
 template <typename T>
-using SplitComplexCaleyTable = CaleyTable<T, 0, 0, 1>;
+using SplitComplexCaleyTable = CaleyTable<T, 1, 0, 0>;
 
 template <typename T>
-using QuaternionCaleyTable = CaleyTable<T, 3, 0, 0>;
+using QuaternionCaleyTable = CaleyTable<T, 0, 3, 0>;
 
 }  // namespace ndyn::math
