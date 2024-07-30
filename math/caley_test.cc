@@ -60,8 +60,8 @@ TEST(CaleyTableTest, CanGenerateDualEntries) {
 }
 
 static constexpr TableEntry<float>
-    quaternion_caley_table[QuaternionCaleyTable<float>::GRADE_COUNT]
-                          [QuaternionCaleyTable<float>::GRADE_COUNT] =  //
+    nontrivial_caley_table[CaleyTable<float, 0, 3, 0>::GRADE_COUNT]
+                          [CaleyTable<float, 0, 3, 0>::GRADE_COUNT] =  //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -139,11 +139,11 @@ static constexpr TableEntry<float>
         },
 };
 
-TEST(CaleyTableTest, CanGenerateQuaternionEntries) {
-  static constexpr auto expected_table = quaternion_caley_table;
-  static constexpr QuaternionCaleyTable<float> table{};
-  for (size_t lhs_grade = 0; lhs_grade < QuaternionCaleyTable<float>::GRADE_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < QuaternionCaleyTable<float>::GRADE_COUNT; ++rhs_grade) {
+TEST(CaleyTableTest, CanGenerateNontrivialEntries) {
+  static constexpr auto expected_table = nontrivial_caley_table;
+  static constexpr CaleyTable<float, 0, 3, 0> table{};
+  for (size_t lhs_grade = 0; lhs_grade < CaleyTable<float, 0, 3, 0>::GRADE_COUNT; ++lhs_grade) {
+    for (size_t rhs_grade = 0; rhs_grade < CaleyTable<float, 0, 3, 0>::GRADE_COUNT; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;

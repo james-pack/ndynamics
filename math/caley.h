@@ -156,7 +156,4 @@ using DualCaleyTable = CaleyTable<T, 0, 0, 1>;
 template <typename T>
 using SplitComplexCaleyTable = CaleyTable<T, 1, 0, 0>;
 
-template <typename T>
-using QuaternionCaleyTable = CaleyTable<T, 0, 3, 0>;
-
 }  // namespace ndyn::math

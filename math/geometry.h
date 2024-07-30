@@ -95,7 +95,4 @@ using DualMultivector = Multivector<T, 0, 0, 1>;
 template <typename T>
 using SplitComplexMultivector = Multivector<T, 1, 0, 0>;
 
-template <typename T>
-using QuaternionMultivector = Multivector<T, 0, 3, 0>;
-
 }  // namespace ndyn::math
