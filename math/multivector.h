@@ -19,7 +19,8 @@ class Multivector final {
   static constexpr size_t grade_count() { return 1UL << bases_count(); }
 
  private:
-  static constexpr CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> caley_table_{};
+  static constexpr CaleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>
+      geometric_product_caley_table_{};
 
   std::array<T, grade_count()> coefficients_{};
 
@@ -79,7 +80,7 @@ class Multivector final {
     Multivector result{};
     for (size_t i = 0; i < grade_count(); ++i) {
       for (size_t j = 0; j < grade_count(); ++j) {
-        const auto& caley_entry{caley_table_.entry(i, j)};
+        const auto& caley_entry{geometric_product_caley_table_.entry(i, j)};
         result.coefficients_[caley_entry.grade] +=
             caley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
       }

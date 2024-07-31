@@ -30,22 +30,22 @@ constexpr size_t count_bits_within_mask(const BitSet<N>& bits, const BitSet<N>& 
   return masked.count();
 }
 
-template <typename T, size_t BASES_COUNT, size_t current_bit>
-constexpr T compute_commutative_order(const BitSet<BASES_COUNT>& lhs_grade_bits,
-                                      const BitSet<BASES_COUNT>& rhs_grade_bits,
-                                      T accumulated_order) {
+template <size_t BASES_COUNT, size_t current_bit>
+constexpr char compute_commutative_order(const BitSet<BASES_COUNT>& lhs_grade_bits,
+                                         const BitSet<BASES_COUNT>& rhs_grade_bits,
+                                         char accumulated_order) {
   if constexpr (BASES_COUNT == 0 or current_bit == 0) {
     return accumulated_order;
   } else {
     if (lhs_grade_bits.test(current_bit)) {
       const BitSet<BASES_COUNT> mask{create_mask_below_bit<BASES_COUNT>(current_bit)};
       if (count_bits_within_mask(rhs_grade_bits, mask) % 2 == 1) {
-        return compute_commutative_order<T, BASES_COUNT, current_bit - 1>(
+        return compute_commutative_order<BASES_COUNT, current_bit - 1>(
             lhs_grade_bits, rhs_grade_bits, -1 * accumulated_order);
       }
     }
-    return compute_commutative_order<T, BASES_COUNT, current_bit - 1>(
-        lhs_grade_bits, rhs_grade_bits, accumulated_order);
+    return compute_commutative_order<BASES_COUNT, current_bit - 1>(lhs_grade_bits, rhs_grade_bits,
+                                                                   accumulated_order);
   }
 }
 
@@ -95,13 +95,13 @@ std::ostream& operator<<(std::ostream& os, const TableEntry& t) {
   return os;
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CaleyTable;
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::string to_string(const CaleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CaleyTable final {
  public:
   static constexpr size_t BASES_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
@@ -140,13 +140,13 @@ class CaleyTable final {
 
       if ((self_multiplication & negative_bases_bitmask()).count() % 2 == 1) {
         constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
-        const char commutative_order = compute_commutative_order<T, BASES_COUNT, BASES_COUNT - 1>(
+        const char commutative_order = compute_commutative_order<BASES_COUNT, BASES_COUNT - 1>(
             lhs_grade_bits, rhs_grade_bits, INITIAL_COMMUTATIVE_ORDER);
         const TableEntry result{lhs_grade xor rhs_grade, commutative_order};
         return result;
       } else {
         constexpr char INITIAL_COMMUTATIVE_ORDER{1};
-        const char commutative_order = compute_commutative_order<T, BASES_COUNT, BASES_COUNT - 1>(
+        const char commutative_order = compute_commutative_order<BASES_COUNT, BASES_COUNT - 1>(
             lhs_grade_bits, rhs_grade_bits, INITIAL_COMMUTATIVE_ORDER);
         const TableEntry result{lhs_grade xor rhs_grade, commutative_order};
         return result;
@@ -166,7 +166,7 @@ class CaleyTable final {
 
   Table table_{generate_table()};
 
-  friend std::string to_string<>(const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
+  friend std::string to_string<>(const CaleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
 
  public:
   constexpr CaleyTable() = default;
@@ -176,11 +176,11 @@ class CaleyTable final {
   }
 };
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::string to_string(const CaleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
   using std::to_string;
   static constexpr size_t GRADE_COUNT{
-      CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::GRADE_COUNT};
+      CaleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::GRADE_COUNT};
 
   std::string result{};
   result.append("\n<\n");
@@ -202,26 +202,21 @@ std::string to_string(const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_B
   return result;
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 std::ostream& operator<<(std::ostream& os,
-                         const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+                         const CaleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
   os << to_string(t);
   return os;
 }
 
-template <typename T>
-using ScalarCaleyTable = CaleyTable<T, 0, 0, 0>;
+using ScalarCaleyTable = CaleyTable<0, 0, 0>;
 
-template <typename T>
-using ComplexCaleyTable = CaleyTable<T, 0, 1, 0>;
+using ComplexCaleyTable = CaleyTable<0, 1, 0>;
 
-template <typename T>
-using DualCaleyTable = CaleyTable<T, 0, 0, 1>;
+using DualCaleyTable = CaleyTable<0, 0, 1>;
 
-template <typename T>
-using SplitComplexCaleyTable = CaleyTable<T, 1, 0, 0>;
+using SplitComplexCaleyTable = CaleyTable<1, 0, 0>;
 
-template <typename T>
-using SpacetimeCaleyTable = CaleyTable<T, 1, 3, 0>;
+using SpacetimeCaleyTable = CaleyTable<1, 3, 0>;
 
 }  // namespace ndyn::math
