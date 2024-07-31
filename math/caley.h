@@ -78,7 +78,7 @@ class TableEntry final {
 template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CaleyTable final {
  public:
-  static constexpr size_t BASES_COUNT{NEGATIVE_BASES + ZERO_BASES + POSITIVE_BASES};
+  static constexpr size_t BASES_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
   static constexpr size_t GRADE_COUNT{1UL << BASES_COUNT};
 
   static constexpr size_t SCALAR_GRADE{0};
@@ -87,15 +87,15 @@ class CaleyTable final {
 
  private:
   static constexpr BitSet<BASES_COUNT> negative_bases_bitmask() {
-    return BitSet<BASES_COUNT>::create_mask(NEGATIVE_BASES);
+    return BitSet<BASES_COUNT>::create_mask(NEGATIVE_BASES, POSITIVE_BASES);
   }
 
   static constexpr BitSet<BASES_COUNT> zero_bases_bitmask() {
-    return BitSet<BASES_COUNT>::create_mask(ZERO_BASES, NEGATIVE_BASES);
+    return BitSet<BASES_COUNT>::create_mask(ZERO_BASES, POSITIVE_BASES + NEGATIVE_BASES);
   }
 
   static constexpr BitSet<BASES_COUNT> positive_bases_bitmask() {
-    return BitSet<BASES_COUNT>::create_mask(POSITIVE_BASES, NEGATIVE_BASES + ZERO_BASES);
+    return BitSet<BASES_COUNT>::create_mask(POSITIVE_BASES);
   }
 
   static constexpr TableEntry<T> generate_entry(size_t lhs_grade, size_t rhs_grade) {
@@ -155,5 +155,8 @@ using DualCaleyTable = CaleyTable<T, 0, 0, 1>;
 
 template <typename T>
 using SplitComplexCaleyTable = CaleyTable<T, 1, 0, 0>;
+
+template <typename T>
+using SpacetimeCaleyTable = CaleyTable<T, 1, 3, 0>;
 
 }  // namespace ndyn::math

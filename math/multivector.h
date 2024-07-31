@@ -95,4 +95,7 @@ using DualMultivector = Multivector<T, 0, 0, 1>;
 template <typename T>
 using SplitComplexMultivector = Multivector<T, 1, 0, 0>;
 
+template <typename T>
+using SpacetimeMultivector = Multivector<T, 1, 3, 0>;
+
 }  // namespace ndyn::math
