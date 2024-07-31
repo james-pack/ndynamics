@@ -50,7 +50,21 @@ class Multivector final {
   constexpr Multivector add(const Multivector& rhs) const {
     Multivector result{*this};
     for (size_t i = 0; i < grade_count(); ++i) {
-      result.coefficients_[i] = coefficients_[i] + rhs.coefficients_[i];
+      result.coefficients_[i] += rhs.coefficients_[i];
+    }
+    return result;
+  }
+
+  constexpr Multivector subtract(const T& rhs) const {
+    Multivector result{*this};
+    result.coefficients_[SCALAR_GRADE] -= rhs;
+    return result;
+  }
+
+  constexpr Multivector subtract(const Multivector& rhs) const {
+    Multivector result{*this};
+    for (size_t i = 0; i < grade_count(); ++i) {
+      result.coefficients_[i] -= rhs.coefficients_[i];
     }
     return result;
   }
@@ -75,6 +89,25 @@ class Multivector final {
     return result;
   }
 
+  // Operator overloads.
+  constexpr bool operator==(const Multivector& rhs) const {
+    return coefficients_ == rhs.coefficients_;
+  }
+
+  constexpr bool operator==(const T& rhs) const { return *this == Multivector{rhs}; }
+
+  constexpr Multivector operator+(const T& rhs) const { return add(rhs); }
+  constexpr Multivector operator+(const Multivector& rhs) const { return add(rhs); }
+
+  constexpr Multivector operator-(const T& rhs) const { return subtract(rhs); }
+  constexpr Multivector operator-(const Multivector& rhs) const { return subtract(rhs); }
+
+  // Unary minus
+  constexpr Multivector operator-() const { return multiply(-1); }
+
+  constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
+  constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
+
   template <size_t N>
   static constexpr Multivector e() {
     Multivector result{};
@@ -83,6 +116,14 @@ class Multivector final {
   }
 };
 
+// Operator overloads where the multivector is not on the left side.
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+constexpr bool operator==(const T& scalar,
+                          const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+  return v == scalar;
+}
+
 template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator+(
     const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
@@ -90,23 +131,15 @@ constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator+(
 }
 
 template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator+(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& lhs,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& rhs) {
-  return lhs.add(rhs);
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator-(
+    const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+  return v.multiply(-1).add(scalar);
 }
 
 template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator*(
     const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
   return v.multiply(scalar);
-}
-
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator*(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& lhs,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& rhs) {
-  return lhs.multiply(rhs);
 }
 
 template <typename T>

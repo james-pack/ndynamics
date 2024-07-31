@@ -87,4 +87,37 @@ TEST(MultivectorTest, CanMultiplyComplexNumbersWithOperator) {
   EXPECT_EQ(16.f, (w * w).scalar());
 }
 
+TEST(MultivectorTest, EqualComplexNumbersEvaluateAsEqual) {
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};  // i
+  static constexpr auto u{i + 1.f};                            // 1 + i
+  static constexpr ComplexMultivector<float> v{1.f};           // 1
+  static constexpr ComplexMultivector<float> w{2.f * i};       // 2i
+
+  EXPECT_EQ(u, v + i);
+  EXPECT_EQ(w, u * u);
+}
+
+TEST(MultivectorTest, CanUseUnaryMinusOnComplexNumbers) {
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};  // i
+  static constexpr auto u{i + 1.f};                            // 1 + i
+
+  EXPECT_EQ(i * -1.f, -i);
+  EXPECT_EQ(-1.f - i, -u);
+}
+
+TEST(MultivectorTest, ValidateOperatorOverloadsOnComplexNumbers) {
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};  // i
+
+  EXPECT_EQ(-1.f, i * i);
+  EXPECT_EQ(i * i, -1.f);
+
+  EXPECT_EQ(0.f, i * i + 1.f);
+  EXPECT_EQ(i * i + 1.f, 0.f);
+
+  EXPECT_EQ(i - 1.f, i * (i + 1.f));
+  EXPECT_EQ(i * (i - 1.f), -1.f - i);
+
+  EXPECT_EQ(-i * (i - 1.f), 1.f + i);
+}
+
 }  // namespace ndyn::math
