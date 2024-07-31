@@ -3,6 +3,7 @@
 #include <array>
 #include <bitset>
 #include <cstring>
+#include <limits>
 #include <ostream>
 #include <string>
 
@@ -60,7 +61,10 @@ class TableEntry final {
   constexpr TableEntry(TableEntry&& rhs)
       : grade(rhs.grade), quadratic_multiplier(rhs.quadratic_multiplier) {}
 
-  constexpr TableEntry(size_t g, char q) : grade(g), quadratic_multiplier(q) {}
+  constexpr TableEntry(size_t g, char q) : grade(g), quadratic_multiplier(q) {
+    // Note that the CaleyTable class has defenses to avoid grades that would overflow the grade
+    // data member below.
+  }
 
   constexpr TableEntry& operator=(TableEntry&& rhs) {
     grade = rhs.grade;
@@ -72,7 +76,7 @@ class TableEntry final {
     return grade == rhs.grade && quadratic_multiplier == rhs.quadratic_multiplier;
   }
 
-  size_t grade{};
+  unsigned char grade{};
   char quadratic_multiplier{};
 };
 
@@ -102,6 +106,11 @@ class CaleyTable final {
  public:
   static constexpr size_t BASES_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
   static constexpr size_t GRADE_COUNT{1UL << BASES_COUNT};
+
+  // Note: failures in following situation can be avoided by templating the TableEntry class on the
+  // number of grades/bases and using different storage sizes as needed.
+  static_assert(GRADE_COUNT <= std::numeric_limits<unsigned char>::max(),
+                "TableEntry cannot handle the number of grades required for this Caley table.");
 
   static constexpr size_t SCALAR_GRADE{0};
 
