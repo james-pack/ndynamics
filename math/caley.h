@@ -3,6 +3,8 @@
 #include <array>
 #include <bitset>
 #include <cstring>
+#include <ostream>
+#include <string>
 
 #include "math/bitset.h"
 
@@ -48,7 +50,6 @@ constexpr T compute_commutative_order(const BitSet<BASES_COUNT>& lhs_grade_bits,
 
 }  // namespace
 
-template <typename T>
 class TableEntry final {
  public:
   constexpr TableEntry() = default;
@@ -59,7 +60,7 @@ class TableEntry final {
   constexpr TableEntry(TableEntry&& rhs)
       : grade(rhs.grade), quadratic_multiplier(rhs.quadratic_multiplier) {}
 
-  constexpr TableEntry(size_t g, T q) : grade(g), quadratic_multiplier(q) {}
+  constexpr TableEntry(size_t g, char q) : grade(g), quadratic_multiplier(q) {}
 
   constexpr TableEntry& operator=(TableEntry&& rhs) {
     grade = rhs.grade;
@@ -72,8 +73,29 @@ class TableEntry final {
   }
 
   size_t grade{};
-  T quadratic_multiplier{};
+  char quadratic_multiplier{};
 };
+
+std::string to_string(const TableEntry& t) {
+  using std::to_string;
+  return std::string{}
+      .append("(")  //
+      .append(to_string(t.grade))
+      .append(", ")
+      .append(to_string(t.quadratic_multiplier))
+      .append(")");
+}
+
+std::ostream& operator<<(std::ostream& os, const TableEntry& t) {
+  os << to_string(t);
+  return os;
+}
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+class CaleyTable;
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::string to_string(const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
 
 template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CaleyTable final {
@@ -83,7 +105,7 @@ class CaleyTable final {
 
   static constexpr size_t SCALAR_GRADE{0};
 
-  using Table = std::array<std::array<TableEntry<T>, GRADE_COUNT>, GRADE_COUNT>;
+  using Table = std::array<std::array<TableEntry, GRADE_COUNT>, GRADE_COUNT>;
 
  private:
   static constexpr BitSet<BASES_COUNT> negative_bases_bitmask() {
@@ -98,34 +120,33 @@ class CaleyTable final {
     return BitSet<BASES_COUNT>::create_mask(POSITIVE_BASES);
   }
 
-  static constexpr TableEntry<T> generate_entry(size_t lhs_grade, size_t rhs_grade) {
+  static constexpr TableEntry generate_entry(size_t lhs_grade, size_t rhs_grade) {
     const BitSet<BASES_COUNT> self_multiplication{lhs_grade & rhs_grade};
 
     if ((self_multiplication & zero_bases_bitmask()).count() != 0) {
-      return TableEntry<T>{lhs_grade xor rhs_grade, 0};
+      return TableEntry{lhs_grade xor rhs_grade, 0};
     } else {
       const BitSet<BASES_COUNT> lhs_grade_bits{lhs_grade};
       const BitSet<BASES_COUNT> rhs_grade_bits{rhs_grade};
 
       if ((self_multiplication & negative_bases_bitmask()).count() % 2 == 1) {
-        constexpr T INITIAL_COMMUTATIVE_ORDER{-1};
-        const T commutative_order = compute_commutative_order<T, BASES_COUNT, BASES_COUNT - 1>(
+        constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
+        const char commutative_order = compute_commutative_order<T, BASES_COUNT, BASES_COUNT - 1>(
             lhs_grade_bits, rhs_grade_bits, INITIAL_COMMUTATIVE_ORDER);
-        const TableEntry<T> result{lhs_grade xor rhs_grade, commutative_order};
+        const TableEntry result{lhs_grade xor rhs_grade, commutative_order};
         return result;
       } else {
-        constexpr T INITIAL_COMMUTATIVE_ORDER{1};
-        const T commutative_order = compute_commutative_order<T, BASES_COUNT, BASES_COUNT - 1>(
+        constexpr char INITIAL_COMMUTATIVE_ORDER{1};
+        const char commutative_order = compute_commutative_order<T, BASES_COUNT, BASES_COUNT - 1>(
             lhs_grade_bits, rhs_grade_bits, INITIAL_COMMUTATIVE_ORDER);
-        const TableEntry<T> result{lhs_grade xor rhs_grade, commutative_order};
+        const TableEntry result{lhs_grade xor rhs_grade, commutative_order};
         return result;
       }
     }
   }
 
-  static constexpr std::array<std::array<TableEntry<T>, GRADE_COUNT>, GRADE_COUNT>
-  generate_table() {
-    std::array<std::array<TableEntry<T>, GRADE_COUNT>, GRADE_COUNT> result{};
+  static constexpr std::array<std::array<TableEntry, GRADE_COUNT>, GRADE_COUNT> generate_table() {
+    std::array<std::array<TableEntry, GRADE_COUNT>, GRADE_COUNT> result{};
     for (size_t i = 0; i < GRADE_COUNT; ++i) {
       for (size_t j = 0; j < GRADE_COUNT; ++j) {
         result.at(i).at(j) = generate_entry(i, j);
@@ -136,13 +157,48 @@ class CaleyTable final {
 
   Table table_{generate_table()};
 
+  friend std::string to_string<>(const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
+
  public:
   constexpr CaleyTable() = default;
 
-  constexpr const TableEntry<T>& entry(size_t lhs_grade, size_t rhs_grade) const {
+  constexpr const TableEntry& entry(size_t lhs_grade, size_t rhs_grade) const {
     return table_.at(lhs_grade).at(rhs_grade);
   }
 };
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::string to_string(const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+  using std::to_string;
+  static constexpr size_t GRADE_COUNT{
+      CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::GRADE_COUNT};
+
+  std::string result{};
+  result.append("\n<\n");
+  for (size_t i = 0; i < GRADE_COUNT; ++i) {
+    const std::array<TableEntry, GRADE_COUNT>& row{t.table_.at(i)};
+    result.append("\t<");
+    bool need_comma{false};
+    for (size_t j = 0; j < GRADE_COUNT; ++j) {
+      if (need_comma) {
+        result.append(", ");
+      }
+      result.append(to_string(row.at(j)));
+      need_comma = true;
+    }
+    result.append(">\n");
+  }
+  result.append(">\n");
+
+  return result;
+}
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::ostream& operator<<(std::ostream& os,
+                         const CaleyTable<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+  os << to_string(t);
+  return os;
+}
 
 template <typename T>
 using ScalarCaleyTable = CaleyTable<T, 0, 0, 0>;

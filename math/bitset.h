@@ -2,7 +2,9 @@
 
 #include <cstring>
 #include <limits>
+#include <ostream>
 #include <stdexcept>
+#include <string>
 
 #include "base/except.h"
 
@@ -106,6 +108,23 @@ class BitSetT final {
 
   unsigned long bits{};
 };
+
+template <size_t N>
+std::string to_string(const BitSetT<N>& b) {
+  std::string result{};
+  result.reserve(N + 2);
+  result.append("0b");
+  for (size_t i = 0; i < N; ++i) {
+    result.append(b.test(i) ? "1" : "0");
+  }
+  return result;
+}
+
+template <size_t N>
+std::ostream& operator<<(std::ostream& os, const BitSetT<N>& b) {
+  os << to_string(b);
+  return os;
+}
 
 // TODO(james): Consider replacing with std::bitset when we switch to C++23.
 template <size_t N>
