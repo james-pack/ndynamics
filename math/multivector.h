@@ -83,6 +83,32 @@ class Multivector final {
   }
 };
 
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator+(
+    const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+  return v.add(scalar);
+}
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator+(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& lhs,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& rhs) {
+  return lhs.add(rhs);
+}
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator*(
+    const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+  return v.multiply(scalar);
+}
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator*(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& lhs,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& rhs) {
+  return lhs.multiply(rhs);
+}
+
 template <typename T>
 using ScalarMultivector = Multivector<T, 0, 0, 0>;
 
