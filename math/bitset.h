@@ -59,6 +59,8 @@ class BitSetT final {
 
   constexpr bool operator==(const BitSetT& rhs) const { return masked_bits() == rhs.masked_bits(); }
 
+  constexpr BitSetT operator xor(const BitSetT& rhs) const { return bits xor rhs.bits; }
+
   constexpr bool test(size_t bit) const {
     if (bit >= MAX_SIZE) {
       except<std::out_of_range>("Attempt to test bit out of range");

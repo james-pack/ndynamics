@@ -19,9 +19,13 @@ class Multivector final {
   static constexpr size_t grade_count() { return 1UL << bases_count(); }
 
  private:
-  static constexpr CaleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>
+  static constexpr CaleyTable<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
+                              ZERO_BASES>
       geometric_product_caley_table_{};
-
+  /*
+  static constexpr CaleyTable<Operations::INNER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>
+      inner_product_caley_table_{};
+  */
   std::array<T, grade_count()> coefficients_{};
 
  public:
@@ -87,6 +91,20 @@ class Multivector final {
     }
     return result;
   }
+
+  /*
+  constexpr Multivector inner(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < grade_count(); ++i) {
+      for (size_t j = 0; j < grade_count(); ++j) {
+        const auto& caley_entry{inner_product_caley_table_.entry(i, j)};
+        result.coefficients_[caley_entry.grade] +=
+            caley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+      }
+    }
+    return result;
+  }
+  */
 
   // Operator overloads.
   constexpr bool operator==(const Multivector& rhs) const {

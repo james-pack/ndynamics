@@ -5,15 +5,17 @@
 namespace ndyn::math {
 
 TEST(CaleyTableTest, CanGenerateScalarEntries) {
-  static constexpr size_t SCALAR_GRADE{ScalarCaleyTable::SCALAR_GRADE};
-  static constexpr ScalarCaleyTable table{};
+  static constexpr size_t SCALAR_GRADE{
+      ScalarCaleyTable<Operations::GEOMETRIC_PRODUCT>::SCALAR_GRADE};
+  static constexpr ScalarCaleyTable<Operations::GEOMETRIC_PRODUCT> table{};
   const auto entry{table.entry(0, 0)};
   EXPECT_EQ(SCALAR_GRADE, entry.grade);
   EXPECT_EQ(1, entry.quadratic_multiplier);
 }
 
-static constexpr TableEntry complex_caley_table[ComplexCaleyTable::GRADE_COUNT]
-                                               [ComplexCaleyTable::GRADE_COUNT] =  //
+static constexpr TableEntry
+    complex_caley_table[ComplexCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT]
+                       [ComplexCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT] =  //
     {
         {
             {0, 1}, {1, 1},  //
@@ -25,9 +27,11 @@ static constexpr TableEntry complex_caley_table[ComplexCaleyTable::GRADE_COUNT]
 
 TEST(CaleyTableTest, CanGenerateComplexEntries) {
   static constexpr auto expected_table = complex_caley_table;
-  static constexpr ComplexCaleyTable table{};
-  for (size_t lhs_grade = 0; lhs_grade < ComplexCaleyTable::GRADE_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < ComplexCaleyTable::GRADE_COUNT; ++rhs_grade) {
+  static constexpr ComplexCaleyTable<Operations::GEOMETRIC_PRODUCT> table{};
+  for (size_t lhs_grade = 0;
+       lhs_grade < ComplexCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++lhs_grade) {
+    for (size_t rhs_grade = 0;
+         rhs_grade < ComplexCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -35,8 +39,9 @@ TEST(CaleyTableTest, CanGenerateComplexEntries) {
   }
 }
 
-static constexpr TableEntry dual_caley_table[DualCaleyTable::GRADE_COUNT]
-                                            [DualCaleyTable::GRADE_COUNT] =  //
+static constexpr TableEntry
+    dual_caley_table[DualCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT]
+                    [DualCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT] =  //
     {
         {
             {0, 1}, {1, 1},  //
@@ -48,9 +53,11 @@ static constexpr TableEntry dual_caley_table[DualCaleyTable::GRADE_COUNT]
 
 TEST(CaleyTableTest, CanGenerateDualEntries) {
   static constexpr auto expected_table = dual_caley_table;
-  static constexpr DualCaleyTable table{};
-  for (size_t lhs_grade = 0; lhs_grade < DualCaleyTable::GRADE_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < DualCaleyTable::GRADE_COUNT; ++rhs_grade) {
+  static constexpr DualCaleyTable<Operations::GEOMETRIC_PRODUCT> table{};
+  for (size_t lhs_grade = 0; lhs_grade < DualCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT;
+       ++lhs_grade) {
+    for (size_t rhs_grade = 0;
+         rhs_grade < DualCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -58,8 +65,9 @@ TEST(CaleyTableTest, CanGenerateDualEntries) {
   }
 }
 
-static constexpr TableEntry nontrivial_caley_table[CaleyTable<0, 3, 0>::GRADE_COUNT]
-                                                  [CaleyTable<0, 3, 0>::GRADE_COUNT] =  //
+static constexpr TableEntry
+    nontrivial_caley_table[CaleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT]
+                          [CaleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT] =  //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -139,9 +147,11 @@ static constexpr TableEntry nontrivial_caley_table[CaleyTable<0, 3, 0>::GRADE_CO
 
 TEST(CaleyTableTest, CanGenerateNontrivialEntries) {
   static constexpr auto expected_table = nontrivial_caley_table;
-  static constexpr CaleyTable<0, 3, 0> table{};
-  for (size_t lhs_grade = 0; lhs_grade < CaleyTable<0, 3, 0>::GRADE_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < CaleyTable<0, 3, 0>::GRADE_COUNT; ++rhs_grade) {
+  static constexpr CaleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0> table{};
+  for (size_t lhs_grade = 0;
+       lhs_grade < CaleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT; ++lhs_grade) {
+    for (size_t rhs_grade = 0;
+         rhs_grade < CaleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -149,8 +159,9 @@ TEST(CaleyTableTest, CanGenerateNontrivialEntries) {
   }
 }
 
-static constexpr TableEntry spacetime_caley_table[SpacetimeCaleyTable::GRADE_COUNT]
-                                                 [SpacetimeCaleyTable::GRADE_COUNT] =  //
+static constexpr TableEntry
+    spacetime_caley_table[SpacetimeCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT]
+                         [SpacetimeCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT] =  //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -460,9 +471,11 @@ static constexpr TableEntry spacetime_caley_table[SpacetimeCaleyTable::GRADE_COU
 
 TEST(CaleyTableTest, CanGenerateSpacetimeEntries) {
   static constexpr auto expected_table = spacetime_caley_table;
-  static constexpr SpacetimeCaleyTable table{};
-  for (size_t lhs_grade = 0; lhs_grade < SpacetimeCaleyTable::GRADE_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < SpacetimeCaleyTable::GRADE_COUNT; ++rhs_grade) {
+  static constexpr SpacetimeCaleyTable<Operations::GEOMETRIC_PRODUCT> table{};
+  for (size_t lhs_grade = 0;
+       lhs_grade < SpacetimeCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++lhs_grade) {
+    for (size_t rhs_grade = 0;
+         rhs_grade < SpacetimeCaleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
