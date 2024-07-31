@@ -106,7 +106,7 @@ TEST(MultivectorTest, CanUseUnaryMinusOnComplexNumbers) {
 }
 
 TEST(MultivectorTest, ValidateOperatorOverloadsOnComplexNumbers) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};  // i
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};
 
   EXPECT_EQ(-1.f, i * i);
   EXPECT_EQ(i * i, -1.f);
@@ -118,6 +118,14 @@ TEST(MultivectorTest, ValidateOperatorOverloadsOnComplexNumbers) {
   EXPECT_EQ(i * (i - 1.f), -1.f - i);
 
   EXPECT_EQ(-i * (i - 1.f), 1.f + i);
+}
+
+TEST(MultivectorTest, CantAccessNonexistentBasesInComplexNumbers) {
+  const auto i{ComplexMultivector<float>::e<0>()};
+  // Uncomment to generate compile error.
+  // const auto does_not_exist{ComplexMultivector<float>::e<1>()};
+
+  EXPECT_EQ(0, i.scalar());
 }
 
 }  // namespace ndyn::math
