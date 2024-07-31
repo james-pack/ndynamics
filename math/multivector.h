@@ -3,9 +3,7 @@
 #include <array>
 #include <bitset>
 #include <cstring>
-#include <stdexcept>
 
-#include "base/except.h"
 #include "math/caley.h"
 
 namespace ndyn::math {
