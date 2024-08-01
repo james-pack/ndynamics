@@ -19,13 +19,16 @@ class Multivector final {
   static constexpr size_t grade_count() { return 1UL << bases_count(); }
 
  private:
+  // Caley tables for each operation.
   static constexpr CaleyTable<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
                               ZERO_BASES>
       geometric_product_caley_table_{};
+
   /*
   static constexpr CaleyTable<Operations::INNER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>
       inner_product_caley_table_{};
   */
+
   std::array<T, grade_count()> coefficients_{};
 
  public:
