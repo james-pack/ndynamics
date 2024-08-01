@@ -117,7 +117,7 @@ class TableEntry final {
       : grade(rhs.grade), quadratic_multiplier(rhs.quadratic_multiplier) {}
 
   constexpr TableEntry(size_t g, char q) : grade(g), quadratic_multiplier(q) {
-    // Note that the CaleyTable class has defenses to avoid grades that would overflow the grade
+    // Note that the CayleyTable class has defenses to avoid grades that would overflow the grade
     // data member below.
   }
 
@@ -151,13 +151,13 @@ std::ostream& operator<<(std::ostream& os, const TableEntry& t) {
 }
 
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-class CaleyTable;
+class CayleyTable;
 
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CaleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
+std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
 
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-class CaleyTable final {
+class CayleyTable final {
  public:
   static constexpr size_t BASES_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
   static constexpr size_t GRADE_COUNT{1UL << BASES_COUNT};
@@ -165,7 +165,7 @@ class CaleyTable final {
   // Note: failures in following situation can be avoided by templating the TableEntry class on the
   // number of grades/bases and using different storage sizes as needed.
   static_assert(GRADE_COUNT <= std::numeric_limits<unsigned char>::max(),
-                "TableEntry cannot handle the number of grades required for this Caley table.");
+                "TableEntry cannot handle the number of grades required for this Cayley table.");
 
   static constexpr size_t SCALAR_GRADE{0};
 
@@ -194,10 +194,10 @@ class CaleyTable final {
   Table table_{generate_table()};
 
   friend std::string to_string<>(
-      const CaleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
+      const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
 
  public:
-  constexpr CaleyTable() = default;
+  constexpr CayleyTable() = default;
 
   constexpr const TableEntry& entry(size_t lhs_grade, size_t rhs_grade) const {
     return table_.at(lhs_grade).at(rhs_grade);
@@ -205,10 +205,10 @@ class CaleyTable final {
 };
 
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CaleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
   using std::to_string;
   static constexpr size_t GRADE_COUNT{
-      CaleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::GRADE_COUNT};
+      CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::GRADE_COUNT};
 
   std::string result{};
   result.append("\n<\n");
@@ -232,24 +232,24 @@ std::string to_string(const CaleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES
 
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 std::ostream& operator<<(
-    std::ostream& os, const CaleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+    std::ostream& os, const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
   os << to_string(t);
   return os;
 }
 
 template <Operations OPERATION>
-using ScalarCaleyTable = CaleyTable<OPERATION, 0, 0, 0>;
+using ScalarCayleyTable = CayleyTable<OPERATION, 0, 0, 0>;
 
 template <Operations OPERATION>
-using ComplexCaleyTable = CaleyTable<OPERATION, 0, 1, 0>;
+using ComplexCayleyTable = CayleyTable<OPERATION, 0, 1, 0>;
 
 template <Operations OPERATION>
-using DualCaleyTable = CaleyTable<OPERATION, 0, 0, 1>;
+using DualCayleyTable = CayleyTable<OPERATION, 0, 0, 1>;
 
 template <Operations OPERATION>
-using SplitComplexCaleyTable = CaleyTable<OPERATION, 1, 0, 0>;
+using SplitComplexCayleyTable = CayleyTable<OPERATION, 1, 0, 0>;
 
 template <Operations OPERATION>
-using SpacetimeCaleyTable = CaleyTable<OPERATION, 1, 3, 0>;
+using SpacetimeCayleyTable = CayleyTable<OPERATION, 1, 3, 0>;
 
 }  // namespace ndyn::math

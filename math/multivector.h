@@ -4,7 +4,7 @@
 #include <bitset>
 #include <cstring>
 
-#include "math/caley.h"
+#include "math/cayley.h"
 
 namespace ndyn::math {
 
@@ -19,14 +19,14 @@ class Multivector final {
   static constexpr size_t grade_count() { return 1UL << bases_count(); }
 
  private:
-  // Caley tables for each operation.
-  static constexpr CaleyTable<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
+  // Cayley tables for each operation.
+  static constexpr CayleyTable<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
                               ZERO_BASES>
-      geometric_product_caley_table_{};
+      geometric_product_cayley_table_{};
 
   /*
-  static constexpr CaleyTable<Operations::INNER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>
-      inner_product_caley_table_{};
+  static constexpr CayleyTable<Operations::INNER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>
+      inner_product_cayley_table_{};
   */
 
   std::array<T, grade_count()> coefficients_{};
@@ -87,9 +87,9 @@ class Multivector final {
     Multivector result{};
     for (size_t i = 0; i < grade_count(); ++i) {
       for (size_t j = 0; j < grade_count(); ++j) {
-        const auto& caley_entry{geometric_product_caley_table_.entry(i, j)};
-        result.coefficients_[caley_entry.grade] +=
-            caley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+        const auto& cayley_entry{geometric_product_cayley_table_.entry(i, j)};
+        result.coefficients_[cayley_entry.grade] +=
+            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
       }
     }
     return result;
@@ -100,9 +100,9 @@ class Multivector final {
     Multivector result{};
     for (size_t i = 0; i < grade_count(); ++i) {
       for (size_t j = 0; j < grade_count(); ++j) {
-        const auto& caley_entry{inner_product_caley_table_.entry(i, j)};
-        result.coefficients_[caley_entry.grade] +=
-            caley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+        const auto& cayley_entry{inner_product_cayley_table_.entry(i, j)};
+        result.coefficients_[cayley_entry.grade] +=
+            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
       }
     }
     return result;

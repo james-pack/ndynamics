@@ -4,7 +4,7 @@ cc_library(
     name = "math",
     hdrs = [
         "bitset.h",
-        "caley.h",
+        "cayley.h",
         "multivector.h",
     ],
     visibility = ["//visibility:public"],
@@ -20,8 +20,8 @@ cc_test(
 )
 
 cc_test(
-    name = "caley_test",
-    srcs = ["caley_test.cc"],
+    name = "cayley_test",
+    srcs = ["cayley_test.cc"],
     deps = [
         ":math",
         "//third_party/gtest",
