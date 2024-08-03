@@ -12,24 +12,24 @@ template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_
 class Multivector final {
  public:
   static constexpr size_t SCALAR_BASES{1};
-  static constexpr size_t SCALAR_GRADE{0};
+  static constexpr size_t SCALAR_COMPONENT_INDEX{0};
 
   static constexpr size_t bases_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
 
-  static constexpr size_t grade_count() { return 1UL << bases_count(); }
+  static constexpr size_t component_count() { return 1UL << bases_count(); }
 
  private:
   // Cayley tables for each operation.
   static constexpr CayleyTable<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
-                              ZERO_BASES>
+                               ZERO_BASES>
       geometric_product_cayley_table_{};
 
   /*
-  static constexpr CayleyTable<Operations::INNER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>
-      inner_product_cayley_table_{};
+  static constexpr CayleyTable<Operations::INNER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
+  ZERO_BASES> inner_product_cayley_table_{};
   */
 
-  std::array<T, grade_count()> coefficients_{};
+  std::array<T, component_count()> coefficients_{};
 
  public:
   constexpr Multivector() = default;
@@ -37,25 +37,27 @@ class Multivector final {
   constexpr Multivector(const Multivector& rhs) = default;
   constexpr Multivector(Multivector&& rhs) = default;
 
-  explicit constexpr Multivector(const T& scalar) { coefficients_[SCALAR_GRADE] = scalar; }
+  explicit constexpr Multivector(const T& scalar) {
+    coefficients_[SCALAR_COMPONENT_INDEX] = scalar;
+  }
   explicit constexpr Multivector(T&& scalar) {
-    coefficients_[SCALAR_GRADE] = std::forward<T>(scalar);
+    coefficients_[SCALAR_COMPONENT_INDEX] = std::forward<T>(scalar);
   }
 
   constexpr Multivector& operator=(const Multivector& rhs) = default;
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
-  constexpr const T& scalar() const { return coefficients_[SCALAR_GRADE]; }
+  constexpr const T& scalar() const { return coefficients_[SCALAR_COMPONENT_INDEX]; }
 
   constexpr Multivector add(const T& rhs) const {
     Multivector result{*this};
-    result.coefficients_[SCALAR_GRADE] += rhs;
+    result.coefficients_[SCALAR_COMPONENT_INDEX] += rhs;
     return result;
   }
 
   constexpr Multivector add(const Multivector& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < grade_count(); ++i) {
+    for (size_t i = 0; i < component_count(); ++i) {
       result.coefficients_[i] += rhs.coefficients_[i];
     }
     return result;
@@ -63,13 +65,13 @@ class Multivector final {
 
   constexpr Multivector subtract(const T& rhs) const {
     Multivector result{*this};
-    result.coefficients_[SCALAR_GRADE] -= rhs;
+    result.coefficients_[SCALAR_COMPONENT_INDEX] -= rhs;
     return result;
   }
 
   constexpr Multivector subtract(const Multivector& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < grade_count(); ++i) {
+    for (size_t i = 0; i < component_count(); ++i) {
       result.coefficients_[i] -= rhs.coefficients_[i];
     }
     return result;
@@ -77,7 +79,7 @@ class Multivector final {
 
   constexpr Multivector multiply(const T& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < grade_count(); ++i) {
+    for (size_t i = 0; i < component_count(); ++i) {
       result.coefficients_[i] *= rhs;
     }
     return result;
@@ -85,8 +87,8 @@ class Multivector final {
 
   constexpr Multivector multiply(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < grade_count(); ++i) {
-      for (size_t j = 0; j < grade_count(); ++j) {
+    for (size_t i = 0; i < component_count(); ++i) {
+      for (size_t j = 0; j < component_count(); ++j) {
         const auto& cayley_entry{geometric_product_cayley_table_.entry(i, j)};
         result.coefficients_[cayley_entry.grade] +=
             cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
@@ -98,8 +100,8 @@ class Multivector final {
   /*
   constexpr Multivector inner(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < grade_count(); ++i) {
-      for (size_t j = 0; j < grade_count(); ++j) {
+    for (size_t i = 0; i < component_count(); ++i) {
+      for (size_t j = 0; j < component_count(); ++j) {
         const auto& cayley_entry{inner_product_cayley_table_.entry(i, j)};
         result.coefficients_[cayley_entry.grade] +=
             cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
