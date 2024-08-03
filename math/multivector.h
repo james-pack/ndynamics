@@ -3,7 +3,12 @@
 #include <array>
 #include <bitset>
 #include <cstring>
+#include <ostream>
+#include <stdexcept>
+#include <string>
 
+#include "base/bits.h"
+#include "base/except.h"
 #include "math/cayley.h"
 
 namespace ndyn::math {
@@ -11,10 +16,10 @@ namespace ndyn::math {
 template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class Multivector final {
  public:
-  static constexpr size_t SCALAR_BASES{1};
   static constexpr size_t SCALAR_COMPONENT_INDEX{0};
 
   static constexpr size_t bases_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
+  static constexpr size_t grade_count() { return bases_count() + 1; }
 
   static constexpr size_t component_count() { return 1UL << bases_count(); }
 
@@ -48,6 +53,20 @@ class Multivector final {
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
   constexpr const T& scalar() const { return coefficients_[SCALAR_COMPONENT_INDEX]; }
+  constexpr const T& component(size_t n) const { return coefficients_[n]; }
+
+  constexpr Multivector grade(size_t grade) const {
+    if (grade >= grade_count()) {
+      except<std::domain_error>("Requested grade is larger than maximum grade of this multivector");
+    }
+    Multivector result{*this};
+    for (size_t i = 0; i < component_count(); ++i) {
+      if (bit_count(i) != grade) {
+        result.coefficients_[i] = 0;
+      }
+    }
+    return result;
+  }
 
   constexpr Multivector add(const T& rhs) const {
     Multivector result{*this};
@@ -177,6 +196,33 @@ constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator*(
   return v.multiply(scalar);
 }
 
+// String and printing operations.
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::string to_string(const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+  using std::to_string;
+  std::string result{};
+  result.append("[");
+  bool need_comma{false};
+  for (size_t i = 0; i < v.component_count(); ++i) {
+    if (need_comma) {
+      result.append(", ");
+    }
+    need_comma = true;
+    result.append(to_string(v.component(i)));
+  }
+  result.append("]");
+  return result;
+}
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::ostream& operator<<(std::ostream& os,
+                         const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+  os << to_string(v);
+  return os;
+}
+
+// Common algebras.
 template <typename T>
 using ScalarMultivector = Multivector<T, 0, 0, 0>;
 

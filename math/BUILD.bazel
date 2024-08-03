@@ -8,6 +8,9 @@ cc_library(
         "multivector.h",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//base",
+    ],
 )
 
 cc_test(
