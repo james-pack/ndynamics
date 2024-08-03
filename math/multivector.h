@@ -45,6 +45,7 @@ class Multivector final {
   explicit constexpr Multivector(const T& scalar) {
     coefficients_[SCALAR_COMPONENT_INDEX] = scalar;
   }
+
   explicit constexpr Multivector(T&& scalar) {
     coefficients_[SCALAR_COMPONENT_INDEX] = std::forward<T>(scalar);
   }
@@ -135,17 +136,21 @@ class Multivector final {
     return coefficients_ == rhs.coefficients_;
   }
 
+  // Equality.
   constexpr bool operator==(const T& rhs) const { return *this == Multivector{rhs}; }
 
+  // Addition.
   constexpr Multivector operator+(const T& rhs) const { return add(rhs); }
   constexpr Multivector operator+(const Multivector& rhs) const { return add(rhs); }
 
+  // Subtraction.
   constexpr Multivector operator-(const T& rhs) const { return subtract(rhs); }
   constexpr Multivector operator-(const Multivector& rhs) const { return subtract(rhs); }
 
-  // Unary minus
+  // Unary minus.
   constexpr Multivector operator-() const { return multiply(-1); }
 
+  // Geometric product.
   constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
   constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
 
