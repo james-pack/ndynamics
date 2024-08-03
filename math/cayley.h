@@ -75,40 +75,60 @@ constexpr char accumulate_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& 
   }
 }
 
-template <Operations OPERATION, size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES,
-          size_t NEGATIVE_BASES, size_t ZERO_BASES>
-constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-                                         const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
-  const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
+template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+class CayleyEntryCalculator final {
+ public:
+  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
 
-  if ((self_multiplication &
-       zero_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
-          .count() != 0) {
-    return 0;
-  } else {
+  constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+                                           const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits);
+
+  constexpr unsigned char compute_result_grade(
+      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits);
+};
+
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+class CayleyEntryCalculator<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
+                            ZERO_BASES>
+    final {
+ public:
+  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
+  static constexpr Operations OPERATION{Operations::GEOMETRIC_PRODUCT};
+
+  constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+                                           const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+    const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
+
     if ((self_multiplication &
-         negative_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
-                .count() %
-            2 ==
-        1) {
-      constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
-      return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
-                                          QUADRATIC_FORM_COUNT - 1>(lhs_component_bits, rhs_component_bits,
-                                                                    INITIAL_COMMUTATIVE_ORDER);
+         zero_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+            .count() != 0) {
+      return 0;
     } else {
-      constexpr char INITIAL_COMMUTATIVE_ORDER{1};
-      return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
-                                          QUADRATIC_FORM_COUNT - 1>(lhs_component_bits, rhs_component_bits,
-                                                                    INITIAL_COMMUTATIVE_ORDER);
+      if ((self_multiplication & negative_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES,
+                                                        NEGATIVE_BASES, ZERO_BASES>())
+                  .count() %
+              2 ==
+          1) {
+        constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
+        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
+                                            QUADRATIC_FORM_COUNT - 1>(
+            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
+      } else {
+        constexpr char INITIAL_COMMUTATIVE_ORDER{1};
+        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
+                                            QUADRATIC_FORM_COUNT - 1>(
+            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
+      }
     }
   }
-}
 
-template <Operations OPERATION, size_t QUADRATIC_FORM_COUNT>
-constexpr unsigned char compute_result_grade(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-                                             const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
-  return (lhs_component_bits xor rhs_component_bits).to_ulong();
-}
+  constexpr unsigned char compute_result_grade(
+      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+    return (lhs_component_bits xor rhs_component_bits).to_ulong();
+  }
+};
 
 }  // namespace
 
@@ -178,23 +198,23 @@ class CayleyTable final {
   using Table = std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT>;
 
  private:
-  static constexpr TableEntry generate_entry(size_t lhs_component, size_t rhs_component) {
-    const BitSet<QUADRATIC_FORM_COUNT> lhs_component_bits{lhs_component};
-    const BitSet<QUADRATIC_FORM_COUNT> rhs_component_bits{rhs_component};
-    return TableEntry{
-        compute_result_grade<OPERATION, QUADRATIC_FORM_COUNT>(lhs_component, rhs_component),
-        compute_commutative_order<OPERATION, QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES,
-                                  ZERO_BASES>(lhs_component_bits, rhs_component_bits)};
-  }
-
   static constexpr std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT>
   generate_table() {
     std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT> result{};
+
+    CayleyEntryCalculator<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> entry_calculator{};
+
     for (size_t i = 0; i < COMPONENT_COUNT; ++i) {
       for (size_t j = 0; j < COMPONENT_COUNT; ++j) {
-        result.at(i).at(j) = generate_entry(i, j);
+        const BitSet<QUADRATIC_FORM_COUNT> lhs_component_bits{i};
+        const BitSet<QUADRATIC_FORM_COUNT> rhs_component_bits{j};
+
+        result.at(i).at(j) = TableEntry{
+            entry_calculator.compute_result_grade(i, j),
+            entry_calculator.compute_commutative_order(lhs_component_bits, rhs_component_bits)};
       }
     }
+
     return result;
   }
 
