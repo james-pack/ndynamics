@@ -14,8 +14,8 @@ TEST(CayleyTableTest, CanGenerateScalarEntries) {
 }
 
 static constexpr TableEntry
-    complex_cayley_table[ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT]
-                       [ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT] =  //
+    complex_cayley_table[ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT]
+                        [ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT] =  //
     {
         {
             {0, 1}, {1, 1},  //
@@ -29,9 +29,11 @@ TEST(CayleyTableTest, CanGenerateComplexEntries) {
   static constexpr auto expected_table = complex_cayley_table;
   static constexpr ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT> table{};
   for (size_t lhs_grade = 0;
-       lhs_grade < ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++lhs_grade) {
+       lhs_grade < ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT;
+       ++lhs_grade) {
     for (size_t rhs_grade = 0;
-         rhs_grade < ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++rhs_grade) {
+         rhs_grade < ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT;
+         ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -40,8 +42,8 @@ TEST(CayleyTableTest, CanGenerateComplexEntries) {
 }
 
 static constexpr TableEntry
-    dual_cayley_table[DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT]
-                    [DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT] =  //
+    dual_cayley_table[DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT]
+                     [DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT] =  //
     {
         {
             {0, 1}, {1, 1},  //
@@ -54,10 +56,10 @@ static constexpr TableEntry
 TEST(CayleyTableTest, CanGenerateDualEntries) {
   static constexpr auto expected_table = dual_cayley_table;
   static constexpr DualCayleyTable<Operations::GEOMETRIC_PRODUCT> table{};
-  for (size_t lhs_grade = 0; lhs_grade < DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT;
-       ++lhs_grade) {
+  for (size_t lhs_grade = 0;
+       lhs_grade < DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT; ++lhs_grade) {
     for (size_t rhs_grade = 0;
-         rhs_grade < DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++rhs_grade) {
+         rhs_grade < DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -65,9 +67,9 @@ TEST(CayleyTableTest, CanGenerateDualEntries) {
   }
 }
 
-static constexpr TableEntry
-    nontrivial_cayley_table[CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT]
-                          [CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT] =  //
+static constexpr TableEntry nontrivial_cayley_table
+    [CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT]
+    [CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT] =  //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -149,9 +151,11 @@ TEST(CayleyTableTest, CanGenerateNontrivialEntries) {
   static constexpr auto expected_table = nontrivial_cayley_table;
   static constexpr CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0> table{};
   for (size_t lhs_grade = 0;
-       lhs_grade < CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT; ++lhs_grade) {
+       lhs_grade < CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT;
+       ++lhs_grade) {
     for (size_t rhs_grade = 0;
-         rhs_grade < CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::GRADE_COUNT; ++rhs_grade) {
+         rhs_grade < CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT;
+         ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -159,9 +163,9 @@ TEST(CayleyTableTest, CanGenerateNontrivialEntries) {
   }
 }
 
-static constexpr TableEntry
-    spacetime_cayley_table[SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT]
-                         [SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT] =  //
+static constexpr TableEntry spacetime_cayley_table
+    [SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT]
+    [SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT] =  //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -473,9 +477,11 @@ TEST(CayleyTableTest, CanGenerateSpacetimeEntries) {
   static constexpr auto expected_table = spacetime_cayley_table;
   static constexpr SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT> table{};
   for (size_t lhs_grade = 0;
-       lhs_grade < SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++lhs_grade) {
+       lhs_grade < SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT;
+       ++lhs_grade) {
     for (size_t rhs_grade = 0;
-         rhs_grade < SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::GRADE_COUNT; ++rhs_grade) {
+         rhs_grade < SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT;
+         ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;

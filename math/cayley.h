@@ -37,70 +37,76 @@ constexpr size_t count_bits_within_mask(const BitSet<N>& bits, const BitSet<N>& 
   return masked.count();
 }
 
-template <size_t BASES_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<BASES_COUNT> positive_bases_bitmask() {
-  return BitSet<BASES_COUNT>::create_mask(POSITIVE_BASES);
+template <size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES,
+          size_t ZERO_BASES>
+static constexpr BitSet<QUADRATIC_FORM_COUNT> positive_bases_bitmask() {
+  return BitSet<QUADRATIC_FORM_COUNT>::create_mask(POSITIVE_BASES);
 }
 
-template <size_t BASES_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<BASES_COUNT> negative_bases_bitmask() {
-  return BitSet<BASES_COUNT>::create_mask(NEGATIVE_BASES, POSITIVE_BASES);
+template <size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES,
+          size_t ZERO_BASES>
+static constexpr BitSet<QUADRATIC_FORM_COUNT> negative_bases_bitmask() {
+  return BitSet<QUADRATIC_FORM_COUNT>::create_mask(NEGATIVE_BASES, POSITIVE_BASES);
 }
 
-template <size_t BASES_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<BASES_COUNT> zero_bases_bitmask() {
-  return BitSet<BASES_COUNT>::create_mask(ZERO_BASES, POSITIVE_BASES + NEGATIVE_BASES);
+template <size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES,
+          size_t ZERO_BASES>
+static constexpr BitSet<QUADRATIC_FORM_COUNT> zero_bases_bitmask() {
+  return BitSet<QUADRATIC_FORM_COUNT>::create_mask(ZERO_BASES, POSITIVE_BASES + NEGATIVE_BASES);
 }
 
-template <Operations OPERATION, size_t BASES_COUNT, size_t current_bit>
-constexpr char accumulate_commutative_order(const BitSet<BASES_COUNT>& lhs_grade_bits,
-                                            const BitSet<BASES_COUNT>& rhs_grade_bits,
+template <Operations OPERATION, size_t QUADRATIC_FORM_COUNT, size_t current_bit>
+constexpr char accumulate_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_grade_bits,
+                                            const BitSet<QUADRATIC_FORM_COUNT>& rhs_grade_bits,
                                             char accumulated_order) {
-  if constexpr (BASES_COUNT == 0 or current_bit == 0) {
+  if constexpr (QUADRATIC_FORM_COUNT == 0 or current_bit == 0) {
     return accumulated_order;
   } else {
     if (lhs_grade_bits.test(current_bit)) {
-      const BitSet<BASES_COUNT> mask{create_mask_below_bit<BASES_COUNT>(current_bit)};
+      const BitSet<QUADRATIC_FORM_COUNT> mask{
+          create_mask_below_bit<QUADRATIC_FORM_COUNT>(current_bit)};
       if (count_bits_within_mask(rhs_grade_bits, mask) % 2 == 1) {
-        return accumulate_commutative_order<OPERATION, BASES_COUNT, current_bit - 1>(
+        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT, current_bit - 1>(
             lhs_grade_bits, rhs_grade_bits, -1 * accumulated_order);
       }
     }
-    return accumulate_commutative_order<OPERATION, BASES_COUNT, current_bit - 1>(
+    return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT, current_bit - 1>(
         lhs_grade_bits, rhs_grade_bits, accumulated_order);
   }
 }
 
-template <Operations OPERATION, size_t BASES_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES,
-          size_t ZERO_BASES>
-constexpr char compute_commutative_order(const BitSet<BASES_COUNT>& lhs_grade_bits,
-                                         const BitSet<BASES_COUNT>& rhs_grade_bits) {
-  const BitSet<BASES_COUNT> self_multiplication{lhs_grade_bits & rhs_grade_bits};
+template <Operations OPERATION, size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES,
+          size_t NEGATIVE_BASES, size_t ZERO_BASES>
+constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_grade_bits,
+                                         const BitSet<QUADRATIC_FORM_COUNT>& rhs_grade_bits) {
+  const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_grade_bits & rhs_grade_bits};
 
   if ((self_multiplication &
-       zero_bases_bitmask<BASES_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+       zero_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
           .count() != 0) {
     return 0;
   } else {
     if ((self_multiplication &
-         negative_bases_bitmask<BASES_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+         negative_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
                 .count() %
             2 ==
         1) {
       constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
-      return accumulate_commutative_order<OPERATION, BASES_COUNT, BASES_COUNT - 1>(
-          lhs_grade_bits, rhs_grade_bits, INITIAL_COMMUTATIVE_ORDER);
+      return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
+                                          QUADRATIC_FORM_COUNT - 1>(lhs_grade_bits, rhs_grade_bits,
+                                                                    INITIAL_COMMUTATIVE_ORDER);
     } else {
       constexpr char INITIAL_COMMUTATIVE_ORDER{1};
-      return accumulate_commutative_order<OPERATION, BASES_COUNT, BASES_COUNT - 1>(
-          lhs_grade_bits, rhs_grade_bits, INITIAL_COMMUTATIVE_ORDER);
+      return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
+                                          QUADRATIC_FORM_COUNT - 1>(lhs_grade_bits, rhs_grade_bits,
+                                                                    INITIAL_COMMUTATIVE_ORDER);
     }
   }
 }
 
-template <Operations OPERATION, size_t BASES_COUNT>
-constexpr unsigned char compute_result_grade(const BitSet<BASES_COUNT>& lhs_grade_bits,
-                                             const BitSet<BASES_COUNT>& rhs_grade_bits) {
+template <Operations OPERATION, size_t QUADRATIC_FORM_COUNT>
+constexpr unsigned char compute_result_grade(const BitSet<QUADRATIC_FORM_COUNT>& lhs_grade_bits,
+                                             const BitSet<QUADRATIC_FORM_COUNT>& rhs_grade_bits) {
   return (lhs_grade_bits xor rhs_grade_bits).to_ulong();
 }
 
@@ -159,32 +165,33 @@ std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASE
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CayleyTable final {
  public:
-  static constexpr size_t BASES_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
-  static constexpr size_t GRADE_COUNT{1UL << BASES_COUNT};
+  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
+  static constexpr size_t COMPONENT_COUNT{1UL << QUADRATIC_FORM_COUNT};
 
   // Note: failures in following situation can be avoided by templating the TableEntry class on the
   // number of grades/bases and using different storage sizes as needed.
-  static_assert(GRADE_COUNT <= std::numeric_limits<unsigned char>::max(),
+  static_assert(COMPONENT_COUNT <= std::numeric_limits<unsigned char>::max(),
                 "TableEntry cannot handle the number of grades required for this Cayley table.");
 
   static constexpr size_t SCALAR_GRADE{0};
 
-  using Table = std::array<std::array<TableEntry, GRADE_COUNT>, GRADE_COUNT>;
+  using Table = std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT>;
 
  private:
   static constexpr TableEntry generate_entry(size_t lhs_grade, size_t rhs_grade) {
-    const BitSet<BASES_COUNT> lhs_grade_bits{lhs_grade};
-    const BitSet<BASES_COUNT> rhs_grade_bits{rhs_grade};
+    const BitSet<QUADRATIC_FORM_COUNT> lhs_grade_bits{lhs_grade};
+    const BitSet<QUADRATIC_FORM_COUNT> rhs_grade_bits{rhs_grade};
     return TableEntry{
-        compute_result_grade<OPERATION, BASES_COUNT>(lhs_grade, rhs_grade),
-        compute_commutative_order<OPERATION, BASES_COUNT, POSITIVE_BASES, NEGATIVE_BASES,
+        compute_result_grade<OPERATION, QUADRATIC_FORM_COUNT>(lhs_grade, rhs_grade),
+        compute_commutative_order<OPERATION, QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES,
                                   ZERO_BASES>(lhs_grade_bits, rhs_grade_bits)};
   }
 
-  static constexpr std::array<std::array<TableEntry, GRADE_COUNT>, GRADE_COUNT> generate_table() {
-    std::array<std::array<TableEntry, GRADE_COUNT>, GRADE_COUNT> result{};
-    for (size_t i = 0; i < GRADE_COUNT; ++i) {
-      for (size_t j = 0; j < GRADE_COUNT; ++j) {
+  static constexpr std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT>
+  generate_table() {
+    std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT> result{};
+    for (size_t i = 0; i < COMPONENT_COUNT; ++i) {
+      for (size_t j = 0; j < COMPONENT_COUNT; ++j) {
         result.at(i).at(j) = generate_entry(i, j);
       }
     }
@@ -207,16 +214,16 @@ class CayleyTable final {
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
   using std::to_string;
-  static constexpr size_t GRADE_COUNT{
-      CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::GRADE_COUNT};
+  static constexpr size_t COMPONENT_COUNT{
+      CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::COMPONENT_COUNT};
 
   std::string result{};
   result.append("\n<\n");
-  for (size_t i = 0; i < GRADE_COUNT; ++i) {
-    const std::array<TableEntry, GRADE_COUNT>& row{t.table_.at(i)};
+  for (size_t i = 0; i < COMPONENT_COUNT; ++i) {
+    const std::array<TableEntry, COMPONENT_COUNT>& row{t.table_.at(i)};
     result.append("\t<");
     bool need_comma{false};
-    for (size_t j = 0; j < GRADE_COUNT; ++j) {
+    for (size_t j = 0; j < COMPONENT_COUNT; ++j) {
       if (need_comma) {
         result.append(", ");
       }
