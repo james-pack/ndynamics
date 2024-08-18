@@ -185,6 +185,8 @@ class TableEntry final {
   char quadratic_multiplier_{};
 
  public:
+  static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(grade_)>::max()};
+
   constexpr TableEntry() = default;
 
   constexpr TableEntry(const TableEntry& rhs)
@@ -241,7 +243,7 @@ class CayleyTable final {
 
   // Note: failures in following situation can be avoided by templating the TableEntry class on the
   // number of grades/bases and using different storage sizes as needed.
-  static_assert(COMPONENT_COUNT <= std::numeric_limits<unsigned char>::max(),
+  static_assert(COMPONENT_COUNT <= TableEntry::MAX_COMPONENT_COUNT,
                 "TableEntry cannot handle the number of grades required for this Cayley table.");
 
   static constexpr size_t SCALAR_GRADE{0};
