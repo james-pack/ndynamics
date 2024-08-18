@@ -85,6 +85,15 @@ class BitSetT final {
     return result;
   }
 
+  constexpr bool is_zero() const {
+    for (size_t i = 0; i < N; ++i) {
+      if (test(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   constexpr size_t size() const { return N; }
 
   constexpr BitSetT operator~() const { return BitSetT{~bits}; }
