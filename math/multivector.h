@@ -16,7 +16,8 @@ namespace ndyn::math {
 enum class InnerProduct : uint8_t {
   LEFT_CONTRACTION,
   RIGHT_CONTRACTION,
-  LOWER_DIMENSION_PROJECTS_ON_HIGHER,
+  BIDIRECTIONAL,  // Left contraction when the grade of the lhs is lower, right contraction
+                  // otherwise. Used in texts by Hestenes and others.
   NO_IMPLICIT_DEFINITION,
 };
 
@@ -201,7 +202,7 @@ class Multivector final {
       return left_contraction(rhs);
     } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::RIGHT_CONTRACTION) {
       return right_contraction(rhs);
-    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::LOWER_DIMENSION_PROJECTS_ON_HIGHER) {
+    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::BIDIRECTIONAL) {
       return bidirectional_inner(rhs);
     }
   }

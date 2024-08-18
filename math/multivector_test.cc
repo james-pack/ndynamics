@@ -377,4 +377,115 @@ TEST(MultivectorTest, CanDoLeftContractionOnSpacetime) {
   EXPECT_EQ(u * v - 4.f + 4.f * x, v.left_contraction(u * v));
 }
 
+TEST(MultivectorTest, InnerProductStyleAsLeftContraction) {
+  static constexpr auto t{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<0>()};
+  static constexpr auto x{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<1>()};
+  static constexpr auto y{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<2>()};
+  static constexpr auto z{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<3>()};
+  static constexpr auto a{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>{1.f}};
+
+  static constexpr auto r{1.f + t};
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f + 2.f * y};
+  static constexpr auto w{2.f + 3.f * z};
+
+  EXPECT_EQ(r.left_contraction(u), r.inner(u));
+  EXPECT_EQ(t.left_contraction(u), t.inner(u));
+  EXPECT_EQ(u.left_contraction(v), u.inner(v));
+  EXPECT_EQ(v.left_contraction(w), v.inner(w));
+  EXPECT_EQ(w.left_contraction(u), w.inner(u));
+
+  // Document the values of these products, since they will be used in more complicated tests below.
+  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
+  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
+  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+
+  // In these three cases, the lhs of the left contraction has a constant plus a term that is
+  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // the rhs.
+  EXPECT_EQ(u.left_contraction(v * w), u.inner(v * w)) << "v * w: " << v * w;
+  EXPECT_EQ(v.left_contraction(w * u), v.inner(w * u));
+  EXPECT_EQ(w.left_contraction(u * v), w.inner(u * v));
+
+  EXPECT_EQ(w.left_contraction(v * w), w.inner(v * w));
+
+  EXPECT_EQ(w.left_contraction(w * u), w.inner(w * u));
+
+  EXPECT_EQ(v.left_contraction(u * v), v.inner(u * v));
+}
+
+TEST(MultivectorTest, InnerProductStyleAsRightContraction) {
+  static constexpr auto t{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<0>()};
+  static constexpr auto x{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<1>()};
+  static constexpr auto y{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<2>()};
+  static constexpr auto z{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<3>()};
+  static constexpr auto a{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>{1.f}};
+
+  static constexpr auto r{1.f + t};
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f + 2.f * y};
+  static constexpr auto w{2.f + 3.f * z};
+
+  EXPECT_EQ(r.right_contraction(u), r.inner(u));
+  EXPECT_EQ(t.right_contraction(u), t.inner(u));
+  EXPECT_EQ(u.right_contraction(v), u.inner(v));
+  EXPECT_EQ(v.right_contraction(w), v.inner(w));
+  EXPECT_EQ(w.right_contraction(u), w.inner(u));
+
+  // Document the values of these products, since they will be used in more complicated tests below.
+  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
+  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
+  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+
+  // In these three cases, the lhs of the right contraction has a constant plus a term that is
+  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // the rhs.
+  EXPECT_EQ(u.right_contraction(v * w), u.inner(v * w)) << "v * w: " << v * w;
+  EXPECT_EQ(v.right_contraction(w * u), v.inner(w * u));
+  EXPECT_EQ(w.right_contraction(u * v), w.inner(u * v));
+
+  EXPECT_EQ(w.right_contraction(v * w), w.inner(v * w));
+
+  EXPECT_EQ(w.right_contraction(w * u), w.inner(w * u));
+
+  EXPECT_EQ(v.right_contraction(u * v), v.inner(u * v));
+}
+
+TEST(MultivectorTest, InnerProductStyleAsBidirectional) {
+  static constexpr auto t{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<0>()};
+  static constexpr auto x{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<1>()};
+  static constexpr auto y{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<2>()};
+  static constexpr auto z{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<3>()};
+  static constexpr auto a{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>{1.f}};
+
+  static constexpr auto r{1.f + t};
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f + 2.f * y};
+  static constexpr auto w{2.f + 3.f * z};
+
+  EXPECT_EQ(r.bidirectional_inner(u), r.inner(u));
+  EXPECT_EQ(t.bidirectional_inner(u), t.inner(u));
+  EXPECT_EQ(u.bidirectional_inner(v), u.inner(v));
+  EXPECT_EQ(v.bidirectional_inner(w), v.inner(w));
+  EXPECT_EQ(w.bidirectional_inner(u), w.inner(u));
+
+  // Document the values of these products, since they will be used in more complicated tests below.
+  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
+  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
+  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+
+  // In these three cases, the lhs of the right contraction has a constant plus a term that is
+  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // the rhs.
+  EXPECT_EQ(u.bidirectional_inner(v * w), u.inner(v * w)) << "v * w: " << v * w;
+  EXPECT_EQ(v.bidirectional_inner(w * u), v.inner(w * u));
+  EXPECT_EQ(w.bidirectional_inner(u * v), w.inner(u * v));
+
+  EXPECT_EQ(w.bidirectional_inner(v * w), w.inner(v * w));
+
+  EXPECT_EQ(w.bidirectional_inner(w * u), w.inner(w * u));
+
+  EXPECT_EQ(v.bidirectional_inner(u * v), v.inner(u * v));
+}
+
 }  // namespace ndyn::math
