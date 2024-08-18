@@ -194,10 +194,11 @@ class Multivector final {
    * exposed in the API of this class, so they may be used explicitly as needed.
    */
   constexpr Multivector inner(const Multivector& rhs) const {
-    static_assert(INNER_PRODUCT_STYLE != InnerProduct::NO_IMPLICIT_DEFINITION,
-                  "inner() method not defined since Multivector type has no implicit definition of "
-                  "the inner product. Must explicitly use either the left or right contraction "
-                  "operations on this Multivector type.");
+    static_assert(
+        INNER_PRODUCT_STYLE != InnerProduct::NO_IMPLICIT_DEFINITION,
+        "inner() method not defined since Multivector type has no implicit definition of "
+        "the inner product. Must explicitly use either the left contraction, right "
+        "contraction, or bidirectional inner product operations on this Multivector type.");
     if constexpr (INNER_PRODUCT_STYLE == InnerProduct::LEFT_CONTRACTION) {
       return left_contraction(rhs);
     } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::RIGHT_CONTRACTION) {

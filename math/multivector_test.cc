@@ -488,4 +488,18 @@ TEST(MultivectorTest, InnerProductStyleAsBidirectional) {
   EXPECT_EQ(v.bidirectional_inner(u * v), v.inner(u * v));
 }
 
+TEST(MultivectorTest, InnerProductStyleAsNoImplicitDefinition) {
+  static constexpr auto t{
+      SpacetimeMultivector<float, InnerProduct::NO_IMPLICIT_DEFINITION>::e<0>()};
+  static constexpr auto x{
+      SpacetimeMultivector<float, InnerProduct::NO_IMPLICIT_DEFINITION>::e<1>()};
+
+  static constexpr auto r{1.f + t};
+  static constexpr auto u{1.f + x};
+
+  // Uncomment the line below to verify behavior when there is no implicit inner product definition
+  // provided by the type.
+  // r.inner(u);
+}
+
 }  // namespace ndyn::math
