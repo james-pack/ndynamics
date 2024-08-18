@@ -179,10 +179,10 @@ class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATI
 
 }  // namespace
 
-template <size_t COMPONENT_COUNT>
+template <size_t COMPONENT_COUNT, typename = void>
 class TableEntry final {
  private:
-  unsigned char grade_{};
+  unsigned short grade_{};
   char quadratic_multiplier_{};
 
  public:
@@ -214,6 +214,44 @@ class TableEntry final {
   }
 
   constexpr unsigned char grade() const { return grade_; }
+  constexpr char quadratic_multiplier() const { return quadratic_multiplier_; }
+};
+
+template <size_t COMPONENT_COUNT>
+class TableEntry<COMPONENT_COUNT, std::enable_if_t<COMPONENT_COUNT >= 8> > final {
+ private:
+  uint64_t grade_{};
+  char quadratic_multiplier_{};
+
+ public:
+  static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(grade_)>::max()};
+  static_assert(COMPONENT_COUNT <= MAX_COMPONENT_COUNT,
+                "This TableEntry class definition does not support enough components");
+
+  constexpr TableEntry() = default;
+
+  constexpr TableEntry(const TableEntry& rhs)
+      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
+
+  constexpr TableEntry(TableEntry&& rhs)
+      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
+
+  constexpr TableEntry(size_t g, char q) : grade_(g), quadratic_multiplier_(q) {
+    // Note that the CayleyTable class has defenses to avoid grades that would overflow the grade
+    // data member below.
+  }
+
+  constexpr TableEntry& operator=(TableEntry&& rhs) {
+    grade_ = rhs.grade_;
+    quadratic_multiplier_ = rhs.quadratic_multiplier_;
+    return *this;
+  }
+
+  constexpr bool operator==(const TableEntry& rhs) const {
+    return grade_ == rhs.grade_ && quadratic_multiplier_ == rhs.quadratic_multiplier_;
+  }
+
+  constexpr uint64_t grade() const { return grade_; }
   constexpr char quadratic_multiplier() const { return quadratic_multiplier_; }
 };
 

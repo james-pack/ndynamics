@@ -5,6 +5,11 @@ build --config=platform_build
 
 build:linux --platforms=//platforms:linux_x86_64_general
 
+# Allows significantly larger multivectors at the cost of much longer compile
+# and link times. This setting is immature and probably doesn't work well
+# enough to be practical.
+build:large_multivectors --cxxopt -fconstexpr-ops-limit=10000000000
+
 # Settings for different C++ dialects
 build:c++17 --cxxopt -std=c++17
 build:c++20 --cxxopt -std=c++20
