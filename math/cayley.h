@@ -179,6 +179,7 @@ class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATI
 
 }  // namespace
 
+template <size_t COMPONENT_COUNT>
 class TableEntry final {
  private:
   unsigned char grade_{};
@@ -186,6 +187,8 @@ class TableEntry final {
 
  public:
   static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(grade_)>::max()};
+  static_assert(COMPONENT_COUNT <= MAX_COMPONENT_COUNT,
+                "This TableEntry class definition does not support enough components");
 
   constexpr TableEntry() = default;
 
@@ -214,7 +217,8 @@ class TableEntry final {
   constexpr char quadratic_multiplier() const { return quadratic_multiplier_; }
 };
 
-std::string to_string(const TableEntry& t) {
+template <size_t COMPONENT_COUNT>
+std::string to_string(const TableEntry<COMPONENT_COUNT>& t) {
   using std::to_string;
   return std::string{}
       .append("(")  //
@@ -224,7 +228,8 @@ std::string to_string(const TableEntry& t) {
       .append(")");
 }
 
-std::ostream& operator<<(std::ostream& os, const TableEntry& t) {
+template <size_t COMPONENT_COUNT>
+std::ostream& operator<<(std::ostream& os, const TableEntry<COMPONENT_COUNT>& t) {
   os << to_string(t);
   return os;
 }
@@ -243,17 +248,17 @@ class CayleyTable final {
 
   // Note: failures in following situation can be avoided by templating the TableEntry class on the
   // number of grades/bases and using different storage sizes as needed.
-  static_assert(COMPONENT_COUNT <= TableEntry::MAX_COMPONENT_COUNT,
+  static_assert(COMPONENT_COUNT <= TableEntry<COMPONENT_COUNT>::MAX_COMPONENT_COUNT,
                 "TableEntry cannot handle the number of grades required for this Cayley table.");
 
   static constexpr size_t SCALAR_GRADE{0};
 
-  using Table = std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT>;
-
  private:
-  static constexpr std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT>
-  generate_table() {
-    std::array<std::array<TableEntry, COMPONENT_COUNT>, COMPONENT_COUNT> result{};
+  using Table =
+      std::array<std::array<TableEntry<COMPONENT_COUNT>, COMPONENT_COUNT>, COMPONENT_COUNT>;
+
+  static constexpr Table generate_table() {
+    Table result{};
 
     CayleyEntryCalculator<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> entry_calculator{};
 
@@ -262,7 +267,7 @@ class CayleyTable final {
         const BitSet<QUADRATIC_FORM_COUNT> lhs_component_bits{i};
         const BitSet<QUADRATIC_FORM_COUNT> rhs_component_bits{j};
 
-        result.at(i).at(j) = TableEntry{
+        result.at(i).at(j) = TableEntry<COMPONENT_COUNT>{
             entry_calculator.compute_result_grade(i, j),
             entry_calculator.compute_commutative_order(lhs_component_bits, rhs_component_bits)};
       }
@@ -279,7 +284,8 @@ class CayleyTable final {
  public:
   constexpr CayleyTable() = default;
 
-  constexpr const TableEntry& entry(size_t lhs_component, size_t rhs_component) const {
+  constexpr const TableEntry<COMPONENT_COUNT>& entry(size_t lhs_component,
+                                                     size_t rhs_component) const {
     return table_.at(lhs_component).at(rhs_component);
   }
 };
@@ -293,7 +299,7 @@ std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASE
   std::string result{};
   result.append("\n<\n");
   for (size_t i = 0; i < COMPONENT_COUNT; ++i) {
-    const std::array<TableEntry, COMPONENT_COUNT>& row{t.table_.at(i)};
+    const std::array<TableEntry<COMPONENT_COUNT>, COMPONENT_COUNT>& row{t.table_.at(i)};
     result.append("\t<");
     bool need_comma{false};
     for (size_t j = 0; j < COMPONENT_COUNT; ++j) {

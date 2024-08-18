@@ -13,7 +13,7 @@ TEST(CayleyTableTest, CanGenerateScalarEntries) {
   EXPECT_EQ(1, entry.quadratic_multiplier());
 }
 
-static constexpr TableEntry
+static constexpr TableEntry<ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT>
     complex_cayley_table[ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT]
                         [ComplexCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT] =  //
     {
@@ -41,7 +41,7 @@ TEST(CayleyTableTest, CanGenerateComplexEntries) {
   }
 }
 
-static constexpr TableEntry
+static constexpr TableEntry<DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT>
     dual_cayley_table[DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT]
                      [DualCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT] =  //
     {
@@ -67,9 +67,10 @@ TEST(CayleyTableTest, CanGenerateDualEntries) {
   }
 }
 
-static constexpr TableEntry nontrivial_cayley_table
-    [CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT]
-    [CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT] =  //
+static constexpr TableEntry<CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT>
+    nontrivial_cayley_table  //
+        [CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT]
+        [CayleyTable<Operations::GEOMETRIC_PRODUCT, 0, 3, 0>::COMPONENT_COUNT] =  //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -163,9 +164,10 @@ TEST(CayleyTableTest, CanGenerateNontrivialEntries) {
   }
 }
 
-static constexpr TableEntry spacetime_cayley_table
-    [SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT]
-    [SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT] =  //
+static constexpr TableEntry<SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT>
+    spacetime_cayley_table
+        [SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT]
+        [SpacetimeCayleyTable<Operations::GEOMETRIC_PRODUCT>::COMPONENT_COUNT] =  //
     {
         // lhs_grade: 0 (scalar)
         {
