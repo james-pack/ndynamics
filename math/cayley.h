@@ -180,41 +180,45 @@ class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATI
 }  // namespace
 
 class TableEntry final {
+ private:
+  unsigned char grade_{};
+  char quadratic_multiplier_{};
+
  public:
   constexpr TableEntry() = default;
 
   constexpr TableEntry(const TableEntry& rhs)
-      : grade(rhs.grade), quadratic_multiplier(rhs.quadratic_multiplier) {}
+      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
   constexpr TableEntry(TableEntry&& rhs)
-      : grade(rhs.grade), quadratic_multiplier(rhs.quadratic_multiplier) {}
+      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
-  constexpr TableEntry(size_t g, char q) : grade(g), quadratic_multiplier(q) {
+  constexpr TableEntry(size_t g, char q) : grade_(g), quadratic_multiplier_(q) {
     // Note that the CayleyTable class has defenses to avoid grades that would overflow the grade
     // data member below.
   }
 
   constexpr TableEntry& operator=(TableEntry&& rhs) {
-    grade = rhs.grade;
-    quadratic_multiplier = rhs.quadratic_multiplier;
+    grade_ = rhs.grade_;
+    quadratic_multiplier_ = rhs.quadratic_multiplier_;
     return *this;
   }
 
   constexpr bool operator==(const TableEntry& rhs) const {
-    return grade == rhs.grade && quadratic_multiplier == rhs.quadratic_multiplier;
+    return grade_ == rhs.grade_ && quadratic_multiplier_ == rhs.quadratic_multiplier_;
   }
 
-  unsigned char grade{};
-  char quadratic_multiplier{};
+  constexpr unsigned char grade() const { return grade_; }
+  constexpr char quadratic_multiplier() const { return quadratic_multiplier_; }
 };
 
 std::string to_string(const TableEntry& t) {
   using std::to_string;
   return std::string{}
       .append("(")  //
-      .append(to_string(t.grade))
+      .append(to_string(t.grade()))
       .append(", ")
-      .append(to_string(t.quadratic_multiplier))
+      .append(to_string(t.quadratic_multiplier()))
       .append(")");
 }
 

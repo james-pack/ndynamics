@@ -122,8 +122,8 @@ class Multivector final {
     for (size_t i = 0; i < component_count(); ++i) {
       for (size_t j = 0; j < component_count(); ++j) {
         const auto& cayley_entry{geometric_product_cayley_table_.entry(i, j)};
-        result.coefficients_[cayley_entry.grade] +=
-            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+        result.coefficients_[cayley_entry.grade()] +=
+            cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
       }
     }
     return result;
@@ -139,8 +139,8 @@ class Multivector final {
     for (size_t i = 0; i < component_count(); ++i) {
       for (size_t j = 0; j < component_count(); ++j) {
         const auto& cayley_entry{left_contraction_cayley_table_.entry(i, j)};
-        result.coefficients_[cayley_entry.grade] +=
-            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+        result.coefficients_[cayley_entry.grade()] +=
+            cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
       }
     }
     return result;
@@ -171,12 +171,12 @@ class Multivector final {
         // to which component is being projected.
         if (bit_count(i) < bit_count(j)) {
           const auto& cayley_entry{left_contraction_cayley_table_.entry(i, j)};
-          result.coefficients_[cayley_entry.grade] +=
-              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+          result.coefficients_[cayley_entry.grade()] +=
+              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
         } else {
           const auto& cayley_entry{left_contraction_cayley_table_.entry(j, i)};
-          result.coefficients_[cayley_entry.grade] +=
-              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+          result.coefficients_[cayley_entry.grade()] +=
+              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
         }
       }
     }

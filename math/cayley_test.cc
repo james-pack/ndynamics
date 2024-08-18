@@ -9,8 +9,8 @@ TEST(CayleyTableTest, CanGenerateScalarEntries) {
       ScalarCayleyTable<Operations::GEOMETRIC_PRODUCT>::SCALAR_GRADE};
   static constexpr ScalarCayleyTable<Operations::GEOMETRIC_PRODUCT> table{};
   const auto entry{table.entry(0, 0)};
-  EXPECT_EQ(SCALAR_GRADE, entry.grade);
-  EXPECT_EQ(1, entry.quadratic_multiplier);
+  EXPECT_EQ(SCALAR_GRADE, entry.grade());
+  EXPECT_EQ(1, entry.quadratic_multiplier());
 }
 
 static constexpr TableEntry
