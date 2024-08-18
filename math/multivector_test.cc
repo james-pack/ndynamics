@@ -226,4 +226,97 @@ TEST(MultivectorTest, ValidGradeOperatorOnSpacetimeNumbers) {
   EXPECT_EQ(16.f * t * x * y * z, all_bases.grade(4));
 }
 
+TEST(MultivectorTest, CanDoLeftContractionOnComplexNumbers) {
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};
+  static constexpr auto a{ComplexMultivector<float>{1.f}};  // 1
+  static constexpr auto u{i.add(1.f)};                      // 1 + i
+  static constexpr auto v{u.multiply(u)};                   // (1 + i)^2 = 2i
+  static constexpr auto w{v.multiply(v)};                   // (2i)^2 = -4
+
+  EXPECT_EQ(-1.f, i.left_contraction(i));
+  EXPECT_EQ(1.f, a.left_contraction(a));
+  EXPECT_EQ(i, u.left_contraction(u));
+  EXPECT_EQ(-2.f, v.left_contraction(i));
+  EXPECT_EQ(-2.f, v.left_contraction(u));
+  EXPECT_EQ(0.f, v.left_contraction(w));
+  EXPECT_EQ(w * u, w.left_contraction(u));
+  EXPECT_EQ(-4.f, u.left_contraction(w));
+}
+
+TEST(MultivectorTest, CanDoLeftContractionOnDualNumbers) {
+  static constexpr auto e{DualMultivector<float>::e<0>()};
+  static constexpr auto a{DualMultivector<float>{1.f}};  // 1
+  static constexpr auto u{e.add(1.f)};                   // 1 + e
+  static constexpr auto v{u.multiply(u)};                // (1 + e)^2 = 1 + 2e
+  static constexpr auto w{4.f + 2.f * e};                // 4 + 2e
+
+  EXPECT_EQ(0.f, e.left_contraction(e));
+  EXPECT_EQ(1.f, a.left_contraction(a));
+  EXPECT_EQ(u, u.left_contraction(u));
+  EXPECT_EQ(v, v.left_contraction(v));
+
+  // Interesting result for dual numbers -- for any multivector m,
+  //   m << m = m.scalar() * m
+  EXPECT_EQ(e.scalar() * e, e.left_contraction(e));
+  EXPECT_EQ(a.scalar() * a, a.left_contraction(a));
+  EXPECT_EQ(u.scalar() * u, u.left_contraction(u));
+  EXPECT_EQ(v.scalar() * v, v.left_contraction(v));
+  EXPECT_EQ(w.scalar() * w, w.left_contraction(w));
+}
+
+TEST(MultivectorTest, CanDoLeftContractionOnSimpleVga) {
+  static constexpr auto x{VgaMultivector<float>::e<0>()};
+  static constexpr auto a{VgaMultivector<float>{1.f}};  // 1
+  static constexpr auto u{x.add(1.f)};                  // 1 + x
+  static constexpr auto v{u.multiply(u)};               // (1 + x)^2 = 2 + 2x
+  static constexpr auto w{v.multiply(v)};               // (2 + 2x)^2 = 8 + 8x
+
+  EXPECT_EQ(1.f, x.left_contraction(x));
+  EXPECT_EQ(1.f, a.left_contraction(a));
+  EXPECT_EQ(1.f, x.left_contraction(u));
+  EXPECT_EQ(u, u.left_contraction(x));
+  EXPECT_EQ(u + 1.f, u.left_contraction(u));
+  EXPECT_EQ(v, v.left_contraction(x));
+  EXPECT_EQ(2.f, x.left_contraction(v));
+  EXPECT_EQ(4.f + 2.f * x, v.left_contraction(u));
+  EXPECT_EQ(32.f + 16.f * x, v.left_contraction(w));
+  EXPECT_EQ(v.left_contraction(w), w.left_contraction(v));
+  EXPECT_EQ(16.f + 8.f * x, w.left_contraction(u));
+  EXPECT_EQ(w.left_contraction(u), u.left_contraction(w));
+}
+
+TEST(MultivectorTest, CanDoLeftContractionOnVga) {
+  static constexpr auto x{VgaMultivector<float>::e<0>()};
+  static constexpr auto y{VgaMultivector<float>::e<1>()};
+  static constexpr auto z{VgaMultivector<float>::e<2>()};
+  static constexpr auto a{VgaMultivector<float>{1.f}};
+
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f + 2.f * y};
+  static constexpr auto w{2.f + 3.f * z};
+
+  EXPECT_EQ(v, u.left_contraction(v));
+  EXPECT_EQ(w, v.left_contraction(w));
+  EXPECT_EQ(2.f * u, w.left_contraction(u));
+
+  // Document the values of these products, since they will be used in more complicated tests below.
+  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
+  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
+  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+
+  // In these three cases, the lhs of the left contraction has a constant plus a term that is
+  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // the rhs.
+  EXPECT_EQ(v * w, u.left_contraction(v * w)) << "v * w: " << v * w;
+  EXPECT_EQ(w * u, v.left_contraction(w * u));
+  EXPECT_EQ(2.f * u * v, w.left_contraction(u * v));
+
+  EXPECT_EQ(4.f + 8.f * y + 6.f * z + 12.f * y * z + 9.f - 18.f * y, w.left_contraction(v * w));
+
+  EXPECT_EQ(2.f * (2.f + 2.f * x + 3.f * z - 3.f * x * z) + 9.f + 9.f * x,
+            w.left_contraction(w * u));
+
+  EXPECT_EQ(u * v + +4.f - 4.f * x, v.left_contraction(u * v));
+}
+
 }  // namespace ndyn::math

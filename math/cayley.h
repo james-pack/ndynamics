@@ -11,10 +11,10 @@
 
 namespace ndyn::math {
 
-enum class Operations : unsigned char {
+enum class Operations : uint8_t {
   UKNOWN,
   GEOMETRIC_PRODUCT,
-  INNER_PRODUCT,
+  LEFT_CONTRACTION,
   OUTER_PRODUCT,
 };
 
@@ -98,6 +98,53 @@ class CayleyEntryCalculator<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGAT
 
   constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
                                            const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+    const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
+
+    if ((self_multiplication &
+         zero_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+            .count() != 0) {
+      return 0;
+    } else {
+      if ((self_multiplication & negative_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES,
+                                                        NEGATIVE_BASES, ZERO_BASES>())
+                  .count() %
+              2 ==
+          1) {
+        constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
+        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
+                                            QUADRATIC_FORM_COUNT - 1>(
+            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
+      } else {
+        constexpr char INITIAL_COMMUTATIVE_ORDER{1};
+        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
+                                            QUADRATIC_FORM_COUNT - 1>(
+            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
+      }
+    }
+  }
+
+  constexpr unsigned char compute_result_grade(
+      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+    return (lhs_component_bits xor rhs_component_bits).to_ulong();
+  }
+};
+
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATIVE_BASES,
+                            ZERO_BASES>
+    final {
+ public:
+  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
+  static constexpr Operations OPERATION{Operations::GEOMETRIC_PRODUCT};
+
+  constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+                                           const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+    // If the lhs has components that are not in the rhs, a left contraction gives a zero.
+    if (!((lhs_component_bits | rhs_component_bits) xor rhs_component_bits).is_zero()) {
+      return 0;
+    }
+
     const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
 
     if ((self_multiplication &

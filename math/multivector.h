@@ -13,7 +13,15 @@
 
 namespace ndyn::math {
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+enum class InnerProduct : uint8_t {
+  LEFT_CONTRACTION,
+  RIGHT_CONTRACTION,
+  LOWER_DIMENSION_PROJECTS_ON_HIGHER,
+  NO_IMPLICIT_DEFINITION,
+};
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 class Multivector final {
  public:
   static constexpr size_t SCALAR_COMPONENT_INDEX{0};
@@ -29,10 +37,13 @@ class Multivector final {
                                ZERO_BASES>
       geometric_product_cayley_table_{};
 
-  /*
-  static constexpr CayleyTable<Operations::INNER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
-  ZERO_BASES> inner_product_cayley_table_{};
-  */
+  static constexpr CayleyTable<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATIVE_BASES,
+                               ZERO_BASES>
+      left_contraction_cayley_table_{};
+
+  static constexpr CayleyTable<Operations::OUTER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
+                               ZERO_BASES>
+      outer_product_cayley_table_{};
 
   std::array<T, component_count()> coefficients_{};
 
@@ -60,10 +71,10 @@ class Multivector final {
     if (grade >= grade_count()) {
       except<std::domain_error>("Requested grade is larger than maximum grade of this multivector");
     }
-    Multivector result{*this};
+    Multivector result{};
     for (size_t i = 0; i < component_count(); ++i) {
-      if (bit_count(i) != grade) {
-        result.coefficients_[i] = 0;
+      if (bit_count(i) == grade) {
+        result.coefficients_[i] = coefficients_[i];
       }
     }
     return result;
@@ -117,19 +128,98 @@ class Multivector final {
     return result;
   }
 
-  /*
-  constexpr Multivector inner(const Multivector& rhs) const {
+  // Inner product variations.
+
+  /**
+   * Left contraction projects the lhs (this Multivector) onto the rhs.
+   */
+  constexpr Multivector left_contraction(const Multivector& rhs) const {
     Multivector result{};
     for (size_t i = 0; i < component_count(); ++i) {
       for (size_t j = 0; j < component_count(); ++j) {
-        const auto& cayley_entry{inner_product_cayley_table_.entry(i, j)};
+        const auto& cayley_entry{left_contraction_cayley_table_.entry(i, j)};
         result.coefficients_[cayley_entry.grade] +=
             cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
       }
     }
     return result;
   }
-  */
+
+  /**
+   * Right contraction projects the rhs onto this Multivector, the lhs.
+   */
+  constexpr Multivector right_contraction(const Multivector& rhs) const {
+    return rhs.left_contraction(*this);
+  }
+
+  /**
+   * The bidirectional inner project projects each pair of components individually, according to
+   * which component has the lower grade. When the lhs component has the lower grade, the lhs
+   * component is projected onto the rhs component. Similarly, the rhs component is projected onto
+   * the lhs component when the rhs component has the lower grade. When the two have the same grade,
+   * the operation is symmetric and can be thought of as projecting the lhs component onto the rhs
+   * component or vice versa.
+   */
+  constexpr Multivector bidirectional_inner(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < component_count(); ++i) {
+      for (size_t j = 0; j < component_count(); ++j) {
+        // If the lhs component is the lower, or same, grade, compute the inner product as the lhs
+        // component being projected on the rhs. Otherwise, project the rhs component on the lhs.
+        // The implementation here is to simply select the appropriate Cayley table entry according
+        // to which component is being projected.
+        if (bit_count(i) < bit_count(j)) {
+          const auto& cayley_entry{left_contraction_cayley_table_.entry(i, j)};
+          result.coefficients_[cayley_entry.grade] +=
+              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+        } else {
+          const auto& cayley_entry{left_contraction_cayley_table_.entry(j, i)};
+          result.coefficients_[cayley_entry.grade] +=
+              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * The inner product. Note that the inner product is not uniformly defined across geometric
+   * algebra texts. In some texts, particularly those by Hestenes, the inner product is defined as
+   * the bidirectional_inner(). In other texts, usually those more focused on the mathematical
+   * structure, the inner product is defined as the left_contraction(). The right_contraction()
+   * style is provided for completeness. All of these approaches are useful, so the Multivector
+   * includes the style of the inner product as part of the type. The inner() method below
+   * implements selecting the style based on the type definition. Finally, all three approaches are
+   * exposed in the API of this class, so they may be used explicitly as needed.
+   */
+  constexpr Multivector inner(const Multivector& rhs) const {
+    static_assert(INNER_PRODUCT_STYLE != InnerProduct::NO_IMPLICIT_DEFINITION,
+                  "inner() method not defined since Multivector type has no implicit definition of "
+                  "the inner product. Must explicitly use either the left or right contraction "
+                  "operations on this Multivector type.");
+    if constexpr (INNER_PRODUCT_STYLE == InnerProduct::LEFT_CONTRACTION) {
+      return left_contraction(rhs);
+    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::RIGHT_CONTRACTION) {
+      return right_contraction(rhs);
+    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::LOWER_DIMENSION_PROJECTS_ON_HIGHER) {
+      return bidirectional_inner(rhs);
+    }
+  }
+
+  /**
+   * The outer product, also known as the wedge operator.
+   */
+  constexpr Multivector outer(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < component_count(); ++i) {
+      for (size_t j = 0; j < component_count(); ++j) {
+        const auto& cayley_entry{outer_product_cayley_table_.entry(i, j)};
+        result.coefficients_[cayley_entry.grade] +=
+            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+      }
+    }
+    return result;
+  }
 
   // Operator overloads.
   constexpr bool operator==(const Multivector& rhs) const {
@@ -154,6 +244,15 @@ class Multivector final {
   constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
   constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
 
+  // The inner product operator below is based on the operator expressions defined on
+  // https://bivecctor.net/. Not completely sure this notation is useful, and it may actually create
+  // readability issues, since it isn't standardized.
+
+  // Inner product.
+  constexpr Multivector operator|(const Multivector& rhs) const { return inner(rhs); }
+
+  // Generate a Multivector of a single component. These can be combined to generate any
+  // Multivector. See the tests for examples.
   template <size_t N>
   static constexpr Multivector e() {
     if constexpr (N >= bases_count()) {
@@ -177,34 +276,44 @@ class Multivector final {
 
 // Operator overloads where the multivector is not on the left side.
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-constexpr bool operator==(const T& scalar,
-                          const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr bool operator==(
+    const T& scalar,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
   return v == scalar;
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator+(
-    const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> operator+(
+    const T& scalar,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
   return v.add(scalar);
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator-(
-    const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> operator-(
+    const T& scalar,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
   return v.multiply(-1).add(scalar);
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> operator*(
-    const T& scalar, const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> operator*(
+    const T& scalar,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
   return v.multiply(scalar);
 }
 
 // String and printing operations.
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+std::string to_string(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
   using std::to_string;
   std::string result{};
   result.append("[");
@@ -220,27 +329,35 @@ std::string to_string(const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_
   return result;
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::ostream& operator<<(std::ostream& os,
-                         const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& v) {
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+std::ostream& operator<<(
+    std::ostream& os,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
   os << to_string(v);
   return os;
 }
 
 // Common algebras.
-template <typename T>
-using ScalarMultivector = Multivector<T, 0, 0, 0>;
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using ScalarMultivector = Multivector<T, 0, 0, 0, INNER_PRODUCT_STYLE>;
 
-template <typename T>
-using ComplexMultivector = Multivector<T, 0, 1, 0>;
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using ComplexMultivector = Multivector<T, 0, 1, 0, INNER_PRODUCT_STYLE>;
 
-template <typename T>
-using DualMultivector = Multivector<T, 0, 0, 1>;
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using DualMultivector = Multivector<T, 0, 0, 1, INNER_PRODUCT_STYLE>;
 
-template <typename T>
-using SplitComplexMultivector = Multivector<T, 1, 0, 0>;
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using SplitComplexMultivector = Multivector<T, 1, 0, 0, INNER_PRODUCT_STYLE>;
 
-template <typename T>
-using SpacetimeMultivector = Multivector<T, 1, 3, 0>;
+// VGA is a standard 3D vectorspace geometric algebra. It is used in non-relativistic physics and
+// engineering applications.
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using VgaMultivector = Multivector<T, 3, 0, 0, INNER_PRODUCT_STYLE>;
+
+// The spacetime algebra is primarily used in relativistic physics applications and research.
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using SpacetimeMultivector = Multivector<T, 1, 3, 0, INNER_PRODUCT_STYLE>;
 
 }  // namespace ndyn::math
