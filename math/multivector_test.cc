@@ -502,4 +502,15 @@ TEST(MultivectorTest, InnerProductStyleAsNoImplicitDefinition) {
   // r.inner(u);
 }
 
+TEST(MultivectorTest, CanHandleSeveralBases) {
+  // The number of positive, negative, and zero components must sum to 7 or fewer.
+  // TODO(james): Expand this range by providing template specializations in the appropriate places,
+  // starting with the Cayley TableEntry class.
+  static constexpr auto x{Multivector<float, 7, 0, 0>::e<0>()};
+
+  static constexpr auto u{1.f + x};
+
+  EXPECT_EQ(x, u - 1.f);
+}
+
 }  // namespace ndyn::math
