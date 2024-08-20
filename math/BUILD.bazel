@@ -49,3 +49,12 @@ cc_test(
         "//third_party/gtest",
     ],
 )
+
+cc_test(
+    name = "multivector_scalability_test",
+    srcs = ["multivector_scalability_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
