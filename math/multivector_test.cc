@@ -497,12 +497,128 @@ TEST(MultivectorTest, InnerProductStyleAsNoImplicitDefinition) {
   static constexpr auto r{1.f + t};
   static constexpr auto u{1.f + x};
 
-  // Uncomment the line below to verify behavior when there is no implicit inner product definition
-  // provided by the type.
+  // Uncomment the line below to verify that we have a compile failure when there is no implicit
+  // inner product definition provided by the type.
   // r.inner(u);
 }
 
-TEST(MultivectorTest, CanInstantiateSeveralBases) {
+TEST(MultivectorTest, CanDoOuterProductOnComplexNumbers) {
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};
+  static constexpr auto a{ComplexMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + i};                         // 1 + i
+  static constexpr auto v{u * u};                           // (1 + i)^2 = 2i
+  static constexpr auto w{v * v};                           // (2i)^2 = -4
+  static constexpr auto x{-2.f + 2.f * i};                  // -2 + 2i
+
+  EXPECT_EQ(1.f, a.outer(a));
+
+  EXPECT_EQ(0.f, i.outer(i));
+
+  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
+  EXPECT_EQ(0.f, v.outer(i));
+  EXPECT_EQ(v, v.outer(u));
+
+  EXPECT_EQ(w * v, v.outer(w));
+  EXPECT_EQ(w * u, w.outer(u));
+  EXPECT_EQ(w * u, u.outer(w));
+
+  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
+  EXPECT_EQ(-2.f, x.outer(u));
+  EXPECT_EQ(x - 2.f * i, u.outer(x));
+  EXPECT_EQ(-2.f, u.outer(x));
+}
+
+TEST(MultivectorTest, CanDoOuterProductOnSplitComplexNumbers) {
+  static constexpr auto i{SplitComplexMultivector<float>::e<0>()};
+  static constexpr auto a{SplitComplexMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + i};                              // 1 + i
+  static constexpr auto v{u * u};                                // (1 + i)^2 = 2 + 2i
+  static constexpr auto w{v * v};                                // 8 + 8i
+  static constexpr auto x{-2.f + 2.f * i};                       // -2 + 2i
+
+  EXPECT_EQ(1.f, a.outer(a));
+
+  EXPECT_EQ(0.f, i.outer(i));
+
+  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
+  EXPECT_EQ(2.f * i, v.outer(i));
+  EXPECT_EQ(2.f + 4.f * i, v.outer(u));
+
+  ASSERT_EQ(8.f + 8.f * i, w);
+  EXPECT_EQ(16.f + 32.f * i, v.outer(w));
+  EXPECT_EQ(8.f + 16.f * i, w.outer(u));
+  EXPECT_EQ(8.f + 16.f * i, u.outer(w));
+
+  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
+  EXPECT_EQ(-2.f, x.outer(u));
+  EXPECT_EQ(x - 2.f * i, u.outer(x));
+  EXPECT_EQ(-2.f, u.outer(x));
+}
+
+TEST(MultivectorTest, CanDoOuterProductOnDualNumbers) {
+  static constexpr auto i{DualMultivector<float>::e<0>()};
+  static constexpr auto a{DualMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + i};                      // 1 + i
+  static constexpr auto v{u * u};                        // (1 + i)^2 = 1 + 2i
+  static constexpr auto w{v * v};                        // 1 + 4i
+  static constexpr auto x{-2.f + 2.f * i};               // -2 + 2i
+
+  EXPECT_EQ(1.f, a.outer(a));
+
+  EXPECT_EQ(0.f, i.outer(i));
+
+  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
+  EXPECT_EQ(i, v.outer(i));
+  EXPECT_EQ(1.f + 3.f * i, v.outer(u));
+
+  EXPECT_EQ(w * v, v.outer(w));
+  EXPECT_EQ(w * u, w.outer(u));
+  EXPECT_EQ(w * u, u.outer(w));
+
+  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
+  EXPECT_EQ(-2.f, x.outer(u));
+  EXPECT_EQ(x - 2.f * i, u.outer(x));
+  EXPECT_EQ(-2.f, u.outer(x));
+}
+
+TEST(MultivectorTest, CanDoOuterProductOnVga) {
+  static constexpr auto i{VgaMultivector<float>::e<0>()};
+  static constexpr auto j{VgaMultivector<float>::e<1>()};
+  static constexpr auto k{VgaMultivector<float>::e<2>()};
+  static constexpr auto a{VgaMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + i};                     // 1 + i
+  static constexpr auto v{u * u};                       // (1 + i)^2 = 2 + 2i
+  static constexpr auto w{v * v};                       // 8 + 8i
+  static constexpr auto x{-2.f + 2.f * i};              // -2 + 2i
+
+  ASSERT_EQ(2.f + 2.f * i, v);
+  ASSERT_EQ(8.f + 8.f * i, w);
+
+  EXPECT_EQ(1.f, a.outer(a));
+
+  EXPECT_EQ(0.f, i.outer(i));
+  EXPECT_EQ(0.f, j.outer(j));
+  EXPECT_EQ(0.f, k.outer(k));
+
+  EXPECT_EQ(i * j, i.outer(j));
+  EXPECT_EQ(j * k, j.outer(k));
+  EXPECT_EQ(-i * k, k.outer(i));
+
+  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
+  EXPECT_EQ(2.f * i, v.outer(i));
+  EXPECT_EQ(2.f + 4.f * i, v.outer(u));
+
+  EXPECT_EQ(16.f + 32.f * i, v.outer(w));
+  EXPECT_EQ(8.f + 16.f * i, w.outer(u));
+  EXPECT_EQ(8.f + 16.f * i, u.outer(w));
+
+  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
+  EXPECT_EQ(-2.f, x.outer(u));
+  EXPECT_EQ(x - 2.f * i, u.outer(x));
+  EXPECT_EQ(-2.f, u.outer(x));
+}
+
+TEST(MultivectorScalabilityTest, CanInstantiateSeveralBases) {
   static constexpr size_t NUMBER_COMPONENTS{7};
 
   static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
@@ -510,7 +626,7 @@ TEST(MultivectorTest, CanInstantiateSeveralBases) {
   EXPECT_EQ(x + 1.f, u);
 }
 
-TEST(MultivectorTest, CanInstantiateManyBases) {
+TEST(MultivectorScalabilityTest, CanInstantiateManyBases) {
   static constexpr size_t NUMBER_COMPONENTS{20};
 
   static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
@@ -522,7 +638,7 @@ TEST(MultivectorTest, CanInstantiateManyBases) {
   EXPECT_EQ(x + 1.f, u);
 }
 
-TEST(MultivectorTest, CanMultiplyMultivectorsOfSeveralBases) {
+TEST(MultivectorScalabilityTest, CanMultiplyMultivectorsOfSeveralBases) {
   // Once we start using the Cayley tables, by multiplying Multivectors or taking inner or outer
   // products, the number of components we can use decreases without setting the
   // -fconstexpr-ops-limit compile flag.
@@ -534,7 +650,7 @@ TEST(MultivectorTest, CanMultiplyMultivectorsOfSeveralBases) {
   EXPECT_EQ(x, a * x);
 }
 
-TEST(MultivectorTest, CanHandleSeveralBases) {
+TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
   // For the smallest Cayley table sizes, the number of positive, negative, and zero components must
   // sum to 7 or fewer.
   // Also, with 7 components, we run into limits on the number of constexpr operations. This
@@ -575,7 +691,7 @@ TEST(MultivectorTest, CanHandleSeveralBases) {
   EXPECT_EQ(u * v + +4.f - 4.f * x, v.left_contraction(u * v));
 }
 
-TEST(MultivectorTest, DISABLED_CanHandleManyBases) {
+TEST(MultivectorScalabilityTest, DISABLED_CanHandleManyBases) {
   // The expanded Cayley TableEntry class can handle many more components, but at the expensive of
   // lots more memory and longer compile times.
   // The value below seems to be an upper limit given the current implementation strategy. I do not

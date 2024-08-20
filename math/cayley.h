@@ -1,183 +1,15 @@
 #pragma once
 
 #include <array>
-#include <bitset>
 #include <cstring>
 #include <limits>
 #include <ostream>
 #include <string>
 
 #include "math/bitset.h"
+#include "math/cayley_entry_calculator.h"
 
 namespace ndyn::math {
-
-enum class Operations : uint8_t {
-  UKNOWN,
-  GEOMETRIC_PRODUCT,
-  LEFT_CONTRACTION,
-  OUTER_PRODUCT,
-};
-
-namespace {
-
-template <size_t N>
-constexpr BitSet<N> create_mask_below_bit(size_t bit) {
-  const BitSet<N> mask{(1UL << bit) - 1};
-  return mask;
-}
-
-template <>
-constexpr BitSet<0> create_mask_below_bit<0>(size_t bit) {
-  return BitSet<0>{};
-}
-
-template <size_t N>
-constexpr size_t count_bits_within_mask(const BitSet<N>& bits, const BitSet<N>& mask) {
-  const BitSet<N> masked{bits & mask};
-  return masked.count();
-}
-
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> positive_bases_bitmask() {
-  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(POSITIVE_BASES);
-}
-
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> negative_bases_bitmask() {
-  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(NEGATIVE_BASES,
-                                                                           POSITIVE_BASES);
-}
-
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> zero_bases_bitmask() {
-  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(
-      ZERO_BASES, POSITIVE_BASES + NEGATIVE_BASES);
-}
-
-template <Operations OPERATION, size_t QUADRATIC_FORM_COUNT, size_t current_bit>
-constexpr int8_t accumulate_commutative_order(
-    const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-    const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits, int8_t accumulated_order) {
-  if constexpr (QUADRATIC_FORM_COUNT == 0 or current_bit == 0) {
-    return accumulated_order;
-  } else {
-    if (lhs_component_bits.test(current_bit)) {
-      const BitSet<QUADRATIC_FORM_COUNT> mask{
-          create_mask_below_bit<QUADRATIC_FORM_COUNT>(current_bit)};
-      if (count_bits_within_mask(rhs_component_bits, mask) % 2 == 1) {
-        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT, current_bit - 1>(
-            lhs_component_bits, rhs_component_bits, -1 * accumulated_order);
-      }
-    }
-    return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT, current_bit - 1>(
-        lhs_component_bits, rhs_component_bits, accumulated_order);
-  }
-}
-
-}  // namespace
-
-template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-class CayleyEntryCalculator final {
- public:
-  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
-
-  constexpr int8_t compute_commutative_order(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const;
-
-  constexpr uint8_t compute_result_grade(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const;
-};
-
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-class CayleyEntryCalculator<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
-                            ZERO_BASES>
-    final {
- public:
-  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
-  static constexpr Operations OPERATION{Operations::GEOMETRIC_PRODUCT};
-
-  constexpr int8_t compute_commutative_order(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
-    const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
-
-    if ((self_multiplication & zero_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
-            .count() != 0) {
-      return 0;
-    } else {
-      if ((self_multiplication &
-           negative_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
-                  .count() %
-              2 ==
-          1) {
-        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{-1};
-        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
-                                            QUADRATIC_FORM_COUNT - 1>(
-            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
-      } else {
-        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{1};
-        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
-                                            QUADRATIC_FORM_COUNT - 1>(
-            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
-      }
-    }
-  }
-
-  constexpr uint8_t compute_result_grade(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
-    return (lhs_component_bits xor rhs_component_bits).to_ulong();
-  }
-};
-
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATIVE_BASES,
-                            ZERO_BASES>
-    final {
- public:
-  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
-  static constexpr Operations OPERATION{Operations::GEOMETRIC_PRODUCT};
-
-  constexpr int8_t compute_commutative_order(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
-    // If the lhs has components that are not in the rhs, a left contraction gives a zero.
-    if (!((lhs_component_bits | rhs_component_bits) xor rhs_component_bits).is_zero()) {
-      return 0;
-    }
-
-    const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
-
-    if ((self_multiplication & zero_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
-            .count() != 0) {
-      return 0;
-    } else {
-      if ((self_multiplication &
-           negative_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
-                  .count() %
-              2 ==
-          1) {
-        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{-1};
-        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
-                                            QUADRATIC_FORM_COUNT - 1>(
-            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
-      } else {
-        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{1};
-        return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
-                                            QUADRATIC_FORM_COUNT - 1>(
-            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
-      }
-    }
-  }
-
-  constexpr uint8_t compute_result_grade(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
-    return (lhs_component_bits xor rhs_component_bits).to_ulong();
-  }
-};
 
 template <size_t COMPONENT_COUNT, typename = void>
 class TableEntry final {
@@ -272,13 +104,13 @@ std::ostream& operator<<(std::ostream& os, const TableEntry<COMPONENT_COUNT>& t)
   return os;
 }
 
-template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CayleyTable;
 
-template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::string to_string(const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
 
-template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CayleyTable final {
  public:
   static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
@@ -298,7 +130,7 @@ class CayleyTable final {
   static constexpr Table generate_table() {
     Table result{};
 
-    CayleyEntryCalculator<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> entry_calculator{};
+    CayleyEntryCalculator<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> entry_calculator{};
 
     for (size_t i = 0; i < COMPONENT_COUNT; ++i) {
       for (size_t j = 0; j < COMPONENT_COUNT; ++j) {
@@ -306,7 +138,7 @@ class CayleyTable final {
         const BitSet<QUADRATIC_FORM_COUNT> rhs_component_bits{j};
 
         result.at(i).at(j) = TableEntry<COMPONENT_COUNT>{
-            entry_calculator.compute_result_grade(i, j),
+            entry_calculator.compute_result_component(i, j),
             entry_calculator.compute_commutative_order(lhs_component_bits, rhs_component_bits)};
       }
     }
@@ -316,8 +148,7 @@ class CayleyTable final {
 
   Table table_{generate_table()};
 
-  friend std::string to_string<>(
-      const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
+  friend std::string to_string<>(const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
 
  public:
   constexpr CayleyTable() = default;
@@ -328,11 +159,11 @@ class CayleyTable final {
   }
 };
 
-template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::string to_string(const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
   using std::to_string;
   static constexpr size_t COMPONENT_COUNT{
-      CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::COMPONENT_COUNT};
+      CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::COMPONENT_COUNT};
 
   std::string result{};
   result.append("\n<\n");
@@ -354,26 +185,17 @@ std::string to_string(const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASE
   return result;
 }
 
-template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::ostream& operator<<(
-    std::ostream& os, const CayleyTable<OPERATION, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+std::ostream& operator<<(std::ostream& os,
+                         const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
   os << to_string(t);
   return os;
 }
 
-template <Operations OPERATION>
-using ScalarCayleyTable = CayleyTable<OPERATION, 0, 0, 0>;
-
-template <Operations OPERATION>
-using ComplexCayleyTable = CayleyTable<OPERATION, 0, 1, 0>;
-
-template <Operations OPERATION>
-using DualCayleyTable = CayleyTable<OPERATION, 0, 0, 1>;
-
-template <Operations OPERATION>
-using SplitComplexCayleyTable = CayleyTable<OPERATION, 1, 0, 0>;
-
-template <Operations OPERATION>
-using SpacetimeCayleyTable = CayleyTable<OPERATION, 1, 3, 0>;
+using ScalarCayleyTable = CayleyTable<0, 0, 0>;
+using ComplexCayleyTable = CayleyTable<0, 1, 0>;
+using DualCayleyTable = CayleyTable<0, 0, 1>;
+using SplitComplexCayleyTable = CayleyTable<1, 0, 0>;
+using SpacetimeCayleyTable = CayleyTable<1, 3, 0>;
 
 }  // namespace ndyn::math

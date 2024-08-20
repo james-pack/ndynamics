@@ -5,6 +5,7 @@ cc_library(
     hdrs = [
         "bitset.h",
         "cayley.h",
+        "cayley_entry_calculator.h",
         "multivector.h",
     ],
     visibility = ["//visibility:public"],
@@ -16,6 +17,15 @@ cc_library(
 cc_test(
     name = "bitset_test",
     srcs = ["bitset_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "cayley_entry_calculator_test",
+    srcs = ["cayley_entry_calculator_test.cc"],
     deps = [
         ":math",
         "//third_party/gtest",

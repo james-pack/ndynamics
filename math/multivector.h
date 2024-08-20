@@ -33,18 +33,7 @@ class Multivector final {
   static constexpr size_t component_count() { return 1UL << bases_count(); }
 
  private:
-  // Cayley tables for each operation.
-  static constexpr CayleyTable<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
-                               ZERO_BASES>
-      geometric_product_cayley_table_{};
-
-  static constexpr CayleyTable<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATIVE_BASES,
-                               ZERO_BASES>
-      left_contraction_cayley_table_{};
-
-  static constexpr CayleyTable<Operations::OUTER_PRODUCT, POSITIVE_BASES, NEGATIVE_BASES,
-                               ZERO_BASES>
-      outer_product_cayley_table_{};
+  static constexpr CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> cayley_table_{};
 
   std::array<T, component_count()> coefficients_{};
 
@@ -121,7 +110,7 @@ class Multivector final {
     Multivector result{};
     for (size_t i = 0; i < component_count(); ++i) {
       for (size_t j = 0; j < component_count(); ++j) {
-        const auto& cayley_entry{geometric_product_cayley_table_.entry(i, j)};
+        const auto& cayley_entry{cayley_table_.entry(i, j)};
         result.coefficients_[cayley_entry.grade()] +=
             cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
       }
@@ -137,10 +126,21 @@ class Multivector final {
   constexpr Multivector left_contraction(const Multivector& rhs) const {
     Multivector result{};
     for (size_t i = 0; i < component_count(); ++i) {
-      for (size_t j = 0; j < component_count(); ++j) {
-        const auto& cayley_entry{left_contraction_cayley_table_.entry(i, j)};
-        result.coefficients_[cayley_entry.grade()] +=
-            cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+      // Note the initialization in the for-loop below. All of the components where the grade of i
+      // is less than the grade of j will not contribute to the result. Also, j must include every
+      // basis in i otherwise the two components are orthogonal to each other.
+      for (size_t j = i; j < component_count(); ++j) {
+        // Here we ensure that the two components are not orthogonal to each other, in the sense
+        // that the rhs component (j) must include all of the bases in the lhs component (i).
+        // Otherwise, the left_contraction of these components is zero, and the result is unchanged.
+        // Note that for i = 0 (the scalar component of the lhs), this case will always be true, and
+        // the effective result is that the left contraction of scalars onto other components adds a
+        // scaled version of the rhs to the result.
+        if ((i & j) == i) {
+          const auto& cayley_entry{cayley_table_.entry(i, j)};
+          result.coefficients_[j - i] +=
+              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+        }
       }
     }
     return result;
@@ -165,18 +165,26 @@ class Multivector final {
     Multivector result{};
     for (size_t i = 0; i < component_count(); ++i) {
       for (size_t j = 0; j < component_count(); ++j) {
-        // If the lhs component is the lower, or same, grade, compute the inner product as the lhs
-        // component being projected on the rhs. Otherwise, project the rhs component on the lhs.
-        // The implementation here is to simply select the appropriate Cayley table entry according
-        // to which component is being projected.
-        if (bit_count(i) < bit_count(j)) {
-          const auto& cayley_entry{left_contraction_cayley_table_.entry(i, j)};
-          result.coefficients_[cayley_entry.grade()] +=
-              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+        // If the lhs component is a lower grade, compute the inner product as the lhs component
+        // being projected on the rhs. Otherwise, project the rhs component on the lhs. The
+        // implementation here is to simply select the appropriate Cayley table entry according to
+        // which component is being projected.
+        // Note that the grade of the component and value of the component are not the same. The
+        // grade is the number of bits set in the value. But, if the value is lower and the grade is
+        // higher (value of 3, meaning a grade of 2, is less than a value of 4, a grade of 1), the
+        // resulting components are orthogonal and the inner product will be zero.
+        if (i < j) {
+          if ((i & j) == i) {
+            const auto& cayley_entry{cayley_table_.entry(i, j)};
+            result.coefficients_[j - i] +=
+                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+          }
         } else {
-          const auto& cayley_entry{left_contraction_cayley_table_.entry(j, i)};
-          result.coefficients_[cayley_entry.grade()] +=
-              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+          if ((i & j) == j) {
+            const auto& cayley_entry{cayley_table_.entry(j, i)};
+            result.coefficients_[i - j] +=
+                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+          }
         }
       }
     }
@@ -212,12 +220,18 @@ class Multivector final {
    * The outer product, also known as the wedge operator.
    */
   constexpr Multivector outer(const Multivector& rhs) const {
+    using std::to_string;
     Multivector result{};
     for (size_t i = 0; i < component_count(); ++i) {
-      for (size_t j = 0; j < component_count(); ++j) {
-        const auto& cayley_entry{outer_product_cayley_table_.entry(i, j)};
-        result.coefficients_[cayley_entry.grade] +=
-            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+      // Note the exit condition of this for-loop. We only loop while i+j is less than the component
+      // count.
+      for (size_t j = 0; i + j < component_count(); ++j) {
+        const auto& cayley_entry{cayley_table_.entry(i, j)};
+        LOG(INFO) << "cayley_entry[" << to_string(i) << ", " << to_string(j) << "]" << cayley_entry;
+        if (bit_count(cayley_entry.grade()) == bit_count(i) + bit_count(j)) {
+          result.coefficients_[i + j] +=
+              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+        }
       }
     }
     return result;
