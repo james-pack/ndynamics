@@ -37,13 +37,13 @@ class BitSetT final {
 
   constexpr BitSetT() = default;
 
+  constexpr BitSetT(unsigned long b) : bits(b) {}
+
   template <size_t M>
   constexpr BitSetT(const BitSetT<M>& rhs) : bits(rhs.bits) {}
 
   template <size_t M>
   constexpr BitSetT(BitSetT<M>&& rhs) : bits(rhs.bits) {}
-
-  constexpr BitSetT(unsigned long b) : bits(b) {}
 
   template <size_t M>
   constexpr BitSetT& operator=(const BitSetT<M>& rhs) {
@@ -58,8 +58,6 @@ class BitSetT final {
   }
 
   constexpr bool operator==(const BitSetT& rhs) const { return masked_bits() == rhs.masked_bits(); }
-
-  constexpr BitSetT operator xor(const BitSetT& rhs) const { return bits xor rhs.bits; }
 
   constexpr bool test(size_t bit) const {
     if (bit >= MAX_SIZE) {
@@ -101,6 +99,8 @@ class BitSetT final {
   constexpr BitSetT operator|(unsigned long rhs) const { return BitSetT{bits | rhs}; }
   constexpr BitSetT operator&(const BitSetT& rhs) const { return BitSetT{bits & rhs.bits}; }
   constexpr BitSetT operator&(unsigned long rhs) const { return BitSetT{bits & rhs}; }
+
+  constexpr BitSetT operator xor(const BitSetT& rhs) const { return bits xor rhs.bits; }
 
   constexpr BitSetT operator<<(size_t b) const { return BitSetT{bits << b}; }
   constexpr BitSetT operator>>(size_t b) const { return BitSetT(masked_bits() >> b); }
