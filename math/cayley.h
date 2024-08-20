@@ -37,28 +37,27 @@ constexpr size_t count_bits_within_mask(const BitSet<N>& bits, const BitSet<N>& 
   return masked.count();
 }
 
-template <size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES,
-          size_t ZERO_BASES>
-static constexpr BitSet<QUADRATIC_FORM_COUNT> positive_bases_bitmask() {
-  return BitSet<QUADRATIC_FORM_COUNT>::create_mask(POSITIVE_BASES);
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> positive_bases_bitmask() {
+  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(POSITIVE_BASES);
 }
 
-template <size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES,
-          size_t ZERO_BASES>
-static constexpr BitSet<QUADRATIC_FORM_COUNT> negative_bases_bitmask() {
-  return BitSet<QUADRATIC_FORM_COUNT>::create_mask(NEGATIVE_BASES, POSITIVE_BASES);
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> negative_bases_bitmask() {
+  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(NEGATIVE_BASES,
+                                                                           POSITIVE_BASES);
 }
 
-template <size_t QUADRATIC_FORM_COUNT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES,
-          size_t ZERO_BASES>
-static constexpr BitSet<QUADRATIC_FORM_COUNT> zero_bases_bitmask() {
-  return BitSet<QUADRATIC_FORM_COUNT>::create_mask(ZERO_BASES, POSITIVE_BASES + NEGATIVE_BASES);
+template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> zero_bases_bitmask() {
+  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(
+      ZERO_BASES, POSITIVE_BASES + NEGATIVE_BASES);
 }
 
 template <Operations OPERATION, size_t QUADRATIC_FORM_COUNT, size_t current_bit>
-constexpr char accumulate_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-                                            const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits,
-                                            char accumulated_order) {
+constexpr int8_t accumulate_commutative_order(
+    const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+    const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits, int8_t accumulated_order) {
   if constexpr (QUADRATIC_FORM_COUNT == 0 or current_bit == 0) {
     return accumulated_order;
   } else {
@@ -75,17 +74,20 @@ constexpr char accumulate_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& 
   }
 }
 
+}  // namespace
+
 template <Operations OPERATION, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
 class CayleyEntryCalculator final {
  public:
   static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
 
-  constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-                                           const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits);
-
-  constexpr unsigned char compute_result_grade(
+  constexpr int8_t compute_commutative_order(
       const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits);
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const;
+
+  constexpr uint8_t compute_result_grade(
+      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const;
 };
 
 template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
@@ -96,26 +98,26 @@ class CayleyEntryCalculator<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGAT
   static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
   static constexpr Operations OPERATION{Operations::GEOMETRIC_PRODUCT};
 
-  constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-                                           const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+  constexpr int8_t compute_commutative_order(
+      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
     const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
 
-    if ((self_multiplication &
-         zero_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+    if ((self_multiplication & zero_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
             .count() != 0) {
       return 0;
     } else {
-      if ((self_multiplication & negative_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES,
-                                                        NEGATIVE_BASES, ZERO_BASES>())
+      if ((self_multiplication &
+           negative_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
                   .count() %
               2 ==
           1) {
-        constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
+        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{-1};
         return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
                                             QUADRATIC_FORM_COUNT - 1>(
             lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
       } else {
-        constexpr char INITIAL_COMMUTATIVE_ORDER{1};
+        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{1};
         return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
                                             QUADRATIC_FORM_COUNT - 1>(
             lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
@@ -123,9 +125,9 @@ class CayleyEntryCalculator<Operations::GEOMETRIC_PRODUCT, POSITIVE_BASES, NEGAT
     }
   }
 
-  constexpr unsigned char compute_result_grade(
+  constexpr uint8_t compute_result_grade(
       const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
     return (lhs_component_bits xor rhs_component_bits).to_ulong();
   }
 };
@@ -138,8 +140,9 @@ class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATI
   static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
   static constexpr Operations OPERATION{Operations::GEOMETRIC_PRODUCT};
 
-  constexpr char compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-                                           const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+  constexpr int8_t compute_commutative_order(
+      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
     // If the lhs has components that are not in the rhs, a left contraction gives a zero.
     if (!((lhs_component_bits | rhs_component_bits) xor rhs_component_bits).is_zero()) {
       return 0;
@@ -147,22 +150,21 @@ class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATI
 
     const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
 
-    if ((self_multiplication &
-         zero_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+    if ((self_multiplication & zero_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
             .count() != 0) {
       return 0;
     } else {
-      if ((self_multiplication & negative_bases_bitmask<QUADRATIC_FORM_COUNT, POSITIVE_BASES,
-                                                        NEGATIVE_BASES, ZERO_BASES>())
+      if ((self_multiplication &
+           negative_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
                   .count() %
               2 ==
           1) {
-        constexpr char INITIAL_COMMUTATIVE_ORDER{-1};
+        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{-1};
         return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
                                             QUADRATIC_FORM_COUNT - 1>(
             lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
       } else {
-        constexpr char INITIAL_COMMUTATIVE_ORDER{1};
+        constexpr int8_t INITIAL_COMMUTATIVE_ORDER{1};
         return accumulate_commutative_order<OPERATION, QUADRATIC_FORM_COUNT,
                                             QUADRATIC_FORM_COUNT - 1>(
             lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
@@ -170,20 +172,18 @@ class CayleyEntryCalculator<Operations::LEFT_CONTRACTION, POSITIVE_BASES, NEGATI
     }
   }
 
-  constexpr unsigned char compute_result_grade(
+  constexpr uint8_t compute_result_grade(
       const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) {
+      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
     return (lhs_component_bits xor rhs_component_bits).to_ulong();
   }
 };
 
-}  // namespace
-
 template <size_t COMPONENT_COUNT, typename = void>
 class TableEntry final {
  private:
-  unsigned short grade_{};
-  char quadratic_multiplier_{};
+  uint8_t grade_{};
+  int8_t quadratic_multiplier_{};
 
  public:
   static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(grade_)>::max()};
@@ -198,7 +198,7 @@ class TableEntry final {
   constexpr TableEntry(TableEntry&& rhs)
       : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
-  constexpr TableEntry(size_t g, char q) : grade_(g), quadratic_multiplier_(q) {
+  constexpr TableEntry(size_t g, int8_t q) : grade_(g), quadratic_multiplier_(q) {
     // Note that the CayleyTable class has defenses to avoid grades that would overflow the grade
     // data member below.
   }
@@ -213,15 +213,15 @@ class TableEntry final {
     return grade_ == rhs.grade_ && quadratic_multiplier_ == rhs.quadratic_multiplier_;
   }
 
-  constexpr unsigned char grade() const { return grade_; }
-  constexpr char quadratic_multiplier() const { return quadratic_multiplier_; }
+  constexpr uint8_t grade() const { return grade_; }
+  constexpr int8_t quadratic_multiplier() const { return quadratic_multiplier_; }
 };
 
 template <size_t COMPONENT_COUNT>
 class TableEntry<COMPONENT_COUNT, std::enable_if_t<COMPONENT_COUNT >= 8> > final {
  private:
   uint64_t grade_{};
-  char quadratic_multiplier_{};
+  int8_t quadratic_multiplier_{};
 
  public:
   static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(grade_)>::max()};
@@ -236,7 +236,7 @@ class TableEntry<COMPONENT_COUNT, std::enable_if_t<COMPONENT_COUNT >= 8> > final
   constexpr TableEntry(TableEntry&& rhs)
       : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
-  constexpr TableEntry(size_t g, char q) : grade_(g), quadratic_multiplier_(q) {
+  constexpr TableEntry(size_t g, int8_t q) : grade_(g), quadratic_multiplier_(q) {
     // Note that the CayleyTable class has defenses to avoid grades that would overflow the grade
     // data member below.
   }
@@ -252,7 +252,7 @@ class TableEntry<COMPONENT_COUNT, std::enable_if_t<COMPONENT_COUNT >= 8> > final
   }
 
   constexpr uint64_t grade() const { return grade_; }
-  constexpr char quadratic_multiplier() const { return quadratic_multiplier_; }
+  constexpr int8_t quadratic_multiplier() const { return quadratic_multiplier_; }
 };
 
 template <size_t COMPONENT_COUNT>
