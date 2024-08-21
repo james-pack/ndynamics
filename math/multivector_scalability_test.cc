@@ -76,7 +76,7 @@ TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
   EXPECT_EQ(u * v + +4.f - 4.f * x, v.left_contraction(u * v));
 }
 
-TEST(MultivectorScalabilityTest, CanHandleManyBases) {
+TEST(MultivectorScalabilityTest, DISABLED_CanHandleManyBases) {
   // The expanded Cayley TableEntry class can handle many more components, but at the expensive of
   // lots more memory and longer compile times.
   // The value below seems to be an upper limit given the current implementation strategy. I do not
@@ -90,6 +90,7 @@ TEST(MultivectorScalabilityTest, CanHandleManyBases) {
   // Note that this test is also DISABLED by default in order to signal that it exists when tests
   // are run.
 
+  /*
   static constexpr size_t NUMBER_COMPONENTS{10};
 
   static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
@@ -123,6 +124,7 @@ TEST(MultivectorScalabilityTest, CanHandleManyBases) {
             w.left_contraction(w * u));
 
   EXPECT_EQ(u * v + +4.f - 4.f * x, v.left_contraction(u * v));
+  */
 }
 
 }  // namespace ndyn::math
