@@ -227,7 +227,6 @@ class Multivector final {
       // count.
       for (size_t j = 0; i + j < component_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
-        LOG(INFO) << "cayley_entry[" << to_string(i) << ", " << to_string(j) << "]" << cayley_entry;
         if (bit_count(cayley_entry.grade()) == bit_count(i) + bit_count(j)) {
           result.coefficients_[i + j] +=
               cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
