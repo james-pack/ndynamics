@@ -618,4 +618,46 @@ TEST(MultivectorTest, CanDoOuterProductOnVga) {
   EXPECT_EQ(-2.f, u.outer(x));
 }
 
+TEST(MultivectorTest, CanDoOuterProductInSpacetimeAlgebra) {
+  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
+  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
+  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
+  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
+  static constexpr auto a{SpacetimeMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + t};                           // 1 + t
+  static constexpr auto v{u * u};                             // (1 + t)^2 = 2 + 2t
+  static constexpr auto w{v * v};                             // 8 + 8t
+
+  ASSERT_EQ(2.f + 2.f * t, v);
+  ASSERT_EQ(8.f + 8.f * t, w);
+
+  EXPECT_EQ(1.f, a.outer(a));
+
+  EXPECT_EQ(0.f, t.outer(t));
+  EXPECT_EQ(0.f, x.outer(x));
+  EXPECT_EQ(0.f, y.outer(y));
+  EXPECT_EQ(0.f, z.outer(z));
+
+  EXPECT_EQ(t * x, t.outer(x));
+  EXPECT_EQ(t * y, t.outer(y));
+  EXPECT_EQ(t * z, t.outer(z));
+  EXPECT_EQ(x * y, x.outer(y));
+  EXPECT_EQ(y * z, y.outer(z));
+  EXPECT_EQ(-t * z, z.outer(t));
+
+  EXPECT_EQ(1.f + 2.f * t, u.outer(u));
+  EXPECT_EQ(2.f * t, v.outer(t));
+  EXPECT_EQ(2.f * x + 2.f * t * x, v.outer(x));
+  EXPECT_EQ(2.f + 4.f * t, v.outer(u));
+
+  EXPECT_EQ(16.f + 32.f * t, v.outer(w));
+  EXPECT_EQ(8.f + 16.f * t, w.outer(u));
+  EXPECT_EQ(8.f + 16.f * t, u.outer(w));
+
+  EXPECT_EQ(x - t * x, x.outer(u));
+  EXPECT_EQ(t, t.outer(u));
+  EXPECT_EQ(x + t * x, u.outer(x));
+  EXPECT_EQ(2.f * t, v.outer(t));
+}
+
 }  // namespace ndyn::math
