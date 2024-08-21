@@ -55,7 +55,7 @@ class Multivector final {
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
   constexpr const T& scalar() const { return coefficients_[SCALAR_COMPONENT_INDEX]; }
-  constexpr const T& component(size_t n) const { return coefficients_[n]; }
+  constexpr const T& component(size_t n) const { return coefficients_.at(n); }
 
   constexpr Multivector grade(size_t grade) const {
     if (grade >= grade_count()) {
