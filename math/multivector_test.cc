@@ -377,6 +377,186 @@ TEST(MultivectorTest, CanDoLeftContractionOnSpacetime) {
   EXPECT_EQ(u * v - 4.f + 4.f * x, v.left_contraction(u * v));
 }
 
+TEST(MultivectorTest, CanDoBidirectionalInnerProductOnComplexNumbers) {
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};
+  static constexpr auto a{ComplexMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + i};                         // 1 + i
+  static constexpr auto v{u * u};                           // (1 + i)^2 = 2i
+  static constexpr auto w{v * v};                           // (2i)^2 = -4
+
+  EXPECT_EQ(-1.f, i.bidirectional_inner(i));
+  EXPECT_EQ(1.f, a.bidirectional_inner(a));
+  EXPECT_EQ(2.f * i, u.bidirectional_inner(u));
+  EXPECT_EQ(-2.f, v.bidirectional_inner(i));
+  EXPECT_EQ(-2.f + 2.f * i, v.bidirectional_inner(u));
+  EXPECT_EQ(-8.f * i, v.bidirectional_inner(w));
+  EXPECT_EQ(w * u, w.bidirectional_inner(u));
+  EXPECT_EQ(w * u, u.bidirectional_inner(w));
+
+  for (const auto& p : {i, a, u, v, w}) {
+    for (const auto& q : {i, a, u, v, w}) {
+      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+    }
+  }
+}
+
+TEST(MultivectorTest, CanDoBidirectionalInnerProductOnDualNumbers) {
+  static constexpr auto e{DualMultivector<float>::e<0>()};
+  static constexpr auto a{DualMultivector<float>{1.f}};  // 1
+  static constexpr auto u{e.add(1.f)};                   // 1 + e
+  static constexpr auto v{u.multiply(u)};                // (1 + e)^2 = 1 + 2e
+  static constexpr auto w{4.f + 2.f * e};                // 4 + 2e
+
+  EXPECT_EQ(0.f, e.bidirectional_inner(e));
+  EXPECT_EQ(1.f, a.bidirectional_inner(a));
+  EXPECT_EQ(1.f + 2.f * e, u.bidirectional_inner(u));
+  EXPECT_EQ(1.f + 4.f * e, v.bidirectional_inner(v));
+
+  EXPECT_EQ(4.f + 10.f * e, w.bidirectional_inner(v));
+
+  for (const auto& p : {e, a, u, v, w}) {
+    for (const auto& q : {e, a, u, v, w}) {
+      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+    }
+  }
+}
+
+TEST(MultivectorTest, CanDoBidirectionalInnerProductOnSimpleVga) {
+  static constexpr auto x{VgaMultivector<float>::e<0>()};
+  static constexpr auto a{VgaMultivector<float>{1.f}};  // 1
+  static constexpr auto u{x.add(1.f)};                  // 1 + x
+  static constexpr auto v{u.multiply(u)};               // (1 + x)^2 = 2 + 2x
+  static constexpr auto w{v.multiply(v)};               // (2 + 2x)^2 = 8 + 8x
+
+  EXPECT_EQ(1.f, x.bidirectional_inner(x));
+  EXPECT_EQ(1.f, a.bidirectional_inner(a));
+  EXPECT_EQ(1.f + x, x.bidirectional_inner(u));
+  EXPECT_EQ(u, u.bidirectional_inner(x));
+  EXPECT_EQ(2.f + 2.f * x, u.bidirectional_inner(u));
+  EXPECT_EQ(v, v.bidirectional_inner(x));
+  EXPECT_EQ(v, x.bidirectional_inner(v));
+  EXPECT_EQ(4.f + 4.f * x, v.bidirectional_inner(u));
+  EXPECT_EQ(32.f + 32.f * x, v.bidirectional_inner(w));
+  EXPECT_EQ(16.f + 16.f * x, w.bidirectional_inner(u));
+
+  for (const auto& p : {x, a, u, v, w}) {
+    for (const auto& q : {x, a, u, v, w}) {
+      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+    }
+  }
+}
+
+TEST(MultivectorTest, CanDoBidirectionalInnerProductOnVga) {
+  static constexpr auto x{VgaMultivector<float>::e<0>()};
+  static constexpr auto y{VgaMultivector<float>::e<1>()};
+  static constexpr auto z{VgaMultivector<float>::e<2>()};
+  static constexpr auto a{VgaMultivector<float>{1.f}};
+
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f + 2.f * y};
+  static constexpr auto w{2.f + 3.f * z};
+
+  EXPECT_EQ(1.f + x + 2.f * y, u.bidirectional_inner(v));
+  EXPECT_EQ(2.f + 3.f * z + 4.f * y, v.bidirectional_inner(w));
+  EXPECT_EQ(2.f + 3.f * z + 2.f * x, w.bidirectional_inner(u));
+
+  // Document the values of these products, since they will be used in more complicated tests below.
+  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
+  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
+  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+
+  EXPECT_EQ(v * w + 2.f * x, u.bidirectional_inner(v * w)) << "v * w: " << v * w;
+  EXPECT_EQ(w * u + 4.f * y, v.bidirectional_inner(w * u));
+  EXPECT_EQ(2.f * u * v + 3.f * z, w.bidirectional_inner(u * v));
+
+  EXPECT_EQ(4.f + 8.f * y + 6.f * z + 12.f * y * z + 6.f * z + 9.f - 18.f * y,
+            w.bidirectional_inner(v * w));
+
+  EXPECT_EQ(4.f + 4.f * x + 6.f * z - 6.f * x * z + 6.f * z + 9.f + 9.f * x,
+            w.bidirectional_inner(w * u));
+
+  EXPECT_EQ(1.f + x + 2.f * y + 2.f * x * y + 2.f * y + 4.f - 4.f * x,
+            v.bidirectional_inner(u * v));
+
+  for (const auto& p : {x, y, z, a, u, v, w}) {
+    for (const auto& q : {x, y, z, a, u, v, w}) {
+      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+    }
+  }
+}
+
+TEST(MultivectorTest, CanDoBidirectionalInnerProductOnSimpleSpacetime) {
+  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
+  static constexpr auto a{SpacetimeMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + x};                           // 1 + x
+  static constexpr auto v{u * u};                             // (1 + x)^2 = 2x
+  static constexpr auto w{v * v};                             // (2x)^2 = -4
+
+  EXPECT_EQ(-1.f, x.bidirectional_inner(x));
+  EXPECT_EQ(1.f, a.bidirectional_inner(a));
+
+  EXPECT_EQ(x - 1.f, x.bidirectional_inner(u));
+  EXPECT_EQ(2.f * x, u.bidirectional_inner(u));
+  EXPECT_EQ(-2.f, v.bidirectional_inner(x));
+  EXPECT_EQ(-2.f, x.bidirectional_inner(v));
+  EXPECT_EQ(-2.f + 2.f * x, v.bidirectional_inner(u));
+
+  EXPECT_EQ(-8.f * x, v.bidirectional_inner(w));
+
+  EXPECT_EQ(-4.f - 4.f * x, w.bidirectional_inner(u));
+
+  for (const auto& p : {x, a, u, v, w}) {
+    for (const auto& q : {x, a, u, v, w}) {
+      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+    }
+  }
+}
+
+TEST(MultivectorTest, CanDoBidirectionalInnerProductOnSpacetime) {
+  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
+  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
+  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
+  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
+  static constexpr auto a{SpacetimeMultivector<float>{1.f}};
+
+  static constexpr auto r{1.f + t};
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f + 2.f * y};
+  static constexpr auto w{2.f + 3.f * z};
+
+  EXPECT_EQ(1.f + x + t, r.bidirectional_inner(u));
+  EXPECT_EQ(t, t.bidirectional_inner(u));
+  EXPECT_EQ(1.f + x + 2.f * y, u.bidirectional_inner(v));
+  EXPECT_EQ(2.f + 4.f * y + 3.f * z, v.bidirectional_inner(w));
+  EXPECT_EQ(2.f + 2.f * x + 3.f * z, w.bidirectional_inner(u));
+
+  // Document the values of these products, since they will be used in more complicated tests below.
+  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
+  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
+  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+
+  EXPECT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z + 2.f * x, u.bidirectional_inner(v * w));
+
+  EXPECT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z + 4.f * y, v.bidirectional_inner(w * u));
+
+  EXPECT_EQ(2.f + 2.f * x + 4.f * y + 4.f * x * y + 3.f * z, w.bidirectional_inner(u * v));
+
+  EXPECT_EQ(4.f + 8.f * y + 6.f * z + 12.f * y * z + 6.f * z - 9.f + 18.f * y,
+            w.bidirectional_inner(v * w));
+
+  EXPECT_EQ(4.f + 4.f * x + 6.f * z - 6.f * x * z + 6.f * z - 9.f - 9.f * x,
+            w.bidirectional_inner(w * u));
+
+  EXPECT_EQ(1.f + x + 2.f * y + 2.f * x * y + 2.f * y - 4.f + 4.f * x,
+            v.bidirectional_inner(u * v));
+
+  for (const auto& p : {t, x, y, z, a, u, v, w}) {
+    for (const auto& q : {t, x, y, z, a, u, v, w}) {
+      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+    }
+  }
+}
+
 TEST(MultivectorTest, InnerProductStyleAsLeftContraction) {
   static constexpr auto t{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<0>()};
   static constexpr auto x{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<1>()};
