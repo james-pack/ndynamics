@@ -840,4 +840,33 @@ TEST(MultivectorTest, CanDoOuterProductInSpacetimeAlgebra) {
   EXPECT_EQ(2.f * t, v.outer(t));
 }
 
+TEST(MultivectorTEST, CanDoAllProductsInConstexprContexts) {
+  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
+  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
+  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
+  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
+  static constexpr auto a{SpacetimeMultivector<float>{1.f}};  // 1
+  static constexpr auto u{1.f + t};                           // 1 + t
+  static constexpr auto v{u * u};                             // (1 + t)^2 = 2 + 2t
+  static constexpr auto w{v * v};                             // 8 + 8t
+
+  static constexpr auto left{v.left_contraction(t)};
+  static constexpr auto right{v.right_contraction(t)};
+  static constexpr auto bidi{v.bidirectional_inner(t)};
+  static constexpr auto inner{v.inner(t)};
+  static constexpr auto outer{v.outer(t)};
+
+  static_assert(2.f * t + 2.f == left, "Inner products should be valid in constexpr contexts");
+  static_assert(2.f == right, "Inner products should be valid in constexpr contexts");
+  static_assert(2.f * t + 2.f == bidi, "Inner products should be valid in constexpr contexts");
+  static_assert(2.f * t + 2.f == inner, "Inner products should be valid in constexpr contexts");
+  static_assert(2.f * t == outer, "Outer product should be valid in constexpr contexts");
+
+  EXPECT_EQ(2.f * t + 2.f, left);
+  EXPECT_EQ(2.f, right);
+  EXPECT_EQ(2.f * t + 2.f, bidi);
+  EXPECT_EQ(2.f * t + 2.f, inner);
+  EXPECT_EQ(2.f * t, outer);
+}
+
 }  // namespace ndyn::math

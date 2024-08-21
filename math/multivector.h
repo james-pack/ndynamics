@@ -238,7 +238,14 @@ class Multivector final {
 
   // Operator overloads.
   constexpr bool operator==(const Multivector& rhs) const {
-    return coefficients_ == rhs.coefficients_;
+    // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
+    // we have to implement this ourselves for earlier versions.
+    for (size_t i = 0; i < component_count(); ++i) {
+      if (coefficients_[i] != rhs.coefficients_[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // Equality.
