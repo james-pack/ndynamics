@@ -1,0 +1,24 @@
+load("//platforms:hex.bzl", "hex")
+
+cc_library(
+    name = "control",
+    hdrs = [
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//base",
+    ],
+)
+
+cc_test(
+    name = "pendulum_test",
+    srcs = [
+        "pendulum.h",
+        "pendulum_test.cc",
+    ],
+    deps = [
+        ":control",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
