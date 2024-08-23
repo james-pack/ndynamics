@@ -3,6 +3,10 @@ Language:      Cpp
 BasedOnStyle:  Google
 ColumnLimit:   100
 ---
+Language:      ObjC
+BasedOnStyle:  Google
+ColumnLimit:   100
+---
 Language:      Proto
 BasedOnStyle:  Google
 ColumnLimit:   100
