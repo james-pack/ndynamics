@@ -6,6 +6,7 @@ cc_library(
         "bitset.h",
         "cayley.h",
         "cayley_entry_calculator.h",
+        "magnitude.h",
         "multivector.h",
     ],
     visibility = ["//visibility:public"],

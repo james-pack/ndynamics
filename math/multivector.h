@@ -10,6 +10,7 @@
 #include "base/bits.h"
 #include "base/except.h"
 #include "math/cayley.h"
+#include "math/magnitude.h"
 
 namespace ndyn::math {
 
@@ -233,6 +234,19 @@ class Multivector final {
     return result;
   }
 
+  /**
+   * The conjugate of this Multivector.
+   */
+  constexpr Multivector conj() const {
+    Multivector result{*this};
+    for (size_t i = 0; i < component_count(); ++i) {
+      if ((i % 4) == 1 || (i % 4) == 2) {
+        result.coefficients_[i] *= -1;
+      }
+    }
+    return result;
+  }
+
   // Operator overloads.
   constexpr bool operator==(const Multivector& rhs) const {
     // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
@@ -393,5 +407,14 @@ using VgaMultivector = Multivector<T, 3, 0, 0, INNER_PRODUCT_STYLE>;
 // The spacetime algebra is primarily used in relativistic physics applications and research.
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using SpacetimeMultivector = Multivector<T, 1, 3, 0, INNER_PRODUCT_STYLE>;
+
+// Non-member operations, especially overloads of functions that might be applicable to scalars and
+// built-in types as well.
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr T square_magnitude(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
+  return (value.conj() * value).scalar();
+}
 
 }  // namespace ndyn::math
