@@ -43,9 +43,7 @@ class Multivector final {
   constexpr Multivector(const Multivector& rhs) = default;
   constexpr Multivector(Multivector&& rhs) = default;
 
-  explicit constexpr Multivector(const T& scalar) {
-    coefficients_[SCALAR_COMPONENT_INDEX] = scalar;
-  }
+  constexpr Multivector(const T& scalar) { coefficients_[SCALAR_COMPONENT_INDEX] = scalar; }
 
   explicit constexpr Multivector(T&& scalar) {
     coefficients_[SCALAR_COMPONENT_INDEX] = std::forward<T>(scalar);
@@ -220,7 +218,6 @@ class Multivector final {
    * The outer product, also known as the wedge operator.
    */
   constexpr Multivector outer(const Multivector& rhs) const {
-    using std::to_string;
     Multivector result{};
     for (size_t i = 0; i < component_count(); ++i) {
       // Note the exit condition of this for-loop. We only loop while i+j is less than the component
@@ -265,6 +262,21 @@ class Multivector final {
   // Geometric product.
   constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
   constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
+
+  // Self-modifying operators.
+  constexpr Multivector& operator+=(const Multivector& rhs) {
+    for (size_t i = 0; i < component_count(); ++i) {
+      coefficients_[i] += rhs.coefficients_[i];
+    }
+    return *this;
+  }
+
+  constexpr Multivector& operator-=(const Multivector& rhs) {
+    for (size_t i = 0; i < component_count(); ++i) {
+      coefficients_[i] -= rhs.coefficients_[i];
+    }
+    return *this;
+  }
 
   // The inner product operator below is based on the operator expressions defined on
   // https://bivecctor.net/. Not completely sure this notation is useful, and it may actually create
