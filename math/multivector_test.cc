@@ -864,4 +864,104 @@ TEST(MultivectorTEST, CanDoAllProductsInConstexprContexts) {
   EXPECT_EQ(2.f * t, outer);
 }
 
+TEST(MultivectorTest, CanDoScalarConjugate) {
+  static constexpr ScalarMultivector<float> u{1.f};
+  static constexpr ScalarMultivector<float> v{-1.f};
+  static constexpr ScalarMultivector<float> w{-4.f};
+
+  EXPECT_EQ(u, u.conj());
+  EXPECT_EQ(v, v.conj());
+  EXPECT_EQ(w, w.conj());
+
+  EXPECT_EQ(1.f, u * u.conj());
+  EXPECT_EQ(1.f, v * v.conj());
+  EXPECT_EQ(16.f, w * w.conj());
+}
+
+TEST(MultivectorTest, CanDoComplexConjugate) {
+  static constexpr auto i{ComplexMultivector<float>::e<0>()};
+  static constexpr auto u{1.f + i};
+  static constexpr auto v{1.f - i};
+  static constexpr auto w{ComplexMultivector<float>{-1.f}};
+
+  EXPECT_EQ(2.f, u * u.conj());
+  EXPECT_EQ(2.f, v * v.conj());
+  EXPECT_EQ(1.f, w * w.conj());
+}
+
+TEST(MultivectorTest, CanDoDualConjugate) {
+  static constexpr auto e{DualMultivector<float>::e<0>()};
+  static constexpr auto u{1.f + e};
+  static constexpr auto v{1.f - e};
+  static constexpr auto w{DualMultivector<float>{-1.f}};
+
+  EXPECT_EQ(1.f, u * u.conj());
+  EXPECT_EQ(1.f, v * v.conj());
+  EXPECT_EQ(1.f, w * w.conj());
+}
+
+TEST(MultivectorTest, CanDoSimpleVgaConjugate) {
+  static constexpr auto x{VgaMultivector<float>::e<0>()};
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f - x};
+  static constexpr auto w{VgaMultivector<float>{-1.f}};
+
+  EXPECT_EQ(0.f, u * u.conj());
+  EXPECT_EQ(0.f, v * v.conj());
+  EXPECT_EQ(1.f, w * w.conj());
+}
+
+TEST(MultivectorTest, CanDoVgaConjugate) {
+  static constexpr auto x{VgaMultivector<float>::e<0>()};
+  static constexpr auto y{VgaMultivector<float>::e<1>()};
+  static constexpr auto z{VgaMultivector<float>::e<2>()};
+  static constexpr auto u{1.f + x + y};
+  static constexpr auto v{1.f - x + y};
+  static constexpr auto w{1.f - x + y - z};
+
+  EXPECT_EQ(1.f - x - y + x - 1.f - x * y + y - y * x - 1.f, u * u.conj());
+  EXPECT_EQ(1.f + x - y - x - 1.f - x * y + y - y * x - 1.f, v * v.conj());
+  EXPECT_EQ((1.f + x - y + z) + (-x - 1.f + x * y - x * z) + (y + y * x - 1.f + y * z) +
+                (-z - z * x + z * y - 1.f),
+            w * w.conj());
+}
+
+TEST(MultivectorTest, CanDoSimpleSpacetimeConjugateWithTimeCoordinate) {
+  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
+  static constexpr auto u{1.f + t};
+  static constexpr auto v{1.f - t};
+  static constexpr auto w{SpacetimeMultivector<float>{-1.f}};
+
+  EXPECT_EQ(0.f, u * u.conj());
+  EXPECT_EQ(0.f, v * v.conj());
+  EXPECT_EQ(1.f, w * w.conj());
+}
+
+TEST(MultivectorTest, CanDoSimpleSpacetimeConjugateWithSpaceCoordinate) {
+  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
+  static constexpr auto u{1.f + x};
+  static constexpr auto v{1.f - x};
+  static constexpr auto w{SpacetimeMultivector<float>{-1.f}};
+
+  EXPECT_EQ(2.f, u * u.conj());
+  EXPECT_EQ(2.f, v * v.conj());
+  EXPECT_EQ(1.f, w * w.conj());
+}
+
+TEST(MultivectorTest, CanDoSpacetimeConjugate) {
+  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
+  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
+  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
+  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
+  static constexpr auto u{1.f + t + x};
+  static constexpr auto v{1.f + t - x};
+  static constexpr auto w{1.f - x + y - z};
+
+  EXPECT_EQ(1.f - t - x + t - 1.f - t * x + x - x * t + 1.f, u * u.conj());
+  EXPECT_EQ(1.f - t + x + t - 1.f + t * x - x + x * t + 1.f, v * v.conj());
+  EXPECT_EQ((1.f + x - y + z) + (-x + 1.f + x * y - x * z) + (y + y * x + 1.f + y * z) +
+                (-z - z * x + z * y + 1.f),
+            w * w.conj());
+}
+
 }  // namespace ndyn::math

@@ -1,8 +1,7 @@
 #pragma once
 
 #include <array>
-#include <bitset>
-#include <cstring>
+#include <cmath>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -26,6 +25,8 @@ template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_
           InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 class Multivector final {
  public:
+  using ScalarType = T;
+
   static constexpr size_t SCALAR_COMPONENT_INDEX{0};
 
   static constexpr size_t bases_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
@@ -113,6 +114,14 @@ class Multivector final {
         result.coefficients_[cayley_entry.grade()] +=
             cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
       }
+    }
+    return result;
+  }
+
+  constexpr Multivector divide(const T& rhs) const {
+    Multivector result{*this};
+    for (size_t i = 0; i < component_count(); ++i) {
+      result.coefficients_[i] /= rhs;
     }
     return result;
   }
@@ -240,8 +249,9 @@ class Multivector final {
   constexpr Multivector conj() const {
     Multivector result{*this};
     for (size_t i = 0; i < component_count(); ++i) {
-      if ((i % 4) == 1 || (i % 4) == 2) {
-        result.coefficients_[i] *= -1;
+      const auto num_bits_set{bit_count(i)};
+      if (num_bits_set % 4 == 1 || num_bits_set % 4 == 2) {
+        result.coefficients_[i] = -result.coefficients_[i];
       }
     }
     return result;
@@ -276,6 +286,9 @@ class Multivector final {
   // Geometric product.
   constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
   constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
+
+  // Division by a scalar.
+  constexpr Multivector operator/(const T& rhs) const { return divide(rhs); }
 
   // Self-modifying operators.
   constexpr Multivector& operator+=(const Multivector& rhs) {
@@ -386,6 +399,24 @@ std::ostream& operator<<(
   return os;
 }
 
+// Non-member operations, especially overloads of functions that might be applicable to scalars and
+// built-in types as well.
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr T square_magnitude(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
+  return (value * value).scalar();
+}
+
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr T abs(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
+  using std::sqrt;
+  return sqrt(square_magnitude(value));
+}
+
 // Common algebras.
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using ScalarMultivector = Multivector<T, 0, 0, 0, INNER_PRODUCT_STYLE>;
@@ -407,14 +438,5 @@ using VgaMultivector = Multivector<T, 3, 0, 0, INNER_PRODUCT_STYLE>;
 // The spacetime algebra is primarily used in relativistic physics applications and research.
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using SpacetimeMultivector = Multivector<T, 1, 3, 0, INNER_PRODUCT_STYLE>;
-
-// Non-member operations, especially overloads of functions that might be applicable to scalars and
-// built-in types as well.
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr T square_magnitude(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
-  return (value.conj() * value).scalar();
-}
 
 }  // namespace ndyn::math
