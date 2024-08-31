@@ -100,7 +100,7 @@ TEST(GAPendulumTest, LengthSameAfterCreation) {
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
-  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(0.);
   auto p{config.create()};
@@ -108,7 +108,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
-  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi / 2.);
   auto p{config.create()};
@@ -116,7 +116,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
-  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi / 2.);
   auto p{config.create()};
@@ -124,7 +124,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
-  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
@@ -132,7 +132,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
-  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
@@ -140,7 +140,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
 }
 
 TEST(GAPendulumTest, ThetaSameAfterCreation) {
-  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   for (const auto angle :
        {0., pi / 2., pi - 0.01, -pi / 2., -(pi - 0.01), 3. * pi / 4., -3. * pi / 4.}) {
