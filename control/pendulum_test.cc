@@ -104,7 +104,7 @@ TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaZero) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(0.);
   auto p{config.create()};
-  math::AreNear(-T::template e<1>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(-T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
@@ -112,7 +112,7 @@ TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi / 2.);
   auto p{config.create()};
-  math::AreNear(T::template e<0>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
@@ -120,7 +120,7 @@ TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi / 2.);
   auto p{config.create()};
-  math::AreNear(-T::template e<0>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(-T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPi) {
@@ -128,7 +128,7 @@ TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPi) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
-  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
@@ -136,7 +136,7 @@ TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
-  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, ThetaSameAfterCreation) {
@@ -165,7 +165,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(0.);
   auto p{config.create()};
-  math::AreNear(-T::template e<1>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(-T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
@@ -173,7 +173,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi / 2.);
   auto p{config.create()};
-  math::AreNear(T::template e<0>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
@@ -181,7 +181,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi / 2.);
   auto p{config.create()};
-  math::AreNear(-T::template e<0>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(-T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
@@ -189,7 +189,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
-  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
@@ -197,7 +197,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
-  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+  EXPECT_TRUE(math::AreNear(T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, ThetaSameAfterCreation) {
