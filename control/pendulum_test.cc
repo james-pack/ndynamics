@@ -89,7 +89,7 @@ TEST(ClassicPendulumTest, DampeningCausesAngleToReduceEachPeriod) {
   }
 }
 
-TEST(GAPendulumTest, LengthSameAfterCreation) {
+TEST(GA2DPendulumTest, LengthSameAfterCreation) {
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   for (const auto length : {1.f, 2.f, 0.5f}) {
@@ -99,7 +99,7 @@ TEST(GAPendulumTest, LengthSameAfterCreation) {
   }
 }
 
-TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
+TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaZero) {
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(0.);
@@ -107,7 +107,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
   math::AreNear(-T::template e<1>(), p.position(), 0.0001);
 }
 
-TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
+TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi / 2.);
@@ -115,7 +115,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
   math::AreNear(T::template e<0>(), p.position(), 0.0001);
 }
 
-TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
+TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi / 2.);
@@ -123,7 +123,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
   math::AreNear(-T::template e<0>(), p.position(), 0.0001);
 }
 
-TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
+TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPi) {
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi);
@@ -131,7 +131,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
   math::AreNear(T::template e<1>(), p.position(), 0.0001);
 }
 
-TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
+TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi);
@@ -139,8 +139,69 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
   math::AreNear(T::template e<1>(), p.position(), 0.0001);
 }
 
-TEST(GAPendulumTest, ThetaSameAfterCreation) {
+TEST(GA2DPendulumTest, ThetaSameAfterCreation) {
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  for (const auto angle :
+       {0., pi / 2., pi - 0.01, -pi / 2., -(pi - 0.01), 3. * pi / 4., -3. * pi / 4.}) {
+    config.set_theta(angle);
+    auto p{config.create()};
+    EXPECT_NEAR(angle, p.theta(), 0.0001);
+  }
+}
+
+TEST(GAPendulumTest, LengthSameAfterCreation) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  for (const auto length : {1.f, 2.f, 0.5f}) {
+    config.set_length(length);
+    auto p{config.create()};
+    EXPECT_NEAR(length, p.length(), 0.0001);
+  }
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(0.);
+  auto p{config.create()};
+  math::AreNear(-T::template e<1>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(pi / 2.);
+  auto p{config.create()};
+  math::AreNear(T::template e<0>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(-pi / 2.);
+  auto p{config.create()};
+  math::AreNear(-T::template e<0>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(pi);
+  auto p{config.create()};
+  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(-pi);
+  auto p{config.create()};
+  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, ThetaSameAfterCreation) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   for (const auto angle :
        {0., pi / 2., pi - 0.01, -pi / 2., -(pi - 0.01), 3. * pi / 4., -3. * pi / 4.}) {
