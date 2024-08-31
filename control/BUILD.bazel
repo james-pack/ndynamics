@@ -18,6 +18,8 @@ cc_test(
     ],
     deps = [
         ":control",
+        "//math",
+        "//math:testing",
         "//third_party/glog",
         "//third_party/gtest",
     ],

@@ -1,16 +1,19 @@
 #include "control/pendulum.h"
 
+#include "base/pi.h"
 #include "glog/logging.h"
 #include "gtest/gtest.h"
+#include "math/multivector.h"
+#include "math/multivector_test_utils.h"
 
 namespace ndyn::control {
 
 static constexpr double PI{3.14159265359};
 
-TEST(PendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
-  PendulumConfigurator config{};
+TEST(ClassicPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
+  ClassicPendulumConfigurator config{};
   config.set_theta(0).set_theta_dot(0);
-  Pendulum p{config.create()};
+  ClassicPendulum p{config.create()};
   ASSERT_EQ(0, p.theta());
   p.evolve(1);
   EXPECT_EQ(0, p.theta());
@@ -18,11 +21,11 @@ TEST(PendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
   EXPECT_EQ(0, p.theta());
 }
 
-TEST(PendulumTest, ApproximatesCanonicalSmallAngleSolution) {
-  PendulumConfigurator config{};
+TEST(ClassicPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
+  ClassicPendulumConfigurator config{};
   static constexpr float ANGLE{0.01};
   config.set_theta(ANGLE).set_theta_dot(0).set_g(-1);
-  Pendulum p{config.create()};
+  ClassicPendulum p{config.create()};
   ASSERT_EQ(ANGLE, p.theta());
 
   // After one period, the angle should be within 10% of the initial angle.
@@ -30,11 +33,11 @@ TEST(PendulumTest, ApproximatesCanonicalSmallAngleSolution) {
   EXPECT_NEAR(ANGLE, p.theta(), ANGLE / 10);
 }
 
-TEST(PendulumTest, SameAngleAfterHalfPeriod) {
-  PendulumConfigurator config{};
+TEST(ClassicPendulumTest, SameAngleAfterHalfPeriod) {
+  ClassicPendulumConfigurator config{};
   static constexpr float ANGLE{0.01};
   config.set_theta(ANGLE).set_theta_dot(0).set_g(-1);
-  Pendulum p{config.create()};
+  ClassicPendulum p{config.create()};
 
   // After 1/2 period, the angle should be within 10% of the initial angle, but with the opposite
   // sign.
@@ -42,11 +45,11 @@ TEST(PendulumTest, SameAngleAfterHalfPeriod) {
   EXPECT_NEAR(-ANGLE, p.theta(), ANGLE / 10);
 }
 
-TEST(PendulumTest, HighDampeningCausesAngleToReduceEachPeriod) {
-  PendulumConfigurator config{};
+TEST(ClassicPendulumTest, HighDampeningCausesAngleToReduceEachPeriod) {
+  ClassicPendulumConfigurator config{};
   static constexpr float ANGLE{1};
   config.set_theta(ANGLE).set_theta_dot(0).set_g(-1).set_mu(0.75);
-  Pendulum p{config.create()};
+  ClassicPendulum p{config.create()};
 
   static constexpr float STEP{0.001};
   float previous_half_period_max{ANGLE};
@@ -54,26 +57,21 @@ TEST(PendulumTest, HighDampeningCausesAngleToReduceEachPeriod) {
        ++half_period) {
     float previous_angular_velocity{0};
     do {
-      LOG(INFO) << "p.theta(): " << p.theta() << ", p.theta_dot(): " << p.theta_dot();
-      LOG(INFO) << "previous_angular_velocity: " << previous_angular_velocity;
-
       // When the angular velocity changes sign, we have traversed 1/2 a period.
       previous_angular_velocity = p.theta_dot();
       p.evolve(STEP, STEP);
     } while (previous_angular_velocity == 0 || p.theta_dot() / previous_angular_velocity > 0);
 
-    LOG(INFO) << "previous_half_period_max: " << previous_half_period_max
-              << ", p.theta(): " << p.theta() << ", p.theta_dot(): " << p.theta_dot();
     EXPECT_LT(p.theta(), previous_half_period_max) << "half_period: " << half_period;
     previous_half_period_max = p.theta();
   }
 }
 
-TEST(PendulumTest, DampeningCausesAngleToReduceEachPeriod) {
-  PendulumConfigurator config{};
+TEST(ClassicPendulumTest, DampeningCausesAngleToReduceEachPeriod) {
+  ClassicPendulumConfigurator config{};
   static constexpr float ANGLE{1};
   config.set_theta(ANGLE).set_theta_dot(0).set_g(-1).set_mu(0.01);
-  Pendulum p{config.create()};
+  ClassicPendulum p{config.create()};
 
   static constexpr float STEP{0.001};
   float previous_half_period_max{ANGLE};
@@ -81,18 +79,74 @@ TEST(PendulumTest, DampeningCausesAngleToReduceEachPeriod) {
        ++half_period) {
     float previous_angular_velocity{0};
     do {
-      LOG(INFO) << "p.theta(): " << p.theta() << ", p.theta_dot(): " << p.theta_dot();
-      LOG(INFO) << "previous_angular_velocity: " << previous_angular_velocity;
-
       // When the angular velocity changes sign, we have traversed 1/2 a period.
       previous_angular_velocity = p.theta_dot();
       p.evolve(STEP, STEP);
     } while (previous_angular_velocity == 0 || p.theta_dot() / previous_angular_velocity > 0);
 
-    LOG(INFO) << "previous_half_period_max: " << previous_half_period_max
-              << ", p.theta(): " << p.theta() << ", p.theta_dot(): " << p.theta_dot();
     EXPECT_LT(p.theta(), previous_half_period_max) << "half_period: " << half_period;
     previous_half_period_max = p.theta();
+  }
+}
+
+TEST(GAPendulumTest, LengthSameAfterCreation) {
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  for (const auto length : {1.f, 2.f, 0.5f}) {
+    config.set_length(length);
+    auto p{config.create()};
+    EXPECT_NEAR(length, p.length(), 0.0001);
+  }
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
+  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(0.);
+  auto p{config.create()};
+  math::AreNear(-T::template e<1>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
+  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(pi / 2.);
+  auto p{config.create()};
+  math::AreNear(T::template e<0>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
+  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(-pi / 2.);
+  auto p{config.create()};
+  math::AreNear(-T::template e<0>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
+  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(pi);
+  auto p{config.create()};
+  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
+  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(-pi);
+  auto p{config.create()};
+  math::AreNear(T::template e<1>(), p.position(), 0.0001);
+}
+
+TEST(GAPendulumTest, ThetaSameAfterCreation) {
+  using T = math::Multivector<double, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  for (const auto angle :
+       {0., pi / 2., pi - 0.01, -pi / 2., -(pi - 0.01), 3. * pi / 4., -3. * pi / 4.}) {
+    config.set_theta(angle);
+    auto p{config.create()};
+    EXPECT_NEAR(angle, p.theta(), 0.0001);
   }
 }
 
