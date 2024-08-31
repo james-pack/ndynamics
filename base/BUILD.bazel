@@ -19,6 +19,7 @@ cc_library(
         }) + [
             "bits.h",
             "except.h",
+            "pi.h",
             "units.h",
         ],
     defines = select({
