@@ -186,7 +186,6 @@ class GAPendulum final {
 
   void update_acceleration() {
     using std::abs;
-    using std::sin;
     const auto pos_hat{position_ / abs(position_)};
     acceleration_ = pos_hat * pos_hat.outer(gravitational_acceleration_);
   }
@@ -243,7 +242,7 @@ class GAPendulum final {
     if (step_size == 0) {
       step_size = abs(gravitational_acceleration_) / 1000;
 
-      VLOG(3) << "Default step size used. step_size: " << step_size;
+      VLOG(5) << "Default step size used. step_size: " << step_size;
     }
 
     if (new_time < t_ && step_size > 0) {
