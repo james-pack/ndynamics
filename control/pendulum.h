@@ -17,8 +17,7 @@ namespace ndyn::control {
 template <typename T>
 class ClassicPendulum final {
  private:
-  const T g_;   // Acceleration due to gravity.
-  const T mu_;  // Dampening factor applied to the angular velocity. Unitless.
+  const T g_;  // Acceleration due to gravity.
 
   const T mass_;    // kg
   const T length_;  // m
@@ -27,16 +26,15 @@ class ClassicPendulum final {
   T theta_{};      // Angle in radians with zero pointing in the direction of gravity.
   T theta_dot_{};  // Angular velocity in radians/s.
 
-  T get_theta_double_dot() { return -mu_ * theta_dot_ + (g_ / length_) * std::sin(theta_); }
+  T get_theta_double_dot() { return (g_ / length_) * std::sin(theta_); }
 
  public:
   // Initialize a pendulum of a certain mass (kg) and length (m) at some initial angle theta
   // (radians) and initial velocity theta_dot (radians/s) at time t (seconds).
-  ClassicPendulum(T g, T mu, T mass, T length, T t, T theta, T theta_dot)
-      : g_(g), mu_(mu), mass_(mass), length_(length), t_(t), theta_(theta), theta_dot_(theta_dot) {}
+  ClassicPendulum(T g, T mass, T length, T t, T theta, T theta_dot)
+      : g_(g), mass_(mass), length_(length), t_(t), theta_(theta), theta_dot_(theta_dot) {}
 
   T g() const { return g_; }
-  T mu() const { return mu_; }
 
   T mass() const { return mass_; }
   T length() const { return length_; }
@@ -59,7 +57,7 @@ class ClassicPendulum final {
       step_size = -step_size;
     }
 
-    while (t_ < new_time) {
+    while (abs(t_ - new_time) > abs(step_size)) {
       T theta_double_dot = get_theta_double_dot();
       theta_ += theta_dot_ * step_size;
       theta_dot_ += theta_double_dot * step_size;
@@ -81,7 +79,6 @@ class ClassicPendulumConfigurator final {
   T initial_time_{0};
   T theta_{};
   T theta_dot_{};
-  T mu_{0};
   T g_{-1.f};
 
  public:
@@ -136,17 +133,6 @@ class ClassicPendulumConfigurator final {
   }
 
   /**
-   * Set a dampening factor. This dampening is modelled as being this factor times the angular
-   * velocity. Useful for modelling air resistance or friction in the system.
-   * Defaults to zero, giving no dampening.
-   */
-  T get_mu() const { return mu_; }
-  ClassicPendulumConfigurator& set_mu(T mu) {
-    mu_ = mu;
-    return *this;
-  }
-
-  /**
    * Set the acceleration due to gravity. Negative values are "down" in that they will pull theta
    * towards zero. Defaults to -9.8, ostensibly in m / s^2.
    */
@@ -166,7 +152,7 @@ class ClassicPendulumConfigurator final {
    * reused, if desired, and its state is not changed after calling this method.
    */
   ClassicPendulum<T> create() const {
-    return ClassicPendulum<T>{g_, mu_, mass_, length_, initial_time_, theta_, theta_dot_};
+    return ClassicPendulum<T>{g_, mass_, length_, initial_time_, theta_, theta_dot_};
   }
 };
 
@@ -224,6 +210,12 @@ class GAPendulum final {
     const auto g_hat{gravitational_acceleration_ / abs(gravitational_acceleration_)};
     const auto pos_hat{position_ / abs(position_)};
 
+    // This quadrant selector computes whether the position and gravity vectors are in the same, or
+    // different, orientation from e0 and e1. If the two sets of vectors are in the same
+    // orientation, the quadrant_selector variable will be positive; if the position is aligned with
+    // gravity, it will be zero; otherwise, it will be negative.
+    // We use this selector to compute theta. The std::acos() function only returns values on [0,
+    // pi]. We use this selector to expand that return value to [-pi, pi].
     const auto quadrant_selector{
         pos_hat.outer(g_hat)
             .left_contraction(MultivectorT::template e<0>() * MultivectorT::template e<1>())
@@ -253,7 +245,7 @@ class GAPendulum final {
       step_size = -step_size;
     }
 
-    for (t_ += step_size; abs(t_ - new_time) > abs(step_size); t_ += step_size) {
+    while (abs(t_ - new_time) > abs(step_size)) {
       update_acceleration();
       velocity_ += step_size * acceleration_;
       position_ += step_size * velocity_;
@@ -263,6 +255,8 @@ class GAPendulum final {
       VLOG(5) << ", position_: " << position_  //
               << ", velocity_: " << velocity_  //
               << ", acceleration_: " << acceleration_;
+
+      t_ += step_size;
     }
   }
 
