@@ -50,8 +50,10 @@ class ClassicPendulum final {
    * the current time.
    */
   void goto_time(T new_time, T step_size = 0) {
+    using std::abs;
+
     if (step_size == 0) {
-      step_size = std::abs(g_) / 1000;
+      step_size = abs(g_) / 1000;
     }
 
     if (new_time < t_ && step_size > 0) {
@@ -183,8 +185,9 @@ class GAPendulum final {
   MultivectorT acceleration_{};
 
   void update_acceleration() {
+    using std::abs;
     using std::sin;
-    acceleration_ = gravitational_acceleration_ * sin(theta());
+    acceleration_ = gravitational_acceleration_ * abs(sin(theta()));
   }
 
  public:
@@ -237,7 +240,9 @@ class GAPendulum final {
     using std::abs;
 
     if (step_size == 0) {
-      step_size = abs(acceleration_) / 1000;
+      step_size = abs(gravitational_acceleration_) / 1000000;
+
+      VLOG(3) << "Default step size used. step_size: " << step_size;
     }
 
     if (new_time < t_ && step_size > 0) {
@@ -248,6 +253,11 @@ class GAPendulum final {
       update_acceleration();
       velocity_ += step_size * acceleration_;
       position_ += step_size * velocity_;
+
+      VLOG(5) << "theta(): " << theta()        //
+              << ", position_: " << position_  //
+              << ", velocity_: " << velocity_  //
+              << ", acceleration_: " << acceleration_;
     }
   }
 
@@ -267,7 +277,7 @@ class GAPendulumConfigurator final {
   ScalarType speed_{0};
   ScalarType initial_time_{0};
   ScalarType theta_{};
-  ScalarType g_{9.8f};
+  ScalarType g_{9.8};
 
   static constexpr auto e0 = MultivectorT::template e<0>();
   static constexpr auto e1 = MultivectorT::template e<1>();
