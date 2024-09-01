@@ -5,7 +5,7 @@
 
 #include "glog/logging.h"
 
-namespace ndyn::control {
+namespace ndyn::simulation {
 
 /**
  * Simple utility that simulates the state of a pendulum at any time. The main purpose of this
@@ -375,4 +375,4 @@ class GAPendulumConfigurator final {
   }
 };
 
-}  // namespace ndyn::control
+}  // namespace ndyn::simulation

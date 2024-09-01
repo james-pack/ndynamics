@@ -1,23 +1,25 @@
 load("//platforms:hex.bzl", "hex")
 
 cc_library(
-    name = "control",
+    name = "simulation",
     hdrs = [
+        "pendulum.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//math",
+        "//third_party/glog",
     ],
 )
 
 cc_test(
     name = "pendulum_test",
     srcs = [
-        "pendulum.h",
         "pendulum_test.cc",
     ],
     deps = [
-        ":control",
+        ":simulation",
         "//math",
         "//math:testing",
         "//third_party/glog",

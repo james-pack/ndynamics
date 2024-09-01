@@ -1,4 +1,4 @@
-#include "control/pendulum.h"
+#include "simulation/pendulum.h"
 
 #include "base/pi.h"
 #include "glog/logging.h"
@@ -6,7 +6,7 @@
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
 
-namespace ndyn::control {
+namespace ndyn::simulation {
 
 static constexpr size_t ONE_PERIOD{1};
 static constexpr size_t MULTIPLE_PERIODS{5};
@@ -414,4 +414,4 @@ TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjust
       IsAccurate(p, ONE_PERIOD, LARGE_ANGLE, calculate_corrected_quarter_period(LARGE_ANGLE)));
 }
 
-}  // namespace ndyn::control
+}  // namespace ndyn::simulation
