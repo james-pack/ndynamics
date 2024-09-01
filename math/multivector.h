@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -9,7 +10,6 @@
 #include "base/bits.h"
 #include "base/except.h"
 #include "math/cayley.h"
-#include "math/magnitude.h"
 
 namespace ndyn::math {
 
@@ -397,24 +397,6 @@ std::ostream& operator<<(
     const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
   os << to_string(v);
   return os;
-}
-
-// Non-member operations, especially overloads of functions that might be applicable to scalars and
-// built-in types as well.
-
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr T square_magnitude(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
-  return (value * value).scalar();
-}
-
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr T abs(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
-  using std::sqrt;
-  return sqrt(square_magnitude(value));
 }
 
 // Common algebras.

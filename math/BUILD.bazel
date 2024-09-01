@@ -8,6 +8,7 @@ cc_library(
         "cayley_entry_calculator.h",
         "magnitude.h",
         "multivector.h",
+        "multivector_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -66,6 +67,15 @@ cc_test(
 cc_test(
     name = "multivector_scalability_test",
     srcs = ["multivector_scalability_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "multivector_utils_test",
+    srcs = ["multivector_utils_test.cc"],
     deps = [
         ":math",
         "//third_party/gtest",
