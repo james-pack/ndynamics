@@ -57,11 +57,13 @@ class ClassicPendulum final {
       step_size = -step_size;
     }
 
-    while (abs(t_ - new_time) > abs(step_size)) {
-      T theta_double_dot = get_theta_double_dot();
-      theta_ += theta_dot_ * step_size;
-      theta_dot_ += theta_double_dot * step_size;
-      t_ += step_size;
+    if (abs(t_ - new_time) > abs(step_size)) {
+      do {
+        t_ += step_size;
+        theta_ += theta_dot_ * step_size;
+        T theta_double_dot = get_theta_double_dot();
+        theta_dot_ += theta_double_dot * step_size;
+      } while (abs(t_ - new_time) > abs(step_size));
     }
   }
 
@@ -245,18 +247,20 @@ class GAPendulum final {
       step_size = -step_size;
     }
 
-    while (abs(t_ - new_time) > abs(step_size)) {
-      update_acceleration();
-      velocity_ += step_size * acceleration_;
-      position_ += step_size * velocity_;
+    if (abs(t_ - new_time) > abs(step_size)) {
+      do {
+        t_ += step_size;
+        position_ += step_size * velocity_;
+        update_acceleration();
+        velocity_ += step_size * acceleration_;
 
-      VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
+        VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
 
-      VLOG(5) << ", position_: " << position_  //
-              << ", velocity_: " << velocity_  //
-              << ", acceleration_: " << acceleration_;
+        VLOG(5) << ", position_: " << position_  //
+                << ", velocity_: " << velocity_  //
+                << ", acceleration_: " << acceleration_;
 
-      t_ += step_size;
+      } while (abs(t_ - new_time) > abs(step_size));
     }
   }
 

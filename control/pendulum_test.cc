@@ -92,7 +92,7 @@ TEST(ClassicPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, SMALL_ANGLE));
 }
 
-TEST(ClassicPendulumTest, DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
+TEST(ClassicPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
   using std::pow;
   ClassicPendulumConfigurator config{};
   config.set_theta(SMALL_ANGLE);
