@@ -60,8 +60,8 @@ class ClassicPendulum final {
     if (abs(t_ - new_time) > abs(step_size)) {
       do {
         t_ += step_size;
-        theta_ += theta_dot_ * step_size;
         T theta_double_dot = get_theta_double_dot();
+        theta_ += theta_dot_ * step_size;
         theta_dot_ += theta_double_dot * step_size;
       } while (abs(t_ - new_time) > abs(step_size));
     }
@@ -169,17 +169,19 @@ class GAPendulum final {
  private:
   const ScalarType mass_;
   const MultivectorT gravitational_acceleration_;  // Acceleration due to gravity.
+  const MultivectorT gravitational_acceleration_hat_;
+  const ScalarType length_;
 
   ScalarType t_;
 
   MultivectorT position_;
+  MultivectorT position_hat_;
   MultivectorT velocity_;
   MultivectorT acceleration_{};
 
   void update_acceleration() {
-    using std::abs;
-    const auto pos_hat{position_ / abs(position_)};
-    acceleration_ = pos_hat * pos_hat.outer(gravitational_acceleration_);
+    VLOG(5) << "length_: " << length_ << ", position_hat_: " << position_hat_;
+    acceleration_ = position_hat_ * position_hat_.outer(gravitational_acceleration_);
   }
 
  public:
@@ -187,18 +189,19 @@ class GAPendulum final {
              MultivectorT gravitational_acceleration)
       : mass_(mass),
         gravitational_acceleration_(gravitational_acceleration),
+        gravitational_acceleration_hat_(gravitational_acceleration_ /
+                                        abs(gravitational_acceleration_)),
+        length_(abs(position)),
         t_(t),
         position_(position),
+        position_hat_(position / length_),
         velocity_(velocity) {
     update_acceleration();
   }
 
   ScalarType current_time() const { return t_; }
 
-  ScalarType length() const {
-    using std::abs;
-    return abs(position_);
-  }
+  ScalarType length() const { return length_; }
 
   const MultivectorT& position() const { return position_; }
   const MultivectorT& velocity() const { return velocity_; }
@@ -208,9 +211,8 @@ class GAPendulum final {
     using std::abs;
     using std::acos;
 
-    // Unit vectors in the direction of gravity and the position of the pendulum.
+    // Unit vector in the direction of gravity.
     const auto g_hat{gravitational_acceleration_ / abs(gravitational_acceleration_)};
-    const auto pos_hat{position_ / abs(position_)};
 
     // This quadrant selector computes whether the position and gravity vectors are in the same, or
     // different, orientation from e0 and e1. If the two sets of vectors are in the same
@@ -219,14 +221,14 @@ class GAPendulum final {
     // We use this selector to compute theta. The std::acos() function only returns values on [0,
     // pi]. We use this selector to expand that return value to [-pi, pi].
     const auto quadrant_selector{
-        pos_hat.outer(g_hat)
+        position_hat_.outer(g_hat)
             .left_contraction(MultivectorT::template e<0>() * MultivectorT::template e<1>())
             .scalar()};
 
     const ScalarType sign{(quadrant_selector < 0) ? static_cast<ScalarType>(-1)
                                                   : static_cast<ScalarType>(1)};
 
-    return sign * acos(pos_hat.left_contraction(g_hat).scalar());
+    return sign * acos(position_hat_.left_contraction(g_hat).scalar());
   }
 
   /**
@@ -250,13 +252,16 @@ class GAPendulum final {
     if (abs(t_ - new_time) > abs(step_size)) {
       do {
         t_ += step_size;
-        position_ += step_size * velocity_;
         update_acceleration();
+        position_ += step_size * velocity_;
+        // We reset the length of the position_ vector to remove some accumulated errors.
+        position_ = length_ / abs(position_) * position_;
+        position_hat_ = position_ / length_;
         velocity_ += step_size * acceleration_;
 
         VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
 
-        VLOG(5) << ", position_: " << position_  //
+        VLOG(5) << "position_: " << position_    //
                 << ", velocity_: " << velocity_  //
                 << ", acceleration_: " << acceleration_;
 

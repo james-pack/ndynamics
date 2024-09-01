@@ -14,11 +14,15 @@ static constexpr size_t MANY_PERIODS{10};
 static constexpr size_t EXTENSIVE_PERIODS{100};
 
 static constexpr float SMALL_ANGLE{0.01};
+static constexpr float MODERATE_ANGLE{pi / 2};
+static constexpr float LARGE_ANGLE{pi - 0.1};
 
 // For more details on circular error, see
 // https://en.wikipedia.org/wiki/Pendulum#Period_of_oscillation
-static constexpr decltype(SMALL_ANGLE) CORRECTED_QUARTER_PERIOD{
-    pi / 2 * (1 + pow(SMALL_ANGLE, 2) / 16 + 11 * pow(SMALL_ANGLE, 4) / 3072)};
+template <typename T>
+T calculate_corrected_quarter_period(T angle) {
+  return pi / 2 * (1 + pow(SMALL_ANGLE, 2) / 16 + 11 * pow(SMALL_ANGLE, 4) / 3072);
+}
 
 template <typename T>
 ::testing::AssertionResult is_near(T lhs, T rhs, T epsilon) {
@@ -37,37 +41,36 @@ template <typename PendulumT, typename ScalarType>
 ::testing::AssertionResult IsAccurate(PendulumT pendulum, size_t num_periods, ScalarType angle,
                                       ScalarType quarter_period = pi / 2) {
   ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  auto EPSILON{angle / 10};
+  ScalarType EPSILON{static_cast<ScalarType>(0.05) * angle};
 
-  static constexpr auto STEP_SIZE{0.0001};
+  static constexpr auto STEP_SIZE{0.001};
   static constexpr ScalarType ZERO_ANGLE{0};
 
   for (size_t i = 0; i < num_periods; ++i) {
-    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
-              << ", pendulum.theta(): " << pendulum.theta();
+    pendulum.goto_time(4 * i * quarter_period);
 
     pendulum.evolve(quarter_period, STEP_SIZE);
     result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
-      return result;
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period, STEP_SIZE);
     result = is_near(-angle, pendulum.theta(), EPSILON);
     if (!result) {
-      return result;
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period, STEP_SIZE);
     result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
-      return result;
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period, STEP_SIZE);
     result = is_near(angle, pendulum.theta(), EPSILON);
     if (!result) {
-      return result;
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
   }
   return result;
@@ -92,22 +95,58 @@ TEST(ClassicPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, SMALL_ANGLE));
 }
 
-TEST(ClassicPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
+TEST(ClassicPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
   ClassicPendulumConfigurator config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE,
+                         calculate_corrected_quarter_period(SMALL_ANGLE)));
 }
 
-TEST(ClassicPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustment) {
+TEST(ClassicPendulumTest,
+     DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
   ClassicPendulumConfigurator config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+  EXPECT_TRUE(
+      IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, calculate_corrected_quarter_period(SMALL_ANGLE)));
+}
+
+TEST(ClassicPendulumTest,
+     DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
+  using std::pow;
+  ClassicPendulumConfigurator config{};
+  config.set_theta(MODERATE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, MODERATE_ANGLE,
+                         calculate_corrected_quarter_period(MODERATE_ANGLE)));
+}
+
+TEST(ClassicPendulumTest,
+     DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
+  using std::pow;
+  ClassicPendulumConfigurator config{};
+  config.set_theta(MODERATE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, MODERATE_ANGLE,
+                         calculate_corrected_quarter_period(MODERATE_ANGLE)));
+}
+
+TEST(ClassicPendulumTest,
+     DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
+  using std::pow;
+  ClassicPendulumConfigurator config{};
+  config.set_theta(LARGE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(
+      IsAccurate(p, ONE_PERIOD, LARGE_ANGLE, calculate_corrected_quarter_period(LARGE_ANGLE)));
 }
 
 TEST(GA2DPendulumTest, LengthSameAfterCreation) {
@@ -180,24 +219,61 @@ TEST(GA2DPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, SMALL_ANGLE));
 }
 
-TEST(GA2DPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
+TEST(GA2DPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE,
+                         calculate_corrected_quarter_period(SMALL_ANGLE)));
 }
 
-TEST(GA2DPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustment) {
+TEST(GA2DPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
   using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+  EXPECT_TRUE(
+      IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, calculate_corrected_quarter_period(SMALL_ANGLE)));
+}
+
+TEST(GA2DPendulumTest,
+     DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(MODERATE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, MODERATE_ANGLE,
+                         calculate_corrected_quarter_period(MODERATE_ANGLE)));
+}
+
+TEST(GA2DPendulumTest,
+     DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(MODERATE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, MODERATE_ANGLE,
+                         calculate_corrected_quarter_period(MODERATE_ANGLE)));
+}
+
+TEST(GA2DPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(LARGE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(
+      IsAccurate(p, ONE_PERIOD, LARGE_ANGLE, calculate_corrected_quarter_period(LARGE_ANGLE)));
 }
 
 TEST(GAPendulumTest, LengthSameAfterCreation) {
@@ -282,24 +358,60 @@ TEST(GAPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, SMALL_ANGLE));
 }
 
-TEST(GAPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
+TEST(GAPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
   using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE,
+                         calculate_corrected_quarter_period(SMALL_ANGLE)));
 }
 
-TEST(GAPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustment) {
+TEST(GAPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
   using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+  EXPECT_TRUE(
+      IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, calculate_corrected_quarter_period(SMALL_ANGLE)));
+}
+
+TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(MODERATE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, MODERATE_ANGLE,
+                         calculate_corrected_quarter_period(MODERATE_ANGLE)));
+}
+
+TEST(GAPendulumTest,
+     DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(MODERATE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, MODERATE_ANGLE,
+                         calculate_corrected_quarter_period(MODERATE_ANGLE)));
+}
+
+TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(LARGE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(
+      IsAccurate(p, ONE_PERIOD, LARGE_ANGLE, calculate_corrected_quarter_period(LARGE_ANGLE)));
 }
 
 }  // namespace ndyn::control
