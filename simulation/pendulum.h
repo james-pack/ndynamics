@@ -182,8 +182,7 @@ class GAPendulum final {
   MultivectorT acceleration_{};
 
   void update_acceleration() {
-    VLOG(5) << "length_: " << length_ << ", position_hat_: " << position_hat_;
-    acceleration_ = position_hat_ * position_hat_.outer(gravitational_acceleration_);
+    acceleration_ = decompose(gravitational_acceleration_, position_hat_).first;
   }
 
  public:
