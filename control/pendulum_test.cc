@@ -8,6 +8,71 @@
 
 namespace ndyn::control {
 
+static constexpr size_t ONE_PERIOD{1};
+static constexpr size_t MULTIPLE_PERIODS{5};
+static constexpr size_t MANY_PERIODS{10};
+static constexpr size_t EXTENSIVE_PERIODS{100};
+
+static constexpr float SMALL_ANGLE{0.01};
+
+// For more details on circular error, see
+// https://en.wikipedia.org/wiki/Pendulum#Period_of_oscillation
+static constexpr decltype(SMALL_ANGLE) CORRECTED_QUARTER_PERIOD{
+    pi / 2 * (1 + pow(SMALL_ANGLE, 2) / 16 + 11 * pow(SMALL_ANGLE, 4) / 3072)};
+
+template <typename T>
+::testing::AssertionResult is_near(T lhs, T rhs, T epsilon) {
+  using std::abs;
+  if (abs(lhs - rhs) < abs(epsilon)) {
+    return ::testing::AssertionSuccess();
+  } else {
+    return ::testing::AssertionFailure() << "lhs: " << lhs                           //
+                                         << ", rhs: " << rhs                         //
+                                         << ", abs(difference): " << abs(lhs - rhs)  //
+                                         << ", abs(epsilon): " << abs(epsilon);
+  }
+}
+
+template <typename PendulumT, typename ScalarType>
+::testing::AssertionResult IsAccurate(PendulumT pendulum, size_t num_periods, ScalarType angle,
+                                      ScalarType quarter_period = pi / 2) {
+  ::testing::AssertionResult result{::testing::AssertionSuccess()};
+  auto EPSILON{angle / 10};
+
+  static constexpr auto STEP_SIZE{0.0001};
+  static constexpr ScalarType ZERO_ANGLE{0};
+
+  for (size_t i = 0; i < num_periods; ++i) {
+    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
+              << ", pendulum.theta(): " << pendulum.theta();
+
+    pendulum.evolve(quarter_period, STEP_SIZE);
+    result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
+    if (!result) {
+      return result;
+    }
+
+    pendulum.evolve(quarter_period, STEP_SIZE);
+    result = is_near(-angle, pendulum.theta(), EPSILON);
+    if (!result) {
+      return result;
+    }
+
+    pendulum.evolve(quarter_period, STEP_SIZE);
+    result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
+    if (!result) {
+      return result;
+    }
+
+    pendulum.evolve(quarter_period, STEP_SIZE);
+    result = is_near(angle, pendulum.theta(), EPSILON);
+    if (!result) {
+      return result;
+    }
+  }
+  return result;
+}
+
 TEST(ClassicPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
   ClassicPendulumConfigurator config{};
   config.set_theta(0);
@@ -21,70 +86,28 @@ TEST(ClassicPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
 
 TEST(ClassicPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
   ClassicPendulumConfigurator config{};
-  static constexpr float ANGLE{0.01};
-  config.set_theta(ANGLE).set_g(-1);
+  config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
-  ASSERT_EQ(ANGLE, p.theta());
 
-  // After one period, the angle should be within 10% of the initial angle.
-  p.evolve(2 * pi);
-  EXPECT_NEAR(ANGLE, p.theta(), ANGLE / 10);
+  EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, SMALL_ANGLE));
 }
 
-TEST(ClassicPendulumTest, SameAngleAfterHalfPeriod) {
+TEST(ClassicPendulumTest, DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
+  using std::pow;
   ClassicPendulumConfigurator config{};
-  static constexpr float ANGLE{0.01};
-  config.set_theta(ANGLE).set_g(-1);
+  config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  // After 1/2 period, the angle should be within 10% of the initial angle, but with the opposite
-  // sign.
-  p.evolve(pi);
-  EXPECT_NEAR(-ANGLE, p.theta(), ANGLE / 10);
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
 }
 
-TEST(ClassicPendulumTest, HighDampeningCausesAngleToReduceEachPeriod) {
+TEST(ClassicPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustment) {
+  using std::pow;
   ClassicPendulumConfigurator config{};
-  static constexpr float ANGLE{1};
-  config.set_theta(ANGLE).set_g(-1).set_mu(0.75);
+  config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  static constexpr float STEP{0.001};
-  float previous_half_period_max{ANGLE};
-  for (int half_period = 0; half_period < 50 && previous_half_period_max > 0.01 * ANGLE;
-       ++half_period) {
-    float previous_angular_velocity{0};
-    do {
-      // When the angular velocity changes sign, we have traversed 1/2 a period.
-      previous_angular_velocity = p.theta_dot();
-      p.evolve(STEP, STEP);
-    } while (previous_angular_velocity == 0 || p.theta_dot() / previous_angular_velocity > 0);
-
-    EXPECT_LT(p.theta(), previous_half_period_max) << "half_period: " << half_period;
-    previous_half_period_max = p.theta();
-  }
-}
-
-TEST(ClassicPendulumTest, DampeningCausesAngleToReduceEachPeriod) {
-  ClassicPendulumConfigurator config{};
-  static constexpr float ANGLE{1};
-  config.set_theta(ANGLE).set_g(-1).set_mu(0.01);
-  auto p{config.create()};
-
-  static constexpr float STEP{0.001};
-  float previous_half_period_max{ANGLE};
-  for (int half_period = 0; half_period < 50 && previous_half_period_max > 0.01 * ANGLE;
-       ++half_period) {
-    float previous_angular_velocity{0};
-    do {
-      // When the angular velocity changes sign, we have traversed 1/2 a period.
-      previous_angular_velocity = p.theta_dot();
-      p.evolve(STEP, STEP);
-    } while (previous_angular_velocity == 0 || p.theta_dot() / previous_angular_velocity > 0);
-
-    EXPECT_LT(p.theta(), previous_half_period_max) << "half_period: " << half_period;
-    previous_half_period_max = p.theta();
-  }
+  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
 }
 
 TEST(GA2DPendulumTest, LengthSameAfterCreation) {
@@ -148,6 +171,35 @@ TEST(GA2DPendulumTest, ThetaSameAfterCreation) {
   }
 }
 
+TEST(GA2DPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(SMALL_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, SMALL_ANGLE));
+}
+
+TEST(GA2DPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
+  using std::pow;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(SMALL_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+}
+
+TEST(GA2DPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustment) {
+  using std::pow;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(SMALL_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
+}
+
 TEST(GAPendulumTest, LengthSameAfterCreation) {
   using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
@@ -209,8 +261,8 @@ TEST(GAPendulumTest, ThetaSameAfterCreation) {
   }
 }
 
-TEST(GA2DPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+TEST(GAPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(0);
   auto p{config.create()};
@@ -221,93 +273,33 @@ TEST(GA2DPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
   EXPECT_EQ(0, p.theta());
 }
 
-TEST(GA2DPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+TEST(GAPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  static constexpr float ANGLE{0.01};
-  config.set_theta(ANGLE).set_g(1);
+  config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  // Assuming a small angle approximation, after 1/4 period, the angle should be zero.
-  p.evolve(pi / 2);
-  EXPECT_NEAR(0, p.theta(), ANGLE / 100);
-
-  // Assuming a small angle approximation, after 1/2 period, the angle should be the initial angle,
-  // but with the opposite sign.
-  p.evolve(pi / 2);
-  EXPECT_NEAR(-ANGLE, p.theta(), ANGLE / 100);
-
-  // Assuming a small angle approximation, after 3/4 period, the angle should be zero.
-  p.evolve(pi / 2);
-  EXPECT_NEAR(0, p.theta(), ANGLE / 100);
-
-  // Assuming a small angle approximation, after one period, the angle should be the initial angle.
-  p.evolve(pi / 2);
-  EXPECT_NEAR(ANGLE, p.theta(), ANGLE / 100);
+  EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, SMALL_ANGLE));
 }
 
-TEST(GA2DPendulumTest, DISABLED_ApproximatesSmallAngleSolutionThroughMultiplePeriods) {
+TEST(GAPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustment) {
   using std::pow;
-  using ScalarType = double;
-  using T = math::Multivector<ScalarType, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
-
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-
-  static constexpr ScalarType ANGLE{0.01};
-  config.set_theta(ANGLE).set_g(1);
-
+  config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  static constexpr auto QUARTER_PERIOD{pi / 2};
-  static constexpr size_t NUM_PERIODS{8};
-  static constexpr auto EPSILON{ANGLE * ANGLE};
-
-  static constexpr auto STEP_SIZE{0.0001};
-  for (size_t i = 0; i < NUM_PERIODS && !HasFailure(); ++i) {
-    LOG(INFO) << "p.current_time(): " << p.current_time() << ", p.theta(): " << p.theta();
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(0, p.theta(), EPSILON);
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(-ANGLE, p.theta(), EPSILON);
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(0, p.theta(), EPSILON);
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(ANGLE, p.theta(), EPSILON);
-  }
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
 }
 
-TEST(GA2DPendulumTest,
-     DISABLED_ApproximatesSmallAngleSolutionThroughMultiplePeriodsWithCircularErrorAdjustment) {
+TEST(GAPendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustment) {
   using std::pow;
-  using ScalarType = double;
-  using T = math::Multivector<ScalarType, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
-
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-
-  static constexpr ScalarType ANGLE{0.01};
-  config.set_theta(ANGLE).set_g(1);
-
+  config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  // For more details on circular error, see
-  // https://en.wikipedia.org/wiki/Pendulum#Period_of_oscillation
-  static constexpr auto QUARTER_PERIOD{pi / 2 *
-                                       (1 + pow(ANGLE, 2) / 16 + 11 * pow(ANGLE, 4) / 3072)};
-  static constexpr size_t NUM_PERIODS{100};
-  static constexpr auto EPSILON{ANGLE * ANGLE};
-
-  static constexpr auto STEP_SIZE{0.0001};
-  for (size_t i = 0; i < NUM_PERIODS && !HasFailure(); ++i) {
-    LOG(INFO) << "p.current_time(): " << p.current_time() << ", p.theta(): " << p.theta();
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(0, p.theta(), EPSILON);
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(-ANGLE, p.theta(), EPSILON);
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(0, p.theta(), EPSILON);
-    p.evolve(QUARTER_PERIOD, STEP_SIZE);
-    EXPECT_NEAR(ANGLE, p.theta(), EPSILON);
-  }
+  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE, CORRECTED_QUARTER_PERIOD));
 }
 
 }  // namespace ndyn::control

@@ -17,8 +17,7 @@ namespace ndyn::control {
 template <typename T>
 class ClassicPendulum final {
  private:
-  const T g_;   // Acceleration due to gravity in m / s^2 with negative values consistent with
-                // pointing in the direction of zero radians.
+  const T g_;   // Acceleration due to gravity.
   const T mu_;  // Dampening factor applied to the angular velocity. Unitless.
 
   const T mass_;    // kg
@@ -83,7 +82,7 @@ class ClassicPendulumConfigurator final {
   T theta_{};
   T theta_dot_{};
   T mu_{0};
-  T g_{-9.8f};
+  T g_{-1.f};
 
  public:
   /**
@@ -153,7 +152,12 @@ class ClassicPendulumConfigurator final {
    */
   T get_g() const { return g_; }
   ClassicPendulumConfigurator& set_g(T g) {
-    g_ = g;
+    using std::abs;
+    if (g > 0) {
+      g_ = -g;
+    } else {
+      g_ = g;
+    }
     return *this;
   }
 
@@ -278,7 +282,7 @@ class GAPendulumConfigurator final {
   ScalarType speed_{0};
   ScalarType initial_time_{0};
   ScalarType theta_{};
-  ScalarType g_{9.8};
+  ScalarType g_{1};
 
   static constexpr auto e0 = MultivectorT::template e<0>();
   static constexpr auto e1 = MultivectorT::template e<1>();
