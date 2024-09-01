@@ -4,6 +4,8 @@
 #include <cstring>
 
 #include "glog/logging.h"
+#include "math/multivector.h"
+#include "math/multivector_utils.h"
 
 namespace ndyn::simulation {
 
