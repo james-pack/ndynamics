@@ -246,4 +246,68 @@ TEST(GA2DPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
   EXPECT_NEAR(ANGLE, p.theta(), ANGLE / 100);
 }
 
+TEST(GA2DPendulumTest, DISABLED_ApproximatesSmallAngleSolutionThroughMultiplePeriods) {
+  using std::pow;
+  using ScalarType = double;
+  using T = math::Multivector<ScalarType, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+
+  GAPendulumConfigurator<T> config{};
+
+  static constexpr ScalarType ANGLE{0.01};
+  config.set_theta(ANGLE).set_g(1);
+
+  auto p{config.create()};
+
+  static constexpr auto QUARTER_PERIOD{pi / 2};
+  static constexpr size_t NUM_PERIODS{8};
+  static constexpr auto EPSILON{ANGLE * ANGLE};
+
+  static constexpr auto STEP_SIZE{0.0001};
+  for (size_t i = 0; i < NUM_PERIODS && !HasFailure(); ++i) {
+    LOG(INFO) << "p.current_time(): " << p.current_time() << ", p.theta(): " << p.theta();
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(0, p.theta(), EPSILON);
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(-ANGLE, p.theta(), EPSILON);
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(0, p.theta(), EPSILON);
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(ANGLE, p.theta(), EPSILON);
+  }
+}
+
+TEST(GA2DPendulumTest,
+     DISABLED_ApproximatesSmallAngleSolutionThroughMultiplePeriodsWithCircularErrorAdjustment) {
+  using std::pow;
+  using ScalarType = double;
+  using T = math::Multivector<ScalarType, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+
+  GAPendulumConfigurator<T> config{};
+
+  static constexpr ScalarType ANGLE{0.01};
+  config.set_theta(ANGLE).set_g(1);
+
+  auto p{config.create()};
+
+  // For more details on circular error, see
+  // https://en.wikipedia.org/wiki/Pendulum#Period_of_oscillation
+  static constexpr auto QUARTER_PERIOD{pi / 2 *
+                                       (1 + pow(ANGLE, 2) / 16 + 11 * pow(ANGLE, 4) / 3072)};
+  static constexpr size_t NUM_PERIODS{100};
+  static constexpr auto EPSILON{ANGLE * ANGLE};
+
+  static constexpr auto STEP_SIZE{0.0001};
+  for (size_t i = 0; i < NUM_PERIODS && !HasFailure(); ++i) {
+    LOG(INFO) << "p.current_time(): " << p.current_time() << ", p.theta(): " << p.theta();
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(0, p.theta(), EPSILON);
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(-ANGLE, p.theta(), EPSILON);
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(0, p.theta(), EPSILON);
+    p.evolve(QUARTER_PERIOD, STEP_SIZE);
+    EXPECT_NEAR(ANGLE, p.theta(), EPSILON);
+  }
+}
+
 }  // namespace ndyn::control
