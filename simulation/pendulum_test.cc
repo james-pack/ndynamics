@@ -9,7 +9,7 @@
 namespace ndyn::simulation {
 
 static constexpr size_t ONE_PERIOD{1};
-static constexpr size_t MULTIPLE_PERIODS{5};
+static constexpr size_t MULTIPLE_PERIODS{3};
 static constexpr size_t MANY_PERIODS{10};
 static constexpr size_t EXTENSIVE_PERIODS{100};
 

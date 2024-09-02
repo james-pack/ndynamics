@@ -4,8 +4,10 @@
 #include <cstring>
 
 #include "glog/logging.h"
+#include "math/integrators.h"
 #include "math/multivector.h"
 #include "math/multivector_utils.h"
+#include "math/state.h"
 
 namespace ndyn::simulation {
 
@@ -167,46 +169,42 @@ template <typename MultivectorT>
 class GAPendulum final {
  public:
   using ScalarType = typename MultivectorT::ScalarType;
+  using StateType = math::StateT<MultivectorT, 3>;
 
  private:
   const ScalarType mass_;
   const MultivectorT gravitational_acceleration_;  // Acceleration due to gravity.
-  const MultivectorT gravitational_acceleration_hat_;
-  const ScalarType length_;
 
   ScalarType t_;
 
-  MultivectorT position_;
-  MultivectorT position_hat_;
-  MultivectorT velocity_;
-  MultivectorT acceleration_{};
+  StateType state_{};
 
-  void update_acceleration() {
-    acceleration_ = decompose(gravitational_acceleration_, position_hat_).first;
-  }
+  math::ForwardEuler<ScalarType, MultivectorT, 3> stepper_{
+      [this](const StateType& s0) -> StateType {
+        StateType result{s0};
+        result.template set_element<2>(
+            decompose(gravitational_acceleration_, result.template element<0>()).first);
+        return result;
+      }};
 
  public:
   GAPendulum(ScalarType mass, ScalarType t, MultivectorT position, MultivectorT velocity,
              MultivectorT gravitational_acceleration)
       : mass_(mass),
         gravitational_acceleration_(gravitational_acceleration),
-        gravitational_acceleration_hat_(gravitational_acceleration_ /
-                                        abs(gravitational_acceleration_)),
-        length_(abs(position)),
         t_(t),
-        position_(position),
-        position_hat_(position / length_),
-        velocity_(velocity) {
-    update_acceleration();
-  }
+        state_({position, velocity}) {}
 
   ScalarType current_time() const { return t_; }
 
-  ScalarType length() const { return length_; }
+  ScalarType length() const {
+    using std::abs;
+    return abs(position());
+  }
 
-  const MultivectorT& position() const { return position_; }
-  const MultivectorT& velocity() const { return velocity_; }
-  const MultivectorT& acceleration() const { return acceleration_; }
+  const MultivectorT& position() const { return state_.template element<0>(); }
+  const MultivectorT& velocity() const { return state_.template element<1>(); }
+  const MultivectorT& acceleration() const { return state_.template element<2>(); }
 
   ScalarType theta() const {
     using std::abs;
@@ -222,14 +220,16 @@ class GAPendulum final {
     // We use this selector to compute theta. The std::acos() function only returns values on [0,
     // pi]. We use this selector to expand that return value to [-pi, pi].
     const auto quadrant_selector{
-        position_hat_.outer(g_hat)
+        state_.template element<0>()
+            .outer(g_hat)
             .left_contraction(MultivectorT::template e<0>() * MultivectorT::template e<1>())
             .scalar()};
 
     const ScalarType sign{(quadrant_selector < 0) ? static_cast<ScalarType>(-1)
                                                   : static_cast<ScalarType>(1)};
 
-    return sign * acos(position_hat_.left_contraction(g_hat).scalar());
+    return sign * acos(state_.template element<0>().left_contraction(g_hat).scalar() /
+                       abs(state_.template element<0>()));
   }
 
   /**
@@ -253,19 +253,9 @@ class GAPendulum final {
     if (abs(t_ - new_time) > abs(step_size)) {
       do {
         t_ += step_size;
-        update_acceleration();
-        position_ += step_size * velocity_;
-        // We reset the length of the position_ vector to remove some accumulated errors.
-        position_ = length_ / abs(position_) * position_;
-        position_hat_ = position_ / length_;
-        velocity_ += step_size * acceleration_;
+        state_ = stepper_(step_size, state_);
 
         VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
-
-        VLOG(5) << "position_: " << position_    //
-                << ", velocity_: " << velocity_  //
-                << ", acceleration_: " << acceleration_;
-
       } while (abs(t_ - new_time) > abs(step_size));
     }
   }
