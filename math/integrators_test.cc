@@ -43,8 +43,8 @@ TEST(ForwardEuler2StateTest, CanUpdateVelocityFromPosition) {
   static constexpr ValueType expected_velocity{0.f, initial_position, 0.f};
 
   ForwardEuler<ScalarType, ValueType, StateType::size()> stepper{
-      [](const StateT<ValueType, StateType::size()>& s0) -> StateT<ValueType, StateType::size()> {
-        StateT<ValueType, StateType::size()> result{s0};
+      [](const StateType& s0) -> StateType {
+        StateType result{s0};
         result.set_element<1>(result.element<0>());
         return result;
       }};
@@ -208,8 +208,8 @@ TEST(ForwardEuler4StateTest, CanUpdateAccelerationFromPosition) {
   static constexpr ValueType expected_acceleration{0.f, initial_position, 0.f};
 
   ForwardEuler<ScalarType, ValueType, StateType::size()> stepper{
-      [](const StateT<ValueType, StateType::size()>& s0) -> StateT<ValueType, StateType::size()> {
-        StateT<ValueType, StateType::size()> result{s0};
+      [](const StateType& s0) -> StateType {
+        StateType result{s0};
         result.set_element<2>(result.element<0>());
         return result;
       }};
@@ -286,8 +286,8 @@ TEST(ForwardEuler4StateTest, CanUpdateJerk) {
   static constexpr ValueType expected_jerk{0.f, initial_position, 0.f};
 
   ForwardEuler<ScalarType, ValueType, StateType::size()> stepper{
-      [](const StateT<ValueType, StateType::size()>& s0) -> StateT<ValueType, StateType::size()> {
-        StateT<ValueType, StateType::size()> result{s0};
+      [](const StateType& s0) -> StateType {
+        StateType result{s0};
         result.set_element<3>(result.element<0>());
         return result;
       }};
