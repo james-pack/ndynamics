@@ -21,22 +21,28 @@ namespace ndyn::simulation {
 template <typename T>
 class ClassicPendulum final {
  private:
+  using StateType = math::StateT<T, 3>;
+
   const T g_;  // Acceleration due to gravity.
 
   const T mass_;    // kg
   const T length_;  // m
 
-  T t_{};          // seconds
-  T theta_{};      // Angle in radians with zero pointing in the direction of gravity.
-  T theta_dot_{};  // Angular velocity in radians/s.
+  T t_;  // seconds
+  StateType state_;
 
-  T get_theta_double_dot() { return (g_ / length_) * std::sin(theta_); }
+  math::ForwardEuler<T, T, 3> stepper_{[this](const StateType& s0) -> StateType {
+    using std::sin;
+    StateType result{s0};
+    result.template set_element<2>((g_ / length_) * sin(result.template element<0>()));
+    return result;
+  }};
 
  public:
   // Initialize a pendulum of a certain mass (kg) and length (m) at some initial angle theta
   // (radians) and initial velocity theta_dot (radians/s) at time t (seconds).
   ClassicPendulum(T g, T mass, T length, T t, T theta, T theta_dot)
-      : g_(g), mass_(mass), length_(length), t_(t), theta_(theta), theta_dot_(theta_dot) {}
+      : g_(g), mass_(mass), length_(length), t_(t), state_({theta, theta_dot}) {}
 
   T g() const { return g_; }
 
@@ -64,17 +70,15 @@ class ClassicPendulum final {
     if (abs(t_ - new_time) > abs(step_size)) {
       do {
         t_ += step_size;
-        T theta_double_dot = get_theta_double_dot();
-        theta_ += theta_dot_ * step_size;
-        theta_dot_ += theta_double_dot * step_size;
+        state_ = stepper_(step_size, state_);
       } while (abs(t_ - new_time) > abs(step_size));
     }
   }
 
   void evolve(T time_increment, T step_size = 0) { goto_time(t_ + time_increment, step_size); }
 
-  T theta() const { return theta_; }
-  T theta_dot() const { return theta_dot_; }
+  T theta() const { return state_.template element<0>(); }
+  T theta_dot() const { return state_.template element<1>(); }
 };
 
 template <typename T = float>
