@@ -6,9 +6,12 @@ cc_library(
         "bitset.h",
         "cayley.h",
         "cayley_entry_calculator.h",
+        "integrators.h",
         "magnitude.h",
         "multivector.h",
         "multivector_utils.h",
+        "state.h",
+        "states.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -76,6 +79,15 @@ cc_test(
 cc_test(
     name = "multivector_utils_test",
     srcs = ["multivector_utils_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "integrators_test",
+    srcs = ["integrators_test.cc"],
     deps = [
         ":math",
         "//third_party/gtest",
