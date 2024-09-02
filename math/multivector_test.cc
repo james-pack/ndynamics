@@ -9,10 +9,18 @@ TEST(MultivectorTest, CanCompile) {
   EXPECT_TRUE(true);
 }
 
-TEST(MultivectorTest, CanInitializeToScalar) {
+TEST(MultivectorTest, CanInitializeFromScalar) {
   static constexpr float SCALAR{1};
   static constexpr ScalarMultivector<float> a{SCALAR};
   EXPECT_EQ(a.scalar(), SCALAR);
+}
+
+TEST(MultivectorTest, CanInitializeFromInitializerList) {
+  static constexpr float REAL{1};
+  static constexpr float IMAG{3};
+  static constexpr ComplexMultivector<float> a{REAL, IMAG};
+  EXPECT_EQ(a.scalar(), REAL);
+  EXPECT_EQ(a.component(1), IMAG);
 }
 
 TEST(MultivectorTest, CanAddScalars) {

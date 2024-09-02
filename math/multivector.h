@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <initializer_list>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -45,10 +46,12 @@ class Multivector final {
   constexpr Multivector(const Multivector& rhs) = default;
   constexpr Multivector(Multivector&& rhs) = default;
 
-  constexpr Multivector(const T& scalar) { coefficients_[SCALAR_COMPONENT_INDEX] = scalar; }
-
-  explicit constexpr Multivector(T&& scalar) {
-    coefficients_[SCALAR_COMPONENT_INDEX] = std::forward<T>(scalar);
+  constexpr Multivector(std::initializer_list<T> values) {
+    size_t i = 0;
+    for (T value : values) {
+      coefficients_.at(i) = value;
+      ++i;
+    }
   }
 
   constexpr Multivector& operator=(const Multivector& rhs) = default;
@@ -411,6 +414,11 @@ using DualMultivector = Multivector<T, 0, 0, 1, INNER_PRODUCT_STYLE>;
 
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using SplitComplexMultivector = Multivector<T, 1, 0, 0, INNER_PRODUCT_STYLE>;
+
+// VGA 2D is a standard 2D vectorspace geometric algebra. It is used in non-relativistic physics and
+// engineering applications.
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using Vga2dMultivector = Multivector<T, 2, 0, 0, INNER_PRODUCT_STYLE>;
 
 // VGA is a standard 3D vectorspace geometric algebra. It is used in non-relativistic physics and
 // engineering applications.
