@@ -31,7 +31,7 @@ class ClassicPendulum final {
   T t_;  // seconds
   StateType state_;
 
-  math::ForwardEuler<T, T, 3> stepper_{[this](const StateType& s0) -> StateType {
+  math::RungeKutta2<T, T, 3> stepper_{[this](const StateType& s0) -> StateType {
     using std::sin;
     StateType result{s0};
     result.template set_element<2>((g_ / length_) * sin(result.template element<0>()));
@@ -183,13 +183,12 @@ class GAPendulum final {
 
   StateType state_{};
 
-  math::ForwardEuler<ScalarType, MultivectorT, 3> stepper_{
-      [this](const StateType& s0) -> StateType {
-        StateType result{s0};
-        result.template set_element<2>(
-            decompose(gravitational_acceleration_, result.template element<0>()).first);
-        return result;
-      }};
+  math::RungeKutta2<ScalarType, MultivectorT, 3> stepper_{[this](const StateType& s0) -> StateType {
+    StateType result{s0};
+    result.template set_element<2>(
+        decompose(gravitational_acceleration_, result.template element<0>()).first);
+    return result;
+  }};
 
  public:
   GAPendulum(ScalarType mass, ScalarType t, MultivectorT position, MultivectorT velocity,
