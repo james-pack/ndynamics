@@ -3,6 +3,8 @@
 #include <array>
 #include <cstring>
 #include <initializer_list>
+#include <ostream>
+#include <string>
 
 namespace ndyn::math {
 
@@ -51,5 +53,28 @@ class StateT final {
 
   constexpr void set_element(size_t index, const T& element) { elements_.at(index) = element; }
 };
+
+template <typename T, size_t SIZE>
+std::string to_string(const StateT<T, SIZE>& state) {
+  using std::to_string;
+  std::string result{"{"};
+  bool need_comma{false};
+  for (size_t i = 0; i < StateT<T, SIZE>::size(); ++i) {
+    if (need_comma) {
+      result.append(", ");
+    }
+    result.append(to_string(state.element(i)));
+    need_comma = true;
+  }
+  result.append("}");
+  return result;
+}
+
+template <typename T, size_t SIZE>
+std::ostream& operator<<(std::ostream& os, const StateT<T, SIZE>& state) {
+  using std::to_string;
+  os << to_string(state);
+  return os;
+}
 
 }  // namespace ndyn::math
