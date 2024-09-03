@@ -119,43 +119,15 @@ class RungeKutta2 final {
       : compute_partials_(std::forward<ComputePartials<T, SIZE>>(updater)) {}
 
   StateT<T, SIZE> operator()(ScalarT interval, StateT<T, SIZE> s0) {
-    s0 = compute_partials_(s0);
-    StateT<T, SIZE> s1{s0};
-
-    for (size_t i = SIZE - 1; i > 0; --i) {
+    auto s1{compute_partials_(s0)};
+    for (size_t i = 1; i < SIZE; ++i) {
       s1.set_element(i - 1, s0.element(i - 1) + interval / 2 * s0.element(i));
     }
 
-    StateT<T, SIZE> s2{s1};
-    s2 = compute_partials_(s1);
-
-    for (size_t i = SIZE - 1; i > 0; --i) {
-      s2.set_element(i - 1, s0.element(i - 1) + interval * s2.element(i));
-    }
-
-    return s2;
-  }
-};
-
-template <typename ScalarT, typename T>
-class RungeKutta2<ScalarT, T, 4> final {
- private:
-  ComputePartials<T, 4> compute_partials_{};
-
- public:
-  RungeKutta2(ComputePartials<T, 4>&& updater)
-      : compute_partials_(std::forward<ComputePartials<T, 4>>(updater)) {}
-
-  StateT<T, 4> operator()(ScalarT interval, StateT<T, 4> s0) {
-    auto s1{compute_partials_(s0)};
-    s1.template set_element<0>(s0.template element<0>() + interval / 2 * s0.template element<1>());
-    s1.template set_element<1>(s0.template element<1>() + interval / 2 * s0.template element<2>());
-    s1.template set_element<2>(s0.template element<2>() + interval / 2 * s0.template element<3>());
-
     auto s2{compute_partials_(s1)};
-    s2.template set_element<0>(s0.template element<0>() + interval * s1.template element<1>());
-    s2.template set_element<1>(s0.template element<1>() + interval * s1.template element<2>());
-    s2.template set_element<2>(s0.template element<2>() + interval * s1.template element<3>());
+    for (size_t i = 1; i < SIZE; ++i) {
+      s2.set_element(i - 1, s0.element(i - 1) + interval * s1.element(i));
+    }
 
     return s2;
   }
