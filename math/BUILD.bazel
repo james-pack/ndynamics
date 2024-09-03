@@ -90,6 +90,8 @@ cc_test(
     srcs = ["integrators_test.cc"],
     deps = [
         ":math",
+        ":testing",
+        "//third_party/glog",
         "//third_party/gtest",
     ],
 )
