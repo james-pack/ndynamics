@@ -9,9 +9,9 @@
 namespace ndyn::simulation {
 
 static constexpr size_t ONE_PERIOD{1};
-static constexpr size_t MULTIPLE_PERIODS{3};
-static constexpr size_t MANY_PERIODS{7};
-static constexpr size_t EXTENSIVE_PERIODS{25};
+static constexpr size_t MULTIPLE_PERIODS{2};
+static constexpr size_t MANY_PERIODS{4};
+static constexpr size_t EXTENSIVE_PERIODS{15};
 
 static constexpr float SMALL_ANGLE{0.01};
 static constexpr float MODERATE_ANGLE{pi / 8};
@@ -50,25 +50,25 @@ template <typename PendulumT, typename ScalarType>
     pendulum.goto_time(4 * i * quarter_period);
 
     pendulum.evolve(quarter_period, STEP_SIZE);
-    result = is_near(ZERO_ANGLE, pendulum.theta(), (i + 1) * EPSILON);
+    result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period, STEP_SIZE);
-    result = is_near(-angle, pendulum.theta(), (i + 1) * EPSILON);
+    result = is_near(-angle, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period, STEP_SIZE);
-    result = is_near(ZERO_ANGLE, pendulum.theta(), (i + 1) * EPSILON);
+    result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period, STEP_SIZE);
-    result = is_near(angle, pendulum.theta(), (i + 1) * EPSILON);
+    result = is_near(angle, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
