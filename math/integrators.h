@@ -3,6 +3,7 @@
 #include <cstring>
 #include <functional>
 
+#include "glog/logging.h"
 #include "math/state.h"
 
 namespace ndyn::math {
@@ -25,12 +26,20 @@ class ForwardEuler final {
   ForwardEuler(ComputePartials<T, SIZE>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, SIZE>>(compute_partials)) {}
 
-  StateT<T, SIZE> operator()(ScalarT interval, StateT<T, SIZE> s0) {
-    const auto partials{compute_partials_(s0)};
+  StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
+    const auto f1{compute_partials_(s1)};
+
+    StateT<T, SIZE> result{};
     for (size_t i = 0; i < SIZE; ++i) {
-      s0.set_element(i, s0.element(i) + interval * partials.element(i));
+      result.set_element(i, s1.element(i) + interval * f1.element(i));
     }
-    return s0;
+
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "result: " << result;
+
+    return result;
   }
 };
 
@@ -43,15 +52,20 @@ class ForwardEuler<ScalarT, T, 3> final {
   ForwardEuler(ComputePartials<T, 3>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 3>>(compute_partials)) {}
 
-  StateT<T, 3> operator()(ScalarT interval, StateT<T, 3> s0) {
-    const auto partials{compute_partials_(s0)};
-    s0.template set_element<0>(s0.template element<0>() +
-                               interval * partials.template element<0>());
-    s0.template set_element<1>(s0.template element<1>() +
-                               interval * partials.template element<1>());
-    s0.template set_element<2>(s0.template element<2>() +
-                               interval * partials.template element<2>());
-    return s0;
+  StateT<T, 3> operator()(ScalarT interval, const StateT<T, 3>& s1) {
+    const auto f1{compute_partials_(s1)};
+
+    StateT<T, 3> result{};
+    result.template set_element<0>(s1.template element<0>() + interval * f1.template element<0>());
+    result.template set_element<1>(s1.template element<1>() + interval * f1.template element<1>());
+    result.template set_element<2>(s1.template element<2>() + interval * f1.template element<2>());
+
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "result: " << result;
+
+    return result;
   }
 };
 
@@ -64,13 +78,19 @@ class ForwardEuler<ScalarT, T, 2> final {
   ForwardEuler(ComputePartials<T, 2>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 2>>(compute_partials)) {}
 
-  StateT<T, 2> operator()(ScalarT interval, StateT<T, 2> s0) {
-    const auto partials{compute_partials_(s0)};
-    s0.template set_element<0>(s0.template element<0>() +
-                               interval * partials.template element<0>());
-    s0.template set_element<1>(s0.template element<1>() +
-                               interval * partials.template element<1>());
-    return s0;
+  StateT<T, 2> operator()(ScalarT interval, const StateT<T, 2>& s1) {
+    const auto f1{compute_partials_(s1)};
+
+    StateT<T, 2> result{};
+    result.template set_element<0>(s1.template element<0>() + interval * f1.template element<0>());
+    result.template set_element<1>(s1.template element<1>() + interval * f1.template element<1>());
+
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "result: " << result;
+
+    return result;
   }
 };
 
@@ -83,11 +103,18 @@ class ForwardEuler<ScalarT, T, 1> final {
   ForwardEuler(ComputePartials<T, 1>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 1>>(compute_partials)) {}
 
-  StateT<T, 1> operator()(ScalarT interval, StateT<T, 1> s0) {
-    const auto partials{compute_partials_(s0)};
-    s0.template set_element<0>(s0.template element<0>() +
-                               interval * partials.template element<0>());
-    return s0;
+  StateT<T, 1> operator()(ScalarT interval, const StateT<T, 1>& s1) {
+    const auto f1{compute_partials_(s1)};
+
+    StateT<T, 1> result{};
+    result.template set_element<0>(s1.template element<0>() + interval * f1.template element<0>());
+
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "result: " << result;
+
+    return result;
   }
 };
 
@@ -106,19 +133,26 @@ class RungeKutta2 final {
   RungeKutta2(ComputePartials<T, SIZE>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, SIZE>>(compute_partials)) {}
 
-  StateT<T, SIZE> operator()(ScalarT interval, StateT<T, SIZE> s0) {
-    const auto f1{compute_partials_(s0)};
+  StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
+    const auto f1{compute_partials_(s1)};
 
-    StateT<T, SIZE> s1{};
+    StateT<T, SIZE> s2{};
     for (size_t i = 0; i < SIZE; ++i) {
-      s1.set_element(i, s0.element(i) + interval / 2 * f1.element(i));
+      s2.set_element(i, s1.element(i) + interval / 2 * f1.element(i));
     }
-    const auto f2{compute_partials_(s1)};
+    const auto f2{compute_partials_(s2)};
 
     StateT<T, SIZE> result{};
     for (size_t i = 0; i < SIZE; ++i) {
-      result.set_element(i, s0.element(i) + interval * f2.element(i));
+      result.set_element(i, s1.element(i) + interval * f2.element(i));
     }
+
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
@@ -133,19 +167,26 @@ class RungeKutta2<ScalarT, T, 3> final {
   RungeKutta2(ComputePartials<T, 3>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 3>>(compute_partials)) {}
 
-  StateT<T, 3> operator()(ScalarT interval, StateT<T, 3> s0) {
-    const auto f1{compute_partials_(s0)};
+  StateT<T, 3> operator()(ScalarT interval, const StateT<T, 3>& s1) {
+    const auto f1{compute_partials_(s1)};
 
-    StateT<T, 3> s1{};
-    s1.template set_element<0>(s0.template element<0>() + interval / 2 * f1.template element<0>());
-    s1.template set_element<1>(s0.template element<1>() + interval / 2 * f1.template element<1>());
-    s1.template set_element<2>(s0.template element<2>() + interval / 2 * f1.template element<2>());
-    const auto f2{compute_partials_(s1)};
+    StateT<T, 3> s2{};
+    s2.template set_element<0>(s1.template element<0>() + interval / 2 * f1.template element<0>());
+    s2.template set_element<1>(s1.template element<1>() + interval / 2 * f1.template element<1>());
+    s2.template set_element<2>(s1.template element<2>() + interval / 2 * f1.template element<2>());
+    const auto f2{compute_partials_(s2)};
 
     StateT<T, 3> result{};
-    result.template set_element<0>(s0.template element<0>() + interval * f2.template element<0>());
-    result.template set_element<1>(s0.template element<1>() + interval * f2.template element<1>());
-    result.template set_element<2>(s0.template element<2>() + interval * f2.template element<2>());
+    result.template set_element<0>(s1.template element<0>() + interval * f2.template element<0>());
+    result.template set_element<1>(s1.template element<1>() + interval * f2.template element<1>());
+    result.template set_element<2>(s1.template element<2>() + interval * f2.template element<2>());
+
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
@@ -160,24 +201,24 @@ class RungeKutta2<ScalarT, T, 2> final {
   RungeKutta2(ComputePartials<T, 2>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 2>>(compute_partials)) {}
 
-  StateT<T, 2> operator()(ScalarT interval, StateT<T, 2> s0) {
-    const auto f1{compute_partials_(s0)};
+  StateT<T, 2> operator()(ScalarT interval, const StateT<T, 2>& s1) {
+    const auto f1{compute_partials_(s1)};
 
-    StateT<T, 2> s1{};
-    s1.template set_element<0>(s0.template element<0>() + interval / 2 * f1.template element<0>());
-    s1.template set_element<1>(s0.template element<1>() + interval / 2 * f1.template element<1>());
-    const auto f2{compute_partials_(s1)};
+    StateT<T, 2> s2{};
+    s2.template set_element<0>(s1.template element<0>() + interval / 2 * f1.template element<0>());
+    s2.template set_element<1>(s1.template element<1>() + interval / 2 * f1.template element<1>());
+    const auto f2{compute_partials_(s2)};
 
     StateT<T, 2> result{};
-    result.template set_element<0>(s0.template element<0>() + interval * f2.template element<0>());
-    result.template set_element<1>(s0.template element<1>() + interval * f2.template element<1>());
+    result.template set_element<0>(s1.template element<0>() + interval * f2.template element<0>());
+    result.template set_element<1>(s1.template element<1>() + interval * f2.template element<1>());
 
-    LOG(INFO) << "interval: " << interval;
-    LOG(INFO) << "s0: " << s0;
-    LOG(INFO) << "f1: " << f1;
-    LOG(INFO) << "s1: " << s1;
-    LOG(INFO) << "f2: " << f2;
-    LOG(INFO) << "result: " << result;
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
@@ -192,15 +233,22 @@ class RungeKutta2<ScalarT, T, 1> final {
   RungeKutta2(ComputePartials<T, 1>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 1>>(compute_partials)) {}
 
-  StateT<T, 1> operator()(ScalarT interval, StateT<T, 1> s0) {
-    const auto f1{compute_partials_(s0)};
+  StateT<T, 1> operator()(ScalarT interval, const StateT<T, 1>& s1) {
+    const auto f1{compute_partials_(s1)};
 
-    StateT<T, 1> s1{};
-    s1.template set_element<0>(s0.template element<0>() + interval / 2 * f1.template element<0>());
-    const auto f2{compute_partials_(s1)};
+    StateT<T, 1> s2{};
+    s2.template set_element<0>(s1.template element<0>() + interval / 2 * f1.template element<0>());
+    const auto f2{compute_partials_(s2)};
 
     StateT<T, 1> result{};
-    result.template set_element<0>(s0.template element<0>() + interval * f2.template element<0>());
+    result.template set_element<0>(s1.template element<0>() + interval * f2.template element<0>());
+
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
@@ -221,7 +269,7 @@ class RungeKutta4 final {
   RungeKutta4(ComputePartials<T, SIZE>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, SIZE>>(compute_partials)) {}
 
-  StateT<T, SIZE> operator()(ScalarT interval, StateT<T, SIZE> s1) {
+  StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
     const auto f1{compute_partials_(s1)};
 
     StateT<T, SIZE> s2{};
@@ -250,16 +298,16 @@ class RungeKutta4 final {
                                                  TWO * f3.element(i) + f4.element(i)));
     }
 
-    LOG(INFO) << "interval: " << interval;
-    LOG(INFO) << "s1: " << s1;
-    LOG(INFO) << "f1: " << f1;
-    LOG(INFO) << "s2: " << s2;
-    LOG(INFO) << "f2: " << f2;
-    LOG(INFO) << "s3: " << s3;
-    LOG(INFO) << "f3: " << f3;
-    LOG(INFO) << "s4: " << s4;
-    LOG(INFO) << "f4: " << f4;
-    LOG(INFO) << "result: " << result;
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "s3: " << s3;
+    VLOG(5) << "f3: " << f3;
+    VLOG(5) << "s4: " << s4;
+    VLOG(5) << "f4: " << f4;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
@@ -274,7 +322,7 @@ class RungeKutta4<ScalarT, T, 3> final {
   RungeKutta4(ComputePartials<T, 3>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 3>>(compute_partials)) {}
 
-  StateT<T, 3> operator()(ScalarT interval, StateT<T, 3> s1) {
+  StateT<T, 3> operator()(ScalarT interval, const StateT<T, 3>& s1) {
     const auto f1{compute_partials_(s1)};
 
     StateT<T, 3> s2{};
@@ -310,16 +358,16 @@ class RungeKutta4<ScalarT, T, 3> final {
                                        (f1.template element<2>() + TWO * f2.template element<2>() +
                                         TWO * f3.template element<2>() + f4.template element<2>()));
 
-    LOG(INFO) << "interval: " << interval;
-    LOG(INFO) << "s1: " << s1;
-    LOG(INFO) << "f1: " << f1;
-    LOG(INFO) << "s2: " << s2;
-    LOG(INFO) << "f2: " << f2;
-    LOG(INFO) << "s3: " << s3;
-    LOG(INFO) << "f3: " << f3;
-    LOG(INFO) << "s4: " << s4;
-    LOG(INFO) << "f4: " << f4;
-    LOG(INFO) << "result: " << result;
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "s3: " << s3;
+    VLOG(5) << "f3: " << f3;
+    VLOG(5) << "s4: " << s4;
+    VLOG(5) << "f4: " << f4;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
@@ -334,7 +382,7 @@ class RungeKutta4<ScalarT, T, 2> final {
   RungeKutta4(ComputePartials<T, 2>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 2>>(compute_partials)) {}
 
-  StateT<T, 2> operator()(ScalarT interval, StateT<T, 2> s1) {
+  StateT<T, 2> operator()(ScalarT interval, const StateT<T, 2>& s1) {
     const auto f1{compute_partials_(s1)};
 
     StateT<T, 2> s2{};
@@ -363,16 +411,16 @@ class RungeKutta4<ScalarT, T, 2> final {
                                        (f1.template element<1>() + TWO * f2.template element<1>() +
                                         TWO * f3.template element<1>() + f4.template element<1>()));
 
-    LOG(INFO) << "interval: " << interval;
-    LOG(INFO) << "s1: " << s1;
-    LOG(INFO) << "f1: " << f1;
-    LOG(INFO) << "s2: " << s2;
-    LOG(INFO) << "f2: " << f2;
-    LOG(INFO) << "s3: " << s3;
-    LOG(INFO) << "f3: " << f3;
-    LOG(INFO) << "s4: " << s4;
-    LOG(INFO) << "f4: " << f4;
-    LOG(INFO) << "result: " << result;
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "s3: " << s3;
+    VLOG(5) << "f3: " << f3;
+    VLOG(5) << "s4: " << s4;
+    VLOG(5) << "f4: " << f4;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
@@ -387,7 +435,7 @@ class RungeKutta4<ScalarT, T, 1> final {
   RungeKutta4(ComputePartials<T, 1>&& compute_partials)
       : compute_partials_(std::forward<ComputePartials<T, 1>>(compute_partials)) {}
 
-  StateT<T, 1> operator()(ScalarT interval, StateT<T, 1> s1) {
+  StateT<T, 1> operator()(ScalarT interval, const StateT<T, 1>& s1) {
     const auto f1{compute_partials_(s1)};
 
     StateT<T, 1> s2{};
@@ -409,16 +457,16 @@ class RungeKutta4<ScalarT, T, 1> final {
                                        (f1.template element<0>() + TWO * f2.template element<0>() +
                                         TWO * f3.template element<0>() + f4.template element<0>()));
 
-    LOG(INFO) << "interval: " << interval;
-    LOG(INFO) << "s1: " << s1;
-    LOG(INFO) << "f1: " << f1;
-    LOG(INFO) << "s2: " << s2;
-    LOG(INFO) << "f2: " << f2;
-    LOG(INFO) << "s3: " << s3;
-    LOG(INFO) << "f3: " << f3;
-    LOG(INFO) << "s4: " << s4;
-    LOG(INFO) << "f4: " << f4;
-    LOG(INFO) << "result: " << result;
+    VLOG(5) << "interval: " << interval;
+    VLOG(5) << "s1: " << s1;
+    VLOG(5) << "f1: " << f1;
+    VLOG(5) << "s2: " << s2;
+    VLOG(5) << "f2: " << f2;
+    VLOG(5) << "s3: " << s3;
+    VLOG(5) << "f3: " << f3;
+    VLOG(5) << "s4: " << s4;
+    VLOG(5) << "f4: " << f4;
+    VLOG(5) << "result: " << result;
 
     return result;
   }
