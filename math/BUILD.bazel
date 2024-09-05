@@ -85,10 +85,47 @@ cc_test(
     ],
 )
 
-cc_test(
-    name = "integrators_test",
-    srcs = ["integrators_test.cc"],
+cc_library(
+    name = "integrators_test_utils",
+    testonly = True,
+    hdrs = [
+        "integrators_test_utils.h",
+    ],
     deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "forward_euler_test",
+    srcs = ["forward_euler_test.cc"],
+    deps = [
+        ":integrators_test_utils",
+        ":math",
+        ":testing",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "runge_kutta2_test",
+    srcs = ["runge_kutta2_test.cc"],
+    deps = [
+        ":integrators_test_utils",
+        ":math",
+        ":testing",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "runge_kutta4_test",
+    srcs = ["runge_kutta4_test.cc"],
+    deps = [
+        ":integrators_test_utils",
         ":math",
         ":testing",
         "//third_party/glog",
