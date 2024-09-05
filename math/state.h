@@ -52,6 +52,14 @@ class StateT final {
   }
 
   constexpr void set_element(size_t index, const T& element) { elements_.at(index) = element; }
+
+  constexpr StateT shift() const {
+    StateT result{};
+    for (size_t i = 0; i < SIZE - 1; ++i) {
+      result.elements_[i] = elements_[i + 1];
+    }
+    return result;
+  }
 };
 
 template <typename T, size_t SIZE>
