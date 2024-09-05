@@ -11,7 +11,7 @@ namespace ndyn::simulation {
 static constexpr size_t ONE_PERIOD{1};
 static constexpr size_t MULTIPLE_PERIODS{2};
 static constexpr size_t MANY_PERIODS{4};
-static constexpr size_t EXTENSIVE_PERIODS{8};
+static constexpr size_t MANY_MORE_PERIODS{10};
 
 static constexpr float SMALL_ANGLE{0.01};
 static constexpr float MODERATE_ANGLE{pi / 8};
@@ -44,14 +44,14 @@ template <typename PendulumT, typename ScalarType>
   // Calculate the expected period including a correction term for the circular error.
   const ScalarType quarter_period = calculate_corrected_quarter_period(angle);
 
-  // Compare the expected and computed values to be within 5% of the given angle.
+  // Compare the expected and computed values to be within a percentage of the given angle.
   const ScalarType EPSILON{static_cast<ScalarType>(0.05) * angle};
 
   static constexpr ScalarType ZERO_ANGLE{0};
 
   // Use a smaller step size as the number of periods is greater. This helps offset the accumulated
   // error.
-  auto STEP_SIZE{0.005 / num_periods};
+  auto STEP_SIZE{0.01 / num_periods};
   for (size_t i = 0; i < num_periods; ++i) {
     pendulum.goto_time(4 * i * quarter_period);
 
@@ -119,13 +119,13 @@ TEST(ClassicPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentS
   EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE));
 }
 
-TEST(ClassicPendulumTest, AccurateThroughExtensivePeriodsWithCircularErrorAdjustmentSmallAngle) {
+TEST(ClassicPendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
   ClassicPendulumConfigurator config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, EXTENSIVE_PERIODS, SMALL_ANGLE));
+  EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, SMALL_ANGLE));
 }
 
 TEST(ClassicPendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
@@ -244,6 +244,17 @@ TEST(GA2DPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmal
   auto p{config.create()};
 
   EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE));
+}
+
+TEST(GA2DPendulumTest,
+     DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(SMALL_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, SMALL_ANGLE));
 }
 
 TEST(GA2DPendulumTest,
@@ -378,6 +389,16 @@ TEST(GAPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallA
   auto p{config.create()};
 
   EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, SMALL_ANGLE));
+}
+
+TEST(GAPendulumTest, DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
+  using std::pow;
+  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  GAPendulumConfigurator<T> config{};
+  config.set_theta(SMALL_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, SMALL_ANGLE));
 }
 
 TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
