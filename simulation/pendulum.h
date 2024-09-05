@@ -21,7 +21,7 @@ namespace ndyn::simulation {
 template <typename T>
 class ClassicPendulum final {
  private:
-  using StateType = math::StateT<T, 3>;
+  using StateType = math::StateT<T, 2>;
 
   const T g_;  // Acceleration due to gravity.
 
@@ -31,10 +31,10 @@ class ClassicPendulum final {
   T t_;  // seconds
   StateType state_;
 
-  math::RungeKutta2<T, T, 3> stepper_{[this](const StateType& s0) -> StateType {
+  math::RungeKutta2<T, T, 2> integrator_{[this](const StateType& state) -> StateType {
     using std::sin;
-    StateType result{s0};
-    result.template set_element<2>((g_ / length_) * sin(result.template element<0>()));
+    StateType result{state.shift()};
+    result.template set_element<1>((g_ / length_) * sin(state.template element<0>()));
     return result;
   }};
 
@@ -70,7 +70,7 @@ class ClassicPendulum final {
     if (abs(t_ - new_time) > abs(step_size)) {
       do {
         t_ += step_size;
-        state_ = stepper_(step_size, state_);
+        state_ = integrator_(step_size, state_);
       } while (abs(t_ - new_time) > abs(step_size));
     }
   }
@@ -173,7 +173,7 @@ template <typename MultivectorT>
 class GAPendulum final {
  public:
   using ScalarType = typename MultivectorT::ScalarType;
-  using StateType = math::StateT<MultivectorT, 3>;
+  using StateType = math::StateT<MultivectorT, 2>;
 
  private:
   const ScalarType mass_;
@@ -183,12 +183,13 @@ class GAPendulum final {
 
   StateType state_{};
 
-  math::RungeKutta2<ScalarType, MultivectorT, 3> stepper_{[this](const StateType& s0) -> StateType {
-    StateType result{s0};
-    result.template set_element<2>(
-        decompose(gravitational_acceleration_, result.template element<0>()).first);
-    return result;
-  }};
+  math::RungeKutta2<ScalarType, MultivectorT, 2> integrator_{
+      [this](const StateType& state) -> StateType {
+        StateType result{state.shift()};
+        result.template set_element<1>(
+            decompose(gravitational_acceleration_, state.template element<0>()).first);
+        return result;
+      }};
 
  public:
   GAPendulum(ScalarType mass, ScalarType t, MultivectorT position, MultivectorT velocity,
@@ -256,7 +257,7 @@ class GAPendulum final {
     if (abs(t_ - new_time) > abs(step_size)) {
       do {
         t_ += step_size;
-        state_ = stepper_(step_size, state_);
+        state_ = integrator_(step_size, state_);
 
         VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
       } while (abs(t_ - new_time) > abs(step_size));
