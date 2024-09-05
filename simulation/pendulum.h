@@ -89,7 +89,7 @@ class ClassicPendulumConfigurator final {
   T initial_time_{0};
   T theta_{};
   T theta_dot_{};
-  T g_{-1.f};
+  T g_{-1};
 
  public:
   /**

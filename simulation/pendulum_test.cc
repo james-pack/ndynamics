@@ -8,14 +8,16 @@
 
 namespace ndyn::simulation {
 
+using FloatT = float;
+
 static constexpr size_t ONE_PERIOD{1};
 static constexpr size_t MULTIPLE_PERIODS{2};
 static constexpr size_t MANY_PERIODS{4};
 static constexpr size_t MANY_MORE_PERIODS{10};
 
-static constexpr float SMALL_ANGLE{0.01};
-static constexpr float MODERATE_ANGLE{pi / 8};
-static constexpr float LARGE_ANGLE{pi - 0.1};
+static constexpr FloatT SMALL_ANGLE{0.01};
+static constexpr FloatT MODERATE_ANGLE{pi / 8};
+static constexpr FloatT LARGE_ANGLE{pi - 0.1};
 
 // For more details on circular error, see
 // https://en.wikipedia.org/wiki/Pendulum#Period_of_oscillation
@@ -51,7 +53,7 @@ template <typename PendulumT, typename ScalarType>
 
   // Use a smaller step size as the number of periods is greater. This helps offset the accumulated
   // error.
-  auto STEP_SIZE{0.01 / num_periods};
+  ScalarType STEP_SIZE{static_cast<ScalarType>(0.01) / num_periods};
   for (size_t i = 0; i < num_periods; ++i) {
     pendulum.goto_time(4 * i * quarter_period);
 
@@ -83,7 +85,7 @@ template <typename PendulumT, typename ScalarType>
 }
 
 TEST(ClassicPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(0);
   auto p{config.create()};
   ASSERT_EQ(0, p.theta());
@@ -94,7 +96,7 @@ TEST(ClassicPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
 }
 
 TEST(ClassicPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -103,7 +105,7 @@ TEST(ClassicPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
 
 TEST(ClassicPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -112,7 +114,7 @@ TEST(ClassicPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustm
 
 TEST(ClassicPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -121,7 +123,7 @@ TEST(ClassicPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentS
 
 TEST(ClassicPendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -130,7 +132,7 @@ TEST(ClassicPendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustm
 
 TEST(ClassicPendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
   using std::pow;
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
@@ -139,7 +141,7 @@ TEST(ClassicPendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustment
 
 TEST(ClassicPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
   using std::pow;
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
@@ -149,7 +151,7 @@ TEST(ClassicPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustm
 TEST(ClassicPendulumTest,
      DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
   using std::pow;
-  ClassicPendulumConfigurator config{};
+  ClassicPendulumConfigurator<FloatT> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
@@ -157,9 +159,9 @@ TEST(ClassicPendulumTest,
 }
 
 TEST(GA2DPendulumTest, LengthSameAfterCreation) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  for (const auto length : {1.f, 2.f, 0.5f}) {
+  for (const auto length : {1., 2., 0.5}) {
     config.set_length(length);
     auto p{config.create()};
     EXPECT_NEAR(length, p.length(), 0.0001);
@@ -167,31 +169,31 @@ TEST(GA2DPendulumTest, LengthSameAfterCreation) {
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaZero) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  config.set_theta(0.);
+  config.set_theta(0);
   auto p{config.create()};
   EXPECT_TRUE(math::AreNear(-T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  config.set_theta(pi / 2.);
+  config.set_theta(pi / 2);
   auto p{config.create()};
   EXPECT_TRUE(math::AreNear(T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  config.set_theta(-pi / 2.);
+  config.set_theta(-pi / 2);
   auto p{config.create()};
   EXPECT_TRUE(math::AreNear(-T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPi) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
@@ -199,7 +201,7 @@ TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaPi) {
 }
 
 TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
@@ -207,10 +209,9 @@ TEST(GA2DPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
 }
 
 TEST(GA2DPendulumTest, ThetaSameAfterCreation) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  for (const auto angle :
-       {0., pi / 2., pi - 0.01, -pi / 2., -(pi - 0.01), 3. * pi / 4., -3. * pi / 4.}) {
+  for (const auto angle : {0., pi / 2, pi - 0.01, -pi / 2, -(pi - 0.01), 3 * pi / 4, -3 * pi / 4}) {
     config.set_theta(angle);
     auto p{config.create()};
     EXPECT_NEAR(angle, p.theta(), 0.0001);
@@ -218,7 +219,7 @@ TEST(GA2DPendulumTest, ThetaSameAfterCreation) {
 }
 
 TEST(GA2DPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -228,7 +229,7 @@ TEST(GA2DPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
 
 TEST(GA2DPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -238,7 +239,7 @@ TEST(GA2DPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustment
 
 TEST(GA2DPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -249,7 +250,7 @@ TEST(GA2DPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmal
 TEST(GA2DPendulumTest,
      DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
   using std::pow;
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -260,7 +261,7 @@ TEST(GA2DPendulumTest,
 TEST(GA2DPendulumTest,
      DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
   using std::pow;
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -271,7 +272,7 @@ TEST(GA2DPendulumTest,
 TEST(GA2DPendulumTest,
      DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
   using std::pow;
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -281,7 +282,7 @@ TEST(GA2DPendulumTest,
 
 TEST(GA2DPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
   using std::pow;
-  using T = math::Multivector<float, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
@@ -290,9 +291,9 @@ TEST(GA2DPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdju
 }
 
 TEST(GAPendulumTest, LengthSameAfterCreation) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  for (const auto length : {1.f, 2.f, 0.5f}) {
+  for (const auto length : {1., 2., 0.5}) {
     config.set_length(length);
     auto p{config.create()};
     EXPECT_NEAR(length, p.length(), 0.0001);
@@ -300,31 +301,31 @@ TEST(GAPendulumTest, LengthSameAfterCreation) {
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaZero) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  config.set_theta(0.);
+  config.set_theta(0);
   auto p{config.create()};
   EXPECT_TRUE(math::AreNear(-T::template e<1>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  config.set_theta(pi / 2.);
+  config.set_theta(pi / 2);
   auto p{config.create()};
   EXPECT_TRUE(math::AreNear(T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  config.set_theta(-pi / 2.);
+  config.set_theta(-pi / 2);
   auto p{config.create()};
   EXPECT_TRUE(math::AreNear(-T::template e<0>(), p.position(), 0.0001));
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
@@ -332,7 +333,7 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaPi) {
 }
 
 TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
@@ -340,10 +341,9 @@ TEST(GAPendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
 }
 
 TEST(GAPendulumTest, ThetaSameAfterCreation) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
-  for (const auto angle :
-       {0., pi / 2., pi - 0.01, -pi / 2., -(pi - 0.01), 3. * pi / 4., -3. * pi / 4.}) {
+  for (const auto angle : {0., pi / 2, pi - 0.01, -pi / 2, -(pi - 0.01), 3 * pi / 4, -3 * pi / 4}) {
     config.set_theta(angle);
     auto p{config.create()};
     EXPECT_NEAR(angle, p.theta(), 0.0001);
@@ -351,7 +351,7 @@ TEST(GAPendulumTest, ThetaSameAfterCreation) {
 }
 
 TEST(GAPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(0);
   auto p{config.create()};
@@ -363,7 +363,7 @@ TEST(GAPendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
 }
 
 TEST(GAPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -372,8 +372,7 @@ TEST(GAPendulumTest, ApproximatesCanonicalSmallAngleSolution) {
 }
 
 TEST(GAPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using std::pow;
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -382,8 +381,7 @@ TEST(GAPendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSm
 }
 
 TEST(GAPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using std::pow;
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -392,8 +390,7 @@ TEST(GAPendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallA
 }
 
 TEST(GAPendulumTest, DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using std::pow;
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -402,8 +399,7 @@ TEST(GAPendulumTest, DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdj
 }
 
 TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
-  using std::pow;
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -413,8 +409,7 @@ TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjust
 
 TEST(GAPendulumTest,
      DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
-  using std::pow;
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -423,8 +418,7 @@ TEST(GAPendulumTest,
 }
 
 TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
-  using std::pow;
-  using T = math::Multivector<float, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
   GAPendulumConfigurator<T> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
