@@ -34,9 +34,9 @@ class ForwardEuler final {
       result.set_element(i, s1.element(i) + interval * f1.element(i));
     }
 
-    VLOG(5) << "interval: " << interval;
-    VLOG(5) << "s1: " << s1;
-    VLOG(5) << "f1: " << f1;
+    VLOG(6) << "interval: " << interval;
+    VLOG(6) << "s1: " << s1;
+    VLOG(6) << "f1: " << f1;
     VLOG(5) << "result: " << result;
 
     return result;
@@ -59,9 +59,9 @@ class ForwardEuler<ScalarT, T, 2> final {
     result.template set_element<0>(s1.template element<0>() + interval * f1.template element<0>());
     result.template set_element<1>(s1.template element<1>() + interval * f1.template element<1>());
 
-    VLOG(5) << "interval: " << interval;
-    VLOG(5) << "s1: " << s1;
-    VLOG(5) << "f1: " << f1;
+    VLOG(6) << "interval: " << interval;
+    VLOG(6) << "s1: " << s1;
+    VLOG(6) << "f1: " << f1;
     VLOG(5) << "result: " << result;
 
     return result;
@@ -97,11 +97,11 @@ class RungeKutta2 final {
       result.set_element(i, s1.element(i) + interval * f2.element(i));
     }
 
-    VLOG(5) << "interval: " << interval;
-    VLOG(5) << "s1: " << s1;
-    VLOG(5) << "f1: " << f1;
-    VLOG(5) << "s2: " << s2;
-    VLOG(5) << "f2: " << f2;
+    VLOG(6) << "interval: " << interval;
+    VLOG(6) << "s1: " << s1;
+    VLOG(6) << "f1: " << f1;
+    VLOG(6) << "s2: " << s2;
+    VLOG(6) << "f2: " << f2;
     VLOG(5) << "result: " << result;
 
     return result;
@@ -129,11 +129,11 @@ class RungeKutta2<ScalarT, T, 2> final {
     result.template set_element<0>(s1.template element<0>() + interval * f2.template element<0>());
     result.template set_element<1>(s1.template element<1>() + interval * f2.template element<1>());
 
-    VLOG(5) << "interval: " << interval;
-    VLOG(5) << "s1: " << s1;
-    VLOG(5) << "f1: " << f1;
-    VLOG(5) << "s2: " << s2;
-    VLOG(5) << "f2: " << f2;
+    VLOG(6) << "interval: " << interval;
+    VLOG(6) << "s1: " << s1;
+    VLOG(6) << "f1: " << f1;
+    VLOG(6) << "s2: " << s2;
+    VLOG(6) << "f2: " << f2;
     VLOG(5) << "result: " << result;
 
     return result;
@@ -184,15 +184,15 @@ class RungeKutta4 final {
                                                  TWO * f3.element(i) + f4.element(i)));
     }
 
-    VLOG(5) << "interval: " << interval;
-    VLOG(5) << "s1: " << s1;
-    VLOG(5) << "f1: " << f1;
-    VLOG(5) << "s2: " << s2;
-    VLOG(5) << "f2: " << f2;
-    VLOG(5) << "s3: " << s3;
-    VLOG(5) << "f3: " << f3;
-    VLOG(5) << "s4: " << s4;
-    VLOG(5) << "f4: " << f4;
+    VLOG(6) << "interval: " << interval;
+    VLOG(6) << "s1: " << s1;
+    VLOG(6) << "f1: " << f1;
+    VLOG(6) << "s2: " << s2;
+    VLOG(6) << "f2: " << f2;
+    VLOG(6) << "s3: " << s3;
+    VLOG(6) << "f3: " << f3;
+    VLOG(6) << "s4: " << s4;
+    VLOG(6) << "f4: " << f4;
     VLOG(5) << "result: " << result;
 
     return result;
@@ -237,15 +237,15 @@ class RungeKutta4<ScalarT, T, 2> final {
                                        (f1.template element<1>() + TWO * f2.template element<1>() +
                                         TWO * f3.template element<1>() + f4.template element<1>()));
 
-    VLOG(5) << "interval: " << interval;
-    VLOG(5) << "s1: " << s1;
-    VLOG(5) << "f1: " << f1;
-    VLOG(5) << "s2: " << s2;
-    VLOG(5) << "f2: " << f2;
-    VLOG(5) << "s3: " << s3;
-    VLOG(5) << "f3: " << f3;
-    VLOG(5) << "s4: " << s4;
-    VLOG(5) << "f4: " << f4;
+    VLOG(6) << "interval: " << interval;
+    VLOG(6) << "s1: " << s1;
+    VLOG(6) << "f1: " << f1;
+    VLOG(6) << "s2: " << s2;
+    VLOG(6) << "f2: " << f2;
+    VLOG(6) << "s3: " << s3;
+    VLOG(6) << "f3: " << f3;
+    VLOG(6) << "s4: " << s4;
+    VLOG(6) << "f4: " << f4;
     VLOG(5) << "result: " << result;
 
     return result;
