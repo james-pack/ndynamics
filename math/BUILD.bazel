@@ -146,9 +146,3 @@ cc_test(
         "//third_party/gtest",
     ],
 )
-
-cc_binary(
-    name = "multivector_multiply_example",
-    srcs = ["multivector_multiply_example.cc"],
-    deps = [":math"],
-)
