@@ -9,11 +9,12 @@
 #include "math/multivector_utils.h"
 #include "math/state.h"
 
-namespace ndyn::simulation {
+namespace ndyn::math {
 
 /**
  * Simple utility that simulates the state of a pendulum at any time. The main purpose of this
- * utility is to provide a physical model for testing control systems.
+ * utility is to provide a model for testing integrator routines (Runge-Kutta, Euler's method,
+ * etc.).
  *
  * Note that this simulation does NOT use a small angle approximation; it numerically approximates
  * the full 2nd order differential equation of motion.
@@ -31,7 +32,7 @@ class ClassicPendulum final {
   T t_;  // seconds
   StateType state_;
 
-  math::RungeKutta2<T, T, 2> integrator_{[this](const StateType& state) -> StateType {
+  math::RungeKutta4<T, T, 2> integrator_{[this](const StateType& state) -> StateType {
     using std::sin;
     StateType result{state.shift()};
     result.template set_element<1>((g_ / length_) * sin(state.template element<0>()));
@@ -183,7 +184,7 @@ class GAPendulum final {
 
   StateType state_{};
 
-  math::RungeKutta2<ScalarType, MultivectorT, 2> integrator_{
+  math::RungeKutta4<ScalarType, MultivectorT, 2> integrator_{
       [this](const StateType& state) -> StateType {
         StateType result{state.shift()};
         result.template set_element<1>(
@@ -370,4 +371,4 @@ class GAPendulumConfigurator final {
   }
 };
 
-}  // namespace ndyn::simulation
+}  // namespace ndyn::math

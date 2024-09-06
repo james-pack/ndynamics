@@ -1,4 +1,4 @@
-#include "simulation/pendulum.h"
+#include "math/pendulum.h"
 
 #include "base/pi.h"
 #include "glog/logging.h"
@@ -6,7 +6,7 @@
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
 
-namespace ndyn::simulation {
+namespace ndyn::math {
 
 using FloatT = float;
 
@@ -426,4 +426,4 @@ TEST(GAPendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjust
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, LARGE_ANGLE));
 }
 
-}  // namespace ndyn::simulation
+}  // namespace ndyn::math

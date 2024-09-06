@@ -133,6 +133,20 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "pendulum_test",
+    srcs = [
+        "pendulum.h",
+        "pendulum_test.cc",
+    ],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
+
 cc_binary(
     name = "multivector_multiply_example",
     srcs = ["multivector_multiply_example.cc"],
