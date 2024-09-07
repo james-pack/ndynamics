@@ -1,0 +1,21 @@
+cc_library(
+    name = "glfw",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_glfw//:glfw",
+    ],
+)
+
+cc_test(
+    name = "glfw_test",
+    srcs = [
+        "glfw_test.cc",
+    ],
+    env = {
+        "DISPLAY": ":1",
+    },
+    deps = [
+        ":glfw",
+        "//third_party/gtest",
+    ],
+)

@@ -90,3 +90,30 @@ def load_source_dependencies():
             ],
             build_file = "//third_party/zlib:zlib.BUILD",
         )
+
+    if not native.existing_rule("com_github_glfw"):
+        http_archive(
+            name = "com_github_glfw",
+            sha256 = "4ff18a3377da465386374d8127e7b7349b685288cb8e17122f7e1179f73769d5",
+            strip_prefix = "glfw-3.3.10",
+            urls = ["https://github.com/glfw/glfw/archive/3.3.10.tar.gz"],
+            build_file = "//third_party/glfw:glfw.BUILD",
+        )
+
+    if not native.existing_rule("com_github_ocornut_imgui"):
+        http_archive(
+            name = "com_github_ocornut_imgui",
+            sha256 = "2c13a8909f75222c836abc9b3f60cef31c445f3f41f95d8242118ea789d145ca",
+            strip_prefix = "imgui-1.91.1",
+            urls = ["https://github.com/ocornut/imgui/archive/v1.91.1.tar.gz"],
+            build_file = "//third_party/imgui:imgui.BUILD",
+        )
+
+    if not native.existing_rule("com_github_epezent_implot"):
+        http_archive(
+            name = "com_github_epezent_implot",
+            #sha256 = "2c13a8909f75222c836abc9b3f60cef31c445f3f41f95d8242118ea789d145ca",
+            strip_prefix = "implot-0.16",
+            urls = ["https://github.com/epezent/implot/archive/v0.16.tar.gz"],
+            build_file = "//third_party/implot:implot.BUILD",
+        )
