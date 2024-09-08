@@ -1,0 +1,24 @@
+load("//platforms:hex.bzl", "hex")
+
+cc_library(
+    name = "simulation",
+    hdrs = [
+        "pendulum.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//base",
+        "//math",
+    ],
+)
+
+cc_test(
+    name = "pendulum_test",
+    srcs = ["pendulum_test.cc"],
+    deps = [
+        ":simulation",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
+    ],
+)
