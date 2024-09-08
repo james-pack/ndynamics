@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "base/initializer.h"
@@ -11,56 +13,69 @@ namespace ndyn::ui {
 class DemoApp : public App {
  private:
   static constexpr size_t NUM_POINTS_LARGE{1024};
-  static constexpr size_t NUM_POINTS_SMALL{32};
 
-  float x1[NUM_POINTS_LARGE], y1[NUM_POINTS_LARGE];
-  float x2[NUM_POINTS_LARGE], y2[NUM_POINTS_LARGE];
-  float x3[NUM_POINTS_SMALL], y3[NUM_POINTS_SMALL];
+  std::array<float, NUM_POINTS_LARGE> x1{};
+  std::array<float, NUM_POINTS_LARGE> y1{};
+
+  std::array<float, NUM_POINTS_LARGE> x2{};
+  std::array<float, NUM_POINTS_LARGE> y2{};
+
+  std::array<float, NUM_POINTS_LARGE> x3{};
+  std::array<float, NUM_POINTS_LARGE> y3{};
+
+  float previous_time{};
 
  protected:
   void Update() override {
+    using std::copy_n;
     using std::exp;
     using std::sin;
 
-    for (size_t i = 0; i < NUM_POINTS_LARGE; ++i) {
-      x1[i] = i / static_cast<float>(NUM_POINTS_LARGE - 1);
-      y1[i] = 0.5f + 0.5f * sin(50 * (x1[i] + ImGui::GetTime() / static_cast<float>(10)));
-    }
+    const float current_time{static_cast<float>(ImGui::GetTime())};
 
-    for (size_t i = 0; i < NUM_POINTS_LARGE; ++i) {
-      x2[i] = i / static_cast<float>(NUM_POINTS_LARGE - 1);
-      y2[i] = 0.5f + 0.5f * sin(15 * (x2[i] + ImGui::GetTime() / static_cast<float>(32) + 150));
-    }
+    if (current_time - previous_time > 0.02) {
+      copy_n(x1.begin() + 1, x1.size(), x1.begin());
+      copy_n(y1.begin() + 1, y1.size(), y1.begin());
+      copy_n(x2.begin() + 1, x2.size(), x2.begin());
+      copy_n(y2.begin() + 1, y2.size(), y2.begin());
+      copy_n(x3.begin() + 1, x3.size(), x3.begin());
+      copy_n(y3.begin() + 1, y3.size(), y3.begin());
 
-    for (size_t i = 0; i < NUM_POINTS_SMALL; ++i) {
-      x3[i] = i / static_cast<float>(NUM_POINTS_SMALL - 1);
-      y3[i] = exp(x3[i]) / 3;
+      x1[x1.size() - 1] = current_time / static_cast<float>(1024);
+      y1[x1.size() - 1] = 0.5f + 0.5f * sin(2048 * x1[x1.size() - 1]);
+
+      x2[x2.size() - 1] = current_time / static_cast<float>(128);
+      y2[x2.size() - 1] = 0.5f + 0.5f * sin(64 * x2[x2.size() - 1]);
+
+      x3[x3.size() - 1] = current_time / static_cast<float>(32);
+      y3[x3.size() - 1] = exp(x3[x3.size() - 1]) / x3[x3.size() - 1];
+
+      previous_time = current_time;
     }
 
     auto size{ImGui::GetContentRegionAvail()};
     size.y /= 3;
 
     if (ImPlot::BeginPlot("Position", size)) {
-      ImPlot::SetupAxes("x", "y");
       ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
-      ImPlot::PlotLine("f(x)", x1, y1, NUM_POINTS_LARGE);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      ImPlot::PlotLine("g(x)", x3, y3, NUM_POINTS_SMALL, ImPlotLineFlags_Segments);
+      ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_None);
+      ImPlot::PlotLine("f(x)", x1.data(), y1.data(), x1.size());
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Theta", size)) {
-      ImPlot::SetupAxes("x", "y");
       ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
-      ImPlot::PlotLine("theta(x)", x2, y2, NUM_POINTS_LARGE);
+      ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_None);
+      ImPlot::PlotLine("theta(x)", x2.data(), y2.data(), x2.size());
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Energy", size)) {
-      ImPlot::SetupAxes("x", "y");
       ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
+      ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_PanStretch | ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      ImPlot::PlotScatter("h(x)", x3, y3, NUM_POINTS_SMALL);
+      ImPlot::PlotLine("h(x)", x3.data(), y3.data(), x3.size());
       ImPlot::EndPlot();
     }
   }
