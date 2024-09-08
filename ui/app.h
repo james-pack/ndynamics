@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ostream>
 #include <string>
 
 #include "GLFW/glfw3.h"
@@ -11,8 +10,7 @@
 #pragma comment(linker, "/subsystem:windows /ENTRY:mainCRTStartup")
 #endif
 
-std::string to_string(const ImVec2&);
-std::ostream& operator<<(std::ostream&, const ImVec2&);
+namespace ndyn::ui {
 
 // Barebones Application Framework
 class App {
@@ -20,15 +18,15 @@ class App {
   ImVec4 clear_color_{};         // background clear color
   GLFWwindow* window_{nullptr};  // GLFW window handle
 
- public:
-  App(std::string title, size_t width = 0, size_t height = 0);
-  virtual ~App();
-
   // Called at top of run
-  virtual void Start() {}
+  virtual void Start(){};
 
   // Update, called once per frame.
   virtual void Update() = 0;
+
+ public:
+  App(std::string title, size_t width = 0, size_t height = 0);
+  virtual ~App();
 
   // Runs the app.
   void Run();
@@ -36,3 +34,5 @@ class App {
   // Get window size
   ImVec2 GetWindowSize() const;
 };
+
+}  // namespace ndyn::ui

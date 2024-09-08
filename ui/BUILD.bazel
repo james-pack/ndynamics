@@ -2,9 +2,11 @@ cc_library(
     name = "ui",
     srcs = [
         "app.cc",
+        "imgui_utils.cc",
     ],
     hdrs = [
         "app.h",
+        "imgui_utils.h",
     ],
     deps = [
         "//third_party/glfw",

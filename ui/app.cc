@@ -8,18 +8,9 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_internal.h"
 #include "implot.h"
+#include "ui/imgui_utils.h"
 
-std::string to_string(const ImVec2 &v) {
-  using std::to_string;
-  std::string result{};
-  result.append("(").append(to_string(v.x)).append(", ").append(to_string(v.y)).append(")");
-  return result;
-}
-
-std::ostream &operator<<(std::ostream &os, const ImVec2 &v) {
-  os << to_string(v);
-  return os;
-}
+namespace ndyn::ui {
 
 void style_colors_app() {
   static const ImVec4 bg_dark = ImVec4(0.15f, 0.16f, 0.21f, 1.00f);
@@ -138,10 +129,6 @@ App::App(std::string title, size_t width, size_t height) {
   // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
   // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);          // 3.0+ only
 
-  // Scaling the window to the monitor helps with readability on high resolution monitors.
-  // Otherwise, the text and other renderings can be too small on 4K and higher resolution monitors.
-  glfwWindowHint(GLFW_SCALE_TO_MONITOR, GL_TRUE);
-
   GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   const GLFWvidmode *mode = glfwGetVideoMode(monitor);
   glfwWindowHint(GLFW_RED_BITS, mode->redBits);
@@ -149,17 +136,17 @@ App::App(std::string title, size_t width, size_t height) {
   glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
   glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-  bool fullscreen{false};
-  if (width == 0 && height == 0) {
-    fullscreen = true;
-  }
-
+  const bool fullscreen{width == 0 && height == 0};
   if (width == 0) {
     width = mode->width;
   }
   if (height == 0) {
     height = mode->height;
   }
+  // Scaling the window to the monitor helps with readability on high resolution monitors.
+  // Otherwise, the text and other renderings can be too small on 4K and higher resolution
+  // monitors.
+  glfwWindowHint(GLFW_SCALE_TO_MONITOR, GL_TRUE);
 
   // Create window with graphics context
   if (fullscreen) {
@@ -217,7 +204,7 @@ App::~App() {
 
 void App::Run() {
   Start();
-  // Main loop
+
   while (!glfwWindowShouldClose(window_)) {
     glfwPollEvents();
     // Start the Dear ImGui frame
@@ -253,3 +240,5 @@ ImVec2 App::GetWindowSize() const {
   glfwGetWindowSize(window_, &w, &h);
   return ImVec2(w, h);
 }
+
+}  // namespace ndyn::ui

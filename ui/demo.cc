@@ -6,6 +6,8 @@
 #include "implot.h"
 #include "ui/app.h"
 
+namespace ndyn::ui {
+
 class DemoApp : public App {
  private:
   static constexpr size_t NUM_POINTS_LARGE{1024};
@@ -15,9 +17,7 @@ class DemoApp : public App {
   float x2[NUM_POINTS_LARGE], y2[NUM_POINTS_LARGE];
   float x3[NUM_POINTS_SMALL], y3[NUM_POINTS_SMALL];
 
- public:
-  using App::App;
-
+ protected:
   void Update() override {
     using std::exp;
     using std::sin;
@@ -64,12 +64,17 @@ class DemoApp : public App {
       ImPlot::EndPlot();
     }
   }
+
+ public:
+  using App::App;
 };
+
+}  // namespace ndyn::ui
 
 int main(int argc, char* argv[]) {
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
-  DemoApp app{"Demo", 1920, 1080};
+  ndyn::ui::DemoApp app{"Demo", 1920, 1080};
   app.Run();
   return 0;
 }
