@@ -1,13 +1,28 @@
 #include "ui/app.h"
 
+#include <ostream>
+#include <string>
+
 #include "glog/logging.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_internal.h"
 #include "implot.h"
 
+std::string to_string(const ImVec2 &v) {
+  using std::to_string;
+  std::string result{};
+  result.append("(").append(to_string(v.x)).append(", ").append(to_string(v.y)).append(")");
+  return result;
+}
+
+std::ostream &operator<<(std::ostream &os, const ImVec2 &v) {
+  os << to_string(v);
+  return os;
+}
+
 void style_colors_app() {
-  // static const ImVec4 bg_dark = ImVec4(0.15f, 0.16f, 0.21f, 1.00f);
+  static const ImVec4 bg_dark = ImVec4(0.15f, 0.16f, 0.21f, 1.00f);
   static const ImVec4 bg_mid = ImVec4(0.20f, 0.21f, 0.27f, 1.00f);
   static const ImVec4 accent_dark = ImVec4(0.292f, 0.360f, 0.594f, 1.000f);
   static const ImVec4 accent_light = ImVec4(0.409f, 0.510f, 0.835f, 1.000f);
@@ -89,12 +104,12 @@ void style_colors_app() {
   ImPlot::StyleColorsAuto();
 
   ImVec4 *pcolors = ImPlot::GetStyle().Colors;
-  pcolors[ImPlotCol_PlotBg] = ImVec4(0, 0, 0, 0);
+  pcolors[ImPlotCol_PlotBg] = bg_dark;
   pcolors[ImPlotCol_PlotBorder] = ImVec4(0, 0, 0, 0);
   pcolors[ImPlotCol_Selection] = attention;
   pcolors[ImPlotCol_Crosshairs] = colors[ImGuiCol_Text];
 
-  ImPlot::GetStyle().DigitalBitHeight = 20;
+  // ImPlot::GetStyle().DigitalBitHeight = 20;
 
   auto &pstyle = ImPlot::GetStyle();
   pstyle.PlotPadding = pstyle.LegendPadding = {12, 12};
@@ -111,47 +126,63 @@ static void glfw_error_callback(int error, const char *description) {
   LOG(ERROR) << "GLFW Error " << error << ": " << description;
 }
 
-App::App(std::string title) {
+App::App(std::string title, size_t width, size_t height) {
   // Setup window
   glfwSetErrorCallback(glfw_error_callback);
   if (!glfwInit()) abort();
 
   // GL 3.0 + GLSL 130
-  const char *glsl_version = "#version 130";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  // const char *glsl_version = "#version 130";
+  // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
   // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);          // 3.0+ only
+
+  // Scaling the window to the monitor helps with readability on high resolution monitors.
+  // Otherwise, the text and other renderings can be too small on 4K and higher resolution monitors.
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GL_TRUE);
 
   GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-
   glfwWindowHint(GLFW_RED_BITS, mode->redBits);
   glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
   glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
   glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-  // Create window with graphics context
-  window_ = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, NULL);
-  if (window_ == nullptr) {
-    fprintf(stderr, "Failed to initialize GLFW window!\n");
-    abort();
+  bool fullscreen{false};
+  if (width == 0 && height == 0) {
+    fullscreen = true;
   }
+
+  if (width == 0) {
+    width = mode->width;
+  }
+  if (height == 0) {
+    height = mode->height;
+  }
+
+  // Create window with graphics context
+  if (fullscreen) {
+    window_ = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
+  } else {
+    window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+  }
+  if (window_ == nullptr) {
+    LOG(FATAL) << "Failed to initialize GLFW window!";
+  }
+
   glfwMakeContextCurrent(window_);
-  glfwSwapInterval(1);
+  glfwSwapInterval(0);
 
   // Initialize OpenGL loader
-  // bool err = gladLoadGL() == 0;
-  // if (err) {
-  //   fprintf(stderr, "Failed to initialize OpenGL loader!\n");
-  //   abort();
+  // if (gladLoadGL() != 0) {
+  //   LOG(FATAL) << "Failed to initialize OpenGL loader!";
   // }
 
+  // Add the GPU details to the window title.
   const GLubyte *renderer = glGetString(GL_RENDERER);
-
   title += " - ";
-  title += reinterpret_cast<char const *>(renderer);
+  title += reinterpret_cast<const char *>(renderer);
   glfwSetWindowTitle(window_, title.c_str());
 
   // Setup Dear ImGui context
@@ -159,10 +190,17 @@ App::App(std::string title) {
   ImGui::CreateContext();
   ImPlot::CreateContext();
 
+  ImVec2 monitor_scale;
+  glfwGetMonitorContentScale(monitor, &monitor_scale.x, &monitor_scale.y);
   ImGuiIO &io = ImGui::GetIO();
-  //io.FontGlobalScale = 2.8f;
+  LOG(INFO) << "monitor_scale: " << monitor_scale;
+  if (monitor_scale.x >= monitor_scale.y) {
+    io.FontGlobalScale = monitor_scale.x;
+  } else {
+    io.FontGlobalScale = monitor_scale.y;
+  }
   ImGui_ImplGlfw_InitForOpenGL(window_, true);
-  ImGui_ImplOpenGL3_Init(glsl_version);
+  ImGui_ImplOpenGL3_Init(/*glsl_version*/);
 
   clear_color_ = ImVec4(0.15f, 0.16f, 0.21f, 1.00f);
   style_colors_app();
@@ -187,7 +225,16 @@ void App::Run() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    static constexpr float PAD{10.f};
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2{PAD, PAD}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
+
+    ImGui::Begin("##App", nullptr, ImGuiWindowFlags_NoDecoration);
+
     Update();
+
+    ImGui::End();
 
     // Rendering
     ImGui::Render();

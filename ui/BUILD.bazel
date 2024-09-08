@@ -19,6 +19,7 @@ cc_binary(
     srcs = ["demo.cc"],
     deps = [
         ":ui",
+        "//base",
         "//third_party/glfw",
         "//third_party/glog",
         "//third_party/imgui",
