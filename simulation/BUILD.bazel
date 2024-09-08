@@ -22,3 +22,14 @@ cc_test(
         "//third_party/gtest",
     ],
 )
+
+cc_binary(
+    name = "pendulum_graph",
+    srcs = ["pendulum_graph.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":simulation",
+        "//math",
+        "//ui",
+    ],
+)
