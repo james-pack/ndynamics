@@ -14,7 +14,7 @@ void initialize(int* argc, char*** argv, const std::string& log_dir) {
   std::filesystem::create_directories(log_path, ec);
   if (ec) {
     log_path = "/tmp/ndyn";
-    std::filesystem::create_directories(log_path);
+    std::filesystem::create_directories(log_path, ec);
     if (ec) {
       // We couldn't fix the issue. Revert to user chosen directory. It will fail, but with a more
       // reasonable error message.
