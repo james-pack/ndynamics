@@ -188,7 +188,7 @@ class GAPendulum final {
       [this](const StateType& state) -> StateType {
         StateType result{state.shift()};
         result.template set_element<1>(
-            decompose(gravitational_acceleration_, state.template element<0>()).first);
+            decompose(gravitational_acceleration_, state.template element<0>()).second);
         return result;
       }};
 

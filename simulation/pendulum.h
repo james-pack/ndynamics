@@ -87,7 +87,7 @@ class Pendulum final {
       [this](const StateType& state) -> StateType {
         StateType result{state.shift()};
         result.template set_element<1>(
-            decompose(gravitational_acceleration_, state.template element<0>()).first);
+            decompose(gravitational_acceleration_, state.template element<0>()).second);
         return result;
       }};
 
@@ -135,8 +135,24 @@ class Pendulum final {
   const MultivectorType& position() const { return state_.template element<0>(); }
   const MultivectorType& velocity() const { return state_.template element<1>(); }
   const MultivectorType& acceleration() const {
-    return decompose(gravitational_acceleration_, position()).first;
+    return decompose(gravitational_acceleration_, position()).second;
   }
+
+  const MultivectorType& graviational_acceleration() const { return gravitational_acceleration_; }
+
+  ScalarType height() const {
+    // Extract the aspect of the position vector that is parallel to the gravitational acceleration
+    // direction.
+    const auto parallel{math::parallel(position(), gravitational_acceleration_)};
+    // Construct the vector that represents the position of the pendulum at the bottom of its swing.
+    const auto bottom_of_swing{length_ / g_ * gravitational_acceleration_};
+
+    return abs(parallel - bottom_of_swing);
+  }
+
+  ScalarType compute_potential_energy() const { return mass_ * g_ * height(); }
+
+  ScalarType compute_kinetic_energy() const { return mass_ / 2 * square_magnitude(velocity()); }
 
   ScalarType theta() const {
     using std::abs;
@@ -182,24 +198,33 @@ class Pendulum final {
 
     if (step_size == 0) {
       step_size = g_ / 1000;
+
+      VLOG(5) << "Default step size used. step_size: " << step_size;
     }
 
-    ScalarType period_offset{remainder(new_time - initial_time_, period_)};
-    if (period_offset < 0) {
-      step_size *= -1;
-    }
-    VLOG(4) << "goto_time() -- period_offset: " << period_offset;
-
-    state_ = {initial_position_};
-    for (ScalarType t = 0; abs(t) < abs(period_offset); t += step_size) {
-      state_ = integrator_(step_size, state_);
-      // Reset the length to adjust for inaccuracies in integration.
-      state_.template set_element<0>(length_ * state_.template element<0>() /
-                                     abs(state_.template element<0>()));
-      VLOG(5) << "goto_time() -- t: " << t << ", state_: " << state_ << ", theta(): " << theta();
+    if (new_time < t_ && step_size > 0) {
+      step_size = -step_size;
     }
 
-    t_ = new_time;
+    if (abs(t_ - new_time) > abs(step_size)) {
+      do {
+        t_ += step_size;
+
+        if (abs(remainder(t_, period_)) < abs(step_size)) {
+          state_ = {initial_position_};
+        } else if (abs(remainder(t_, period_ / 2)) < abs(step_size)) {
+          state_ = {reflect(initial_position_, gravitational_acceleration_)};
+        } else {
+          state_ = integrator_(step_size, state_);
+
+          // Renomalize length after each step integration step. This helps stabilize the overall
+          // system by enforcing the constraint that the pendulum's length is constant.
+          state_.template set_element<0>(length_ / abs(state_.template element<0>()) *
+                                         state_.template element<0>());
+        }
+        VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
+      } while (abs(t_ - new_time) > abs(step_size));
+    }
   }
 
   void evolve(ScalarType time_increment, ScalarType step_size = 0) {

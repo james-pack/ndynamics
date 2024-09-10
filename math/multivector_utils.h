@@ -26,9 +26,42 @@ constexpr T abs(
 }
 
 /**
- * Decompose a Multivector into a Multivector that is perpendicular to the given axis and a
- * Multivector that is parallel to that axis. Returns a std::pair whose first element is the
- * perpendicular Multivector, the second is the  parallel  Multivector. The sum of the two will
+ * Decompose a Multivector into a Multivector that is perpendicular to the given axis.
+ */
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>
+orthogonal(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& axis) {
+  using MultivectorT =
+      Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
+
+  MultivectorT result{};
+  result = axis * axis.outer(value) / square_magnitude(axis);
+  return result;
+}
+
+/**
+ * Decompose a Multivector into a Multivector that is parallel to the given axis.
+ */
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> parallel(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& axis) {
+  using MultivectorT =
+      Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
+
+  MultivectorT result{};
+  result = value.left_contraction(axis).scalar() / square_magnitude(axis) * axis;
+  return result;
+}
+
+/**
+ * Decompose a Multivector into a Multivector that is parallel to the given axis and a
+ * Multivector that is perpendicular to that axis. Returns a std::pair whose first element is the
+ * parallel Multivector, the second is the perpendicular Multivector. The sum of the two will
  * equal the original value.
  */
 template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
@@ -42,9 +75,20 @@ decompose(
       Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
 
   std::pair<MultivectorT, MultivectorT> result{};
-  result.first = axis * axis.outer(value) / square_magnitude(axis);
-  result.second = value - result.first;
+  result.second = orthogonal(value, axis);
+  result.first = value - result.second;
   return result;
+}
+
+/**
+ * Reflect a Multivector across the given axis.
+ */
+template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+          InnerProduct INNER_PRODUCT_STYLE>
+constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> reflect(
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value,
+    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& axis) {
+  return axis * value * axis / square_magnitude(axis);
 }
 
 }  // namespace ndyn::math

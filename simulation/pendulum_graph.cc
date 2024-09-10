@@ -3,27 +3,42 @@
 #include <cmath>
 
 #include "base/initializer.h"
+#include "base/pi.h"
 #include "glog/logging.h"
 #include "imgui.h"
 #include "implot.h"
+#include "math/multivector.h"
+#include "simulation/pendulum.h"
 #include "ui/app.h"
 
 namespace ndyn::simulation {
 
 class PendulumGraph : public ui::App {
  private:
+  using FloatT = float;
+  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+
+  static constexpr FloatT ANGLE{pi / 32};
+  Pendulum<T> pendulum{PendulumConfigurator<T>{}.set_theta(ANGLE).create()};
+
   static constexpr size_t NUM_POINTS_LARGE{1024};
 
-  std::array<float, NUM_POINTS_LARGE> x1{};
-  std::array<float, NUM_POINTS_LARGE> y1{};
+  std::array<FloatT, NUM_POINTS_LARGE> x1{};
+  std::array<FloatT, NUM_POINTS_LARGE> y1{};
 
-  std::array<float, NUM_POINTS_LARGE> x2{};
-  std::array<float, NUM_POINTS_LARGE> y2{};
+  std::array<FloatT, NUM_POINTS_LARGE> x2{};
+  std::array<FloatT, NUM_POINTS_LARGE> y2{};
 
-  std::array<float, NUM_POINTS_LARGE> x3{};
-  std::array<float, NUM_POINTS_LARGE> y3{};
+  std::array<FloatT, NUM_POINTS_LARGE> x3{};
+  std::array<FloatT, NUM_POINTS_LARGE> y3{};
 
-  float previous_time{};
+  std::array<FloatT, NUM_POINTS_LARGE> x4{};
+  std::array<FloatT, NUM_POINTS_LARGE> y4{};
+
+  std::array<FloatT, NUM_POINTS_LARGE> x5{};
+  std::array<FloatT, NUM_POINTS_LARGE> y5{};
+
+  FloatT previous_time{};
 
  protected:
   void Update() override {
@@ -31,24 +46,42 @@ class PendulumGraph : public ui::App {
     using std::exp;
     using std::sin;
 
-    const float current_time{static_cast<float>(ImGui::GetTime())};
+    const FloatT current_time{static_cast<FloatT>(ImGui::GetTime())};
 
     if (current_time - previous_time > 0.02) {
       copy_n(x1.begin() + 1, x1.size(), x1.begin());
       copy_n(y1.begin() + 1, y1.size(), y1.begin());
       copy_n(x2.begin() + 1, x2.size(), x2.begin());
       copy_n(y2.begin() + 1, y2.size(), y2.begin());
+
       copy_n(x3.begin() + 1, x3.size(), x3.begin());
       copy_n(y3.begin() + 1, y3.size(), y3.begin());
 
-      x1[x1.size() - 1] = current_time / static_cast<float>(1024);
-      y1[x1.size() - 1] = 0.5f + 0.5f * sin(2048 * x1[x1.size() - 1]);
+      copy_n(x4.begin() + 1, x4.size(), x4.begin());
+      copy_n(y4.begin() + 1, y4.size(), y4.begin());
 
-      x2[x2.size() - 1] = current_time / static_cast<float>(128);
-      y2[x2.size() - 1] = 0.5f + 0.5f * sin(64 * x2[x2.size() - 1]);
+      copy_n(x5.begin() + 1, x5.size(), x5.begin());
+      copy_n(y5.begin() + 1, y5.size(), y5.begin());
 
-      x3[x3.size() - 1] = current_time / static_cast<float>(32);
-      y3[x3.size() - 1] = exp(x3[x3.size() - 1]) / x3[x3.size() - 1];
+      pendulum.goto_time(current_time);
+
+      x1[x1.size() - 1] = current_time;
+      y1[x1.size() - 1] = pendulum.height();
+
+      x2[x2.size() - 1] = current_time;
+      y2[x2.size() - 1] = pendulum.compute_potential_energy();
+
+      x3[x3.size() - 1] = current_time;
+      y3[x3.size() - 1] = pendulum.compute_kinetic_energy();
+
+      x4[x4.size() - 1] = current_time;
+      y4[x4.size() - 1] = pendulum.compute_kinetic_energy() + pendulum.compute_potential_energy();
+
+      x5[x5.size() - 1] = current_time;
+      y5[x5.size() - 1] = pendulum.theta();
+
+      VLOG(2) << "current_time: " << current_time << ", theta: " << y5[x5.size() - 1]
+              << ", height: " << y1[x1.size() - 1];
 
       previous_time = current_time;
     }
@@ -57,25 +90,26 @@ class PendulumGraph : public ui::App {
     size.y /= 3;
 
     if (ImPlot::BeginPlot("Position", size)) {
-      ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
-      ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_None);
-      ImPlot::PlotLine("f(x)", x1.data(), y1.data(), x1.size());
-      ImPlot::EndPlot();
-    }
-
-    if (ImPlot::BeginPlot("Theta", size)) {
-      ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
-      ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_None);
-      ImPlot::PlotLine("theta(x)", x2.data(), y2.data(), x2.size());
+      ImPlot::SetupAxes("t", "h", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+      ImPlot::PlotScatter("Height", x1.data(), y1.data(), x1.size());
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Energy", size)) {
-      ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
-      ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_PanStretch | ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxes("t", "Energy", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      ImPlot::PlotLine("h(x)", x3.data(), y3.data(), x3.size());
+      ImPlot::PlotScatter("Potential", x2.data(), y2.data(), x2.size());
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Cross);
+      ImPlot::PlotScatter("Kinetic", x3.data(), y3.data(), x3.size());
+      ImPlot::PlotScatter("Total", x4.data(), y4.data(), x4.size());
+      ImPlot::EndPlot();
+    }
+
+    if (ImPlot::BeginPlot("Angle", size)) {
+      ImPlot::SetupAxes("t", "Energy", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+      ImPlot::PlotScatter("theta", x5.data(), y5.data(), x5.size());
       ImPlot::EndPlot();
     }
   }

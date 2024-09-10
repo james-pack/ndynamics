@@ -81,6 +81,7 @@ cc_test(
     srcs = ["multivector_utils_test.cc"],
     deps = [
         ":math",
+        ":testing",
         "//third_party/gtest",
     ],
 )
