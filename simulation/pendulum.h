@@ -126,19 +126,21 @@ class Pendulum final {
 
   ScalarType mass() const { return mass_; }
   // Magnitude of the acceleration due to gravity.
-  ScalarType g() const { return g_; }
-  ScalarType period() const { return period_; }
-  ScalarType length() const { return length_; }
-  ScalarType current_time() const { return t_; }
+  constexpr ScalarType g() const { return g_; }
+  constexpr ScalarType period() const { return period_; }
+  constexpr ScalarType length() const { return length_; }
+  constexpr ScalarType current_time() const { return t_; }
 
-  const StateType& state() const { return state_; }
-  const MultivectorType& position() const { return state_.template element<0>(); }
-  const MultivectorType& velocity() const { return state_.template element<1>(); }
-  const MultivectorType& acceleration() const {
+  constexpr const StateType& state() const { return state_; }
+  constexpr const MultivectorType& position() const { return state_.template element<0>(); }
+  constexpr const MultivectorType& velocity() const { return state_.template element<1>(); }
+  constexpr const MultivectorType& acceleration() const {
     return decompose(gravitational_acceleration_, position()).second;
   }
 
-  const MultivectorType& graviational_acceleration() const { return gravitational_acceleration_; }
+  constexpr const MultivectorType& graviational_acceleration() const {
+    return gravitational_acceleration_;
+  }
 
   ScalarType height() const {
     // Extract the aspect of the position vector that is parallel to the gravitational acceleration
