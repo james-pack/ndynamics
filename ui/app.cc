@@ -180,7 +180,6 @@ App::App(std::string title, size_t width, size_t height) {
   ImVec2 monitor_scale;
   glfwGetMonitorContentScale(monitor, &monitor_scale.x, &monitor_scale.y);
   ImGuiIO &io = ImGui::GetIO();
-  LOG(INFO) << "monitor_scale: " << monitor_scale;
   if (monitor_scale.x >= monitor_scale.y) {
     io.FontGlobalScale = monitor_scale.x;
   } else {
