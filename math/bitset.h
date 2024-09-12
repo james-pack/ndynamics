@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstring>
+#include <cstdint>
 #include <limits>
 #include <ostream>
 #include <stdexcept>
@@ -13,7 +13,7 @@ namespace ndyn::math {
 template <size_t N>
 class BitSetT final {
  private:
-  constexpr unsigned long masked_bits() const {
+  constexpr uint64_t masked_bits() const {
     if constexpr (N < MAX_SIZE) {
       return bits & ((1UL << N) - 1);
     } else {
@@ -22,22 +22,22 @@ class BitSetT final {
   }
 
  public:
-  static constexpr size_t MAX_SIZE{8 * sizeof(unsigned long)};
+  static constexpr size_t MAX_SIZE{8 * sizeof(uint64_t)};
 
   static_assert(N <= MAX_SIZE,
-                "Can't handle BitSets larger than the number of bits in an unsigned long");
+                "Can't handle BitSets larger than the number of bits in an uint64_t");
 
   static constexpr BitSetT create_mask(size_t width = N, size_t left_shift = 0) {
     if (width + left_shift < N) {
       return BitSetT{((1UL << width) - 1) << left_shift};
     } else {
-      return BitSetT{std::numeric_limits<unsigned long>::max() << left_shift};
+      return BitSetT{std::numeric_limits<uint64_t>::max() << left_shift};
     }
   }
 
   constexpr BitSetT() = default;
 
-  constexpr BitSetT(unsigned long b) : bits(b) {}
+  constexpr BitSetT(uint64_t b) : bits(b) {}
 
   template <size_t M>
   constexpr BitSetT(const BitSetT<M>& rhs) : bits(rhs.bits) {}
@@ -96,9 +96,9 @@ class BitSetT final {
 
   constexpr BitSetT operator~() const { return BitSetT{~bits}; }
   constexpr BitSetT operator|(const BitSetT& rhs) const { return BitSetT{bits | rhs.bits}; }
-  constexpr BitSetT operator|(unsigned long rhs) const { return BitSetT{bits | rhs}; }
+  constexpr BitSetT operator|(uint64_t rhs) const { return BitSetT{bits | rhs}; }
   constexpr BitSetT operator&(const BitSetT& rhs) const { return BitSetT{bits & rhs.bits}; }
-  constexpr BitSetT operator&(unsigned long rhs) const { return BitSetT{bits & rhs}; }
+  constexpr BitSetT operator&(uint64_t rhs) const { return BitSetT{bits & rhs}; }
 
   constexpr BitSetT operator xor(const BitSetT& rhs) const { return bits xor rhs.bits; }
 
@@ -115,9 +115,9 @@ class BitSetT final {
     return *this;
   }
 
-  constexpr unsigned long to_ulong() const { return static_cast<unsigned long>(masked_bits()); }
+  constexpr uint64_t to_ulong() const { return static_cast<uint64_t>(masked_bits()); }
 
-  unsigned long bits{};
+  uint64_t bits{};
 };
 
 template <size_t N>
