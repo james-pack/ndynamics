@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstring>
 #include <functional>
 
 #include "glog/logging.h"

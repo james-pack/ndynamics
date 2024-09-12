@@ -2,7 +2,7 @@
 
 #include <array>
 #include <cmath>
-#include <cstring>
+#include <cstdint>
 #include <initializer_list>
 #include <ostream>
 #include <stdexcept>

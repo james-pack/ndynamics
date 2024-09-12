@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <cstring>
 
 #include "base/pi.h"
 #include "glog/logging.h"

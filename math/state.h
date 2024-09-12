@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <cstring>
+#include <cstdint>
 #include <initializer_list>
 #include <ostream>
 #include <string>

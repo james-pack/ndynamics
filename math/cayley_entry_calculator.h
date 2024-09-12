@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstring>
+#include <cstdint>
 
 #include "math/bitset.h"
 
