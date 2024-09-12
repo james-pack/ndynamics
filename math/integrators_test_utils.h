@@ -1,5 +1,6 @@
+#pragma once
+
 #include <cmath>
-#include <cstring>
 
 #include "glog/logging.h"
 #include "gtest/gtest.h"
