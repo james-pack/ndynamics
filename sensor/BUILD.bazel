@@ -1,0 +1,57 @@
+load("//platforms:hex.bzl", "hex")
+
+cc_library(
+    name = "sensor",
+    hdrs = [
+        "bus.h",
+        "characteristics.h",
+        "measurement_channel.h",
+        "measurement_type.h",
+        "sensor.h",
+        "sensors.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//base",
+        "//math",
+        "//time",
+    ],
+)
+
+cc_library(
+    name = "imu_bmi323",
+    hdrs = [
+        "imu_bmi323.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sensor",
+        "//base",
+        "//math",
+    ],
+)
+
+cc_library(
+    name = "testing",
+    hdrs = [
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sensor",
+        "//base",
+        "//math",
+    ],
+)
+
+cc_test(
+    name = "imu_bmi323_test",
+    srcs = ["imu_bmi323_test.cc"],
+    deps = [
+        ":imu_bmi323",
+        ":sensor",
+        ":testing",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
+    ],
+)
