@@ -23,25 +23,29 @@ class MeasurementValueType final {};
 template <>
 class MeasurementValueType<MeasurementType::TEMPERATURE> final {
  public:
-  using type = float;
+  using scalar_type = float;
+  using type = scalar_type;
 };
 
 template <>
 class MeasurementValueType<MeasurementType::ACCELEROMETER> final {
  public:
-  using type = math::Multivector<float, 3, 0, 0>;
+  using scalar_type = float;
+  using type = math::Multivector<scalar_type, 3, 0, 0>;
 };
 
 template <>
 class MeasurementValueType<MeasurementType::GYROSCOPE> final {
  public:
-  using type = math::Multivector<float, 3, 0, 0>;
+  using scalar_type = float;
+  using type = math::Multivector<scalar_type, 3, 0, 0>;
 };
 
 template <>
 class MeasurementValueType<MeasurementType::MAGNETOMETER> final {
  public:
-  using type = math::Multivector<float, 3, 0, 0>;
+  using scalar_type = float;
+  using type = math::Multivector<scalar_type, 3, 0, 0>;
 };
 
 }  // namespace ndyn::sensor

@@ -21,7 +21,7 @@ class Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> final {
 
  private:
   std::function<ValueType(time::TimeT)> measure_fn_;
-  std::function<bool(time::TimeT)> should_read_fn_;
+  SensorReadLimiter should_read_fn_;
 
   TemperatureMeasurementChannel temperature_{};
 
@@ -67,7 +67,7 @@ class Sensor<SensorSku::FAKE_ACCELEROMETER, BusType::NO_BUS> final {
 
  private:
   std::function<ValueType(time::TimeT)> measure_fn_;
-  std::function<bool(time::TimeT)> should_read_fn_;
+  SensorReadLimiter should_read_fn_;
 
   AccelerometerMeasurementChannel accelerometer_{};
 
@@ -113,7 +113,7 @@ class Sensor<SensorSku::FAKE_GYROSCOPE, BusType::NO_BUS> final {
 
  private:
   std::function<ValueType(time::TimeT)> measure_fn_;
-  std::function<bool(time::TimeT)> should_read_fn_;
+  SensorReadLimiter should_read_fn_;
 
   GyroscopeMeasurementChannel gyroscope_{};
 

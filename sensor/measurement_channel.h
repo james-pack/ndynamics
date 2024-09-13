@@ -12,6 +12,7 @@ template <MeasurementType TYPE>
 class MeasurementChannel final {
  public:
   using ValueType = typename MeasurementValueType<TYPE>::type;
+  using ScalarType = typename MeasurementValueType<TYPE>::scalar_type;
 
  private:
   time::TimeT time_{};

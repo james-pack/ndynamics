@@ -7,6 +7,7 @@ cc_library(
         "characteristics.h",
         "measurement_channel.h",
         "measurement_type.h",
+        "read_limiters.h",
         "sensor.h",
         "sensors.h",
     ],

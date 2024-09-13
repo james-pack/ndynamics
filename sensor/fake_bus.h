@@ -42,6 +42,22 @@ class BusTransmission<BusType::FAKE_BUS, AddressT, DeviceAddressT> final {
     return true;
   }
 
+  bool write(AddressT location, uint16_t value) {
+    for (size_t i = 0; i < sizeof(value); ++i) {
+      values_[location + i] = value & 0xff;
+      value = (value >> 8);
+    }
+    return true;
+  }
+
+  bool write(AddressT location, uint32_t value) {
+    for (size_t i = 0; i < sizeof(value); ++i) {
+      values_[location + i] = value & 0xff;
+      value = (value >> 8);
+    }
+    return true;
+  }
+
   template <size_t ARRAY_SIZE>
   bool write(AddressT location, size_t num_bytes, const std::array<uint8_t, ARRAY_SIZE>& values) {
     for (size_t i = 0; i < num_bytes; ++i) {
@@ -59,9 +75,31 @@ class BusTransmission<BusType::FAKE_BUS, AddressT, DeviceAddressT> final {
     return true;
   }
 
-  template <size_t ARRAY_SIZE>
-  size_t read(AddressT location, std::array<uint8_t, ARRAY_SIZE>& buffer) {
-    for (size_t i = 0; i < buffer.size(); ++i) {
+  bool read(AddressT location, uint16_t& buffer) {
+    for (size_t i = 0; i < sizeof(buffer); ++i) {
+      if (values_.count(location + i) > 0) {
+        buffer = (buffer << 8) | values_[location + i];
+      } else {
+        buffer = (buffer << 8);
+      }
+    }
+    return true;
+  }
+
+  bool read(AddressT location, uint32_t& buffer) {
+    for (size_t i = 0; i < sizeof(buffer); ++i) {
+      if (values_.count(location + i) > 0) {
+        buffer = (buffer << 8) | values_[location + i];
+      } else {
+        buffer = (buffer << 8);
+      }
+    }
+    return true;
+  }
+
+  template <typename T>
+  bool read(AddressT location, T& buffer) {
+    for (size_t i = 0; i < sizeof(buffer); ++i) {
       if (values_.count(location + i) > 0) {
         buffer[i] = values_[location + i];
       } else {

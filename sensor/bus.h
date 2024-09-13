@@ -50,6 +50,8 @@ class BusTransmission final {
   }
 
   bool write(AddressT location, uint8_t value) { return false; }
+  bool write(AddressT location, uint16_t value) { return false; }
+  bool write(AddressT location, uint32_t value) { return false; }
 
   template <size_t ARRAY_SIZE>
   bool write(AddressT location, size_t num_bytes, const std::array<uint8_t, ARRAY_SIZE>& value) {
@@ -57,6 +59,8 @@ class BusTransmission final {
   }
 
   bool read(AddressT location, uint8_t& buffer) { return false; };
+  bool read(AddressT location, uint16_t& buffer) { return false; };
+  bool read(AddressT location, uint32_t& buffer) { return false; };
 
   template <size_t ARRAY_SIZE>
   size_t read(AddressT location, std::array<uint8_t, ARRAY_SIZE>& buffer) {
@@ -67,8 +71,8 @@ class BusTransmission final {
 template <BusType BUS_TYPE, typename AddressT, typename DeviceAddressT>
 class Bus final {
  private:
-  void lock();
-  void unlock();
+  void lock() {}
+  void unlock() {}
 
   friend class BusTransmission<BUS_TYPE, AddressT, DeviceAddressT>;
 
