@@ -35,8 +35,8 @@ cc_library(
 cc_library(
     name = "testing",
     hdrs = [
-        "fake_accelerometer.h",
         "fake_bus.h",
+        "fake_sensors.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -61,8 +61,8 @@ cc_test(
 )
 
 cc_test(
-    name = "fake_accelerometer_test",
-    srcs = ["fake_accelerometer_test.cc"],
+    name = "fake_sensors_test",
+    srcs = ["fake_sensors_test.cc"],
     deps = [
         ":sensor",
         ":testing",
