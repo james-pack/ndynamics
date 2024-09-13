@@ -56,6 +56,7 @@ class BusTransmission<BusType::FAKE_BUS, AddressT, DeviceAddressT> final {
     } else {
       buffer = 0;
     }
+    return true;
   }
 
   template <size_t ARRAY_SIZE>
