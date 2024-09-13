@@ -30,11 +30,22 @@ class BusTransmission final {
   Bus<BUS_TYPE, AddressT, DeviceAddressT>* bus_;
 
  public:
-  BusTransmission(Bus<BUS_TYPE, AddressT, DeviceAddressT>& bus) : bus_(&bus) { bus_->lock(); }
+  BusTransmission(Bus<BUS_TYPE, AddressT, DeviceAddressT>& bus) : bus_(&bus) { bus_->lock(this); }
 
-  BusTransmission(BusTransmission&& rhs) : bus_(rhs.bus_) { rhs.bus_ = nullptr; }
+  BusTransmission(BusTransmission&& rhs) : bus_(rhs.bus_) {
+    if (bus_->owns_lock(&rhs)) {
+      bus_->unlock();
+      bus_->lock(this);
+    }
+    rhs.bus_ = nullptr;
+  }
+
   BusTransmission& operator=(BusTransmission&& rhs) {
     bus_ = rhs.bus_;
+    if (bus_->owns_lock(&rhs)) {
+      bus_->unlock();
+      bus_->lock(this);
+    }
     rhs.bus_ = nullptr;
     return *this;
   }
@@ -44,10 +55,12 @@ class BusTransmission final {
   BusTransmission& operator=(const BusTransmission&) = delete;
 
   ~BusTransmission() {
-    if (bus_) {
+    if (bus_ && bus_->owns_lock(this)) {
       bus_->unlock();
     }
   }
+
+  operator bool() const { return bus_ != nullptr && bus_->owns_lock(this); }
 
   bool write(AddressT location, uint8_t value) { return false; }
   bool write(AddressT location, uint16_t value) { return false; }
@@ -63,7 +76,7 @@ class BusTransmission final {
   bool read(AddressT location, uint32_t& buffer) { return false; };
 
   template <size_t ARRAY_SIZE>
-  size_t read(AddressT location, std::array<uint8_t, ARRAY_SIZE>& buffer) {
+  size_t read(AddressT location, size_t bytes_to_read, std::array<uint8_t, ARRAY_SIZE>& buffer) {
     return 0;
   }
 };
@@ -71,8 +84,22 @@ class BusTransmission final {
 template <BusType BUS_TYPE, typename AddressT, typename DeviceAddressT>
 class Bus final {
  private:
-  void lock() {}
-  void unlock() {}
+  const void* owner_{nullptr};
+
+  bool lock(const void* p) {
+    if (owner_ == nullptr) {
+      owner_ = p;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool owns_lock(const void* p) const { return owner_ == p; }
+
+  bool is_locked() const { return owner_ != nullptr; }
+
+  void unlock() { owner_ = nullptr; }
 
   friend class BusTransmission<BUS_TYPE, AddressT, DeviceAddressT>;
 

@@ -65,8 +65,7 @@ class Sensor<SensorSku::IMU_BMI323, BUS_TYPE> final {
     using ValueType = TemperatureMeasurementChannel::ValueType;
     static constexpr AddressType REGISTER_TEMPERATURE{0x09};
     uint16_t read_value{};
-    {
-      auto transmission{bus_->initiate(device_address_)};
+    if (auto transmission{bus_->initiate(device_address_)}; transmission) {
       transmission.read(REGISTER_TEMPERATURE, read_value);
     }
     ValueType temperature = read_value / static_cast<ValueType>(512) + static_cast<ValueType>(23);
@@ -85,8 +84,8 @@ class Sensor<SensorSku::IMU_BMI323, BUS_TYPE> final {
     uint16_t read_value_x{};
     uint16_t read_value_y{};
     uint16_t read_value_z{};
-    {
-      auto transmission{bus_->initiate(device_address_)};
+
+    if (auto transmission{bus_->initiate(device_address_)}; transmission) {
       transmission.read(REGISTER_ACCELEROMETER_X, read_value_x);
       transmission.read(REGISTER_ACCELEROMETER_Y, read_value_y);
       transmission.read(REGISTER_ACCELEROMETER_Z, read_value_z);
@@ -109,8 +108,7 @@ class Sensor<SensorSku::IMU_BMI323, BUS_TYPE> final {
     uint16_t read_value_x{};
     uint16_t read_value_y{};
     uint16_t read_value_z{};
-    {
-      auto transmission{bus_->initiate(device_address_)};
+    if (auto transmission{bus_->initiate(device_address_)}; transmission) {
       transmission.read(REGISTER_GYROSCOPE_X, read_value_x);
       transmission.read(REGISTER_GYROSCOPE_Y, read_value_y);
       transmission.read(REGISTER_GYROSCOPE_Z, read_value_z);
