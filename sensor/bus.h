@@ -12,6 +12,9 @@
 namespace ndyn::sensor {
 
 enum class BusType : uint8_t {
+  // Testing only. Useful when working with fakes and mocks that don't require a bus.
+  NO_BUS,
+  // Testing only. A simple bus that reads back whatever value is written to it.
   FAKE_BUS,
   I2C,
   SPI,
