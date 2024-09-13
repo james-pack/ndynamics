@@ -20,7 +20,7 @@ class Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> final {
   using ValueType = MeasurementValueType<MeasurementType::TEMPERATURE>::type;
 
  private:
-  std::function<ValueType(time::TimeT)> binding_fn_;
+  std::function<ValueType(time::TimeT)> measure_fn_;
 
   TemperatureMeasurementChannel temperature_{};
 
@@ -31,12 +31,12 @@ class Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> final {
 
   void read_temperature(time::TimeT t) {
     LOG(INFO) << "Sensor::read_temperature() -- t: " << t;
-    temperature_.set_value(t, binding_fn_(t));
+    temperature_.set_value(t, measure_fn_(t));
   }
 
  public:
-  Sensor(std::function<ValueType(time::TimeT)> binding_fn)
-      : binding_fn_(std::forward<std::function<ValueType(time::TimeT)>>(binding_fn)) {}
+  Sensor(std::function<ValueType(time::TimeT)> measure_fn)
+      : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)) {}
 
   void update(time::TimeT t) {
     LOG(INFO) << "Sensor::update() -- t: " << t;
@@ -47,7 +47,7 @@ class Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> final {
     LOG(INFO) << "Sensor::update() -- exiting";
   }
 
-  const TemperatureMeasurementChannel& temperature_measurements() const { return temperature_; }
+  const TemperatureMeasurementChannel& measurement() const { return temperature_; }
 };
 
 template <>
@@ -56,7 +56,7 @@ class Sensor<SensorSku::FAKE_ACCELEROMETER, BusType::NO_BUS> final {
   using ValueType = MeasurementValueType<MeasurementType::ACCELEROMETER>::type;
 
  private:
-  std::function<ValueType(time::TimeT)> binding_fn_;
+  std::function<ValueType(time::TimeT)> measure_fn_;
 
   AccelerometerMeasurementChannel accelerometer_{};
 
@@ -67,12 +67,12 @@ class Sensor<SensorSku::FAKE_ACCELEROMETER, BusType::NO_BUS> final {
 
   void read_accelerometer(time::TimeT t) {
     LOG(INFO) << "Sensor::read_accelerometer() -- t: " << t;
-    accelerometer_.set_value(t, binding_fn_(t));
+    accelerometer_.set_value(t, measure_fn_(t));
   }
 
  public:
-  Sensor(std::function<ValueType(time::TimeT)> binding_fn)
-      : binding_fn_(std::forward<std::function<ValueType(time::TimeT)>>(binding_fn)) {}
+  Sensor(std::function<ValueType(time::TimeT)> measure_fn)
+      : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)) {}
 
   void update(time::TimeT t) {
     LOG(INFO) << "Sensor::update() -- t: " << t;
@@ -83,9 +83,7 @@ class Sensor<SensorSku::FAKE_ACCELEROMETER, BusType::NO_BUS> final {
     LOG(INFO) << "Sensor::update() -- exiting";
   }
 
-  const AccelerometerMeasurementChannel& accelerometer_measurements() const {
-    return accelerometer_;
-  }
+  const AccelerometerMeasurementChannel& measurement() const { return accelerometer_; }
 };
 
 template <>
@@ -94,7 +92,7 @@ class Sensor<SensorSku::FAKE_GYROSCOPE, BusType::NO_BUS> final {
   using ValueType = MeasurementValueType<MeasurementType::GYROSCOPE>::type;
 
  private:
-  std::function<ValueType(time::TimeT)> binding_fn_;
+  std::function<ValueType(time::TimeT)> measure_fn_;
 
   GyroscopeMeasurementChannel gyroscope_{};
 
@@ -105,12 +103,12 @@ class Sensor<SensorSku::FAKE_GYROSCOPE, BusType::NO_BUS> final {
 
   void read_gyroscope(time::TimeT t) {
     LOG(INFO) << "Sensor::read_gyroscope() -- t: " << t;
-    gyroscope_.set_value(t, binding_fn_(t));
+    gyroscope_.set_value(t, measure_fn_(t));
   }
 
  public:
-  Sensor(std::function<ValueType(time::TimeT)> binding_fn)
-      : binding_fn_(std::forward<std::function<ValueType(time::TimeT)>>(binding_fn)) {}
+  Sensor(std::function<ValueType(time::TimeT)> measure_fn)
+      : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)) {}
 
   void update(time::TimeT t) {
     LOG(INFO) << "Sensor::update() -- t: " << t;
@@ -121,7 +119,7 @@ class Sensor<SensorSku::FAKE_GYROSCOPE, BusType::NO_BUS> final {
     LOG(INFO) << "Sensor::update() -- exiting";
   }
 
-  const GyroscopeMeasurementChannel& gyroscope_measurements() const { return gyroscope_; }
+  const GyroscopeMeasurementChannel& measurement() const { return gyroscope_; }
 };
 
 }  // namespace ndyn::sensor
