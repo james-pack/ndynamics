@@ -2,6 +2,7 @@
 
 #include "sensor/bus.h"
 #include "sensor/sensors.h"
+#include "time/time.h"
 
 namespace ndyn::sensor {
 
@@ -9,7 +10,7 @@ namespace ndyn::sensor {
 template <SensorSku SKU, BusType BUS_TYPE>
 class Sensor final {
  public:
-  void update();
+  void update(time::TimeT t);
 };
 
 }  // namespace ndyn::sensor

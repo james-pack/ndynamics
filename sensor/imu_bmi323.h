@@ -8,6 +8,7 @@
 #include "sensor/measurement_type.h"
 #include "sensor/sensor.h"
 #include "sensor/sensors.h"
+#include "time/time.h"
 
 namespace ndyn::sensor {
 
@@ -25,25 +26,25 @@ class Sensor<SensorSku::IMU_BMI323, BUS_TYPE> final {
   AccelerometerMeasurementChannel accelerometer_{};
   GyroscopeMeasurementChannel gyroscope_{};
 
-  bool should_read_temperature() { return false; }
-  bool should_read_accelerometer() { return false; }
-  bool should_read_gyroscope() { return false; }
+  bool should_read_temperature(time::TimeT) { return false; }
+  bool should_read_accelerometer(time::TimeT) { return false; }
+  bool should_read_gyroscope(time::TimeT) { return false; }
 
-  void read_temperature() {}
-  void read_accelerometer() {}
-  void read_gyroscope() {}
+  void read_temperature(time::TimeT) {}
+  void read_accelerometer(time::TimeT) {}
+  void read_gyroscope(time::TimeT) {}
 
  public:
   constexpr Sensor(Bus<BUS_TYPE, uint8_t, uint8_t>& bus, ImuBmi323_AllowedI2CAddress i2c_address)
       : bus_(&bus) {}
 
-  void update() {
-    if (should_read_temperature()) {
-      read_temperature();
-    } else if (should_read_accelerometer()) {
-      read_accelerometer();
-    } else if (should_read_gyroscope()) {
-      read_gyroscope();
+  void update(time::TimeT t) {
+    if (should_read_temperature(t)) {
+      read_temperature(t);
+    } else if (should_read_accelerometer(t)) {
+      read_accelerometer(t);
+    } else if (should_read_gyroscope(t)) {
+      read_gyroscope(t);
     }
   }
 
