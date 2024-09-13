@@ -25,20 +25,20 @@ TEST_F(FakeTemperatureTest, CanCompile) {
   Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> sensor{
       FakeTemperatureTest::return_time};
 
-  const TemperatureMeasurementChannel& temperature{sensor.measurement()};
+  const TemperatureMeasurementChannel& measurement{sensor.measurement()};
 
-  EXPECT_FALSE(temperature.has_value_available());
+  EXPECT_FALSE(measurement.has_value_available());
 }
 
 TEST_F(FakeTemperatureTest, CanUpdate) {
   Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> sensor{
       FakeTemperatureTest::return_time};
 
-  const TemperatureMeasurementChannel& temperature{sensor.measurement()};
+  const TemperatureMeasurementChannel& measurement{sensor.measurement()};
 
   sensor.update(1);
 
-  EXPECT_TRUE(temperature.has_value_available());
+  EXPECT_TRUE(measurement.has_value_available());
 }
 
 TEST_F(FakeTemperatureTest, CanSetNextValueThroughMeasureFunction) {
@@ -53,6 +53,32 @@ TEST_F(FakeTemperatureTest, CanSetNextValueThroughMeasureFunction) {
 
   sensor.update(EXPECTED_TIME);
 
+  EXPECT_EQ(EXPECTED_TIME, measurement.time());
+  EXPECT_EQ(EXPECTED_VALUE, measurement.value());
+}
+
+TEST_F(FakeTemperatureTest, CanLimitReadsThroughReadFunction) {
+  bool should_read{false};
+  Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> sensor(
+      [this](time::TimeT t) { return this->next_measure_value; },
+      [&should_read](time::TimeT t) { return should_read; });
+
+  const auto& measurement{sensor.measurement()};
+
+  static constexpr time::TimeT EARLIER_TIME{static_cast<time::TimeT>(5)};
+  static constexpr time::TimeT EXPECTED_TIME{static_cast<time::TimeT>(10)};
+  static constexpr ValueType EXPECTED_VALUE{ValueType{static_cast<ScalarType>(12)}};
+  next_measure_value = EXPECTED_VALUE;
+
+  should_read = false;
+  sensor.update(EARLIER_TIME);
+
+  EXPECT_FALSE(measurement.has_value_available());
+
+  should_read = true;
+  sensor.update(EXPECTED_TIME);
+
+  EXPECT_TRUE(measurement.has_value_available());
   EXPECT_EQ(EXPECTED_TIME, measurement.time());
   EXPECT_EQ(EXPECTED_VALUE, measurement.value());
 }
@@ -101,6 +127,32 @@ TEST_F(FakeAccelerometerTest, CanSetNextValueThroughMeasureFunction) {
   EXPECT_EQ(EXPECTED_VALUE, measurement.value());
 }
 
+TEST_F(FakeAccelerometerTest, CanLimitReadsThroughReadFunction) {
+  bool should_read{false};
+  Sensor<SensorSku::FAKE_ACCELEROMETER, BusType::NO_BUS> sensor(
+      [this](time::TimeT t) { return this->next_measure_value; },
+      [&should_read](time::TimeT t) { return should_read; });
+
+  const auto& measurement{sensor.measurement()};
+
+  static constexpr time::TimeT EARLIER_TIME{static_cast<time::TimeT>(5)};
+  static constexpr time::TimeT EXPECTED_TIME{static_cast<time::TimeT>(10)};
+  static constexpr ValueType EXPECTED_VALUE{ValueType{static_cast<ScalarType>(12)}};
+  next_measure_value = EXPECTED_VALUE;
+
+  should_read = false;
+  sensor.update(EARLIER_TIME);
+
+  EXPECT_FALSE(measurement.has_value_available());
+
+  should_read = true;
+  sensor.update(EXPECTED_TIME);
+
+  EXPECT_TRUE(measurement.has_value_available());
+  EXPECT_EQ(EXPECTED_TIME, measurement.time());
+  EXPECT_EQ(EXPECTED_VALUE, measurement.value());
+}
+
 class FakeGyroscopeTest : public ::testing::Test {
  public:
   using ValueType = MeasurementValueType<MeasurementType::GYROSCOPE>::type;
@@ -141,6 +193,32 @@ TEST_F(FakeGyroscopeTest, CanSetNextValueThroughMeasureFunction) {
 
   sensor.update(EXPECTED_TIME);
 
+  EXPECT_EQ(EXPECTED_TIME, measurement.time());
+  EXPECT_EQ(EXPECTED_VALUE, measurement.value());
+}
+
+TEST_F(FakeGyroscopeTest, CanLimitReadsThroughReadFunction) {
+  bool should_read{false};
+  Sensor<SensorSku::FAKE_GYROSCOPE, BusType::NO_BUS> sensor(
+      [this](time::TimeT t) { return this->next_measure_value; },
+      [&should_read](time::TimeT t) { return should_read; });
+
+  const auto& measurement{sensor.measurement()};
+
+  static constexpr time::TimeT EARLIER_TIME{static_cast<time::TimeT>(5)};
+  static constexpr time::TimeT EXPECTED_TIME{static_cast<time::TimeT>(10)};
+  static constexpr ValueType EXPECTED_VALUE{ValueType{static_cast<ScalarType>(12)}};
+  next_measure_value = EXPECTED_VALUE;
+
+  should_read = false;
+  sensor.update(EARLIER_TIME);
+
+  EXPECT_FALSE(measurement.has_value_available());
+
+  should_read = true;
+  sensor.update(EXPECTED_TIME);
+
+  EXPECT_TRUE(measurement.has_value_available());
   EXPECT_EQ(EXPECTED_TIME, measurement.time());
   EXPECT_EQ(EXPECTED_VALUE, measurement.value());
 }

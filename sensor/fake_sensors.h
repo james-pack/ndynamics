@@ -21,12 +21,17 @@ class Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> final {
 
  private:
   std::function<ValueType(time::TimeT)> measure_fn_;
+  std::function<bool(time::TimeT)> should_read_fn_;
 
   TemperatureMeasurementChannel temperature_{};
 
   bool should_read_temperature(time::TimeT t) {
     LOG(INFO) << "Sensor::should_read_temperature() -- t: " << t;
-    return true;
+    if (should_read_fn_) {
+      return should_read_fn_(t);
+    } else {
+      return true;
+    }
   }
 
   void read_temperature(time::TimeT t) {
@@ -37,6 +42,11 @@ class Sensor<SensorSku::FAKE_TEMPERATURE_SENSOR, BusType::NO_BUS> final {
  public:
   Sensor(std::function<ValueType(time::TimeT)> measure_fn)
       : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)) {}
+
+  Sensor(std::function<ValueType(time::TimeT)> measure_fn,
+         std::function<bool(time::TimeT)> should_read_fn)
+      : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)),
+        should_read_fn_(std::forward<std::function<bool(time::TimeT)>>(should_read_fn)) {}
 
   void update(time::TimeT t) {
     LOG(INFO) << "Sensor::update() -- t: " << t;
@@ -57,12 +67,17 @@ class Sensor<SensorSku::FAKE_ACCELEROMETER, BusType::NO_BUS> final {
 
  private:
   std::function<ValueType(time::TimeT)> measure_fn_;
+  std::function<bool(time::TimeT)> should_read_fn_;
 
   AccelerometerMeasurementChannel accelerometer_{};
 
   bool should_read_accelerometer(time::TimeT t) {
     LOG(INFO) << "Sensor::should_read_accelerometer() -- t: " << t;
-    return true;
+    if (should_read_fn_) {
+      return should_read_fn_(t);
+    } else {
+      return true;
+    }
   }
 
   void read_accelerometer(time::TimeT t) {
@@ -73,6 +88,11 @@ class Sensor<SensorSku::FAKE_ACCELEROMETER, BusType::NO_BUS> final {
  public:
   Sensor(std::function<ValueType(time::TimeT)> measure_fn)
       : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)) {}
+
+  Sensor(std::function<ValueType(time::TimeT)> measure_fn,
+         std::function<bool(time::TimeT)> should_read_fn)
+      : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)),
+        should_read_fn_(std::forward<std::function<bool(time::TimeT)>>(should_read_fn)) {}
 
   void update(time::TimeT t) {
     LOG(INFO) << "Sensor::update() -- t: " << t;
@@ -93,12 +113,17 @@ class Sensor<SensorSku::FAKE_GYROSCOPE, BusType::NO_BUS> final {
 
  private:
   std::function<ValueType(time::TimeT)> measure_fn_;
+  std::function<bool(time::TimeT)> should_read_fn_;
 
   GyroscopeMeasurementChannel gyroscope_{};
 
   bool should_read_gyroscope(time::TimeT t) {
     LOG(INFO) << "Sensor::should_read_gyroscope() -- t: " << t;
-    return true;
+    if (should_read_fn_) {
+      return should_read_fn_(t);
+    } else {
+      return true;
+    }
   }
 
   void read_gyroscope(time::TimeT t) {
@@ -109,6 +134,11 @@ class Sensor<SensorSku::FAKE_GYROSCOPE, BusType::NO_BUS> final {
  public:
   Sensor(std::function<ValueType(time::TimeT)> measure_fn)
       : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)) {}
+
+  Sensor(std::function<ValueType(time::TimeT)> measure_fn,
+         std::function<bool(time::TimeT)> should_read_fn)
+      : measure_fn_(std::forward<std::function<ValueType(time::TimeT)>>(measure_fn)),
+        should_read_fn_(std::forward<std::function<bool(time::TimeT)>>(should_read_fn)) {}
 
   void update(time::TimeT t) {
     LOG(INFO) << "Sensor::update() -- t: " << t;
