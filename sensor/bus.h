@@ -6,17 +6,16 @@
  */
 #pragma once
 
+#include <array>
 #include <cstdint>
-#include <string>
 
 namespace ndyn::sensor {
 
 enum class BusType : uint8_t {
+  FAKE_BUS,
   I2C,
   SPI,
   CAN,
-
-  FAKE_BUS = 255,
 };
 
 template <BusType BUS_TYPE, typename AddressT, typename DeviceAddressT = uint8_t>
@@ -48,10 +47,18 @@ class BusTransmission final {
   }
 
   bool write(AddressT location, uint8_t value) { return false; }
-  bool write(AddressT location, const std::string& value) { return false; };
+
+  template <size_t ARRAY_SIZE>
+  bool write(AddressT location, size_t num_bytes, const std::array<uint8_t, ARRAY_SIZE>& value) {
+    return false;
+  }
 
   bool read(AddressT location, uint8_t& buffer) { return false; };
-  bool read(AddressT location, uint8_t num_bytes, std::string& buffer) { return false; };
+
+  template <size_t ARRAY_SIZE>
+  size_t read(AddressT location, std::array<uint8_t, ARRAY_SIZE>& buffer) {
+    return 0;
+  }
 };
 
 template <BusType BUS_TYPE, typename AddressT, typename DeviceAddressT>
@@ -70,7 +77,9 @@ class Bus final {
   Bus(const Bus&) = delete;
   constexpr Bus& operator=(const Bus&) = delete;
 
-  BusTransmission<BUS_TYPE, AddressT, DeviceAddressT> initiate(DeviceAddressT addr);
+  BusTransmission<BUS_TYPE, AddressT, DeviceAddressT> initiate(DeviceAddressT addr) {
+    return BusTransmission<BUS_TYPE, AddressT, DeviceAddressT>(*this);
+  }
 };
 
 }  // namespace ndyn::sensor
