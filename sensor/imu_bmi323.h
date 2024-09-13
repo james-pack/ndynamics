@@ -25,9 +25,27 @@ class Sensor<SensorSku::IMU_BMI323, BUS_TYPE> final {
   AccelerometerMeasurementChannel accelerometer_{};
   GyroscopeMeasurementChannel gyroscope_{};
 
+  bool should_read_temperature() { return false; }
+  bool should_read_accelerometer() { return false; }
+  bool should_read_gyroscope() { return false; }
+
+  void read_temperature() {}
+  void read_accelerometer() {}
+  void read_gyroscope() {}
+
  public:
   constexpr Sensor(Bus<BUS_TYPE, uint8_t, uint8_t>& bus, ImuBmi323_AllowedI2CAddress i2c_address)
       : bus_(&bus) {}
+
+  void update() {
+    if (should_read_temperature()) {
+      read_temperature();
+    } else if (should_read_accelerometer()) {
+      read_accelerometer();
+    } else if (should_read_gyroscope()) {
+      read_gyroscope();
+    }
+  }
 
   constexpr const TemperatureMeasurementChannel& temperature_measurements() const {
     return temperature_;
