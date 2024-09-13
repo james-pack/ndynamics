@@ -28,12 +28,14 @@ cc_library(
         ":sensor",
         "//base",
         "//math",
+        "//time",
     ],
 )
 
 cc_library(
     name = "testing",
     hdrs = [
+        "fake_accelerometer.h",
         "fake_bus.h",
     ],
     visibility = ["//visibility:public"],
@@ -41,6 +43,7 @@ cc_library(
         ":sensor",
         "//base",
         "//math",
+        "//time",
     ],
 )
 
@@ -54,5 +57,18 @@ cc_test(
         "//math",
         "//math:testing",
         "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "fake_accelerometer_test",
+    srcs = ["fake_accelerometer_test.cc"],
+    deps = [
+        ":sensor",
+        ":testing",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
+        "//time",
     ],
 )
