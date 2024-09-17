@@ -3,12 +3,25 @@ load("//platforms:hex.bzl", "hex")
 cc_library(
     name = "simulation",
     hdrs = [
+        "characterization.h",
         "pendulum.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//base",
         "//math",
+        "//sensor",
+    ],
+)
+
+cc_test(
+    name = "characterization_test",
+    srcs = ["characterization_test.cc"],
+    deps = [
+        ":simulation",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
     ],
 )
 
