@@ -136,9 +136,11 @@ class Sensor<SensorSku::IMU_BMI323, BUS_TYPE> final {
   void update(time::TimeT t) {
     if (should_read_temperature(t)) {
       read_temperature(t);
-    } else if (should_read_accelerometer(t)) {
+    }
+    if (should_read_accelerometer(t)) {
       read_accelerometer(t);
-    } else if (should_read_gyroscope(t)) {
+    }
+    if (should_read_gyroscope(t)) {
       read_gyroscope(t);
     }
   }
