@@ -8,6 +8,9 @@
 
 namespace ndyn::sensor {
 
+// Most sensors should accept a read limiting function at construction, possibly a separate one for
+// each measurement capability. They may also include limiting functionality internally, but that
+// makes it more difficult to test the sensor.
 using SensorReadLimiter = std::function<bool(time::TimeT)>;
 
 // TODO(james): Make this class actually useful or delete it. Currently, it has very little value.
