@@ -133,8 +133,8 @@ class Pendulum final {
   constexpr const StateType& state() const { return state_; }
   constexpr const MultivectorType& position() const { return state_.template element<0>(); }
   constexpr const MultivectorType& velocity() const { return state_.template element<1>(); }
-  constexpr const MultivectorType& acceleration() const {
-    return decompose(gravitational_acceleration_, position()).second;
+  constexpr MultivectorType acceleration() const {
+    return orthogonal(gravitational_acceleration_, position());
   }
 
   constexpr const MultivectorType& graviational_acceleration() const {
