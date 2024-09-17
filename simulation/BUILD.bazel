@@ -43,6 +43,7 @@ cc_binary(
     deps = [
         ":simulation",
         "//math",
+        "//sensor",
         "//ui",
     ],
 )

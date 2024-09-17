@@ -8,6 +8,8 @@
 #include "imgui.h"
 #include "implot.h"
 #include "math/multivector.h"
+#include "sensor/measurement_type.h"
+#include "simulation/characterization.h"
 #include "simulation/pendulum.h"
 #include "ui/app.h"
 
@@ -15,8 +17,10 @@ namespace ndyn::simulation {
 
 class PendulumGraph : public ui::App {
  private:
-  using FloatT = float;
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
+  using FloatT = AccelerometerTypes::scalar_type;
+  using T = AccelerometerTypes::type;
+  using TemperatureType = sensor::MeasurementValueType<sensor::MeasurementType::TEMPERATURE>::type;
 
   static constexpr FloatT GRAVITY_ACCELERATION{1};
   static constexpr FloatT LENGTH{1};
@@ -27,6 +31,11 @@ class PendulumGraph : public ui::App {
                            .set_g(GRAVITY_ACCELERATION)
                            .set_theta(ANGLE)
                            .create()};
+
+  static constexpr TemperatureType TEMPERATURE{25};
+
+  Characterization<T, FloatT> characterization{
+      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.01}, .offset_std{0.1}}};
 
   // Show 7 full periods at a time with 128 points per period.
   static constexpr size_t NUM_POINTS{
@@ -46,6 +55,15 @@ class PendulumGraph : public ui::App {
 
   std::array<FloatT, NUM_POINTS> x5{};
   std::array<FloatT, NUM_POINTS> y5{};
+
+  std::array<FloatT, NUM_POINTS> x6{};
+  std::array<FloatT, NUM_POINTS> y6{};
+
+  std::array<FloatT, NUM_POINTS> x7{};
+  std::array<FloatT, NUM_POINTS> y7{};
+
+  std::array<FloatT, NUM_POINTS> x8{};
+  std::array<FloatT, NUM_POINTS> y8{};
 
   FloatT previous_time{};
 
@@ -72,6 +90,15 @@ class PendulumGraph : public ui::App {
     copy_n(x5.begin() + 1, x5.size(), x5.begin());
     copy_n(y5.begin() + 1, y5.size(), y5.begin());
 
+    copy_n(x6.begin() + 1, x6.size(), x6.begin());
+    copy_n(y6.begin() + 1, y6.size(), y6.begin());
+
+    copy_n(x7.begin() + 1, x7.size(), x7.begin());
+    copy_n(y7.begin() + 1, y7.size(), y7.begin());
+
+    copy_n(x8.begin() + 1, x8.size(), x8.begin());
+    copy_n(y8.begin() + 1, y8.size(), y8.begin());
+
     pendulum.goto_time(current_time);
 
     x1[x1.size() - 1] = current_time;
@@ -86,8 +113,18 @@ class PendulumGraph : public ui::App {
     x4[x4.size() - 1] = current_time;
     y4[x4.size() - 1] = pendulum.compute_kinetic_energy() + pendulum.compute_potential_energy();
 
+    const auto theta{pendulum.theta()};
     x5[x5.size() - 1] = current_time;
-    y5[x5.size() - 1] = pendulum.theta();
+    y5[x5.size() - 1] = theta;
+
+    const auto& acceleration{pendulum.acceleration()};
+    const auto fuzzed_acceleration{characterization.inject_noise(TEMPERATURE, acceleration)};
+    x6[x6.size() - 1] = current_time;
+    y6[x6.size() - 1] = fuzzed_acceleration.component(1);
+    x7[x7.size() - 1] = current_time;
+    y7[x7.size() - 1] = fuzzed_acceleration.component(2);
+    x8[x8.size() - 1] = current_time;
+    y8[x8.size() - 1] = fuzzed_acceleration.component(4);
 
     VLOG(2) << "current_time: " << current_time << ", theta: " << y5[x5.size() - 1]
             << ", height: " << y1[x1.size() - 1];
@@ -95,7 +132,7 @@ class PendulumGraph : public ui::App {
     previous_time = current_time;
 
     auto size{ImGui::GetContentRegionAvail()};
-    size.y /= 3;
+    size.y /= 4;
 
     if (ImPlot::BeginPlot("Position", size)) {
       ImPlot::SetupAxes("t", "h", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
@@ -115,9 +152,18 @@ class PendulumGraph : public ui::App {
     }
 
     if (ImPlot::BeginPlot("Angle", size)) {
-      ImPlot::SetupAxes("t", "Energy", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxes("t", "Theta", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
       ImPlot::PlotScatter("theta", x5.data(), y5.data(), x5.size());
+      ImPlot::EndPlot();
+    }
+
+    if (ImPlot::BeginPlot("Accelerometer Measurements", size)) {
+      ImPlot::SetupAxes("t", "Acceleration", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+      ImPlot::PlotScatter("x", x6.data(), y6.data(), x6.size());
+      ImPlot::PlotScatter("y", x7.data(), y7.data(), x7.size());
+      ImPlot::PlotScatter("z", x8.data(), y8.data(), x8.size());
       ImPlot::EndPlot();
     }
   }
