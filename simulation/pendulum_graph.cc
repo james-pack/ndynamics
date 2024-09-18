@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <string>
+#include <string_view>
 
 #include "base/initializer.h"
 #include "base/pi.h"
@@ -15,21 +17,54 @@
 
 namespace ndyn::simulation {
 
-template <typename T, size_t NUM_POINTS, size_t NUM_DIMENSIONS = 1>
+template <typename T, size_t NUM_POINTS, size_t NUM_FUNCTIONS = 1>
 class DataSeries final {
  private:
-  std::array<std::array<T, NUM_POINTS>, NUM_DIMENSIONS + 1> data_{};
+  std::array<std::array<T, NUM_POINTS>, NUM_FUNCTIONS + 1> data_{};
+  std::array<std::string, NUM_FUNCTIONS + 1> labels_{};
 
  public:
-  void update(T x, const std::array<T, NUM_DIMENSIONS>& y) {
+  constexpr DataSeries() = default;
+  constexpr DataSeries(const DataSeries&) = default;
+  constexpr DataSeries(DataSeries&&) = default;
+
+  constexpr DataSeries(std::string_view x_label, std::initializer_list<std::string_view> y_labels) {
+    labels_.at(0) = x_label;
+    size_t i = 1;
+    for (auto label : y_labels) {
+      labels_.at(i) = label;
+      ++i;
+    }
+  }
+
+  constexpr DataSeries& operator=(const DataSeries&) = default;
+  constexpr DataSeries& operator=(DataSeries&&) = default;
+
+  void update(T x, const std::array<T, NUM_FUNCTIONS>& y) {
     using std::copy_n;
-    for (size_t i = 0; i < NUM_DIMENSIONS + 1; ++i) {
+    for (size_t i = 0; i < NUM_FUNCTIONS + 1; ++i) {
       copy_n(data_[i].begin() + 1, data_[i].size() - 1, data_[i].begin());
     }
     data_[0][NUM_POINTS - 1] = x;
-    for (size_t i = 0; i < NUM_DIMENSIONS; ++i) {
+    for (size_t i = 0; i < NUM_FUNCTIONS; ++i) {
       data_.at(i + 1).at(NUM_POINTS - 1) = y.at(i);
     }
+  }
+
+  const std::string& x_label() const { return labels_[0]; }
+
+  template <size_t DIMENSION = 0>
+  const std::string& y_label() const {
+    return labels_.at(DIMENSION + 1);
+  }
+
+  // The x label expressed as a C-style string.
+  const char* x_clabel() const { return labels_[0].c_str(); }
+
+  // The y labels expressed as a C-style string.
+  template <size_t DIMENSION = 0>
+  const char* y_clabel() const {
+    return labels_.at(DIMENSION + 1).c_str();
   }
 
   const T* x_data() const { return data_[0].data(); }
@@ -39,7 +74,9 @@ class DataSeries final {
     return data_.at(DIMENSION + 1).data();
   }
 
-  size_t size() const { return NUM_POINTS; }
+  static constexpr size_t size() { return NUM_POINTS; }
+
+  static constexpr size_t num_functions() { return NUM_FUNCTIONS; }
 };
 
 class PendulumGraph : public ui::App {
@@ -68,7 +105,7 @@ class PendulumGraph : public ui::App {
   static constexpr size_t NUM_POINTS{
       static_cast<size_t>(64 * 4 * compute_period(LENGTH, GRAVITY_ACCELERATION, ANGLE))};
 
-  DataSeries<FloatT, NUM_POINTS, 4> position_series{};
+  DataSeries<FloatT, NUM_POINTS, 4> position_series{"t", {"x", "y", "z", "height"}};
   DataSeries<FloatT, NUM_POINTS, 3> acceleration_series{};
   DataSeries<FloatT, NUM_POINTS, 1> theta_series{};
   DataSeries<FloatT, NUM_POINTS, 3> energy_series{};
@@ -113,16 +150,17 @@ class PendulumGraph : public ui::App {
     size.y /= 4;
 
     if (ImPlot::BeginPlot("Position", size)) {
-      ImPlot::SetupAxes("t", "position", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxes(position_series.x_clabel(), "position", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      // ImPlot::PlotScatter("x", position_series.x_data(), position_series.y_data<0>(),
-      //                     position_series.size());
-      // ImPlot::PlotScatter("y", position_series.x_data(), position_series.y_data<1>(),
-      //                     position_series.size());
-      // ImPlot::PlotScatter("z", position_series.x_data(), position_series.y_data<2>(),
-      //                     position_series.size());
-      ImPlot::PlotScatter("height", position_series.x_data(), position_series.y_data<3>(),
-                          position_series.size());
+      // ImPlot::PlotScatter(position_series.y_clabel<0>(), position_series.x_data(),
+      //                     position_series.y_data<0>(), position_series.size());
+      // ImPlot::PlotScatter(position_series.y_clabel<1>(), position_series.x_data(),
+      //                     position_series.y_data<1>(), position_series.size());
+      ImPlot::PlotScatter(position_series.y_clabel<2>(), position_series.x_data(),
+                          position_series.y_data<2>(), position_series.size());
+      ImPlot::PlotScatter(position_series.y_clabel<3>(), position_series.x_data(),
+                          position_series.y_data<3>(), position_series.size());
       ImPlot::EndPlot();
     }
 
