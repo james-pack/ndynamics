@@ -231,6 +231,8 @@ void App::Run() {
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(window_);
+
+    VLOG(4) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
   }
 }
 
