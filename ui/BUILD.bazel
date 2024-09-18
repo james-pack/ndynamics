@@ -6,6 +6,7 @@ cc_library(
     ],
     hdrs = [
         "app.h",
+        "data_series.h",
         "imgui_utils.h",
     ],
     visibility = ["//visibility:public"],

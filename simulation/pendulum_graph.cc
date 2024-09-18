@@ -1,8 +1,4 @@
-#include <algorithm>
-#include <array>
 #include <cmath>
-#include <string>
-#include <string_view>
 
 #include "base/initializer.h"
 #include "base/pi.h"
@@ -14,70 +10,9 @@
 #include "simulation/characterization.h"
 #include "simulation/pendulum.h"
 #include "ui/app.h"
+#include "ui/data_series.h"
 
 namespace ndyn::simulation {
-
-template <typename T, size_t NUM_POINTS, size_t NUM_FUNCTIONS = 1>
-class DataSeries final {
- private:
-  std::array<std::array<T, NUM_POINTS>, NUM_FUNCTIONS + 1> data_{};
-  std::array<std::string, NUM_FUNCTIONS + 1> labels_{};
-
- public:
-  constexpr DataSeries() = default;
-  constexpr DataSeries(const DataSeries&) = default;
-  constexpr DataSeries(DataSeries&&) = default;
-
-  constexpr DataSeries(std::string_view x_label, std::initializer_list<std::string_view> y_labels) {
-    labels_.at(0) = x_label;
-    size_t i = 1;
-    for (auto label : y_labels) {
-      labels_.at(i) = label;
-      ++i;
-    }
-  }
-
-  constexpr DataSeries& operator=(const DataSeries&) = default;
-  constexpr DataSeries& operator=(DataSeries&&) = default;
-
-  void update(T x, const std::array<T, NUM_FUNCTIONS>& y) {
-    using std::copy_n;
-    for (size_t i = 0; i < NUM_FUNCTIONS + 1; ++i) {
-      copy_n(data_[i].begin() + 1, data_[i].size() - 1, data_[i].begin());
-    }
-    data_[0][NUM_POINTS - 1] = x;
-    for (size_t i = 0; i < NUM_FUNCTIONS; ++i) {
-      data_.at(i + 1).at(NUM_POINTS - 1) = y.at(i);
-    }
-  }
-
-  const std::string& x_label() const { return labels_[0]; }
-
-  template <size_t DIMENSION = 0>
-  const std::string& y_label() const {
-    return labels_.at(DIMENSION + 1);
-  }
-
-  // The x label expressed as a C-style string.
-  const char* x_clabel() const { return labels_[0].c_str(); }
-
-  // The y labels expressed as a C-style string.
-  template <size_t DIMENSION = 0>
-  const char* y_clabel() const {
-    return labels_.at(DIMENSION + 1).c_str();
-  }
-
-  const T* x_data() const { return data_[0].data(); }
-
-  template <size_t DIMENSION = 0>
-  const T* y_data() const {
-    return data_.at(DIMENSION + 1).data();
-  }
-
-  static constexpr size_t size() { return NUM_POINTS; }
-
-  static constexpr size_t num_functions() { return NUM_FUNCTIONS; }
-};
 
 class PendulumGraph : public ui::App {
  private:
@@ -105,10 +40,10 @@ class PendulumGraph : public ui::App {
   static constexpr size_t NUM_POINTS{
       static_cast<size_t>(64 * 4 * compute_period(LENGTH, GRAVITY_ACCELERATION, ANGLE))};
 
-  DataSeries<FloatT, NUM_POINTS, 4> position_series{"t", {"x", "y", "z", "height"}};
-  DataSeries<FloatT, NUM_POINTS, 3> acceleration_series{};
-  DataSeries<FloatT, NUM_POINTS, 1> theta_series{};
-  DataSeries<FloatT, NUM_POINTS, 3> energy_series{};
+  ui::DataSeries<FloatT, NUM_POINTS, 4> position_series{"t", {"x", "y", "z", "height"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 3> acceleration_series{"t", {"x", "y", "z"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 1> theta_series{"t", {"theta"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
 
   FloatT previous_time{};
 
@@ -150,50 +85,54 @@ class PendulumGraph : public ui::App {
     size.y /= 4;
 
     if (ImPlot::BeginPlot("Position", size)) {
-      ImPlot::SetupAxes(position_series.x_clabel(), "position", ImPlotAxisFlags_AutoFit,
+      ImPlot::SetupAxes(position_series.x_clabel(), "Position", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      // ImPlot::PlotScatter(position_series.y_clabel<0>(), position_series.x_data(),
-      //                     position_series.y_data<0>(), position_series.size());
-      // ImPlot::PlotScatter(position_series.y_clabel<1>(), position_series.x_data(),
-      //                     position_series.y_data<1>(), position_series.size());
-      ImPlot::PlotScatter(position_series.y_clabel<2>(), position_series.x_data(),
-                          position_series.y_data<2>(), position_series.size());
-      ImPlot::PlotScatter(position_series.y_clabel<3>(), position_series.x_data(),
-                          position_series.y_data<3>(), position_series.size());
+
+      for (size_t i = 0; i < position_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(position_series.y_clabel(i), position_series.x_data(),
+                            position_series.y_data(i), position_series.size());
+      }
+
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Energy", size)) {
-      ImPlot::SetupAxes("t", "Energy", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxes(energy_series.x_clabel(), "Energy", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      ImPlot::PlotScatter("Kinetic", energy_series.x_data(), energy_series.y_data<0>(),
-                          energy_series.size());
-      ImPlot::PlotScatter("Potential", energy_series.x_data(), energy_series.y_data<1>(),
-                          energy_series.size());
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Cross);
-      ImPlot::PlotScatter("Total", energy_series.x_data(), energy_series.y_data<2>(),
-                          energy_series.size());
+
+      for (size_t i = 0; i < energy_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(energy_series.y_clabel(i), energy_series.x_data(),
+                            energy_series.y_data(i), energy_series.size());
+      }
+
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Angle", size)) {
-      ImPlot::SetupAxes("t", "Theta", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxes(theta_series.x_clabel(), "Theta", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      ImPlot::PlotScatter("theta", theta_series.x_data(), theta_series.y_data(),
-                          theta_series.size());
+
+      for (size_t i = 0; i < theta_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(theta_series.y_clabel(i), theta_series.x_data(), theta_series.y_data(i),
+                            theta_series.size());
+      }
+
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Accelerometer Measurements", size)) {
-      ImPlot::SetupAxes("t", "Acceleration", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxes(acceleration_series.x_clabel(), "Acceleration", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      ImPlot::PlotScatter("x", acceleration_series.x_data(), acceleration_series.y_data<0>(),
-                          acceleration_series.size());
-      ImPlot::PlotScatter("y", acceleration_series.x_data(), acceleration_series.y_data<1>(),
-                          acceleration_series.size());
-      ImPlot::PlotScatter("z", acceleration_series.x_data(), acceleration_series.y_data<2>(),
-                          acceleration_series.size());
+
+      for (size_t i = 0; i < acceleration_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(acceleration_series.y_clabel(i), acceleration_series.x_data(),
+                            acceleration_series.y_data(i), acceleration_series.size());
+      }
+
       ImPlot::EndPlot();
     }
   }
