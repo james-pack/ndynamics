@@ -14,6 +14,7 @@ class DataSeries final {
  private:
   std::array<std::array<T, NUM_POINTS>, NUM_FUNCTIONS + 1> data_{};
   std::array<std::string, NUM_FUNCTIONS + 1> labels_{};
+  size_t data_size_{0};
 
  public:
   constexpr DataSeries() = default;
@@ -34,21 +35,23 @@ class DataSeries final {
 
   void update(T x, const std::array<T, NUM_FUNCTIONS>& y) {
     using std::copy_n;
+    // Copy all of the items until we are full, and then drop one item each update.
+    const size_t num_items_to_copy{data_size_ == NUM_POINTS ? data_size_ - 1 : data_size_};
+    const size_t src_offset{data_size_ == NUM_POINTS ? 1 : NUM_POINTS - data_size_};
+    const size_t dest_offset{data_size_ == NUM_POINTS ? 0 : NUM_POINTS - data_size_ - 1};
     for (size_t i = 0; i < NUM_FUNCTIONS + 1; ++i) {
-      copy_n(data_[i].begin() + 1, data_[i].size() - 1, data_[i].begin());
+      copy_n(data_[i].begin() + src_offset, num_items_to_copy, data_[i].begin() + dest_offset);
     }
     data_[0][NUM_POINTS - 1] = x;
     for (size_t i = 0; i < NUM_FUNCTIONS; ++i) {
       data_.at(i + 1).at(NUM_POINTS - 1) = y.at(i);
     }
-  }
-
-  void clear() {
-    using std::fill;
-    for (auto& dimension : data_) {
-      fill(dimension.begin(), dimension.end(), T{});
+    if (data_size_ < NUM_POINTS) {
+      ++data_size_;
     }
   }
+
+  void clear() { data_size_ = 0; }
 
   const std::string& x_label() const { return labels_[0]; }
 
@@ -69,16 +72,16 @@ class DataSeries final {
   // The y labels expressed as a C-style string.
   const char* y_clabel(size_t i) const { return labels_.at(i + 1).c_str(); }
 
-  const T* x_data() const { return data_[0].data(); }
+  const T* x_data() const { return data_[0].data() + NUM_POINTS - data_size_; }
 
   template <size_t DIMENSION = 0>
   const T* y_data() const {
-    return data_.at(DIMENSION + 1).data();
+    return data_.at(DIMENSION + 1).data() + NUM_POINTS - data_size_;
   }
 
-  const T* y_data(size_t i) const { return data_.at(i + 1).data(); }
+  const T* y_data(size_t i) const { return data_.at(i + 1).data() + NUM_POINTS - data_size_; }
 
-  static constexpr size_t size() { return NUM_POINTS; }
+  constexpr size_t size() { return data_size_; }
 
   static constexpr size_t num_functions() { return NUM_FUNCTIONS; }
 };
