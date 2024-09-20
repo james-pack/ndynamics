@@ -84,14 +84,40 @@ class Pendulum final {
 
   math::RungeKutta4<ScalarType, MultivectorType, 2> integrator_{
       [this](const StateType& state) -> StateType {
-        StateType result{state.shift()};
-        result.template set_element<1>(
+        StateType partials{state.shift()};
+        partials.template set_element<1>(
             decompose(gravitational_acceleration_, state.template element<0>()).second);
-        return result;
+        return partials;
       }};
 
   // Mass isn't used directly in calculations. It is available for reference in the API.
   const ScalarType mass_;
+
+  // Initial energy of the system. Sum of potential and kinetic energy at construction.
+  const ScalarType initial_energy_;
+
+  /**
+   * Renormalize the state of the pendulum according to physical constraints after performing an
+   * integration step.
+   */
+  void renormalize() {
+    using std::sqrt;
+
+    // Renormalize length after each step integration step. This helps stabilize the overall
+    // system by enforcing the constraint that the pendulum's length is constant.
+    state_.template set_element<0>(length_ / abs(state_.template element<0>()) *
+                                   state_.template element<0>());
+
+    // Renormalize the speed of the pendulum by removing / adding kinetic energy to bring us back to
+    // the original energy total.
+    const ScalarType potential{compute_potential_energy()};
+    const ScalarType kinetic{compute_kinetic_energy()};
+    const ScalarType current_total{potential + kinetic};
+    if (current_total > 0) {
+      state_.template set_element<1>(sqrt(initial_energy_ / current_total) *
+                                     state_.template element<1>());
+    }
+  }
 
   constexpr static ScalarType compute_max_angle(const MultivectorType& position,
                                                 const MultivectorType& gravitational_acceleration) {
@@ -119,7 +145,8 @@ class Pendulum final {
         initial_time_(t),
         t_(t),
         state_({position}),
-        mass_(mass) {
+        mass_(mass),
+        initial_energy_(compute_potential_energy() + compute_kinetic_energy()) {
     LOG(INFO) << "Pendulum::Pendulum() -- period_: " << period_;
   }
 
@@ -131,6 +158,7 @@ class Pendulum final {
   constexpr ScalarType current_time() const { return t_; }
 
   constexpr const StateType& state() const { return state_; }
+
   constexpr const MultivectorType& position() const { return state_.template element<0>(); }
   constexpr const MultivectorType& velocity() const { return state_.template element<1>(); }
   constexpr MultivectorType acceleration() const {
@@ -218,11 +246,9 @@ class Pendulum final {
         } else {
           state_ = integrator_(step_size, state_);
 
-          // Renomalize length after each step integration step. This helps stabilize the overall
-          // system by enforcing the constraint that the pendulum's length is constant.
-          state_.template set_element<0>(length_ / abs(state_.template element<0>()) *
-                                         state_.template element<0>());
+          renormalize();
         }
+
         VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
       } while (abs(t_ - new_time) > abs(step_size));
     }
