@@ -43,6 +43,13 @@ class DataSeries final {
     }
   }
 
+  void clear() {
+    using std::fill;
+    for (auto& dimension : data_) {
+      fill(dimension.begin(), dimension.end(), T{});
+    }
+  }
+
   const std::string& x_label() const { return labels_[0]; }
 
   template <size_t DIMENSION = 0>
