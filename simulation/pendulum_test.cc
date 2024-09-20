@@ -32,6 +32,24 @@ template <typename T>
   }
 }
 
+template <typename T>
+::testing::AssertionResult is_positive(T value) {
+  if (value > 0) {
+    return ::testing::AssertionSuccess();
+  } else {
+    return ::testing::AssertionFailure() << "value: " << value;
+  }
+}
+
+template <typename T>
+::testing::AssertionResult is_negative(T value) {
+  if (value < 0) {
+    return ::testing::AssertionSuccess();
+  } else {
+    return ::testing::AssertionFailure() << "value: " << value;
+  }
+}
+
 template <typename PendulumT, typename ScalarType>
 ::testing::AssertionResult IsAccurate(PendulumT pendulum, size_t num_periods, ScalarType angle) {
   ::testing::AssertionResult result{::testing::AssertionSuccess()};
@@ -50,7 +68,20 @@ template <typename PendulumT, typename ScalarType>
   for (size_t i = 0; i < num_periods; ++i) {
     pendulum.goto_time(4 * quarter_period * i, STEP_SIZE);
 
-    pendulum.evolve(quarter_period, STEP_SIZE);
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
+    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
+              << ", calculated time: " << 4 * quarter_period * i + quarter_period / 2
+              << ", velocity(): " << pendulum.velocity();
+    result = is_negative(pendulum.velocity().component(1));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
+    }
+    result = is_negative(pendulum.velocity().component(2));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
+    }
+
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
     LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
               << ", calculated time: " << 4 * quarter_period * i + quarter_period
               << ", theta(): " << pendulum.theta() << " (expected " << ZERO_ANGLE << ")";
@@ -59,7 +90,22 @@ template <typename PendulumT, typename ScalarType>
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
-    pendulum.evolve(quarter_period, STEP_SIZE);
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
+    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
+              << ", calculated time: " << 4 * quarter_period * i + 3 * quarter_period / 2
+              << ", velocity(): " << pendulum.velocity();
+    result = is_negative(pendulum.velocity().component(1));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
+    }
+    result = is_positive(pendulum.velocity().component(2));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ". Expected positive velocity in y-direction. velocity: "
+                    << pendulum.velocity();
+    }
+
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
     LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
               << ", calculated time: " << 4 * quarter_period * i + 2 * quarter_period
               << ", theta(): " << pendulum.theta() << " (expected " << -angle << ")";
@@ -68,7 +114,17 @@ template <typename PendulumT, typename ScalarType>
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
-    pendulum.evolve(quarter_period, STEP_SIZE);
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
+    result = is_positive(pendulum.velocity().component(1));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
+    }
+    result = is_negative(pendulum.velocity().component(2));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
+    }
+
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
     LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
               << ", calculated time: " << 4 * quarter_period * i + 3 * quarter_period
               << ", theta(): " << pendulum.theta() << " (expected " << ZERO_ANGLE << ")";
@@ -77,7 +133,17 @@ template <typename PendulumT, typename ScalarType>
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
-    pendulum.evolve(quarter_period, STEP_SIZE);
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
+    result = is_positive(pendulum.velocity().component(1));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
+    }
+    result = is_positive(pendulum.velocity().component(2));
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time();
+    }
+
+    pendulum.evolve(quarter_period / 2, STEP_SIZE);
     LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
               << ", calculated time: " << 4 * quarter_period * i + 4 * quarter_period
               << ", theta(): " << pendulum.theta() << " (expected " << angle << ")";
@@ -191,12 +257,19 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePi) {
 
 TEST(PendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
   using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+
   PendulumConfigurator<T> config{};
   config.set_theta(0);
+
   auto p{config.create()};
   ASSERT_EQ(0, p.theta());
+
+  EXPECT_EQ(0, p.compute_potential_energy());
+  EXPECT_EQ(0, p.compute_kinetic_energy());
+
   p.evolve(1);
   EXPECT_EQ(0, p.theta());
+
   p.evolve(1);
   EXPECT_EQ(0, p.theta());
 }
