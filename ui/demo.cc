@@ -26,7 +26,7 @@ class DemoApp : public App {
   float previous_time{};
 
  protected:
-  void Update() override {
+  void update() override {
     using std::copy_n;
     using std::exp;
     using std::sin;
@@ -90,6 +90,6 @@ int main(int argc, char* argv[]) {
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
   ndyn::ui::DemoApp app{"Demo", 1920, 1080};
-  app.Run();
+  app.run();
   return 0;
 }

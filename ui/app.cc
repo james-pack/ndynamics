@@ -1,7 +1,9 @@
 #include "ui/app.h"
 
+#include <chrono>
 #include <ostream>
 #include <string>
+#include <thread>
 
 #include "glog/logging.h"
 #include "imgui_impl_glfw.h"
@@ -201,45 +203,56 @@ App::~App() {
   glfwTerminate();
 }
 
-void App::Run() {
-  Start();
+void App::run() {
+  using namespace std::chrono_literals;
 
-  while (!glfwWindowShouldClose(window_)) {
+  start();
+
+  while (!glfwWindowShouldClose(window_) && !close_requested()) {
     glfwPollEvents();
+
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    static constexpr float PAD{10.f};
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2{PAD, PAD}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
+    if (ImGui::IsKeyPressed(ImGuiKey_Space) || ImGui::IsKeyPressed(ImGuiKey_P)) {
+      invert_pause();
+    }
 
-    ImGui::Begin("##App", nullptr, ImGuiWindowFlags_NoDecoration);
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape) || ImGui::IsKeyPressed(ImGuiKey_Q)) {
+      request_close();
+      pause();
+    }
 
-    Update();
+    if (!is_paused()) {
+      static constexpr float PAD{10.f};
+      const ImGuiViewport *viewport = ImGui::GetMainViewport();
+      ImGui::SetNextWindowPos(ImVec2{PAD, PAD}, ImGuiCond_FirstUseEver);
+      ImGui::SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
 
-    ImGui::End();
+      ImGui::Begin("##App", nullptr, ImGuiWindowFlags_NoDecoration);
 
-    // Rendering
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(window_, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color_.x, clear_color_.y, clear_color_.z, clear_color_.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    glfwSwapBuffers(window_);
+      update();
+
+      ImGui::End();
+
+      // Rendering
+      ImGui::Render();
+      int display_w, display_h;
+      glfwGetFramebufferSize(window_, &display_w, &display_h);
+      glViewport(0, 0, display_w, display_h);
+      glClearColor(clear_color_.x, clear_color_.y, clear_color_.z, clear_color_.w);
+      glClear(GL_COLOR_BUFFER_BIT);
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+      glfwSwapBuffers(window_);
+    } else {
+      // Tiny sleep so the CPU doesn't waste energy.
+      std::this_thread::sleep_for(20ms);
+    }
 
     VLOG(4) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
   }
-}
-
-ImVec2 App::GetWindowSize() const {
-  int w, h;
-  glfwGetWindowSize(window_, &w, &h);
-  return ImVec2(w, h);
 }
 
 }  // namespace ndyn::ui

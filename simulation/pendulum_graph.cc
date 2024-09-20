@@ -23,7 +23,7 @@ class PendulumGraph : public ui::App {
 
   static constexpr FloatT GRAVITY_ACCELERATION{1};
   static constexpr FloatT LENGTH{1};
-  static constexpr FloatT ANGLE{pi / 32};
+  static constexpr FloatT ANGLE{pi / 4};
 
   Pendulum<T> pendulum{PendulumConfigurator<T>{}
                            .set_length(LENGTH)
@@ -40,15 +40,16 @@ class PendulumGraph : public ui::App {
   static constexpr size_t NUM_POINTS{
       static_cast<size_t>(64 * 4 * compute_period(LENGTH, GRAVITY_ACCELERATION, ANGLE))};
 
-  ui::DataSeries<FloatT, NUM_POINTS, 4> position_series{"t", {"x", "y", "z", "height"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 3> acceleration_series{"t", {"x", "y", "z"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 3> position_series{"t", {"x", "y", "height"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 2> velocity_series{"t", {"x", "y"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 1> theta_series{"t", {"theta"}};
   ui::DataSeries<FloatT, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
 
   FloatT previous_time{};
 
  protected:
-  void Update() override {
+  void update() override {
     using std::exp;
     using std::sin;
 
@@ -60,8 +61,13 @@ class PendulumGraph : public ui::App {
 
     {
       const auto position{pendulum.position()};
-      position_series.update(current_time, {position.component(1), position.component(2),
-                                            position.component(4), pendulum.height()});
+      position_series.update(current_time,
+                             {position.component(1), position.component(2), pendulum.height()});
+    }
+
+    {
+      const auto velocity{pendulum.velocity()};
+      velocity_series.update(current_time, {velocity.component(1), velocity.component(2)});
     }
 
     theta_series.update(current_time, {pendulum.theta()});
@@ -76,13 +82,13 @@ class PendulumGraph : public ui::App {
     {
       const auto acceleration{pendulum.acceleration()};
       const auto fuzzed_acceleration{characterization.inject_noise(TEMPERATURE, acceleration)};
+      const auto& graphed_acceleration{acceleration};
       acceleration_series.update(
-          current_time,
-          {acceleration.component(1), acceleration.component(2), acceleration.component(4)});
+          current_time, {graphed_acceleration.component(1), graphed_acceleration.component(2)});
     }
 
     auto size{ImGui::GetContentRegionAvail()};
-    size.y /= 4;
+    size.y /= 5;
 
     if (ImPlot::BeginPlot("Position", size)) {
       ImPlot::SetupAxes(position_series.x_clabel(), "Position", ImPlotAxisFlags_AutoFit,
@@ -92,6 +98,32 @@ class PendulumGraph : public ui::App {
       for (size_t i = 0; i < position_series.num_functions(); ++i) {
         ImPlot::PlotScatter(position_series.y_clabel(i), position_series.x_data(),
                             position_series.y_data(i), position_series.size());
+      }
+
+      ImPlot::EndPlot();
+    }
+
+    if (ImPlot::BeginPlot("Velocity", size)) {
+      ImPlot::SetupAxes(velocity_series.x_clabel(), "Velocity", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+
+      for (size_t i = 0; i < velocity_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(velocity_series.y_clabel(i), velocity_series.x_data(),
+                            velocity_series.y_data(i), velocity_series.size());
+      }
+
+      ImPlot::EndPlot();
+    }
+
+    if (ImPlot::BeginPlot("Accelerometer Measurements", size)) {
+      ImPlot::SetupAxes(acceleration_series.x_clabel(), "Acceleration", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+
+      for (size_t i = 0; i < acceleration_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(acceleration_series.y_clabel(i), acceleration_series.x_data(),
+                            acceleration_series.y_data(i), acceleration_series.size());
       }
 
       ImPlot::EndPlot();
@@ -122,19 +154,14 @@ class PendulumGraph : public ui::App {
 
       ImPlot::EndPlot();
     }
+  }
 
-    if (ImPlot::BeginPlot("Accelerometer Measurements", size)) {
-      ImPlot::SetupAxes(acceleration_series.x_clabel(), "Acceleration", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-
-      for (size_t i = 0; i < acceleration_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(acceleration_series.y_clabel(i), acceleration_series.x_data(),
-                            acceleration_series.y_data(i), acceleration_series.size());
-      }
-
-      ImPlot::EndPlot();
-    }
+  void handle_unpause() override {
+    position_series.clear();
+    velocity_series.clear();
+    acceleration_series.clear();
+    theta_series.clear();
+    energy_series.clear();
   }
 
  public:
@@ -147,6 +174,6 @@ int main(int argc, char* argv[]) {
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
   ndyn::simulation::PendulumGraph app{"Pendulum Graph", 1920, 1080};
-  app.Run();
+  app.run();
   return 0;
 }
