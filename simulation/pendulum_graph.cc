@@ -15,31 +15,21 @@
 namespace ndyn::simulation {
 
 class PendulumGraph : public ui::App {
- private:
+ public:
   using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
   using FloatT = AccelerometerTypes::scalar_type;
   using T = AccelerometerTypes::type;
   using TemperatureType = sensor::MeasurementValueType<sensor::MeasurementType::TEMPERATURE>::type;
 
-  static constexpr FloatT GRAVITY_ACCELERATION{1};
-  static constexpr FloatT LENGTH{1};
-  static constexpr FloatT ANGLE{pi / 2};
+ private:
+  Pendulum<T>* pendulum_;
 
-  Pendulum<T> pendulum{PendulumConfigurator<T>{}
-                           .set_length(LENGTH)
-                           .set_g(GRAVITY_ACCELERATION)
-                           .set_theta(ANGLE)
-                           .create()};
-
-  static constexpr TemperatureType TEMPERATURE{25};
+  TemperatureType TEMPERATURE{25};
 
   Characterization<T, FloatT> characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.01}, .offset_std{0.1}}};
 
-  // Show 7 full periods at a time with 128 points per period.
-  static constexpr size_t NUM_POINTS{
-      static_cast<size_t>(64 * 4 * compute_period(LENGTH, GRAVITY_ACCELERATION, ANGLE))};
-
+  static constexpr size_t NUM_POINTS{2048};
   ui::DataSeries<FloatT, NUM_POINTS, 3> position_series{"t", {"x", "y", "height"}};
   ui::DataSeries<FloatT, NUM_POINTS, 2> velocity_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
@@ -56,35 +46,35 @@ class PendulumGraph : public ui::App {
     using std::sin;
 
     // Every 5 seconds, we display cycle through one period of the pendulum.
-    const FloatT current_time{static_cast<FloatT>(ImGui::GetTime()) * pendulum.period() / 5};
+    const FloatT current_time{static_cast<FloatT>(ImGui::GetTime()) * pendulum_->period() / 5};
 
-    pendulum.goto_time(current_time);
+    pendulum_->goto_time(current_time);
     previous_time = current_time;
 
     {
-      const auto position{pendulum.position()};
+      const auto position{pendulum_->position()};
       position_series.update(current_time,
-                             {position.component(1), position.component(2), pendulum.height()});
+                             {position.component(1), position.component(2), pendulum_->height()});
     }
 
     {
-      const auto velocity{pendulum.velocity()};
+      const auto velocity{pendulum_->velocity()};
       velocity_series.update(current_time, {velocity.component(1), velocity.component(2)});
     }
 
-    theta_series.update(current_time, {pendulum.theta()});
-    theta_dot_series.update(current_time, {pendulum.theta_dot()});
-    theta_double_dot_series.update(current_time, {pendulum.theta_double_dot()});
+    theta_series.update(current_time, {pendulum_->theta()});
+    theta_dot_series.update(current_time, {pendulum_->theta_dot()});
+    theta_double_dot_series.update(current_time, {pendulum_->theta_double_dot()});
 
     {
-      const auto kinetic_energy{pendulum.compute_kinetic_energy()};
-      const auto potential_energy{pendulum.compute_potential_energy()};
+      const auto kinetic_energy{pendulum_->compute_kinetic_energy()};
+      const auto potential_energy{pendulum_->compute_potential_energy()};
       const auto total_energy{kinetic_energy + potential_energy};
       energy_series.update(current_time, {kinetic_energy, potential_energy, total_energy});
     }
 
     {
-      const auto acceleration{pendulum.acceleration()};
+      const auto acceleration{pendulum_->acceleration()};
       const auto fuzzed_acceleration{characterization.inject_noise(TEMPERATURE, acceleration)};
       const auto& graphed_acceleration{acceleration};
       acceleration_series.update(
@@ -197,15 +187,29 @@ class PendulumGraph : public ui::App {
   }
 
  public:
-  using ui::App::App;
+  PendulumGraph(Pendulum<T>& pendulum, std::string title, size_t width = 0, size_t height = 0)
+      : App(std::move(title), width, height), pendulum_(&pendulum) {}
 };
 
 }  // namespace ndyn::simulation
 
 int main(int argc, char* argv[]) {
+  using namespace ndyn::simulation;
+
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
-  ndyn::simulation::PendulumGraph app{"Pendulum Graph", 1920, 1080};
+
+  static constexpr PendulumGraph::FloatT GRAVITY_ACCELERATION{1};
+  static constexpr PendulumGraph::FloatT LENGTH{1};
+  static constexpr PendulumGraph::FloatT ANGLE{ndyn::pi / 2};
+
+  Pendulum<PendulumGraph::T> pendulum{PendulumConfigurator<PendulumGraph::T>{}
+                                          .set_length(LENGTH)
+                                          .set_g(GRAVITY_ACCELERATION)
+                                          .set_theta(ANGLE)
+                                          .create()};
+
+  PendulumGraph app{pendulum, "Pendulum Graph", 1920, 1080};
   app.run();
   return 0;
 }
