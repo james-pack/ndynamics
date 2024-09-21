@@ -211,7 +211,6 @@ class Pendulum final {
         VLOG(4) << "t_: " << t_ << ", theta(): " << theta() << ", theta_dot(): " << theta_dot();
       } while (abs(t_ - new_time) > abs(step_size));
     }
-    t_ = new_time;
   }
 
   void evolve(ScalarType time_increment, ScalarType step_size = 0) {

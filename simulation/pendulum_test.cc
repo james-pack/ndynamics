@@ -63,9 +63,10 @@ template <typename PendulumT, typename ScalarType>
 
   static constexpr ScalarType ZERO_ANGLE{0};
 
-  pendulum.goto_time(0);
-  ScalarType STEP_SIZE{static_cast<ScalarType>(0.01)};
+  ScalarType STEP_SIZE{0.01};
   for (size_t i = 0; i < num_periods; ++i) {
+    pendulum.goto_time(i * 4 * quarter_period);
+
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
     result = is_negative(pendulum.velocity().component(1))
              << " Expected component(1) of velocity to be negative. velocity: "
