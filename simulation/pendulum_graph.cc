@@ -23,7 +23,7 @@ class PendulumGraph : public ui::App {
 
   static constexpr FloatT GRAVITY_ACCELERATION{1};
   static constexpr FloatT LENGTH{1};
-  static constexpr FloatT ANGLE{pi / 4};
+  static constexpr FloatT ANGLE{pi / 2};
 
   Pendulum<T> pendulum{PendulumConfigurator<T>{}
                            .set_length(LENGTH)
@@ -44,6 +44,8 @@ class PendulumGraph : public ui::App {
   ui::DataSeries<FloatT, NUM_POINTS, 2> velocity_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 1> theta_series{"t", {"theta"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 1> theta_dot_series{"t", {"theta_dot"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 1> theta_double_dot_series{"t", {"theta_double_dot"}};
   ui::DataSeries<FloatT, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
 
   FloatT previous_time{};
@@ -71,6 +73,8 @@ class PendulumGraph : public ui::App {
     }
 
     theta_series.update(current_time, {pendulum.theta()});
+    theta_dot_series.update(current_time, {pendulum.theta_dot()});
+    theta_double_dot_series.update(current_time, {pendulum.theta_double_dot()});
 
     {
       const auto kinetic_energy{pendulum.compute_kinetic_energy()};
@@ -88,7 +92,7 @@ class PendulumGraph : public ui::App {
     }
 
     auto size{ImGui::GetContentRegionAvail()};
-    size.y /= 5;
+    size.y /= 7;
 
     if (ImPlot::BeginPlot("Position", size)) {
       ImPlot::SetupAxes(position_series.x_clabel(), "Position", ImPlotAxisFlags_AutoFit,
@@ -116,7 +120,7 @@ class PendulumGraph : public ui::App {
       ImPlot::EndPlot();
     }
 
-    if (ImPlot::BeginPlot("Accelerometer Measurements", size)) {
+    if (ImPlot::BeginPlot("Acceleration", size)) {
       ImPlot::SetupAxes(acceleration_series.x_clabel(), "Acceleration", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
@@ -154,6 +158,32 @@ class PendulumGraph : public ui::App {
 
       ImPlot::EndPlot();
     }
+
+    if (ImPlot::BeginPlot("Angular Velocity", size)) {
+      ImPlot::SetupAxes(theta_dot_series.x_clabel(), "Theta Dot", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+
+      for (size_t i = 0; i < theta_dot_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(theta_dot_series.y_clabel(i), theta_dot_series.x_data(),
+                            theta_dot_series.y_data(i), theta_dot_series.size());
+      }
+
+      ImPlot::EndPlot();
+    }
+
+    if (ImPlot::BeginPlot("Angular Acceleration", size)) {
+      ImPlot::SetupAxes(theta_double_dot_series.x_clabel(), "Theta Double Dot",
+                        ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+
+      for (size_t i = 0; i < theta_double_dot_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(theta_double_dot_series.y_clabel(i), theta_double_dot_series.x_data(),
+                            theta_double_dot_series.y_data(i), theta_double_dot_series.size());
+      }
+
+      ImPlot::EndPlot();
+    }
   }
 
   void handle_unpause() override {
@@ -161,6 +191,8 @@ class PendulumGraph : public ui::App {
     velocity_series.clear();
     acceleration_series.clear();
     theta_series.clear();
+    theta_dot_series.clear();
+    theta_double_dot_series.clear();
     energy_series.clear();
   }
 
