@@ -9,15 +9,16 @@
 namespace ndyn::simulation {
 
 using FloatT = float;
+using MultivectorType = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
 
 static constexpr size_t ONE_PERIOD{1};
 static constexpr size_t MULTIPLE_PERIODS{5};
 static constexpr size_t MANY_PERIODS{10};
-static constexpr size_t MANY_MORE_PERIODS{25};
+static constexpr size_t MANY_MORE_PERIODS{50};
 
 static constexpr FloatT SMALL_ANGLE{0.01};
-static constexpr FloatT MODERATE_ANGLE{pi / 16};
-static constexpr FloatT LARGE_ANGLE{pi / 4};
+static constexpr FloatT MODERATE_ANGLE{pi / 4};
+static constexpr FloatT LARGE_ANGLE{pi / 2};
 
 template <typename T>
 ::testing::AssertionResult is_near(T lhs, T rhs, T epsilon) {
@@ -62,43 +63,39 @@ template <typename PendulumT, typename ScalarType>
 
   static constexpr ScalarType ZERO_ANGLE{0};
 
-  // Use a smaller step size as the number of periods is greater. This helps offset the accumulated
-  // error.
-  ScalarType STEP_SIZE{static_cast<ScalarType>(0.001)};
+  pendulum.goto_time(0);
+  ScalarType STEP_SIZE{static_cast<ScalarType>(0.01)};
   for (size_t i = 0; i < num_periods; ++i) {
-    pendulum.goto_time(4 * quarter_period * i, STEP_SIZE);
-
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
-              << ", calculated time: " << 4 * quarter_period * i + quarter_period / 2
-              << ", velocity(): " << pendulum.velocity();
-    result = is_negative(pendulum.velocity().component(1));
+    result = is_negative(pendulum.velocity().component(1))
+             << " Expected component(1) of velocity to be negative. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
-    result = is_negative(pendulum.velocity().component(2));
+    result = is_negative(pendulum.velocity().component(2))
+             << " Expected component(2) of velocity to be negative. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
-              << ", calculated time: " << 4 * quarter_period * i + quarter_period
-              << ", theta(): " << pendulum.theta() << " (expected " << ZERO_ANGLE << ")";
     result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
-              << ", calculated time: " << 4 * quarter_period * i + 3 * quarter_period / 2
-              << ", velocity(): " << pendulum.velocity();
-    result = is_negative(pendulum.velocity().component(1));
+    result = is_negative(pendulum.velocity().component(1))
+             << " Expected component(1) of velocity to be negative. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
-    result = is_positive(pendulum.velocity().component(2));
+    result = is_positive(pendulum.velocity().component(2))
+             << " Expected component(2) of velocity to be positive. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ". Expected positive velocity in y-direction. velocity: "
@@ -106,47 +103,46 @@ template <typename PendulumT, typename ScalarType>
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
-              << ", calculated time: " << 4 * quarter_period * i + 2 * quarter_period
-              << ", theta(): " << pendulum.theta() << " (expected " << -angle << ")";
     result = is_near(-angle, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_positive(pendulum.velocity().component(1));
+    result = is_positive(pendulum.velocity().component(1))
+             << " Expected component(1) of velocity to be positive. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
-    result = is_negative(pendulum.velocity().component(2));
+    result = is_negative(pendulum.velocity().component(2))
+             << " Expected component(2) of velocity to be negative. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
-              << ", calculated time: " << 4 * quarter_period * i + 3 * quarter_period
-              << ", theta(): " << pendulum.theta() << " (expected " << ZERO_ANGLE << ")";
     result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_positive(pendulum.velocity().component(1));
+    result = is_positive(pendulum.velocity().component(1))
+             << " Expected component(1) of velocity to be positive. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
-    result = is_positive(pendulum.velocity().component(2));
+    result = is_positive(pendulum.velocity().component(2))
+             << " Expected component(2) of velocity to be positive. velocity: "
+             << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    LOG(INFO) << "pendulum.current_time(): " << pendulum.current_time()
-              << ", calculated time: " << 4 * quarter_period * i + 4 * quarter_period
-              << ", theta(): " << pendulum.theta() << " (expected " << angle << ")";
     result = is_near(angle, pendulum.theta(), EPSILON);
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time();
@@ -156,7 +152,7 @@ template <typename PendulumT, typename ScalarType>
 }
 
 TEST(PendulumTest, LengthSameAfterCreation) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   for (const auto length : {1., 2., 0.5}) {
     config.set_length(length);
@@ -166,7 +162,7 @@ TEST(PendulumTest, LengthSameAfterCreation) {
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaZero) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(0);
   auto p{config.create()};
@@ -174,7 +170,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaZero) {
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(pi / 2);
   auto p{config.create()};
@@ -182,7 +178,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(-pi / 2);
   auto p{config.create()};
@@ -190,7 +186,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaPi) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
@@ -198,7 +194,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaPi) {
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
@@ -206,7 +202,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
 }
 
 TEST(PendulumTest, ThetaSameAfterCreation) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   for (const auto angle : {0., pi / 2, pi - 0.01, -pi / 2, -(pi - 0.01), 3 * pi / 4, -3 * pi / 4}) {
     config.set_theta(angle);
@@ -216,7 +212,7 @@ TEST(PendulumTest, ThetaSameAfterCreation) {
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaZero) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(0);
   auto p{config.create()};
@@ -224,7 +220,7 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaZero) {
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaPiOverTwo) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(pi / 2);
   auto p{config.create()};
@@ -232,7 +228,7 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaPiOverTwo) {
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePiOverTwo) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(-pi / 2);
   auto p{config.create()};
@@ -240,7 +236,7 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePiOverTwo) {
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaPi) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
@@ -248,7 +244,7 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaPi) {
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePi) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
@@ -256,7 +252,7 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePi) {
 }
 
 TEST(PendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
 
   PendulumConfigurator<T> config{};
   config.set_theta(0);
@@ -276,7 +272,7 @@ TEST(PendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaPiFourths) {
   using std::sqrt;
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(pi / 4);
   auto p{config.create()};
@@ -285,7 +281,7 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaPiFourths) {
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePiFourths) {
   using std::sqrt;
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(-pi / 4);
   auto p{config.create()};
@@ -293,7 +289,7 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePiFourths) {
 }
 
 TEST(PendulumTest, ApproximatesCanonicalSmallAngleSolution) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -302,7 +298,7 @@ TEST(PendulumTest, ApproximatesCanonicalSmallAngleSolution) {
 }
 
 TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -311,7 +307,7 @@ TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmal
 }
 
 TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -320,7 +316,7 @@ TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAng
 }
 
 TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
@@ -328,8 +324,8 @@ TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmal
   EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, SMALL_ANGLE));
 }
 
-TEST(PendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -337,9 +333,8 @@ TEST(PendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustme
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest,
-     DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -347,8 +342,8 @@ TEST(PendulumTest,
   EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerateAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerateAngle) {
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -356,9 +351,8 @@ TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmen
   EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest,
-     DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentModerateAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentModerateAngle) {
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
@@ -366,13 +360,40 @@ TEST(PendulumTest,
   EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest, DISABLED_AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
-  using T = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
+  using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, LARGE_ANGLE));
+}
+
+TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLargeAngle) {
+  using T = MultivectorType;
+  PendulumConfigurator<T> config{};
+  config.set_theta(LARGE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, LARGE_ANGLE));
+}
+
+TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentLargeAngle) {
+  using T = MultivectorType;
+  PendulumConfigurator<T> config{};
+  config.set_theta(LARGE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, LARGE_ANGLE));
+}
+
+TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentLargeAngle) {
+  using T = MultivectorType;
+  PendulumConfigurator<T> config{};
+  config.set_theta(LARGE_ANGLE);
+  auto p{config.create()};
+
+  EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, LARGE_ANGLE));
 }
 
 }  // namespace ndyn::simulation

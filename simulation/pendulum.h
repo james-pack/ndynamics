@@ -69,7 +69,7 @@ class Pendulum final {
 
   // Initial position of the pendulum. We restrict the initial velocity to zero, so this vector also
   // gives the maximum angle for the pendulum.
-  const MultivectorType initial_position_;
+  const MultivectorType initial_angular_position_;
 
   // Acceleration due to gravity as a vector.
   const MultivectorType gravitational_acceleration_;
@@ -80,141 +80,101 @@ class Pendulum final {
   const ScalarType initial_time_;
 
   ScalarType t_;
-  StateType state_;
+  StateType angular_state_;
 
   math::RungeKutta4<ScalarType, MultivectorType, 2> integrator_{
       [this](const StateType& state) -> StateType {
+        using std::sin;
         StateType partials{state.shift()};
-        partials.template set_element<1>(
-            decompose(gravitational_acceleration_, state.template element<0>()).second);
+        const MultivectorType& angular_position{state.element(0)};
+        partials.template set_element<1>(-g_ / angular_position.component(1) *
+                                         sin(angular_position.component(2)) *
+                                         MultivectorType::template e<1>());
         return partials;
       }};
 
-  // Mass isn't used directly in calculations. It is available for reference in the API.
   const ScalarType mass_;
 
   // Initial energy of the system. Sum of potential and kinetic energy at construction.
   const ScalarType initial_energy_;
 
-  /**
-   * Renormalize the state of the pendulum according to physical constraints after performing an
-   * integration step.
-   */
-  void renormalize() {
-    using std::sqrt;
-
-    // Renormalize length after each step integration step. This helps stabilize the overall
-    // system by enforcing the constraint that the pendulum's length is constant.
-    state_.template set_element<0>(length_ / abs(state_.template element<0>()) *
-                                   state_.template element<0>());
-
-    // Renormalize the speed of the pendulum by removing / adding kinetic energy to bring us back to
-    // the original energy total.
-    const ScalarType potential{compute_potential_energy()};
-    const ScalarType kinetic{compute_kinetic_energy()};
-    const ScalarType current_total{potential + kinetic};
-    if (current_total > 0) {
-      state_.template set_element<1>(sqrt(initial_energy_ / current_total) *
-                                     state_.template element<1>());
-    }
-  }
-
-  constexpr static ScalarType compute_max_angle(const MultivectorType& position,
-                                                const MultivectorType& gravitational_acceleration) {
-    using std::abs;
-    using std::acos;
-
-    // Unit vector in the direction of gravity.
-    const auto g_hat{gravitational_acceleration / abs(gravitational_acceleration)};
-
-    // Return the angle computed directly from acos(). This angle will be on [0, pi]. In this
-    // method, we are concerned with computing the maximum angle; we do not care whether the
-    // pendulum is swung to the left or right.
-    return acos(position.left_contraction(g_hat).scalar() / abs(position));
-  }
-
  public:
   constexpr Pendulum(ScalarType mass, MultivectorType gravitational_acceleration, ScalarType t,
-                     MultivectorType position)
-      : length_(abs(position)),
+                     MultivectorType angular_position)
+      : length_(angular_position.component(1)),
         g_(abs(gravitational_acceleration)),
-        initial_position_(position),
+        initial_angular_position_(angular_position),
         gravitational_acceleration_(gravitational_acceleration),
-        period_(
-            compute_period(length_, g_, compute_max_angle(position, gravitational_acceleration_))),
+        period_(compute_period(length_, g_, angular_position.component(2))),
         initial_time_(t),
         t_(t),
-        state_({position}),
+        angular_state_({initial_angular_position_}),
         mass_(mass),
-        initial_energy_(compute_potential_energy() + compute_kinetic_energy()) {
-    LOG(INFO) << "Pendulum::Pendulum() -- period_: " << period_;
-  }
+        initial_energy_(compute_potential_energy() + compute_kinetic_energy()) {}
 
   ScalarType mass() const { return mass_; }
+
   // Magnitude of the acceleration due to gravity.
   constexpr ScalarType g() const { return g_; }
+
   constexpr ScalarType period() const { return period_; }
-  constexpr ScalarType length() const { return length_; }
-  constexpr ScalarType current_time() const { return t_; }
 
-  constexpr const StateType& state() const { return state_; }
+  // Actual state as held internally.
+  constexpr const StateType& angular_state() const { return angular_state_; }
 
-  constexpr const MultivectorType& position() const { return state_.template element<0>(); }
-  constexpr const MultivectorType& velocity() const { return state_.template element<1>(); }
+  constexpr MultivectorType angular_acceleration() const {
+    using std::sin;
+    return -g_ / angular_state_.element(0).component(1) *
+           sin(angular_state_.element(0).component(2)) * MultivectorType::template e<1>();
+  }
+
+  // Rectilinear state. These are transformations of the actual state.
+  constexpr MultivectorType position() const {
+    using std::cos;
+    using std::sin;
+    return length() * sin(theta()) * MultivectorType::template e<0>() -
+           length() * cos(theta()) * MultivectorType::template e<1>();
+  }
+
+  constexpr MultivectorType velocity() const {
+    using std::abs;
+    using std::cos;
+    using std::sin;
+    const auto angle{theta()};
+    const auto angle_dot{theta_dot()};
+    return length() * cos(angle) * angle_dot * MultivectorType::template e<0>() +
+           length() * sin(angle) * angle_dot * MultivectorType::template e<1>();
+  }
+
   constexpr MultivectorType acceleration() const {
-    return orthogonal(gravitational_acceleration_, position());
+    using std::cos;
+    using std::sin;
+    const auto r{length()};
+    const auto angle{theta()};
+    const auto theta_double_dot{-g_ / r * sin(angle)};
+    return r * cos(angle) * theta_double_dot * MultivectorType::template e<0>() +
+           r * sin(angle) * theta_double_dot * MultivectorType::template e<1>();
   }
 
   constexpr const MultivectorType& graviational_acceleration() const {
     return gravitational_acceleration_;
   }
 
-  ScalarType height() const {
-    // Extract the aspect of the position vector that is parallel to the gravitational acceleration
-    // direction.
-    const auto parallel{math::parallel(position(), gravitational_acceleration_)};
-    // Construct the vector that represents the position of the pendulum at the bottom of its swing.
-    const auto bottom_of_swing{length_ / g_ * gravitational_acceleration_};
+  constexpr ScalarType height() const { return length() + position().component(2); }
 
-    return abs(parallel - bottom_of_swing);
+  constexpr ScalarType compute_potential_energy() const { return mass_ * g_ * height(); }
+
+  constexpr ScalarType compute_kinetic_energy() const {
+    return mass_ / 2 * square_magnitude(velocity());
   }
 
-  ScalarType compute_potential_energy() const { return mass_ * g_ * height(); }
-
-  ScalarType compute_kinetic_energy() const { return mass_ / 2 * square_magnitude(velocity()); }
-
-  ScalarType theta() const {
-    using std::abs;
-    using std::acos;
-
-    // Unit vector in the direction of gravity.
-    const auto g_hat{gravitational_acceleration_ / g_};
-
-    // This quadrant selector computes whether the position and gravity vectors are in the same, or
-    // different, orientation from e0 and e1. If the two sets of vectors are in the same
-    // orientation, the quadrant_selector variable will be positive; if the position is aligned with
-    // gravity, it will be zero; otherwise, it will be negative.
-    // We use this selector to compute theta. The std::acos() function only returns values on [0,
-    // pi]. We use this selector to expand that return value to [-pi, pi].
-    const auto quadrant_selector{
-        position()
-            .outer(gravitational_acceleration_)
-            .left_contraction(MultivectorType::template e<0>() * MultivectorType::template e<1>())
-            .scalar()};
-
-    const ScalarType sign{(quadrant_selector < 0) ? static_cast<ScalarType>(-1)
-                                                  : static_cast<ScalarType>(1)};
-
-    VLOG(5) << "theta() -- position(): " << position();
-    VLOG(5) << "theta() -- gravitational_acceleration_: " << gravitational_acceleration_;
-    VLOG(5) << "theta() -- length_: " << length_;
-    VLOG(5) << "theta() -- abs(position()): " << abs(position());
-
-    VLOG(5) << "theta() -- value for acos(): "
-            << position().left_contraction(gravitational_acceleration_).scalar() / abs(position());
-
-    return sign * acos(position().left_contraction(g_hat).scalar() / abs(position()));
+  constexpr ScalarType length() const { return angular_state_.template element<0>().component(1); }
+  constexpr ScalarType theta() const { return angular_state_.template element<0>().component(2); }
+  constexpr ScalarType theta_dot() const {
+    return angular_state_.template element<1>().component(2);
   }
+  constexpr ScalarType theta_double_dot() const { return angular_acceleration().component(2); }
+  constexpr ScalarType current_time() const { return t_; }
 
   /**
    * Set the state of the system to the new_time using the given step_size. A default step_size
@@ -224,6 +184,7 @@ class Pendulum final {
   void goto_time(ScalarType new_time, ScalarType step_size = 0) {
     using std::abs;
     using std::remainder;
+    using std::round;
 
     if (step_size == 0) {
       step_size = g_ / 1000;
@@ -240,18 +201,17 @@ class Pendulum final {
         t_ += step_size;
 
         if (abs(remainder(t_, period_)) < abs(step_size)) {
-          state_ = {initial_position_};
-        } else if (abs(remainder(t_, period_ / 2)) < abs(step_size)) {
-          state_ = {reflect(initial_position_, gravitational_acceleration_)};
+          // If we are going to a time that is a multiple of the period, just set the state to the
+          // initial position. We do this to zero out any accumulated errors in the integration.
+          angular_state_ = {initial_angular_position_};
         } else {
-          state_ = integrator_(step_size, state_);
-
-          renormalize();
+          angular_state_ = integrator_(step_size, angular_state_);
         }
 
-        VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
+        VLOG(4) << "t_: " << t_ << ", theta(): " << theta() << ", theta_dot(): " << theta_dot();
       } while (abs(t_ - new_time) > abs(step_size));
     }
+    t_ = new_time;
   }
 
   void evolve(ScalarType time_increment, ScalarType step_size = 0) {
@@ -330,12 +290,7 @@ class PendulumConfigurator final {
     return *this;
   }
 
-  MultivectorType calculate_position() const {
-    using std::cos;
-    using std::sin;
-
-    return length_ * sin(theta_) * e0 - length_ * cos(theta_) * e1;
-  }
+  MultivectorType calculate_position() const { return length_ * e0 + theta_ * e1; }
 
   MultivectorType gravitational_acceleration() const { return -g_ * e1; }
 
