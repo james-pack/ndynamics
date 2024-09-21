@@ -2,6 +2,7 @@
 
 #include "base/initializer.h"
 #include "base/pi.h"
+#include "gflags/gflags.h"
 #include "glog/logging.h"
 #include "imgui.h"
 #include "implot.h"
@@ -193,20 +194,22 @@ class PendulumGraph : public ui::App {
 
 }  // namespace ndyn::simulation
 
+DEFINE_double(length, 1, "Length of the pendulum");
+DEFINE_double(gravity, 1, "Acceleration due to gravity");
+DEFINE_double(mass, 1, "Mass of the pendulum");
+DEFINE_double(angle, ndyn::pi / 4, "Initial angle of the pendulum in radians. Defaults to pi/4.");
+
 int main(int argc, char* argv[]) {
   using namespace ndyn::simulation;
 
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
 
-  static constexpr PendulumGraph::FloatT GRAVITY_ACCELERATION{1};
-  static constexpr PendulumGraph::FloatT LENGTH{1};
-  static constexpr PendulumGraph::FloatT ANGLE{ndyn::pi / 2};
-
   Pendulum<PendulumGraph::T> pendulum{PendulumConfigurator<PendulumGraph::T>{}
-                                          .set_length(LENGTH)
-                                          .set_g(GRAVITY_ACCELERATION)
-                                          .set_theta(ANGLE)
+                                          .set_length(FLAGS_length)
+                                          .set_g(FLAGS_gravity)
+                                          .set_mass(FLAGS_mass)
+                                          .set_theta(FLAGS_angle)
                                           .create()};
 
   PendulumGraph app{pendulum, "Pendulum Graph", 1920, 1080};
