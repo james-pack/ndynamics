@@ -237,11 +237,23 @@ void App::run() {
     if (!is_paused()) {
       static constexpr float PAD{10};
       const ImGuiViewport *viewport = ImGui::GetMainViewport();
-      auto window_size{viewport->WorkSize};
-      ImGui::SetNextWindowPos(ImVec2{window_size.x * 0.9f, PAD}, ImGuiCond_FirstUseEver);
-      ImGui::SetNextWindowSize(window_size, ImGuiCond_FirstUseEver);
 
-      ImGui::Begin("##App", nullptr, ImGuiWindowFlags_NoDecoration);
+      ImVec2 work_pos = viewport->WorkPos;  // Use work area to avoid menu-bar/task-bar, if any!
+      ImVec2 work_size = viewport->WorkSize;
+      ImVec2 window_pos, window_pos_pivot;
+      window_pos.x = work_pos.x + work_size.x - PAD;
+      window_pos.y = work_pos.y + PAD;
+      window_pos_pivot.x = 1.0f;
+      window_pos_pivot.y = 0.0f;
+      ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+
+      ImGui::SetNextWindowBgAlpha(0.35f);  // Transparent background
+
+      const ImGuiWindowFlags window_flags{
+          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+          ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove};
+      ImGui::Begin("##App", nullptr, window_flags);
 
       update_gui();
 
@@ -286,7 +298,7 @@ GLuint App::initialize_shaders(std::filesystem::path vertex_file_path,
       R"(#version 330 core
 out vec3 color;
 void main() {
-  color = vec3(1,0,0);
+  color = vec3(1,0,1);
 }
 )" /*io::read_file(fragment_file_path)*/};
 
