@@ -239,12 +239,15 @@ void App::run() {
 
       // Rendering
       ImGui::Render();
+
       int display_w, display_h;
       glfwGetFramebufferSize(window_, &display_w, &display_h);
       glViewport(0, 0, display_w, display_h);
       glClearColor(clear_color_.x, clear_color_.y, clear_color_.z, clear_color_.w);
-      glClear(GL_COLOR_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
       glfwSwapBuffers(window_);
     } else {
       // Tiny sleep so the CPU doesn't waste energy.
