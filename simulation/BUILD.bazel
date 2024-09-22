@@ -42,8 +42,28 @@ cc_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":simulation",
+        "//base",
         "//math",
         "//sensor",
+        "//third_party/glad",
+        "//third_party/glfw",
+        "//ui",
+    ],
+)
+
+cc_binary(
+    name = "cube",
+    srcs = ["cube.cc"],
+    data = [
+        "red_fragment_shader.fragmentshader",
+        "trivial_vertex_shader.vertexshader",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":simulation",
+        "//base",
+        "//third_party/glad",
+        "//third_party/glfw",
         "//ui",
     ],
 )
