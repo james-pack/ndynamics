@@ -20,9 +20,7 @@ class Cube final : public ui::App {
 
   GLuint vertex_buffer_{};
 
-  void start() override { set_up_vertex_array(); }
-
-  void set_up_vertex_array() {
+  void start() override {
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
@@ -37,13 +35,13 @@ class Cube final : public ui::App {
 
     program_id_ = initialize_shaders("simulation/trivial_vertex_shader.vertexshader",
                                      "simulation/red_fragment_shader.fragmentshader");
-  }
 
-  void update_frame() override {
     if (program_id_ != 0) {
       glUseProgram(program_id_);
     }
+  }
 
+  void update_frame() override {
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
     glVertexAttribPointer(
