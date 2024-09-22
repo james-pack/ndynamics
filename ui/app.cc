@@ -1,7 +1,11 @@
+// clang-format off
+#include "glad/gl.h"
+// clang-format on
+
 #include "ui/app.h"
 
 #include <chrono>
-#include <ostream>
+#include <filesystem>
 #include <string>
 #include <thread>
 
@@ -10,6 +14,7 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_internal.h"
 #include "implot.h"
+#include "io/utils.h"
 #include "ui/imgui_utils.h"
 
 namespace ndyn::ui {
@@ -164,9 +169,11 @@ App::App(std::string title, size_t width, size_t height) {
   glfwSwapInterval(0);
 
   // Initialize OpenGL loader
-  // if (gladLoadGL() != 0) {
-  //   LOG(FATAL) << "Failed to initialize OpenGL loader!";
-  // }
+  int version = gladLoadGL(glfwGetProcAddress);
+  LOG(INFO) << "glfw version: " << version;
+  if (version == 0) {
+    LOG(FATAL) << "Failed to initialize OpenGL loader!";
+  }
 
   // Add the GPU details to the window title.
   const GLubyte *renderer = glGetString(GL_RENDERER);
@@ -190,7 +197,7 @@ App::App(std::string title, size_t width, size_t height) {
   ImGui_ImplGlfw_InitForOpenGL(window_, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  clear_color_ = ImVec4(0.15f, 0.16f, 0.21f, 1.00f);
+  clear_color_ = ImVec4(0.f, 0.f, 0.f, 1.00f);
   style_colors_app();
 }
 
@@ -228,14 +235,15 @@ void App::run() {
     update_model();
 
     if (!is_paused()) {
-      static constexpr float PAD{10.f};
+      static constexpr float PAD{10};
       const ImGuiViewport *viewport = ImGui::GetMainViewport();
-      ImGui::SetNextWindowPos(ImVec2{PAD, PAD}, ImGuiCond_FirstUseEver);
-      ImGui::SetNextWindowSize(viewport->WorkSize, ImGuiCond_FirstUseEver);
+      auto window_size{viewport->WorkSize};
+      ImGui::SetNextWindowPos(ImVec2{window_size.x * 0.9f, PAD}, ImGuiCond_FirstUseEver);
+      ImGui::SetNextWindowSize(window_size, ImGuiCond_FirstUseEver);
 
       ImGui::Begin("##App", nullptr, ImGuiWindowFlags_NoDecoration);
 
-      update_frame();
+      update_gui();
 
       ImGui::End();
 
@@ -248,6 +256,8 @@ void App::run() {
       glClearColor(clear_color_.x, clear_color_.y, clear_color_.z, clear_color_.w);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+      update_frame();
+
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       glfwSwapBuffers(window_);
@@ -258,6 +268,87 @@ void App::run() {
 
     VLOG(4) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
   }
+}
+
+GLuint App::initialize_shaders(std::filesystem::path vertex_file_path,
+                               std::filesystem::path fragment_file_path) {
+  // Create the shaders
+  GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+  GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+
+  GLint result{GL_FALSE};
+  int info_log_length{0};
+
+  const std::string vertex_shader_code{io::read_file(vertex_file_path)};
+  LOG(INFO) << "vertex shader:\n" << vertex_shader_code << "\n";
+
+  const std::string fragment_shader_code{
+      R"(#version 330 core
+out vec3 color;
+void main() {
+  color = vec3(1,0,0);
+}
+)" /*io::read_file(fragment_file_path)*/};
+
+  LOG(INFO) << "fragment shader:\n" << fragment_shader_code << "\n";
+
+  const char *vertex_source_pointer = vertex_shader_code.c_str();
+  glShaderSource(vertex_shader_id, 1, &vertex_source_pointer, NULL);
+  glCompileShader(vertex_shader_id);
+
+  glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &result);
+  if (result == GL_FALSE) {
+    glGetShaderiv(vertex_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+    if (info_log_length > 0) {
+      LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
+      std::vector<GLchar> error_message(info_log_length);
+      glGetShaderInfoLog(vertex_shader_id, info_log_length, &info_log_length, &error_message[0]);
+      LOG(FATAL) << "Could not compile vertex shader: " << &error_message[0];
+    }
+  }
+
+  const char *fragment_source_pointer = fragment_shader_code.c_str();
+  glShaderSource(fragment_shader_id, 1, &fragment_source_pointer, NULL);
+  glCompileShader(fragment_shader_id);
+
+  glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &result);
+  if (result == GL_FALSE) {
+    glGetShaderiv(fragment_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+    if (info_log_length > 0) {
+      LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
+      std::vector<GLchar> error_message(info_log_length);
+      glGetShaderInfoLog(fragment_shader_id, info_log_length, &info_log_length, &error_message[0]);
+      LOG(FATAL) << "Could not compile fragment shader: " << &error_message[0];
+    }
+  }
+
+  // Link the program
+  LOG(INFO) << "Linking shader program.";
+  GLuint program_id = glCreateProgram();
+  glAttachShader(program_id, vertex_shader_id);
+  glAttachShader(program_id, fragment_shader_id);
+  glLinkProgram(program_id);
+
+  // Check the program
+  glGetProgramiv(program_id, GL_LINK_STATUS, &result);
+  if (result == GL_FALSE) {
+    glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
+    if (info_log_length > 0) {
+      LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
+      std::vector<GLchar> error_message(info_log_length);
+      glGetShaderInfoLog(fragment_shader_id, info_log_length, &info_log_length, &error_message[0]);
+      LOG(FATAL) << "Could not link shader program: " << &error_message[0];
+    }
+  }
+
+  glDetachShader(program_id, vertex_shader_id);
+  glDetachShader(program_id, fragment_shader_id);
+
+  glDeleteShader(vertex_shader_id);
+  glDeleteShader(fragment_shader_id);
+
+  LOG(INFO) << "program_id: " << program_id;
+  return program_id;
 }
 
 }  // namespace ndyn::ui

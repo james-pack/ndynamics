@@ -54,7 +54,7 @@ class DemoApp : public App {
     }
   }
 
-  void update_frame() override {
+  void update_gui() override {
     auto size{ImGui::GetContentRegionAvail()};
     size.y /= 3;
 

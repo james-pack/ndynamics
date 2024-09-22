@@ -1,6 +1,11 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
+
+// clang-format off
+//#include "glad/gl.h"
+// clang-format on
 
 #include "GLFW/glfw3.h"
 #include "imgui.h"
@@ -27,8 +32,11 @@ class App {
   // Update, called once per frame. This method is called when paused.
   virtual void update_model() {}
 
-  // Update, called once per frame. Not called when paused.
-  virtual void update_frame() = 0;
+  // Update, called once per frame to update any gui elements. Not called when paused.
+  virtual void update_gui() {}
+
+  // Update, called once per frame to do any direct OpenGL rendering. Not called when paused.
+  virtual void update_frame() {}
 
   // Called when app is first paused.
   virtual void handle_pause() {}
@@ -69,6 +77,9 @@ class App {
 
   // Runs the app.
   void run();
+
+  static GLuint initialize_shaders(std::filesystem::path vertex_path,
+                                   std::filesystem::path fragment_path);
 };
 
 }  // namespace ndyn::ui

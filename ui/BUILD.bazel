@@ -11,6 +11,8 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//io",
+        "//third_party/glad",
         "//third_party/glfw",
         "//third_party/glog",
         "//third_party/imgui",
@@ -24,6 +26,7 @@ cc_binary(
     deps = [
         ":ui",
         "//base",
+        "//third_party/glad",
         "//third_party/glfw",
         "//third_party/glog",
         "//third_party/imgui",
