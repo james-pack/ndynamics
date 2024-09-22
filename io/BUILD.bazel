@@ -1,0 +1,14 @@
+cc_library(
+    name = "io",
+    srcs = [
+        "utils.cc",
+    ],
+    hdrs = [
+        "utils.h",
+    ],
+    linkopts = ["-lstdc++fs"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/glog",
+    ],
+)
