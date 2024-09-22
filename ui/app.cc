@@ -291,46 +291,42 @@ GLuint App::initialize_shaders(std::filesystem::path vertex_file_path,
   GLint result{GL_FALSE};
   int info_log_length{0};
 
-  const std::string vertex_shader_code{io::read_file(vertex_file_path)};
-  LOG(INFO) << "vertex shader:\n" << vertex_shader_code << "\n";
+  {
+    const std::string vertex_shader_code{io::read_file(vertex_file_path)};
+    LOG(INFO) << "vertex shader:\n" << vertex_shader_code << "\n";
+    const char *vertex_source_pointer = vertex_shader_code.c_str();
+    glShaderSource(vertex_shader_id, 1, &vertex_source_pointer, NULL);
+    glCompileShader(vertex_shader_id);
 
-  const std::string fragment_shader_code{
-      R"(#version 330 core
-out vec3 color;
-void main() {
-  color = vec3(1,0,1);
-}
-)" /*io::read_file(fragment_file_path)*/};
-
-  LOG(INFO) << "fragment shader:\n" << fragment_shader_code << "\n";
-
-  const char *vertex_source_pointer = vertex_shader_code.c_str();
-  glShaderSource(vertex_shader_id, 1, &vertex_source_pointer, NULL);
-  glCompileShader(vertex_shader_id);
-
-  glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &result);
-  if (result == GL_FALSE) {
-    glGetShaderiv(vertex_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-    if (info_log_length > 0) {
-      LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
-      std::vector<GLchar> error_message(info_log_length);
-      glGetShaderInfoLog(vertex_shader_id, info_log_length, &info_log_length, &error_message[0]);
-      LOG(FATAL) << "Could not compile vertex shader: " << &error_message[0];
+    glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE) {
+      glGetShaderiv(vertex_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+      if (info_log_length > 0) {
+        LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
+        std::vector<GLchar> error_message(info_log_length);
+        glGetShaderInfoLog(vertex_shader_id, info_log_length, &info_log_length, &error_message[0]);
+        LOG(FATAL) << "Could not compile vertex shader: " << &error_message[0];
+      }
     }
   }
 
-  const char *fragment_source_pointer = fragment_shader_code.c_str();
-  glShaderSource(fragment_shader_id, 1, &fragment_source_pointer, NULL);
-  glCompileShader(fragment_shader_id);
+  {
+    const std::string fragment_shader_code{io::read_file(fragment_file_path)};
+    LOG(INFO) << "fragment shader:\n" << fragment_shader_code << "\n";
+    const char *fragment_source_pointer = fragment_shader_code.c_str();
+    glShaderSource(fragment_shader_id, 1, &fragment_source_pointer, NULL);
+    glCompileShader(fragment_shader_id);
 
-  glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &result);
-  if (result == GL_FALSE) {
-    glGetShaderiv(fragment_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-    if (info_log_length > 0) {
-      LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
-      std::vector<GLchar> error_message(info_log_length);
-      glGetShaderInfoLog(fragment_shader_id, info_log_length, &info_log_length, &error_message[0]);
-      LOG(FATAL) << "Could not compile fragment shader: " << &error_message[0];
+    glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE) {
+      glGetShaderiv(fragment_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
+      if (info_log_length > 0) {
+        LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
+        std::vector<GLchar> error_message(info_log_length);
+        glGetShaderInfoLog(fragment_shader_id, info_log_length, &info_log_length,
+                           &error_message[0]);
+        LOG(FATAL) << "Could not compile fragment shader: " << &error_message[0];
+      }
     }
   }
 
