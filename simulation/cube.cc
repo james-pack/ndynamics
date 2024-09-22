@@ -33,8 +33,8 @@ class Cube final : public ui::App {
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data,
                  GL_STATIC_DRAW);
 
-    program_id_ = initialize_shaders("simulation/trivial_vertex_shader.vertexshader",
-                                     "simulation/red_fragment_shader.fragmentshader");
+    program_id_ = initialize_shaders("simulation/sample_vertex_shader.vertexshader",
+                                     "simulation/sample_fragment_shader.fragmentshader");
 
     if (program_id_ != 0) {
       glUseProgram(program_id_);

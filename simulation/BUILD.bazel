@@ -55,8 +55,8 @@ cc_binary(
     name = "cube",
     srcs = ["cube.cc"],
     data = [
-        "red_fragment_shader.fragmentshader",
-        "trivial_vertex_shader.vertexshader",
+        "sample_fragment_shader.fragmentshader",
+        "sample_vertex_shader.vertexshader",
     ],
     visibility = ["//visibility:public"],
     deps = [
