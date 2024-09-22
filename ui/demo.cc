@@ -26,7 +26,7 @@ class DemoApp : public App {
   float previous_time{};
 
  protected:
-  void update() override {
+  void update_model() override {
     using std::copy_n;
     using std::exp;
     using std::sin;
@@ -52,7 +52,9 @@ class DemoApp : public App {
 
       previous_time = current_time;
     }
+  }
 
+  void update_frame() override {
     auto size{ImGui::GetContentRegionAvail()};
     size.y /= 3;
 

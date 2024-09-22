@@ -125,11 +125,11 @@ App::App(std::string title, size_t width, size_t height) {
   if (!glfwInit()) abort();
 
   // GL 3.0 + GLSL 130
-  // const char *glsl_version = "#version 130";
-  // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-  // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);          // 3.0+ only
+  const char *glsl_version = "#version 130";
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);          // 3.0+ only
 
   GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   const GLFWvidmode *mode = glfwGetVideoMode(monitor);
@@ -188,7 +188,7 @@ App::App(std::string title, size_t width, size_t height) {
     io.FontGlobalScale = monitor_scale.y;
   }
   ImGui_ImplGlfw_InitForOpenGL(window_, true);
-  ImGui_ImplOpenGL3_Init(/*glsl_version*/);
+  ImGui_ImplOpenGL3_Init(glsl_version);
 
   clear_color_ = ImVec4(0.15f, 0.16f, 0.21f, 1.00f);
   style_colors_app();
@@ -225,6 +225,8 @@ void App::run() {
       pause();
     }
 
+    update_model();
+
     if (!is_paused()) {
       static constexpr float PAD{10.f};
       const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -233,7 +235,7 @@ void App::run() {
 
       ImGui::Begin("##App", nullptr, ImGuiWindowFlags_NoDecoration);
 
-      update();
+      update_frame();
 
       ImGui::End();
 

@@ -24,8 +24,11 @@ class App {
   // Called at top of run
   virtual void start() {}
 
+  // Update, called once per frame. This method is called when paused.
+  virtual void update_model() {}
+
   // Update, called once per frame. Not called when paused.
-  virtual void update() = 0;
+  virtual void update_frame() = 0;
 
   // Called when app is first paused.
   virtual void handle_pause() {}

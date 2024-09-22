@@ -42,7 +42,7 @@ class PendulumGraph : public ui::App {
   FloatT previous_time{};
 
  protected:
-  void update() override {
+  void update_model() override {
     using std::exp;
     using std::sin;
 
@@ -81,7 +81,9 @@ class PendulumGraph : public ui::App {
       acceleration_series.update(
           current_time, {graphed_acceleration.component(1), graphed_acceleration.component(2)});
     }
+  }
 
+  void update_frame() override {
     auto size{ImGui::GetContentRegionAvail()};
     size.y /= 7;
 
