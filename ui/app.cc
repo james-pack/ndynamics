@@ -181,6 +181,11 @@ App::App(std::string title, size_t width, size_t height) {
   title += reinterpret_cast<const char *>(renderer);
   glfwSetWindowTitle(window_, title.c_str());
 
+  // Enable depth test
+  glEnable(GL_DEPTH_TEST);
+  // Accept fragment if it closer to the camera than the former one
+  glDepthFunc(GL_LESS);
+
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -197,7 +202,7 @@ App::App(std::string title, size_t width, size_t height) {
   ImGui_ImplGlfw_InitForOpenGL(window_, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  clear_color_ = ImVec4(0.f, 0.f, 0.f, 1.00f);
+  clear_color_ = ImVec4(0.01f, 0.05f, 0.1f, 1.00f);
   style_colors_app();
 }
 
