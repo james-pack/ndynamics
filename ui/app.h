@@ -71,6 +71,15 @@ class App {
   void request_close() { close_requested_ = true; }
   bool close_requested() const { return close_requested_; }
 
+  float aspect_ratio() const {
+    float result{};
+    int width{};
+    int height{};
+    glfwGetWindowSize(window_, &width, &height);
+    result = static_cast<float>(width) / height;
+    return result;
+  }
+
  public:
   App(std::string title, size_t width = 0, size_t height = 0);
   virtual ~App();
