@@ -64,6 +64,7 @@ cc_binary(
         "//base",
         "//third_party/glad",
         "//third_party/glfw",
+        "//third_party/glm",
         "//ui",
     ],
 )
