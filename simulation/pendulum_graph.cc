@@ -15,7 +15,7 @@
 
 namespace ndyn::simulation {
 
-class PendulumGraph : public ui::App {
+class PendulumGraph : public ui::UiElement {
  public:
   using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
   using FloatT = AccelerometerTypes::scalar_type;
@@ -42,7 +42,7 @@ class PendulumGraph : public ui::App {
   FloatT previous_time{};
 
  protected:
-  void update_model() override {
+  void update() override {
     using std::exp;
     using std::sin;
 
@@ -81,9 +81,7 @@ class PendulumGraph : public ui::App {
       acceleration_series.update(
           current_time, {graphed_acceleration.component(1), graphed_acceleration.component(2)});
     }
-  }
 
-  void update_gui() override {
     auto size{ImGui::GetContentRegionAvail()};
     size.y /= 7;
 
@@ -179,19 +177,8 @@ class PendulumGraph : public ui::App {
     }
   }
 
-  void handle_unpause() override {
-    position_series.clear();
-    velocity_series.clear();
-    acceleration_series.clear();
-    theta_series.clear();
-    theta_dot_series.clear();
-    theta_double_dot_series.clear();
-    energy_series.clear();
-  }
-
  public:
-  PendulumGraph(Pendulum<T>& pendulum, std::string title, size_t width = 0, size_t height = 0)
-      : App(std::move(title), width, height), pendulum_(&pendulum) {}
+  PendulumGraph(Pendulum<T>& pendulum) : pendulum_(&pendulum) {}
 };
 
 }  // namespace ndyn::simulation
@@ -203,6 +190,7 @@ DEFINE_double(angle, ndyn::pi / 4, "Initial angle of the pendulum in radians. De
 
 int main(int argc, char* argv[]) {
   using namespace ndyn::simulation;
+  using namespace ndyn::ui;
 
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
@@ -214,7 +202,10 @@ int main(int argc, char* argv[]) {
                                           .set_theta(FLAGS_angle)
                                           .create()};
 
-  PendulumGraph app{pendulum, "Pendulum Graph", 1920, 1080};
+  App app{"Pendulum Graph", 1920, 1080};
+  PendulumGraph ui{pendulum};
+  app.set_root_ui_element(ui);
   app.run();
+
   return 0;
 }

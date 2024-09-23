@@ -5,17 +5,15 @@
 #include "ui/app.h"
 
 #include <chrono>
-#include <filesystem>
 #include <string>
 #include <thread>
 
 #include "GLFW/glfw3.h"
 #include "glog/logging.h"
+#include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "imgui_internal.h"
 #include "implot.h"
-#include "io/utils.h"
 #include "ui/imgui_utils.h"
 
 namespace ndyn::ui {
@@ -219,8 +217,6 @@ App::~App() {
 void App::run() {
   using namespace std::chrono_literals;
 
-  start();
-
   while (!glfwWindowShouldClose(window_) && !close_requested()) {
     glfwPollEvents();
 
@@ -238,32 +234,14 @@ void App::run() {
       pause();
     }
 
-    update_model();
+    for (auto *model : models_) {
+      model->update();
+    }
 
     if (!is_paused()) {
-      static constexpr float PAD{10};
-      const ImGuiViewport *viewport = ImGui::GetMainViewport();
-
-      ImVec2 work_pos = viewport->WorkPos;  // Use work area to avoid menu-bar/task-bar, if any!
-      ImVec2 work_size = viewport->WorkSize;
-      ImVec2 window_pos, window_pos_pivot;
-      window_pos.x = work_pos.x + work_size.x - PAD;
-      window_pos.y = work_pos.y + PAD;
-      window_pos_pivot.x = 1.0f;
-      window_pos_pivot.y = 0.0f;
-      ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-
-      ImGui::SetNextWindowBgAlpha(0.35f);  // Transparent background
-
-      const ImGuiWindowFlags window_flags{
-          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
-          ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
-          ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove};
-      ImGui::Begin("##App", nullptr, window_flags);
-
-      update_gui();
-
-      ImGui::End();
+      if (root_element_ != nullptr) {
+        root_element_->update();
+      }
 
       // Rendering
       ImGui::Render();
@@ -274,7 +252,9 @@ void App::run() {
       glClearColor(clear_color_.x, clear_color_.y, clear_color_.z, clear_color_.w);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      update_frame();
+      for (auto *direct : directs_) {
+        direct->update();
+      }
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

@@ -11,11 +11,21 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glog/logging.h"
 #include "ui/app.h"
+#include "ui/direct_render_element.h"
 #include "ui/shader_program.h"
 
 namespace ndyn::simulation {
 
-class Cube final : public ui::App {
+float aspect_ratio(GLFWwindow& window) {
+  float result{};
+  int width{};
+  int height{};
+  glfwGetWindowSize(&window, &width, &height);
+  result = static_cast<float>(width) / height;
+  return result;
+}
+
+class Cube final : public ui::DirectRenderElement {
  private:
   static constexpr GLfloat g_vertex_buffer_data[] = {
       -1.0f, -1.0f, -1.0f,  // triangle 1 : begin
@@ -98,8 +108,8 @@ class Cube final : public ui::App {
 
   ui::ShaderProgram program_;
 
-  GLuint vertex_buffer_;
-  GLuint color_buffer_;
+  GLuint vertex_buffer_{};
+  GLuint color_buffer_{};
 
   glm::mat4 model_{1.f};
   glm::mat4 view_{glm::lookAt(glm::vec3(4, 3, 3),  // Camera is at (4,3,3), in World Space
@@ -107,17 +117,14 @@ class Cube final : public ui::App {
                               glm::vec3(0, 1, 0)   // Head is up (set to 0,-1,0 to look upside-down)
                               )};
 
-  // Projection matrix: 50° Field of View, aspect ratio from the window, display range: 0.1 unit <->
-  // 100 units Or, for an ortho camera: glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In
-  // world coordinates
-  glm::mat4 projection_{glm::perspective(glm::radians(50.f), aspect_ratio(), 0.1f, 100.f)};
+  glm::mat4 projection_;
   glm::mat4 mvp_{1.f};
 
   GLuint mvp_matrix_id_{};
 
   bool mvp_dirty_{true};
 
-  void update_frame() override {
+  void update() override {
     glUseProgram(program_.id());
 
     if (mvp_dirty_) {
@@ -155,12 +162,15 @@ class Cube final : public ui::App {
   }
 
  public:
-  Cube(std::string title, size_t width = 0, size_t height = 0)
-      : App(title, width, height),
-        program_(ui::ShaderProgramBuilder{}
+  Cube(GLFWwindow& window)
+      : program_(ui::ShaderProgramBuilder{}
                      .add_vertex_shader("simulation/sample_vertex_shader.vertexshader")
                      .add_fragment_shader("simulation/sample_fragment_shader.fragmentshader")
-                     .build()) {
+                     .build()),
+        // Projection matrix: 50° Field of View, aspect ratio from the window, display range: 0.1
+        // unit <-> 100 units Or, for an ortho camera:
+        // glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In world coordinates
+        projection_(glm::perspective(glm::radians(50.f), aspect_ratio(window), 0.1f, 100.f)) {
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
@@ -186,11 +196,14 @@ class Cube final : public ui::App {
 
 int main(int argc, char* argv[]) {
   using namespace ndyn::simulation;
+  using namespace ndyn::ui;
 
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
 
-  Cube app{"Cube", 1920, 1080};
+  App app{"Cube", 1920, 1080};
+  Cube cube{app.window()};
+  app.add_direct_render_element(cube);
   app.run();
   return 0;
 }

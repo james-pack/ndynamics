@@ -4,12 +4,16 @@ cc_library(
         "app.cc",
         "imgui_utils.cc",
         "shader_program.cc",
+        "ui_elements.cc",
     ],
     hdrs = [
         "app.h",
         "data_series.h",
+        "direct_render_element.h",
         "imgui_utils.h",
         "shader_program.h",
+        "ui_elements.h",
+        "ui_model.h",
     ],
     visibility = ["//visibility:public"],
     deps = [

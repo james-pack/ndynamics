@@ -7,11 +7,13 @@
 #include "imgui.h"
 #include "implot.h"
 #include "ui/app.h"
+#include "ui/ui_elements.h"
+#include "ui/ui_model.h"
 
 namespace ndyn::ui {
 
-class DemoApp : public App {
- private:
+class DemoModel final : public UiModel {
+ public:
   static constexpr size_t NUM_POINTS_LARGE{1024};
 
   std::array<float, NUM_POINTS_LARGE> x1{};
@@ -25,8 +27,7 @@ class DemoApp : public App {
 
   float previous_time{};
 
- protected:
-  void update_model() override {
+  void update() override {
     using std::copy_n;
     using std::exp;
     using std::sin;
@@ -53,22 +54,30 @@ class DemoApp : public App {
       previous_time = current_time;
     }
   }
+};
 
-  void update_gui() override {
+class DemoUi final : public UiElement {
+ private:
+  const DemoModel* model_;
+
+ public:
+  DemoUi(const DemoModel& model) : model_(&model) {}
+
+  void update() override {
     auto size{ImGui::GetContentRegionAvail()};
     size.y /= 3;
 
     if (ImPlot::BeginPlot("Position", size)) {
       ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
       ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_None);
-      ImPlot::PlotLine("f(x)", x1.data(), y1.data(), x1.size());
+      ImPlot::PlotLine("f(x)", model_->x1.data(), model_->y1.data(), model_->x1.size());
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Theta", size)) {
       ImPlot::SetupAxesLimits(0, 1, -0.1, 1.1);
       ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_None);
-      ImPlot::PlotLine("theta(x)", x2.data(), y2.data(), x2.size());
+      ImPlot::PlotLine("theta(x)", model_->x2.data(), model_->y2.data(), model_->x2.size());
       ImPlot::EndPlot();
     }
 
@@ -77,21 +86,26 @@ class DemoApp : public App {
       ImPlot::SetupAxes("x", "y", ImPlotAxisFlags_PanStretch | ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-      ImPlot::PlotLine("h(x)", x3.data(), y3.data(), x3.size());
+      ImPlot::PlotLine("h(x)", model_->x3.data(), model_->y3.data(), model_->x3.size());
       ImPlot::EndPlot();
     }
   }
-
- public:
-  using App::App;
 };
 
 }  // namespace ndyn::ui
 
 int main(int argc, char* argv[]) {
+  using namespace ndyn::ui;
+
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
-  ndyn::ui::DemoApp app{"Demo", 1920, 1080};
+  App app{"Demo", 1920, 1080};
+  DemoModel model{};
+  DemoUi demo{model};
+  Window ui{};
+  ui.add_child(demo);
+  app.add_model(model);
+  app.set_root_ui_element(ui);
   app.run();
   return 0;
 }
