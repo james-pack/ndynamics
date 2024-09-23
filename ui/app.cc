@@ -293,7 +293,7 @@ GLuint App::initialize_shaders(std::filesystem::path vertex_file_path,
 
   {
     const std::string vertex_shader_code{io::read_file(vertex_file_path)};
-    LOG(INFO) << "vertex shader:\n" << vertex_shader_code << "\n";
+    VLOG(2) << "vertex shader:\n" << vertex_shader_code << "\n";
     const char *vertex_source_pointer = vertex_shader_code.c_str();
     glShaderSource(vertex_shader_id, 1, &vertex_source_pointer, NULL);
     glCompileShader(vertex_shader_id);
@@ -312,7 +312,7 @@ GLuint App::initialize_shaders(std::filesystem::path vertex_file_path,
 
   {
     const std::string fragment_shader_code{io::read_file(fragment_file_path)};
-    LOG(INFO) << "fragment shader:\n" << fragment_shader_code << "\n";
+    VLOG(2) << "fragment shader:\n" << fragment_shader_code << "\n";
     const char *fragment_source_pointer = fragment_shader_code.c_str();
     glShaderSource(fragment_shader_id, 1, &fragment_source_pointer, NULL);
     glCompileShader(fragment_shader_id);
@@ -355,7 +355,7 @@ GLuint App::initialize_shaders(std::filesystem::path vertex_file_path,
   glDeleteShader(vertex_shader_id);
   glDeleteShader(fragment_shader_id);
 
-  LOG(INFO) << "program_id: " << program_id;
+  VLOG(3) << "program_id: " << program_id;
   return program_id;
 }
 
