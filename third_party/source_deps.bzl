@@ -100,6 +100,15 @@ def load_source_dependencies():
             build_file = "//third_party/glfw:glfw.BUILD",
         )
 
+    if not native.existing_rule("com_github_gtruc_glm"):
+        http_archive(
+            name = "com_github_gtruc_glm",
+            #sha256 = "4ff18a3377da465386374d8127e7b7349b685288cb8e17122f7e1179f73769d5",
+            strip_prefix = "glm-1.0.1",
+            urls = ["https://github.com/g-truc/glm/archive/refs/tags/1.0.1.tar.gz"],
+            build_file = "//third_party/glm:glm.BUILD",
+        )
+
     if not native.existing_rule("com_github_ocornut_imgui"):
         http_archive(
             name = "com_github_ocornut_imgui",
