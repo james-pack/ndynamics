@@ -9,6 +9,7 @@
 #include <string>
 #include <thread>
 
+#include "GLFW/glfw3.h"
 #include "glog/logging.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -285,83 +286,6 @@ void App::run() {
 
     VLOG(4) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
   }
-}
-
-GLuint App::initialize_shaders(std::filesystem::path vertex_file_path,
-                               std::filesystem::path fragment_file_path) {
-  // Create the shaders
-  GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
-  GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
-
-  GLint result{GL_FALSE};
-  int info_log_length{0};
-
-  {
-    const std::string vertex_shader_code{io::read_file(vertex_file_path)};
-    VLOG(2) << "vertex shader:\n" << vertex_shader_code << "\n";
-    const char *vertex_source_pointer = vertex_shader_code.c_str();
-    glShaderSource(vertex_shader_id, 1, &vertex_source_pointer, NULL);
-    glCompileShader(vertex_shader_id);
-
-    glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE) {
-      glGetShaderiv(vertex_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-      if (info_log_length > 0) {
-        LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
-        std::vector<GLchar> error_message(info_log_length);
-        glGetShaderInfoLog(vertex_shader_id, info_log_length, &info_log_length, &error_message[0]);
-        LOG(FATAL) << "Could not compile vertex shader: " << &error_message[0];
-      }
-    }
-  }
-
-  {
-    const std::string fragment_shader_code{io::read_file(fragment_file_path)};
-    VLOG(2) << "fragment shader:\n" << fragment_shader_code << "\n";
-    const char *fragment_source_pointer = fragment_shader_code.c_str();
-    glShaderSource(fragment_shader_id, 1, &fragment_source_pointer, NULL);
-    glCompileShader(fragment_shader_id);
-
-    glGetShaderiv(fragment_shader_id, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE) {
-      glGetShaderiv(fragment_shader_id, GL_INFO_LOG_LENGTH, &info_log_length);
-      if (info_log_length > 0) {
-        LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
-        std::vector<GLchar> error_message(info_log_length);
-        glGetShaderInfoLog(fragment_shader_id, info_log_length, &info_log_length,
-                           &error_message[0]);
-        LOG(FATAL) << "Could not compile fragment shader: " << &error_message[0];
-      }
-    }
-  }
-
-  // Link the program
-  LOG(INFO) << "Linking shader program.";
-  GLuint program_id = glCreateProgram();
-  glAttachShader(program_id, vertex_shader_id);
-  glAttachShader(program_id, fragment_shader_id);
-  glLinkProgram(program_id);
-
-  // Check the program
-  glGetProgramiv(program_id, GL_LINK_STATUS, &result);
-  if (result == GL_FALSE) {
-    glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &info_log_length);
-    if (info_log_length > 0) {
-      LOG(INFO) << "result: " << result << ", info_log_length: " << info_log_length;
-      std::vector<GLchar> error_message(info_log_length);
-      glGetShaderInfoLog(fragment_shader_id, info_log_length, &info_log_length, &error_message[0]);
-      LOG(FATAL) << "Could not link shader program: " << &error_message[0];
-    }
-  }
-
-  glDetachShader(program_id, vertex_shader_id);
-  glDetachShader(program_id, fragment_shader_id);
-
-  glDeleteShader(vertex_shader_id);
-  glDeleteShader(fragment_shader_id);
-
-  VLOG(3) << "program_id: " << program_id;
-  return program_id;
 }
 
 }  // namespace ndyn::ui

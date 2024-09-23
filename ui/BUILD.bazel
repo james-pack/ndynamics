@@ -3,11 +3,13 @@ cc_library(
     srcs = [
         "app.cc",
         "imgui_utils.cc",
+        "shader_program.cc",
     ],
     hdrs = [
         "app.h",
         "data_series.h",
         "imgui_utils.h",
+        "shader_program.h",
     ],
     visibility = ["//visibility:public"],
     deps = [

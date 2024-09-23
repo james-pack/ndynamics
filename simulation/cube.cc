@@ -1,14 +1,17 @@
 // clang-format off
 #include "glad/gl.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
 // clang-format on
+
+#include <string>
 
 #include "base/initializer.h"
 #include "gflags/gflags.h"
 #include "GLFW/glfw3.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include "glog/logging.h"
 #include "ui/app.h"
+#include "ui/shader_program.h"
 
 namespace ndyn::simulation {
 
@@ -93,7 +96,7 @@ class Cube final : public ui::App {
       0.982f, 0.099f, 0.879f   //
   };
 
-  GLuint program_id_{};
+  ui::ShaderProgram program_;
 
   GLuint vertex_buffer_;
   GLuint color_buffer_;
@@ -114,42 +117,11 @@ class Cube final : public ui::App {
 
   bool mvp_dirty_{true};
 
-  void start() override {
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
-
-    // Generate 1 buffer, put the resulting identifier in vertexbuffer
-    glGenBuffers(1, &vertex_buffer_);
-    // The following commands will talk about our 'vertexbuffer' buffer
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-    // Give our vertices to OpenGL.
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data,
-                 GL_STATIC_DRAW);
-
-    glGenBuffers(1, &color_buffer_);
-    glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
-
-    program_id_ = initialize_shaders("simulation/sample_vertex_shader.vertexshader",
-                                     "simulation/sample_fragment_shader.fragmentshader");
-
-    if (program_id_ != 0) {
-      glUseProgram(program_id_);
-    }
-
-    // Get a handle for our "MVP" uniform
-    // Only during the initialisation
-    mvp_matrix_id_ = glGetUniformLocation(program_id_, "MVP");
-  }
-
   void update_frame() override {
+    glUseProgram(program_.id());
+
     if (mvp_dirty_) {
       mvp_ = projection_ * view_ * model_;
-
-      // Send our transformation to the currently bound shader, in the "MVP" uniform
-      // This is done in the main loop since each model will have a different MVP matrix (At least
-      // for the M part)
       glUniformMatrix4fv(mvp_matrix_id_, 1, GL_FALSE, &mvp_[0][0]);
       mvp_dirty_ = false;
     }
@@ -183,7 +155,31 @@ class Cube final : public ui::App {
   }
 
  public:
-  using ui::App::App;
+  Cube(std::string title, size_t width = 0, size_t height = 0)
+      : App(title, width, height),
+        program_(ui::ShaderProgramBuilder{}
+                     .add_vertex_shader("simulation/sample_vertex_shader.vertexshader")
+                     .add_fragment_shader("simulation/sample_fragment_shader.fragmentshader")
+                     .build()) {
+    GLuint VertexArrayID;
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
+
+    // Generate 1 buffer, put the resulting identifier in vertexbuffer
+    glGenBuffers(1, &vertex_buffer_);
+    // The following commands will talk about our 'vertexbuffer' buffer
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+    // Give our vertices to OpenGL.
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data,
+                 GL_STATIC_DRAW);
+
+    glGenBuffers(1, &color_buffer_);
+    glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+
+    glUseProgram(program_.id());
+    mvp_matrix_id_ = glGetUniformLocation(program_.id(), "MVP");
+  }
 };
 
 }  // namespace ndyn::simulation
