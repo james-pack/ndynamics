@@ -203,7 +203,9 @@ int main(int argc, char* argv[]) {
                                           .create()};
 
   App app{"Pendulum Graph", 1920, 1080};
-  PendulumGraph ui{pendulum};
+  Window ui{};
+  PendulumGraph statistics{pendulum};
+  ui.add_child(statistics);
   app.set_root_ui_element(ui);
   app.run();
 

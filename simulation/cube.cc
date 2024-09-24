@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
   ndyn::initialize(&argc, &argv);
 
   App app{"Cube", 1920, 1080};
-  Cube cube{app.window()};
+  Cube cube{app.gl_window()};
   app.add_direct_render_element(cube);
   app.run();
   return 0;
