@@ -69,11 +69,11 @@ class App final {
 
   void add_model(UiModel& model) { models_.push_back(&model); }
   void add_direct_render_element(DirectRenderElement& element) { directs_.push_back(&element); }
-  void set_root_ui_element(UiElement& element) { root_element_ = &element; }
+  void set_root_ui_element(Window& element) { root_element_ = &element; }
 
   void run();
 
-  GLFWwindow& window() { return *window_; }
+  GLFWwindow& gl_window() { return *window_; }
 };
 
 }  // namespace ndyn::ui
