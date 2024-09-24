@@ -14,6 +14,28 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "simulation_ui",
+    hdrs = [
+        "cube_ui.h",
+        "pendulum_graph_ui.h",
+    ],
+    data = [
+        "sample_fragment_shader.fragmentshader",
+        "sample_vertex_shader.vertexshader",
+    ],
+    deps = [
+        ":simulation",
+        "//base",
+        "//math",
+        "//third_party/glfw",
+        "//third_party/glm",
+        "//third_party/imgui",
+        "//third_party/implot",
+        "//ui",
+    ],
+)
+
 cc_test(
     name = "characterization_test",
     srcs = ["characterization_test.cc"],
@@ -39,9 +61,9 @@ cc_test(
 cc_binary(
     name = "pendulum_graph",
     srcs = ["pendulum_graph.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         ":simulation",
+        ":simulation_ui",
         "//base",
         "//math",
         "//sensor",
@@ -54,17 +76,12 @@ cc_binary(
 cc_binary(
     name = "cube",
     srcs = ["cube.cc"],
-    data = [
-        "sample_fragment_shader.fragmentshader",
-        "sample_vertex_shader.vertexshader",
-    ],
-    visibility = ["//visibility:public"],
     deps = [
         ":simulation",
+        ":simulation_ui",
         "//base",
         "//third_party/glad",
         "//third_party/glfw",
-        "//third_party/glm",
         "//ui",
     ],
 )
