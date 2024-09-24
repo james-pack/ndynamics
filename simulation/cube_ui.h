@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -16,6 +18,8 @@ static inline float aspect_ratio(GLFWwindow& window) {
   result = static_cast<float>(width) / height;
   return result;
 }
+
+using CubePositionFn = std::function<glm::mat4()>;
 
 class Cube final : public ui::DirectRenderElement {
  private:
@@ -99,14 +103,15 @@ class Cube final : public ui::DirectRenderElement {
   };
 
   const ui::ShaderProgram program_;
+  CubePositionFn position_fn_;
 
   GLuint vertex_buffer_{};
   GLuint color_buffer_{};
 
   glm::mat4 model_{1.f};
-  glm::mat4 view_{glm::lookAt(glm::vec3(4, 3, 3),  // Camera is at (4,3,3), in World Space
-                              glm::vec3(0, 0, 0),  // and looks at the origin
-                              glm::vec3(0, 1, 0)   // Head is up (set to 0,-1,0 to look upside-down)
+  glm::mat4 view_{glm::lookAt(glm::vec3{0, 0, 10},  // Camera location in World Space
+                              glm::vec3{0, 0, 0},   // and looks at this location in World Space
+                              glm::vec3{0, 1, 0}  // Head is up (set to 0,-1,0 to look upside-down)
                               )};
 
   glm::mat4 projection_;
@@ -116,22 +121,31 @@ class Cube final : public ui::DirectRenderElement {
 
   bool mvp_dirty_{true};
 
-  void sync_model_position() {
+  void rotate_model() {
     static constexpr glm::vec3 rotation_axis{0, 1, 1};
-    // Assuming that we render about 100 fps, this gives us a rotation about every 10s.
-    static constexpr float RADIANS_PER_FRAME{6.2832f / 100 / 10};
+    // Assuming that we render about 1000 fps, this gives us a rotation about every 10s.
+    static constexpr float RADIANS_PER_FRAME{6.2832f / 1000 / 10};
     model_ = glm::rotate(model_, RADIANS_PER_FRAME, rotation_axis);
 
     mvp_dirty_ = true;
   }
 
+  void sync_model_position() {
+    model_ = position_fn_();
+    mvp_dirty_ = true;
+  }
+
   void update() override {
-    sync_model_position();
+    if (position_fn_) {
+      sync_model_position();
+    } else {
+      rotate_model();
+    }
 
     glUseProgram(program_.id());
 
     if (mvp_dirty_) {
-      mvp_ = projection_ * view_ * model_;
+      mvp_ = projection_ * view_ * model_ * glm::scale(glm::mat4{1.f}, glm::vec3{0.75});
       glUniformMatrix4fv(mvp_matrix_id_, 1, GL_FALSE, &mvp_[0][0]);
       mvp_dirty_ = false;
     }
@@ -165,7 +179,7 @@ class Cube final : public ui::DirectRenderElement {
   }
 
  public:
-  Cube(GLFWwindow& window)
+  Cube(GLFWwindow& window, CubePositionFn position_fn = CubePositionFn{})
       : program_(ui::ShaderProgramBuilder{}
                      .add_vertex_shader("simulation/sample_vertex_shader.vertexshader")
                      .add_fragment_shader("simulation/sample_fragment_shader.fragmentshader")
@@ -173,6 +187,7 @@ class Cube final : public ui::DirectRenderElement {
         // Projection matrix: 50° Field of View, aspect ratio from the window, display range: 0.1
         // unit <-> 100 units Or, for an ortho camera:
         // glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In world coordinates
+        position_fn_(position_fn),
         projection_(glm::perspective(glm::radians(50.f), aspect_ratio(window), 0.1f, 100.f)) {
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);

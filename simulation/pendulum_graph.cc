@@ -6,6 +6,8 @@
 #include "base/pi.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include "simulation/cube_ui.h"
 #include "simulation/pendulum.h"
 #include "simulation/pendulum_graph_ui.h"
@@ -38,7 +40,16 @@ int main(int argc, char* argv[]) {
   ui.add_child(statistics);
   app.set_root_ui_element(ui);
 
-  Cube cube{app.gl_window()};
+  CubePositionFn cube_as_pendulum{[&pendulum]() {
+    const auto x{pendulum.position().component(1)};
+    const auto y{pendulum.position().component(2) + FLAGS_length / 2};
+    const auto z{pendulum.position().component(4)};
+    const auto theta{pendulum.theta()};
+    return glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), theta,
+                       glm::vec3{0, 0, 1});
+  }};
+
+  Cube cube{app.gl_window(), cube_as_pendulum};
   app.add_direct_render_element(cube);
 
   app.run();
