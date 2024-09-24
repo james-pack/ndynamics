@@ -203,6 +203,9 @@ App::App(std::string title, size_t width, size_t height) {
 
   clear_color_ = ImVec4(0.01f, 0.05f, 0.1f, 1.00f);
   style_colors_app();
+
+  io.IniFilename = nullptr;
+  io.LogFilename = nullptr;
 }
 
 App::~App() {
