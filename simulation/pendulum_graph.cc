@@ -20,6 +20,8 @@ DEFINE_double(gravity, 1, "Acceleration due to gravity");
 DEFINE_double(mass, 1, "Mass of the pendulum");
 DEFINE_double(angle, ndyn::pi / 4, "Initial angle of the pendulum in radians. Defaults to pi/4.");
 
+DEFINE_bool(fullscreen, false, "Run in fullscreen mode (windowless)");
+
 int main(int argc, char* argv[]) {
   using namespace ndyn::simulation;
   using namespace ndyn::ui;
@@ -34,14 +36,16 @@ int main(int argc, char* argv[]) {
                                           .set_theta(FLAGS_angle)
                                           .create()};
 
-  App app{"Pendulum Graph", 1920, 1080};
+  size_t width{FLAGS_fullscreen ? 0 : 1920};
+  size_t height{FLAGS_fullscreen ? 0 : 1080};
+
+  App app{"Pendulum Graph", width, height};
 
   Window ui{};
   PendulumGraph statistics{pendulum};
   ui.add_left_child(statistics);
   SensorMeasurementGraph sensor_measurements{pendulum};
   ui.add_right_child(sensor_measurements);
-  app.set_root_ui_element(ui);
 
   CubePositionFn cube_as_pendulum{[&pendulum]() {
     const auto x{pendulum.position().component(1)};
@@ -51,10 +55,10 @@ int main(int argc, char* argv[]) {
     return glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), theta,
                        glm::vec3{0, 0, 1});
   }};
-
   Cube cube{app.gl_window(), cube_as_pendulum};
-  app.add_direct_render_element(cube);
 
+  app.set_root_ui_element(ui);
+  app.add_direct_render_element(cube);
   app.run();
 
   return 0;
