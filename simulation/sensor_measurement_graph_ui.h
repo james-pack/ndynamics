@@ -33,9 +33,13 @@ class SensorMeasurementGraph final : public ui::UiElement {
   Characterization<T, FloatT> accelerometer_2_characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.05}, .offset_std{.25}}};
 
+  Characterization<T, FloatT> accelerometer_3_characterization{
+      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.15}, .offset_std{.5}}};
+
   static constexpr size_t NUM_POINTS{2048};
   ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_1_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_2_series{"t", {"x", "y"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_3_series{"t", {"x", "y"}};
 
   FloatT previous_time{};
 
@@ -62,12 +66,17 @@ class SensorMeasurementGraph final : public ui::UiElement {
           accelerometer_2_characterization.inject_noise(TEMPERATURE, acceleration)};
       accelerometer_2_series.update(
           current_time, {fuzzed_acceleration_2.component(1), fuzzed_acceleration_2.component(2)});
+
+      const auto fuzzed_acceleration_3{
+          accelerometer_3_characterization.inject_noise(TEMPERATURE, acceleration)};
+      accelerometer_3_series.update(
+          current_time, {fuzzed_acceleration_3.component(1), fuzzed_acceleration_3.component(2)});
     }
 
     auto size{ImGui::GetContentRegionAvail()};
-    size.y /= 2;
+    size.y /= 3;
 
-    if (ImPlot::BeginPlot("Accelerometer 1", size)) {
+    if (ImPlot::BeginPlot("Accelerometer 1 (good)", size)) {
       ImPlot::SetupAxes(accelerometer_1_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
@@ -80,7 +89,7 @@ class SensorMeasurementGraph final : public ui::UiElement {
       ImPlot::EndPlot();
     }
 
-    if (ImPlot::BeginPlot("Accelerometer 2", size)) {
+    if (ImPlot::BeginPlot("Accelerometer 2 (bad)", size)) {
       ImPlot::SetupAxes(accelerometer_2_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
@@ -88,6 +97,19 @@ class SensorMeasurementGraph final : public ui::UiElement {
       for (size_t i = 0; i < accelerometer_2_series.num_functions(); ++i) {
         ImPlot::PlotScatter(accelerometer_2_series.y_clabel(i), accelerometer_2_series.x_data(),
                             accelerometer_2_series.y_data(i), accelerometer_2_series.size());
+      }
+
+      ImPlot::EndPlot();
+    }
+
+    if (ImPlot::BeginPlot("Accelerometer 3 (ugly)", size)) {
+      ImPlot::SetupAxes(accelerometer_3_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+
+      for (size_t i = 0; i < accelerometer_3_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(accelerometer_3_series.y_clabel(i), accelerometer_3_series.x_data(),
+                            accelerometer_3_series.y_data(i), accelerometer_3_series.size());
       }
 
       ImPlot::EndPlot();
