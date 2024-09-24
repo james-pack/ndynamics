@@ -190,14 +190,18 @@ App::App(std::string title, size_t width, size_t height) {
   ImGui::CreateContext();
   ImPlot::CreateContext();
 
-  ImVec2 monitor_scale;
-  glfwGetMonitorContentScale(monitor, &monitor_scale.x, &monitor_scale.y);
   ImGuiIO &io = ImGui::GetIO();
-  if (monitor_scale.x >= monitor_scale.y) {
-    io.FontGlobalScale = monitor_scale.x;
-  } else {
-    io.FontGlobalScale = monitor_scale.y;
+
+  if (!fullscreen) {
+    ImVec2 monitor_scale;
+    glfwGetMonitorContentScale(monitor, &monitor_scale.x, &monitor_scale.y);
+    if (monitor_scale.x >= monitor_scale.y) {
+      io.FontGlobalScale = monitor_scale.x;
+    } else {
+      io.FontGlobalScale = monitor_scale.y;
+    }
   }
+
   ImGui_ImplGlfw_InitForOpenGL(window_, true);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
