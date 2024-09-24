@@ -98,7 +98,7 @@ class Cube final : public ui::DirectRenderElement {
       0.982f, 0.099f, 0.879f   //
   };
 
-  ui::ShaderProgram program_;
+  const ui::ShaderProgram program_;
 
   GLuint vertex_buffer_{};
   GLuint color_buffer_{};
@@ -116,7 +116,18 @@ class Cube final : public ui::DirectRenderElement {
 
   bool mvp_dirty_{true};
 
+  void sync_model_position() {
+    static constexpr glm::vec3 rotation_axis{0, 1, 1};
+    // Assuming that we render about 100 fps, this gives us a rotation about every 10s.
+    static constexpr float RADIANS_PER_FRAME{6.2832f / 100 / 10};
+    model_ = glm::rotate(model_, RADIANS_PER_FRAME, rotation_axis);
+
+    mvp_dirty_ = true;
+  }
+
   void update() override {
+    sync_model_position();
+
     glUseProgram(program_.id());
 
     if (mvp_dirty_) {

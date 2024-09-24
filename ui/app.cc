@@ -267,7 +267,7 @@ void App::run() {
       std::this_thread::sleep_for(20ms);
     }
 
-    VLOG(4) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
+    VLOG(1) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
   }
 }
 
