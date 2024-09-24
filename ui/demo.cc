@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
   DemoModel model{};
   DemoUi demo{model};
   Window ui{};
-  ui.add_child(demo);
+  ui.add_right_child(demo);
   app.add_model(model);
   app.set_root_ui_element(ui);
   app.run();

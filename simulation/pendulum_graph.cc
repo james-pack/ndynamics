@@ -11,6 +11,7 @@
 #include "simulation/cube_ui.h"
 #include "simulation/pendulum.h"
 #include "simulation/pendulum_graph_ui.h"
+#include "simulation/sensor_measurement_graph_ui.h"
 #include "ui/app.h"
 #include "ui/ui_elements.h"
 
@@ -37,7 +38,9 @@ int main(int argc, char* argv[]) {
 
   Window ui{};
   PendulumGraph statistics{pendulum};
-  ui.add_child(statistics);
+  ui.add_left_child(statistics);
+  SensorMeasurementGraph sensor_measurements{pendulum};
+  ui.add_right_child(sensor_measurements);
   app.set_root_ui_element(ui);
 
   CubePositionFn cube_as_pendulum{[&pendulum]() {

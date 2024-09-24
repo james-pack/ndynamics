@@ -19,6 +19,7 @@ cc_library(
     hdrs = [
         "cube_ui.h",
         "pendulum_graph_ui.h",
+        "sensor_measurement_graph_ui.h",
     ],
     data = [
         "sample_fragment_shader.fragmentshader",

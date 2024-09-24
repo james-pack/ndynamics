@@ -7,7 +7,6 @@
 #include "implot.h"
 #include "math/multivector.h"
 #include "sensor/measurement_type.h"
-#include "simulation/characterization.h"
 #include "simulation/pendulum.h"
 #include "ui/app.h"
 #include "ui/data_series.h"
@@ -20,15 +19,9 @@ class PendulumGraph : public ui::UiElement {
   using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
   using FloatT = AccelerometerTypes::scalar_type;
   using T = AccelerometerTypes::type;
-  using TemperatureType = sensor::MeasurementValueType<sensor::MeasurementType::TEMPERATURE>::type;
 
  private:
   Pendulum<T>* pendulum_;
-
-  TemperatureType TEMPERATURE{25};
-
-  Characterization<T, FloatT> characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.01}, .offset_std{0.1}}};
 
   static constexpr size_t NUM_POINTS{2048};
   ui::DataSeries<FloatT, NUM_POINTS, 3> position_series{"t", {"x", "y", "height"}};
@@ -36,7 +29,6 @@ class PendulumGraph : public ui::UiElement {
   ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 1> theta_series{"t", {"theta"}};
   ui::DataSeries<FloatT, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_series{"t", {"x", "y"}};
 
   FloatT previous_time{};
 
@@ -73,15 +65,12 @@ class PendulumGraph : public ui::UiElement {
 
     {
       const auto acceleration{pendulum_->acceleration()};
-      const auto fuzzed_acceleration{characterization.inject_noise(TEMPERATURE, acceleration)};
       acceleration_series.update(current_time,
                                  {acceleration.component(1), acceleration.component(2)});
-      accelerometer_series.update(
-          current_time, {fuzzed_acceleration.component(1), fuzzed_acceleration.component(2)});
     }
 
     auto size{ImGui::GetContentRegionAvail()};
-    size.y /= 6;
+    size.y /= 5;
 
     if (ImPlot::BeginPlot("Position", size)) {
       ImPlot::SetupAxes(position_series.x_clabel(), "Position", ImPlotAxisFlags_AutoFit,
@@ -117,19 +106,6 @@ class PendulumGraph : public ui::UiElement {
       for (size_t i = 0; i < acceleration_series.num_functions(); ++i) {
         ImPlot::PlotScatter(acceleration_series.y_clabel(i), acceleration_series.x_data(),
                             acceleration_series.y_data(i), acceleration_series.size());
-      }
-
-      ImPlot::EndPlot();
-    }
-
-    if (ImPlot::BeginPlot("Accelerometer", size)) {
-      ImPlot::SetupAxes(accelerometer_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-
-      for (size_t i = 0; i < accelerometer_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(accelerometer_series.y_clabel(i), accelerometer_series.x_data(),
-                            accelerometer_series.y_data(i), accelerometer_series.size());
       }
 
       ImPlot::EndPlot();

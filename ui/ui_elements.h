@@ -17,13 +17,15 @@ class UiElement {
 
 class Window final : public UiElement {
  private:
-  std::vector<UiElement*> children_{};
+  std::vector<UiElement*> left_children_{};
+  std::vector<UiElement*> right_children_{};
 
  public:
   // Update, called once per frame to update any gui elements. Not called when paused.
   void update() override;
 
-  void add_child(UiElement& child) { children_.push_back(&child); }
+  void add_left_child(UiElement& child) { left_children_.push_back(&child); }
+  void add_right_child(UiElement& child) { right_children_.push_back(&child); }
 };
 
 }  // namespace ndyn::ui
