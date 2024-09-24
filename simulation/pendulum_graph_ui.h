@@ -35,9 +35,8 @@ class PendulumGraph : public ui::UiElement {
   ui::DataSeries<FloatT, NUM_POINTS, 2> velocity_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 1> theta_series{"t", {"theta"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 1> theta_dot_series{"t", {"theta_dot"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 1> theta_double_dot_series{"t", {"theta_double_dot"}};
   ui::DataSeries<FloatT, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_series{"t", {"x", "y"}};
 
   FloatT previous_time{};
 
@@ -64,8 +63,6 @@ class PendulumGraph : public ui::UiElement {
     }
 
     theta_series.update(current_time, {pendulum_->theta()});
-    theta_dot_series.update(current_time, {pendulum_->theta_dot()});
-    theta_double_dot_series.update(current_time, {pendulum_->theta_double_dot()});
 
     {
       const auto kinetic_energy{pendulum_->compute_kinetic_energy()};
@@ -77,13 +74,14 @@ class PendulumGraph : public ui::UiElement {
     {
       const auto acceleration{pendulum_->acceleration()};
       const auto fuzzed_acceleration{characterization.inject_noise(TEMPERATURE, acceleration)};
-      const auto& graphed_acceleration{acceleration};
-      acceleration_series.update(
-          current_time, {graphed_acceleration.component(1), graphed_acceleration.component(2)});
+      acceleration_series.update(current_time,
+                                 {acceleration.component(1), acceleration.component(2)});
+      accelerometer_series.update(
+          current_time, {fuzzed_acceleration.component(1), fuzzed_acceleration.component(2)});
     }
 
     auto size{ImGui::GetContentRegionAvail()};
-    size.y /= 7;
+    size.y /= 6;
 
     if (ImPlot::BeginPlot("Position", size)) {
       ImPlot::SetupAxes(position_series.x_clabel(), "Position", ImPlotAxisFlags_AutoFit,
@@ -124,6 +122,19 @@ class PendulumGraph : public ui::UiElement {
       ImPlot::EndPlot();
     }
 
+    if (ImPlot::BeginPlot("Accelerometer", size)) {
+      ImPlot::SetupAxes(accelerometer_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
+                        ImPlotAxisFlags_AutoFit);
+      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+
+      for (size_t i = 0; i < accelerometer_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(accelerometer_series.y_clabel(i), accelerometer_series.x_data(),
+                            accelerometer_series.y_data(i), accelerometer_series.size());
+      }
+
+      ImPlot::EndPlot();
+    }
+
     if (ImPlot::BeginPlot("Energy", size)) {
       ImPlot::SetupAxes(energy_series.x_clabel(), "Energy", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
@@ -145,32 +156,6 @@ class PendulumGraph : public ui::UiElement {
       for (size_t i = 0; i < theta_series.num_functions(); ++i) {
         ImPlot::PlotScatter(theta_series.y_clabel(i), theta_series.x_data(), theta_series.y_data(i),
                             theta_series.size());
-      }
-
-      ImPlot::EndPlot();
-    }
-
-    if (ImPlot::BeginPlot("Angular Velocity", size)) {
-      ImPlot::SetupAxes(theta_dot_series.x_clabel(), "Theta Dot", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-
-      for (size_t i = 0; i < theta_dot_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(theta_dot_series.y_clabel(i), theta_dot_series.x_data(),
-                            theta_dot_series.y_data(i), theta_dot_series.size());
-      }
-
-      ImPlot::EndPlot();
-    }
-
-    if (ImPlot::BeginPlot("Angular Acceleration", size)) {
-      ImPlot::SetupAxes(theta_double_dot_series.x_clabel(), "Theta Double Dot",
-                        ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-
-      for (size_t i = 0; i < theta_double_dot_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(theta_double_dot_series.y_clabel(i), theta_double_dot_series.x_data(),
-                            theta_double_dot_series.y_data(i), theta_double_dot_series.size());
       }
 
       ImPlot::EndPlot();
