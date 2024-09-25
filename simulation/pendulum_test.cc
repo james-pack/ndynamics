@@ -72,19 +72,22 @@ template <typename PendulumT, typename ScalarType>
              << " Expected component(1) of velocity to be negative. velocity: "
              << pendulum.velocity();
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
     result = is_negative(pendulum.velocity().component(2))
              << " Expected component(2) of velocity to be negative. velocity: "
              << pendulum.velocity();
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
     result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
@@ -92,7 +95,8 @@ template <typename PendulumT, typename ScalarType>
              << " Expected component(1) of velocity to be negative. velocity: "
              << pendulum.velocity();
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
     result = is_positive(pendulum.velocity().component(2))
              << " Expected component(2) of velocity to be positive. velocity: "
@@ -100,13 +104,14 @@ template <typename PendulumT, typename ScalarType>
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ". Expected positive velocity in y-direction. velocity: "
-                    << pendulum.velocity();
+                    << pendulum.velocity() << ", pendulum.period(): " << pendulum.period();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
     result = is_near(-angle, pendulum.theta(), EPSILON);
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
@@ -114,19 +119,22 @@ template <typename PendulumT, typename ScalarType>
              << " Expected component(1) of velocity to be positive. velocity: "
              << pendulum.velocity();
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
     result = is_negative(pendulum.velocity().component(2))
              << " Expected component(2) of velocity to be negative. velocity: "
              << pendulum.velocity();
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
     result = is_near(ZERO_ANGLE, pendulum.theta(), EPSILON);
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
@@ -134,19 +142,56 @@ template <typename PendulumT, typename ScalarType>
              << " Expected component(1) of velocity to be positive. velocity: "
              << pendulum.velocity();
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
     result = is_positive(pendulum.velocity().component(2))
              << " Expected component(2) of velocity to be positive. velocity: "
              << pendulum.velocity();
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
     result = is_near(angle, pendulum.theta(), EPSILON);
     if (!result) {
-      return result << ", pendulum.current_time(): " << pendulum.current_time();
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
+    }
+  }
+  return result;
+}
+
+template <typename PendulumT, typename ScalarType>
+::testing::AssertionResult IsAccurateAtHalfPeriod(PendulumT pendulum, size_t num_periods,
+                                                  ScalarType angle) {
+  ::testing::AssertionResult result{::testing::AssertionSuccess()};
+
+  // Calculate the expected period including a correction term for the circular error.
+  const ScalarType quarter_period = compute_period(pendulum.length(), pendulum.g(), angle) / 4;
+
+  // Compare the expected and computed values to be within a percentage of the given angle.
+  const ScalarType EPSILON{static_cast<ScalarType>(0.05) * angle};
+
+  static constexpr ScalarType ZERO_ANGLE{0};
+
+  ScalarType STEP_SIZE{0.01};
+  for (size_t i = 0; i < num_periods; ++i) {
+    pendulum.goto_time(i * 4 * quarter_period);
+
+    pendulum.evolve(quarter_period * 2, STEP_SIZE);
+    result = is_near(-angle, pendulum.theta(), EPSILON);
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
+    }
+
+    pendulum.evolve(quarter_period * 2, STEP_SIZE);
+    result = is_near(angle, pendulum.theta(), EPSILON);
+    if (!result) {
+      return result << ", pendulum.current_time(): " << pendulum.current_time()
+                    << ", pendulum.period(): " << pendulum.period();
     }
   }
   return result;
@@ -334,23 +379,22 @@ TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerat
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest,
-     DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
+TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, MODERATE_ANGLE));
+  EXPECT_TRUE(IsAccurateAtHalfPeriod(p, MULTIPLE_PERIODS, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerateAngle) {
+TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerateAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, MODERATE_ANGLE));
+  EXPECT_TRUE(IsAccurateAtHalfPeriod(p, MANY_PERIODS, MODERATE_ANGLE));
 }
 
 TEST(PendulumTest,
@@ -360,7 +404,7 @@ TEST(PendulumTest,
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, MODERATE_ANGLE));
+  EXPECT_TRUE(IsAccurateAtHalfPeriod(p, MANY_MORE_PERIODS, MODERATE_ANGLE));
 }
 
 TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
@@ -372,13 +416,13 @@ TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAn
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, LARGE_ANGLE));
 }
 
-TEST(PendulumTest, DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLargeAngle) {
+TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLargeAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, LARGE_ANGLE));
+  EXPECT_TRUE(IsAccurateAtHalfPeriod(p, MULTIPLE_PERIODS, LARGE_ANGLE));
 }
 
 TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentLargeAngle) {
@@ -387,7 +431,7 @@ TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmen
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, LARGE_ANGLE));
+  EXPECT_TRUE(IsAccurateAtHalfPeriod(p, MANY_PERIODS, LARGE_ANGLE));
 }
 
 TEST(PendulumTest, DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentLargeAngle) {
@@ -396,7 +440,7 @@ TEST(PendulumTest, DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjus
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
-  EXPECT_TRUE(IsAccurate(p, MANY_MORE_PERIODS, LARGE_ANGLE));
+  EXPECT_TRUE(IsAccurateAtHalfPeriod(p, MANY_MORE_PERIODS, LARGE_ANGLE));
 }
 
 }  // namespace ndyn::simulation
