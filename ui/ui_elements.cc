@@ -17,6 +17,11 @@ Window::Window() {
   bind_key(ImGuiKey_H, "Help", [this](ImGuiKeyChord) { show_help_text_ = not show_help_text_; });
   bind_key(/* question mark key: "?" */ ImGuiKey_Slash | ImGuiMod_Shift, "Help",
            [this](ImGuiKeyChord) { show_help_text_ = not show_help_text_; });
+
+  bind_key(ImGuiKey_LeftBracket, "Toggle display of left pane",
+           [this](ImGuiKeyChord) { show_left_children_ = not show_left_children_; });
+  bind_key(ImGuiKey_RightBracket, "Toggle display of right pane",
+           [this](ImGuiKeyChord) { show_right_children_ = not show_right_children_; });
 }
 
 void Window::update() {
@@ -37,7 +42,7 @@ void Window::update() {
       ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
       ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove};
 
-  if (!left_children_.empty()) {  // Add left children to UI
+  if (show_left_children_ && !left_children_.empty()) {  // Add left children to UI
     ImVec2 window_size, window_pos;
     window_size.x = work_size.x * UI_FRACTION_HORIZONTAL;
     window_size.y = 0.f;  // Auto-fit the y-axis.
@@ -62,7 +67,7 @@ void Window::update() {
     ImGui::End();
   }
 
-  if (!right_children_.empty()) {  // Add right children to UI
+  if (show_right_children_ && !right_children_.empty()) {  // Add right children to UI
     ImVec2 window_size, window_pos;
     window_size.x = work_size.x * UI_FRACTION_HORIZONTAL;
     window_size.y = 0.f;  // Auto-fit the y-axis.

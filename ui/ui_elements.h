@@ -21,6 +21,8 @@ class Window final : public UiElement {
   std::vector<UiElement*> right_children_{};
 
   bool show_help_text_{false};
+  bool show_left_children_{true};
+  bool show_right_children_{true};
 
  public:
   Window();
