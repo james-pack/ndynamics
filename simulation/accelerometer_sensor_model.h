@@ -1,5 +1,6 @@
 #pragma once
 
+#include "imgui.h"
 #include "sensor/measurement_type.h"
 #include "simulation/characterization.h"
 #include "ui/data_series.h"
