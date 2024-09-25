@@ -81,7 +81,7 @@ class DataSeries final {
 
   const T* y_data(size_t i) const { return data_.at(i + 1).data() + NUM_POINTS - data_size_; }
 
-  constexpr size_t size() { return data_size_; }
+  constexpr size_t size() const { return data_size_; }
 
   static constexpr size_t num_functions() { return NUM_FUNCTIONS; }
 };
