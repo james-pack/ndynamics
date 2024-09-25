@@ -6,6 +6,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "ui/direct_render_element.h"
+#include "ui/keyboard_shortcuts.h"
 #include "ui/shader_program.h"
 
 namespace ndyn::simulation {
@@ -108,6 +109,8 @@ class Cube final : public ui::DirectRenderElement {
   GLuint vertex_buffer_{};
   GLuint color_buffer_{};
 
+  float aspect_ratio_;
+
   glm::mat4 model_{1.f};
   glm::mat4 view_{glm::lookAt(glm::vec3{0, 0, 10},  // Camera location in World Space
                               glm::vec3{0, 0, 0},   // and looks at this location in World Space
@@ -120,6 +123,7 @@ class Cube final : public ui::DirectRenderElement {
   GLuint mvp_matrix_id_{};
 
   bool mvp_dirty_{true};
+  bool use_perspective_projection_{true};
 
   void rotate_model() {
     static constexpr glm::vec3 rotation_axis{0, 1, 1};
@@ -184,11 +188,9 @@ class Cube final : public ui::DirectRenderElement {
                      .add_vertex_shader("simulation/sample_vertex_shader.vertexshader")
                      .add_fragment_shader("simulation/sample_fragment_shader.fragmentshader")
                      .build()),
-        // Projection matrix: 50° Field of View, aspect ratio from the window, display range: 0.1
-        // unit <-> 100 units Or, for an ortho camera:
-        // glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In world coordinates
         position_fn_(position_fn),
-        projection_(glm::perspective(glm::radians(50.f), aspect_ratio(window), 0.1f, 100.f)) {
+        aspect_ratio_(aspect_ratio(window)),
+        projection_(glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f)) {
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
@@ -207,6 +209,22 @@ class Cube final : public ui::DirectRenderElement {
 
     glUseProgram(program_.id());
     mvp_matrix_id_ = glGetUniformLocation(program_.id(), "MVP");
+
+    ui::bind_key(ImGuiKey_O, "Toggle between perspective and orthographic projections",
+                 [this](ImGuiKeyChord) {
+                   use_perspective_projection_ = not use_perspective_projection_;
+                   if (use_perspective_projection_) {
+                     // Projection matrix: 50° Field of View, aspect ratio from the window, display
+                     // range: 0.1
+                     // unit <-> 100 units.
+                     projection_ = glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f);
+                   } else {
+                     // Orthographic camera.
+                     projection_ = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f,
+                                              100.0f);  // In world coordinates
+                   }
+                   mvp_dirty_ = true;
+                 });
   }
 };
 
