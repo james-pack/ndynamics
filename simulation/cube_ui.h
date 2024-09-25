@@ -179,7 +179,7 @@ class Cube final : public ui::DirectRenderElement {
   }
 
  public:
-  Cube(GLFWwindow& window, CubePositionFn position_fn = CubePositionFn{})
+  Cube(GLFWwindow& window, const CubePositionFn& position_fn = CubePositionFn{})
       : program_(ui::ShaderProgramBuilder{}
                      .add_vertex_shader("simulation/sample_vertex_shader.vertexshader")
                      .add_fragment_shader("simulation/sample_fragment_shader.fragmentshader")
