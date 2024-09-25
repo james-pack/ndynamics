@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
 
-  static constexpr size_t NUM_POINTS{2048};
+  static constexpr size_t NUM_POINTS{1024};
   using PendulumGraphType = PendulumGraph<NUM_POINTS>;
   using FloatT = PendulumGraphType::FloatT;
   using PendulumType = Pendulum<PendulumGraphType::T>;
