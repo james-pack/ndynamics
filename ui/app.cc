@@ -15,6 +15,7 @@
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 #include "ui/imgui_utils.h"
+#include "ui/keyboard_shortcuts.h"
 
 namespace ndyn::ui {
 
@@ -210,6 +211,19 @@ App::App(std::string title, size_t width, size_t height) {
 
   io.IniFilename = nullptr;
   io.LogFilename = nullptr;
+
+  bind_key(ImGuiKey_Space, "Pause/unpause UI rendering", [this](ImGuiKeyChord) { invert_pause(); });
+  bind_key(ImGuiKey_P, "Pause/unpause UI rendering", [this](ImGuiKeyChord) { invert_pause(); });
+
+  bind_key(ImGuiKey_Escape, "Quit the application", [this](ImGuiKeyChord) {
+    request_close();
+    pause();
+  });
+
+  bind_key(ImGuiKey_Q, "Quit the application", [this](ImGuiKeyChord) {
+    request_close();
+    pause();
+  });
 }
 
 App::~App() {
@@ -232,14 +246,7 @@ void App::run() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    if (ImGui::IsKeyPressed(ImGuiKey_Space) || ImGui::IsKeyPressed(ImGuiKey_P)) {
-      invert_pause();
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_Escape) || ImGui::IsKeyPressed(ImGuiKey_Q)) {
-      request_close();
-      pause();
-    }
+    Shortcuts::global_shortcuts().process_key_presses();
 
     for (auto *model : models_) {
       model->update();

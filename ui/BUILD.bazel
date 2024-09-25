@@ -3,6 +3,7 @@ cc_library(
     srcs = [
         "app.cc",
         "imgui_utils.cc",
+        "keyboard_shortcuts.cc",
         "shader_program.cc",
         "ui_elements.cc",
     ],
@@ -11,6 +12,7 @@ cc_library(
         "data_series.h",
         "direct_render_element.h",
         "imgui_utils.h",
+        "keyboard_shortcuts.h",
         "shader_program.h",
         "ui_elements.h",
         "ui_model.h",
