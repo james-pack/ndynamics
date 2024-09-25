@@ -20,7 +20,11 @@ class Window final : public UiElement {
   std::vector<UiElement*> left_children_{};
   std::vector<UiElement*> right_children_{};
 
+  bool show_help_text_{false};
+
  public:
+  Window();
+
   // Update, called once per frame to update any gui elements. Not called when paused.
   void update() override;
 

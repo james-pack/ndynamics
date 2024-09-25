@@ -9,8 +9,15 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "ui/imgui_utils.h"
+#include "ui/keyboard_shortcuts.h"
 
 namespace ndyn::ui {
+
+Window::Window() {
+  bind_key(ImGuiKey_H, "Help", [this](ImGuiKeyChord) { show_help_text_ = not show_help_text_; });
+  bind_key(/* question mark key: "?" */ ImGuiKey_Slash | ImGuiMod_Shift, "Help",
+           [this](ImGuiKeyChord) { show_help_text_ = not show_help_text_; });
+}
 
 void Window::update() {
   // Fraction of the horizontal window size that will be used for the UI panes.
@@ -18,6 +25,7 @@ void Window::update() {
 
   static constexpr ImVec2 WINDOW_POS_PIVOT_LEFT{0.f, 0.f};
   static constexpr ImVec2 WINDOW_POS_PIVOT_RIGHT{1.f, 0.f};
+  static constexpr ImVec2 WINDOW_POS_PIVOT_CENTER{0.5f, 0.f};
 
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
@@ -77,6 +85,24 @@ void Window::update() {
     }
 
     ImGui::End();
+  }
+
+  if (show_help_text_) {
+    ImVec2 window_size, window_pos;
+    window_size.x = 0.f;  // Auto-fit the x-axis.
+    window_size.y = 0.f;  // Auto-fit the y-axis.
+
+    // We are going to center this next window horizontally.
+    window_pos.x = work_pos.x + work_size.x / 2;
+    window_pos.y = work_pos.y;
+
+    VLOG(6) << "work_pos: " << work_pos << ", work_size: " << work_size
+            << ", window_pos: " << window_pos;
+
+    ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, WINDOW_POS_PIVOT_CENTER);
+    ImGui::SetNextWindowSize(window_size, ImGuiCond_Always);
+
+    Shortcuts::global_shortcuts().render_key_binding_help_text(&show_help_text_);
   }
 }
 
