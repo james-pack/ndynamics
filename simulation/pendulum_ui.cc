@@ -8,6 +8,8 @@
 #include "glog/logging.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "sensor/measurement_type.h"
+#include "simulation/accelerometer_sensor_model.h"
 #include "simulation/cube_ui.h"
 #include "simulation/pendulum.h"
 #include "simulation/pendulum_graph_ui.h"
@@ -23,6 +25,7 @@ DEFINE_double(angle, ndyn::pi / 4, "Initial angle of the pendulum in radians. De
 DEFINE_bool(fullscreen, false, "Run in fullscreen mode (windowless)");
 
 int main(int argc, char* argv[]) {
+  using namespace ndyn::sensor;
   using namespace ndyn::simulation;
   using namespace ndyn::ui;
 
@@ -34,6 +37,13 @@ int main(int argc, char* argv[]) {
   using FloatT = PendulumGraphType::FloatT;
   using PendulumType = Pendulum<PendulumGraphType::T>;
   using PendulumConfiguratorType = PendulumConfigurator<PendulumGraphType::T>;
+  using AccelerometerType = MeasurementValueType<MeasurementType::ACCELEROMETER>::type;
+  using TemperatureType = MeasurementValueType<MeasurementType::TEMPERATURE>::type;
+
+  size_t width{FLAGS_fullscreen ? 0UL : 1920UL};
+  size_t height{FLAGS_fullscreen ? 0UL : 1080UL};
+
+  App app{"Pendulum Simulation", width, height};
 
   PendulumType pendulum{PendulumConfiguratorType{}
                             .set_length(FLAGS_length)
@@ -42,23 +52,44 @@ int main(int argc, char* argv[]) {
                             .set_theta(FLAGS_angle)
                             .create()};
 
-  size_t width{FLAGS_fullscreen ? 0UL : 1920UL};
-  size_t height{FLAGS_fullscreen ? 0UL : 1080UL};
-
-  App app{"Pendulum Simulation", width, height};
-
   PendulumModel<NUM_POINTS> pendulum_model{pendulum};
   PositionModel<PendulumType, FloatT, NUM_POINTS> position_model{pendulum};
 
+  static constexpr TemperatureType TEMPERATURE{25};
+  Characterization<AccelerometerType, FloatT> accelerometer_1_characterization{
+      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.025}, .offset_std{.05}}};
+
+  AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_1{
+      pendulum, accelerometer_1_characterization};
+
+  Characterization<AccelerometerType, FloatT> accelerometer_2_characterization{
+      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.05}, .offset_std{.25}}};
+
+  AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_2{
+      pendulum, accelerometer_2_characterization};
+
+  Characterization<AccelerometerType, FloatT> accelerometer_3_characterization{
+      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.15}, .offset_std{.5}}};
+
+  AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_3{
+      pendulum, accelerometer_3_characterization};
+
   app.add_model(pendulum_model);
   app.add_model(position_model);
+  app.add_model(accelerometer_1);
+  app.add_model(accelerometer_2);
+  app.add_model(accelerometer_3);
 
   Window ui{};
+  app.set_root_ui_element(ui);
 
   PendulumGraphType statistics{pendulum_model, position_model};
   ui.add_left_child(statistics);
 
-  SensorMeasurementGraph sensor_measurements{pendulum};
+  SensorMeasurementGraph<PendulumType, NUM_POINTS> sensor_measurements{};
+  sensor_measurements.add_accelerometer(accelerometer_1);
+  sensor_measurements.add_accelerometer(accelerometer_2);
+  sensor_measurements.add_accelerometer(accelerometer_3);
   ui.add_right_child(sensor_measurements);
 
   CubePositionFn cube_as_pendulum{[&pendulum]() {
@@ -70,9 +101,8 @@ int main(int argc, char* argv[]) {
                        glm::vec3{0, 0, 1});
   }};
   Cube cube{app.gl_window(), cube_as_pendulum};
-
-  app.set_root_ui_element(ui);
   app.add_direct_render_element(cube);
+
   app.run();
 
   return 0;

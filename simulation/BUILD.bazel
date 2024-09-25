@@ -17,6 +17,7 @@ cc_library(
 cc_library(
     name = "simulation_ui",
     hdrs = [
+        "accelerometer_sensor_model.h",
         "cube_ui.h",
         "pendulum_graph_ui.h",
         "pendulum_model.h",

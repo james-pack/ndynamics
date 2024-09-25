@@ -1,123 +1,51 @@
 #pragma once
 
-#include <cmath>
+#include <string>
 
-#include "base/pi.h"
 #include "imgui.h"
 #include "implot.h"
-#include "math/multivector.h"
-#include "sensor/measurement_type.h"
-#include "simulation/characterization.h"
-#include "simulation/pendulum.h"
-#include "ui/app.h"
-#include "ui/data_series.h"
+#include "simulation/accelerometer_sensor_model.h"
 #include "ui/ui_elements.h"
 
 namespace ndyn::simulation {
 
+template <typename DataSourceT, size_t NUM_POINTS = 2048>
 class SensorMeasurementGraph final : public ui::UiElement {
- public:
-  using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
-  using FloatT = AccelerometerTypes::scalar_type;
-  using T = AccelerometerTypes::type;
-  using TemperatureType = sensor::MeasurementValueType<sensor::MeasurementType::TEMPERATURE>::type;
-
  private:
-  Pendulum<T>* pendulum_;
-
-  TemperatureType TEMPERATURE{25};
-
-  Characterization<T, FloatT> accelerometer_1_characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.025}, .offset_std{.05}}};
-
-  Characterization<T, FloatT> accelerometer_2_characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.05}, .offset_std{.25}}};
-
-  Characterization<T, FloatT> accelerometer_3_characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.15}, .offset_std{.5}}};
-
-  static constexpr size_t NUM_POINTS{2048};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_1_series{"t", {"x", "y"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_2_series{"t", {"x", "y"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> accelerometer_3_series{"t", {"x", "y"}};
-
-  FloatT previous_time{};
+  std::vector<AccelerometerSensorModel<DataSourceT, NUM_POINTS>*> accelerometers_{};
+  std::vector<std::string> plot_names_{};
 
  protected:
   void update() override {
-    using std::exp;
-    using std::sin;
-
-    // Every 5 seconds, we display cycle through one period of the pendulum.
-    const FloatT current_time{static_cast<FloatT>(ImGui::GetTime()) * pendulum_->period() / 5};
-
-    pendulum_->goto_time(current_time);
-    previous_time = current_time;
-
-    {
-      const auto acceleration{pendulum_->acceleration()};
-
-      const auto fuzzed_acceleration_1{
-          accelerometer_1_characterization.inject_noise(TEMPERATURE, acceleration)};
-      accelerometer_1_series.update(
-          current_time, {fuzzed_acceleration_1.component(1), fuzzed_acceleration_1.component(2)});
-
-      const auto fuzzed_acceleration_2{
-          accelerometer_2_characterization.inject_noise(TEMPERATURE, acceleration)};
-      accelerometer_2_series.update(
-          current_time, {fuzzed_acceleration_2.component(1), fuzzed_acceleration_2.component(2)});
-
-      const auto fuzzed_acceleration_3{
-          accelerometer_3_characterization.inject_noise(TEMPERATURE, acceleration)};
-      accelerometer_3_series.update(
-          current_time, {fuzzed_acceleration_3.component(1), fuzzed_acceleration_3.component(2)});
-    }
-
     auto size{ImGui::GetContentRegionAvail()};
-    size.y /= 3;
+    size.y /= accelerometers_.size();
 
-    if (ImPlot::BeginPlot("Accelerometer 1 (good)", size)) {
-      ImPlot::SetupAxes(accelerometer_1_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+    size_t i{0};
+    for (const auto* accelerometer : accelerometers_) {
+      if (ImPlot::BeginPlot(plot_names_[i].c_str(), size)) {
+        ImPlot::SetupAxes(accelerometer->acceleration_series.x_clabel(), "Accelerometer",
+                          ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+        ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < accelerometer_1_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(accelerometer_1_series.y_clabel(i), accelerometer_1_series.x_data(),
-                            accelerometer_1_series.y_data(i), accelerometer_1_series.size());
+        for (size_t j = 0; j < accelerometer->acceleration_series.num_functions(); ++j) {
+          ImPlot::PlotScatter(accelerometer->acceleration_series.y_clabel(j),
+                              accelerometer->acceleration_series.x_data(),
+                              accelerometer->acceleration_series.y_data(j),
+                              accelerometer->acceleration_series.size());
+        }
+
+        ImPlot::EndPlot();
       }
-
-      ImPlot::EndPlot();
-    }
-
-    if (ImPlot::BeginPlot("Accelerometer 2 (bad)", size)) {
-      ImPlot::SetupAxes(accelerometer_2_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-
-      for (size_t i = 0; i < accelerometer_2_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(accelerometer_2_series.y_clabel(i), accelerometer_2_series.x_data(),
-                            accelerometer_2_series.y_data(i), accelerometer_2_series.size());
-      }
-
-      ImPlot::EndPlot();
-    }
-
-    if (ImPlot::BeginPlot("Accelerometer 3 (ugly)", size)) {
-      ImPlot::SetupAxes(accelerometer_3_series.x_clabel(), "Accelerometer", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
-      ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-
-      for (size_t i = 0; i < accelerometer_3_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(accelerometer_3_series.y_clabel(i), accelerometer_3_series.x_data(),
-                            accelerometer_3_series.y_data(i), accelerometer_3_series.size());
-      }
-
-      ImPlot::EndPlot();
+      ++i;
     }
   }
 
  public:
-  SensorMeasurementGraph(Pendulum<T>& pendulum) : pendulum_(&pendulum) {}
+  void add_accelerometer(AccelerometerSensorModel<DataSourceT, NUM_POINTS>& accelerometer) {
+    using std::to_string;
+    accelerometers_.push_back(&accelerometer);
+    plot_names_.push_back(std::string{"Accelerometer "}.append(to_string(accelerometers_.size())));
+  }
 };
 
 }  // namespace ndyn::simulation
