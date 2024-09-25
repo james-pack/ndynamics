@@ -22,8 +22,8 @@ class ForwardEuler final {
   ComputePartials<T, SIZE> compute_partials_{};
 
  public:
-  ForwardEuler(ComputePartials<T, SIZE>&& compute_partials)
-      : compute_partials_(std::forward<ComputePartials<T, SIZE>>(compute_partials)) {}
+  ForwardEuler(const ComputePartials<T, SIZE>& compute_partials)
+      : compute_partials_(compute_partials) {}
 
   StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
     const auto f1{compute_partials_(s1)};
@@ -48,8 +48,8 @@ class ForwardEuler<ScalarT, T, 2> final {
   ComputePartials<T, 2> compute_partials_{};
 
  public:
-  ForwardEuler(ComputePartials<T, 2>&& compute_partials)
-      : compute_partials_(std::forward<ComputePartials<T, 2>>(compute_partials)) {}
+  ForwardEuler(const ComputePartials<T, 2>& compute_partials)
+      : compute_partials_(compute_partials) {}
 
   StateT<T, 2> operator()(ScalarT interval, const StateT<T, 2>& s1) {
     const auto f1{compute_partials_(s1)};
@@ -79,8 +79,8 @@ class RungeKutta2 final {
   ComputePartials<T, SIZE> compute_partials_{};
 
  public:
-  RungeKutta2(ComputePartials<T, SIZE>&& compute_partials)
-      : compute_partials_(std::forward<ComputePartials<T, SIZE>>(compute_partials)) {}
+  RungeKutta2(const ComputePartials<T, SIZE>& compute_partials)
+      : compute_partials_(compute_partials) {}
 
   StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
     const auto f1{compute_partials_(s1)};
@@ -113,8 +113,8 @@ class RungeKutta2<ScalarT, T, 2> final {
   ComputePartials<T, 2> compute_partials_{};
 
  public:
-  RungeKutta2(ComputePartials<T, 2>&& compute_partials)
-      : compute_partials_(std::forward<ComputePartials<T, 2>>(compute_partials)) {}
+  RungeKutta2(const ComputePartials<T, 2>& compute_partials)
+      : compute_partials_(compute_partials) {}
 
   StateT<T, 2> operator()(ScalarT interval, const StateT<T, 2>& s1) {
     const auto f1{compute_partials_(s1)};
@@ -151,8 +151,8 @@ class RungeKutta4 final {
   ComputePartials<T, SIZE> compute_partials_{};
 
  public:
-  RungeKutta4(ComputePartials<T, SIZE>&& compute_partials)
-      : compute_partials_(std::forward<ComputePartials<T, SIZE>>(compute_partials)) {}
+  RungeKutta4(const ComputePartials<T, SIZE>& compute_partials)
+      : compute_partials_(compute_partials) {}
 
   StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
     const auto f1{compute_partials_(s1)};
@@ -204,8 +204,8 @@ class RungeKutta4<ScalarT, T, 2> final {
   ComputePartials<T, 2> compute_partials_{};
 
  public:
-  RungeKutta4(ComputePartials<T, 2>&& compute_partials)
-      : compute_partials_(std::forward<ComputePartials<T, 2>>(compute_partials)) {}
+  RungeKutta4(const ComputePartials<T, 2>& compute_partials)
+      : compute_partials_(compute_partials) {}
 
   StateT<T, 2> operator()(ScalarT interval, const StateT<T, 2>& s1) {
     const auto f1{compute_partials_(s1)};
