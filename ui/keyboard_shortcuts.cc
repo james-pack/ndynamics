@@ -1,6 +1,7 @@
 #include "ui/keyboard_shortcuts.h"
 
 #include "imgui.h"
+#include "ui/imgui_utils.h"
 
 namespace ndyn::ui {
 
@@ -16,7 +17,7 @@ void Shortcuts::render_key_binding_help_text(bool* is_open) {
     for (const auto& [chord, text] : help_text_) {
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(/* first column */ 0);
-      ImGui::Text("%d", chord);
+      ImGui::Text("%s", key_chord_to_string(chord).c_str());
       ImGui::TableSetColumnIndex(/* second column */ 1);
       ImGui::Text("%s", text.c_str());
     }
