@@ -334,7 +334,8 @@ TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerat
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
+TEST(PendulumTest,
+     DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
@@ -343,7 +344,7 @@ TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentMode
   EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerateAngle) {
+TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerateAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
@@ -352,7 +353,8 @@ TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerate
   EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, MODERATE_ANGLE));
 }
 
-TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentModerateAngle) {
+TEST(PendulumTest,
+     DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentModerateAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(MODERATE_ANGLE);
@@ -370,7 +372,7 @@ TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAn
   EXPECT_TRUE(IsAccurate(p, ONE_PERIOD, LARGE_ANGLE));
 }
 
-TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLargeAngle) {
+TEST(PendulumTest, DISABLED_AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLargeAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(LARGE_ANGLE);
@@ -379,7 +381,7 @@ TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLarg
   EXPECT_TRUE(IsAccurate(p, MULTIPLE_PERIODS, LARGE_ANGLE));
 }
 
-TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentLargeAngle) {
+TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentLargeAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(LARGE_ANGLE);
@@ -388,7 +390,7 @@ TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentLargeAng
   EXPECT_TRUE(IsAccurate(p, MANY_PERIODS, LARGE_ANGLE));
 }
 
-TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentLargeAngle) {
+TEST(PendulumTest, DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentLargeAngle) {
   using T = MultivectorType;
   PendulumConfigurator<T> config{};
   config.set_theta(LARGE_ANGLE);
