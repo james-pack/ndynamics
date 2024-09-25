@@ -200,13 +200,14 @@ class Pendulum final {
       do {
         t_ += step_size;
 
-        if (abs(remainder(t_, period_)) < abs(step_size)) {
-          // If we are going to a time that is a multiple of the period, just set the state to the
-          // initial position. We do this to zero out any accumulated errors in the integration.
-          angular_state_ = {initial_angular_position_};
-        } else {
-          angular_state_ = integrator_(step_size, angular_state_);
-        }
+        // if (abs(remainder(t_, period_)) < abs(step_size)) {
+        //   // If we are going to a time that is a multiple of the period, just set the state to
+        //   the
+        //   // initial position. We do this to zero out any accumulated errors in the integration.
+        //   angular_state_ = {initial_angular_position_};
+        // } else {
+        angular_state_ = integrator_(step_size, angular_state_);
+        // }
 
         VLOG(4) << "t_: " << t_ << ", theta(): " << theta() << ", theta_dot(): " << theta_dot();
       } while (abs(t_ - new_time) > abs(step_size));
