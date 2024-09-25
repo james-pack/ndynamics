@@ -1,19 +1,15 @@
 #pragma once
 
-#include <cmath>
-
-#include "base/pi.h"
 #include "imgui.h"
 #include "implot.h"
-#include "math/multivector.h"
-#include "sensor/measurement_type.h"
 #include "simulation/pendulum.h"
-#include "ui/app.h"
-#include "ui/data_series.h"
+#include "simulation/pendulum_model.h"
+#include "simulation/position_model.h"
 #include "ui/ui_elements.h"
 
 namespace ndyn::simulation {
 
+template <size_t NUM_POINTS = 2048>
 class PendulumGraph : public ui::UiElement {
  public:
   using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
@@ -21,117 +17,82 @@ class PendulumGraph : public ui::UiElement {
   using T = AccelerometerTypes::type;
 
  private:
-  Pendulum<T>* pendulum_;
-
-  static constexpr size_t NUM_POINTS{2048};
-  ui::DataSeries<FloatT, NUM_POINTS, 3> position_series{"t", {"x", "y", "height"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> velocity_series{"t", {"x", "y"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 1> theta_series{"t", {"theta"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
-
-  FloatT previous_time{};
+  PendulumModel<NUM_POINTS>* pendulum_;
+  PositionModel<Pendulum<T>, FloatT, NUM_POINTS>* position_;
 
  protected:
   void update() override {
-    using std::exp;
-    using std::sin;
-
-    // Every 5 seconds, we display cycle through one period of the pendulum.
-    const FloatT current_time{static_cast<FloatT>(ImGui::GetTime()) * pendulum_->period() / 5};
-
-    pendulum_->goto_time(current_time);
-    previous_time = current_time;
-
-    {
-      const auto position{pendulum_->position()};
-      position_series.update(current_time,
-                             {position.component(1), position.component(2), pendulum_->height()});
-    }
-
-    {
-      const auto velocity{pendulum_->velocity()};
-      velocity_series.update(current_time, {velocity.component(1), velocity.component(2)});
-    }
-
-    theta_series.update(current_time, {pendulum_->theta()});
-
-    {
-      const auto kinetic_energy{pendulum_->compute_kinetic_energy()};
-      const auto potential_energy{pendulum_->compute_potential_energy()};
-      const auto total_energy{kinetic_energy + potential_energy};
-      energy_series.update(current_time, {kinetic_energy, potential_energy, total_energy});
-    }
-
-    {
-      const auto acceleration{pendulum_->acceleration()};
-      acceleration_series.update(current_time,
-                                 {acceleration.component(1), acceleration.component(2)});
-    }
-
     auto size{ImGui::GetContentRegionAvail()};
     size.y /= 5;
 
     if (ImPlot::BeginPlot("Position", size)) {
-      ImPlot::SetupAxes(position_series.x_clabel(), "Position", ImPlotAxisFlags_AutoFit,
+      ImPlot::SetupAxes(position_->position_series.x_clabel(), "Position", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < position_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(position_series.y_clabel(i), position_series.x_data(),
-                            position_series.y_data(i), position_series.size());
+      for (size_t i = 0; i < position_->position_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(
+            position_->position_series.y_clabel(i), position_->position_series.x_data(),
+            position_->position_series.y_data(i), position_->position_series.size());
+      }
+
+      for (size_t i = 0; i < pendulum_->height_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(pendulum_->height_series.y_clabel(i), pendulum_->height_series.x_data(),
+                            pendulum_->height_series.y_data(i), pendulum_->height_series.size());
       }
 
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Velocity", size)) {
-      ImPlot::SetupAxes(velocity_series.x_clabel(), "Velocity", ImPlotAxisFlags_AutoFit,
+      ImPlot::SetupAxes(position_->velocity_series.x_clabel(), "Velocity", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < velocity_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(velocity_series.y_clabel(i), velocity_series.x_data(),
-                            velocity_series.y_data(i), velocity_series.size());
+      for (size_t i = 0; i < position_->velocity_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(
+            position_->velocity_series.y_clabel(i), position_->velocity_series.x_data(),
+            position_->velocity_series.y_data(i), position_->velocity_series.size());
       }
 
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Acceleration", size)) {
-      ImPlot::SetupAxes(acceleration_series.x_clabel(), "Acceleration", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
+      ImPlot::SetupAxes(position_->acceleration_series.x_clabel(), "Acceleration",
+                        ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < acceleration_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(acceleration_series.y_clabel(i), acceleration_series.x_data(),
-                            acceleration_series.y_data(i), acceleration_series.size());
+      for (size_t i = 0; i < position_->acceleration_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(
+            position_->acceleration_series.y_clabel(i), position_->acceleration_series.x_data(),
+            position_->acceleration_series.y_data(i), position_->acceleration_series.size());
       }
 
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Energy", size)) {
-      ImPlot::SetupAxes(energy_series.x_clabel(), "Energy", ImPlotAxisFlags_AutoFit,
+      ImPlot::SetupAxes(pendulum_->energy_series.x_clabel(), "Energy", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < energy_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(energy_series.y_clabel(i), energy_series.x_data(),
-                            energy_series.y_data(i), energy_series.size());
+      for (size_t i = 0; i < pendulum_->energy_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(pendulum_->energy_series.y_clabel(i), pendulum_->energy_series.x_data(),
+                            pendulum_->energy_series.y_data(i), pendulum_->energy_series.size());
       }
 
       ImPlot::EndPlot();
     }
 
     if (ImPlot::BeginPlot("Angle", size)) {
-      ImPlot::SetupAxes(theta_series.x_clabel(), "Theta", ImPlotAxisFlags_AutoFit,
+      ImPlot::SetupAxes(pendulum_->theta_series.x_clabel(), "Theta", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < theta_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(theta_series.y_clabel(i), theta_series.x_data(), theta_series.y_data(i),
-                            theta_series.size());
+      for (size_t i = 0; i < pendulum_->theta_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(pendulum_->theta_series.y_clabel(i), pendulum_->theta_series.x_data(),
+                            pendulum_->theta_series.y_data(i), pendulum_->theta_series.size());
       }
 
       ImPlot::EndPlot();
@@ -139,7 +100,9 @@ class PendulumGraph : public ui::UiElement {
   }
 
  public:
-  PendulumGraph(Pendulum<T>& pendulum) : pendulum_(&pendulum) {}
+  PendulumGraph(PendulumModel<NUM_POINTS>& pendulum,
+                PositionModel<Pendulum<T>, FloatT, NUM_POINTS>& position)
+      : pendulum_(&pendulum), position_(&position) {}
 };
 
 }  // namespace ndyn::simulation

@@ -29,21 +29,35 @@ int main(int argc, char* argv[]) {
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
 
-  Pendulum<PendulumGraph::T> pendulum{PendulumConfigurator<PendulumGraph::T>{}
-                                          .set_length(FLAGS_length)
-                                          .set_g(FLAGS_gravity)
-                                          .set_mass(FLAGS_mass)
-                                          .set_theta(FLAGS_angle)
-                                          .create()};
+  static constexpr size_t NUM_POINTS{2048};
+  using PendulumGraphType = PendulumGraph<NUM_POINTS>;
+  using FloatT = PendulumGraphType::FloatT;
+  using PendulumType = Pendulum<PendulumGraphType::T>;
+  using PendulumConfiguratorType = PendulumConfigurator<PendulumGraphType::T>;
 
-  size_t width{FLAGS_fullscreen ? 0 : 1920};
-  size_t height{FLAGS_fullscreen ? 0 : 1080};
+  PendulumType pendulum{PendulumConfiguratorType{}
+                            .set_length(FLAGS_length)
+                            .set_g(FLAGS_gravity)
+                            .set_mass(FLAGS_mass)
+                            .set_theta(FLAGS_angle)
+                            .create()};
+
+  size_t width{FLAGS_fullscreen ? 0UL : 1920UL};
+  size_t height{FLAGS_fullscreen ? 0UL : 1080UL};
 
   App app{"Pendulum Graph", width, height};
 
+  PendulumModel<NUM_POINTS> pendulum_model{pendulum};
+  PositionModel<PendulumType, FloatT, NUM_POINTS> position_model{pendulum};
+
+  app.add_model(pendulum_model);
+  app.add_model(position_model);
+
   Window ui{};
-  PendulumGraph statistics{pendulum};
+
+  PendulumGraphType statistics{pendulum_model, position_model};
   ui.add_left_child(statistics);
+
   SensorMeasurementGraph sensor_measurements{pendulum};
   ui.add_right_child(sensor_measurements);
 

@@ -20,6 +20,8 @@ cc_library(
         "cube_ui.h",
         "pendulum_graph_ui.h",
         "sensor_measurement_graph_ui.h",
+        "position_model.h",
+        "pendulum_model.h",
     ],
     data = [
         "sample_fragment_shader.fragmentshader",
