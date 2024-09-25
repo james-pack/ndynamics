@@ -19,9 +19,9 @@ cc_library(
     hdrs = [
         "cube_ui.h",
         "pendulum_graph_ui.h",
-        "sensor_measurement_graph_ui.h",
-        "position_model.h",
         "pendulum_model.h",
+        "position_model.h",
+        "sensor_measurement_graph_ui.h",
     ],
     data = [
         "sample_fragment_shader.fragmentshader",
@@ -62,8 +62,8 @@ cc_test(
 )
 
 cc_binary(
-    name = "pendulum_graph",
-    srcs = ["pendulum_graph.cc"],
+    name = "pendulum",
+    srcs = ["pendulum_ui.cc"],
     deps = [
         ":simulation",
         ":simulation_ui",

@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
   size_t width{FLAGS_fullscreen ? 0UL : 1920UL};
   size_t height{FLAGS_fullscreen ? 0UL : 1080UL};
 
-  App app{"Pendulum Graph", width, height};
+  App app{"Pendulum Simulation", width, height};
 
   PendulumModel<NUM_POINTS> pendulum_model{pendulum};
   PositionModel<PendulumType, FloatT, NUM_POINTS> position_model{pendulum};
