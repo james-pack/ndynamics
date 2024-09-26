@@ -87,8 +87,8 @@ class Pendulum final {
         using std::sin;
         StateType partials{state.shift()};
         const MultivectorType& angular_position{state.element(0)};
-        partials.template set_element<1>(-g_ / angular_position.component(1) *
-                                         sin(angular_position.component(2)) *
+        partials.template set_element<1>(-g_ / angular_position.r() *
+                                         sin(angular_position.theta()) *
                                          MultivectorType::template e<1>());
         return partials;
       }};
@@ -101,11 +101,11 @@ class Pendulum final {
  public:
   constexpr Pendulum(ScalarType mass, MultivectorType gravitational_acceleration, ScalarType t,
                      MultivectorType angular_position)
-      : length_(angular_position.component(1)),
+      : length_(angular_position.r()),
         g_(abs(gravitational_acceleration)),
         initial_angular_position_(angular_position),
         gravitational_acceleration_(gravitational_acceleration),
-        period_(compute_period(length_, g_, angular_position.component(2))),
+        period_(compute_period(length_, g_, angular_position.theta())),
         initial_time_(t),
         t_(t),
         angular_state_({initial_angular_position_}),
@@ -124,8 +124,8 @@ class Pendulum final {
 
   constexpr MultivectorType angular_acceleration() const {
     using std::sin;
-    return -g_ / angular_state_.element(0).component(1) *
-           sin(angular_state_.element(0).component(2)) * MultivectorType::template e<1>();
+    return -g_ / angular_state_.element(0).r() * sin(angular_state_.element(0).theta()) *
+           MultivectorType::template e<1>();
   }
 
   // Rectilinear state. These are transformations of the actual state.
@@ -160,7 +160,7 @@ class Pendulum final {
     return gravitational_acceleration_;
   }
 
-  constexpr ScalarType height() const { return length() + position().component(2); }
+  constexpr ScalarType height() const { return length() + position().y(); }
 
   constexpr ScalarType compute_potential_energy() const { return mass_ * g_ * height(); }
 
@@ -168,12 +168,10 @@ class Pendulum final {
     return mass_ / 2 * square_magnitude(velocity());
   }
 
-  constexpr ScalarType length() const { return angular_state_.template element<0>().component(1); }
-  constexpr ScalarType theta() const { return angular_state_.template element<0>().component(2); }
-  constexpr ScalarType theta_dot() const {
-    return angular_state_.template element<1>().component(2);
-  }
-  constexpr ScalarType theta_double_dot() const { return angular_acceleration().component(2); }
+  constexpr ScalarType length() const { return angular_state_.template element<0>().r(); }
+  constexpr ScalarType theta() const { return angular_state_.template element<0>().theta(); }
+  constexpr ScalarType theta_dot() const { return angular_state_.template element<1>().theta(); }
+  constexpr ScalarType theta_double_dot() const { return angular_acceleration().theta(); }
   constexpr ScalarType current_time() const { return t_; }
 
   /**
