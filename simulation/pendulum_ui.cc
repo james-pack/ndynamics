@@ -68,17 +68,24 @@ int main(int argc, char* argv[]) {
   AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_2{
       pendulum, accelerometer_2_characterization};
 
-  Characterization<AccelerometerType, FloatT> accelerometer_3_characterization{
+  Characterization<AccelerometerType, FloatT> gyroscope_1_characterization{
+      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.01}, .offset_std{.1}}};
+
+  AccelerometerSensorModel<PendulumType, NUM_POINTS> gyroscope_1{pendulum,
+                                                                 gyroscope_1_characterization};
+
+  Characterization<AccelerometerType, FloatT> gyroscope_2_characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.15}, .offset_std{.5}}};
 
-  AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_3{
-      pendulum, accelerometer_3_characterization};
+  AccelerometerSensorModel<PendulumType, NUM_POINTS> gyroscope_2{pendulum,
+                                                                 gyroscope_2_characterization};
 
   app.add_model(pendulum_model);
   app.add_model(position_model);
   app.add_model(accelerometer_1);
   app.add_model(accelerometer_2);
-  app.add_model(accelerometer_3);
+  app.add_model(gyroscope_1);
+  app.add_model(gyroscope_2);
 
   Window ui{};
   app.set_root_ui_element(ui);
@@ -89,7 +96,8 @@ int main(int argc, char* argv[]) {
   SensorMeasurementGraph<PendulumType, NUM_POINTS> sensor_measurements{};
   sensor_measurements.add_accelerometer(accelerometer_1);
   sensor_measurements.add_accelerometer(accelerometer_2);
-  sensor_measurements.add_accelerometer(accelerometer_3);
+  sensor_measurements.add_gyroscope(gyroscope_1);
+  sensor_measurements.add_gyroscope(gyroscope_2);
   ui.add_right_child(sensor_measurements);
 
   CubePositionFn cube_as_pendulum{[&pendulum]() {
