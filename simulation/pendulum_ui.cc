@@ -93,9 +93,9 @@ int main(int argc, char* argv[]) {
   ui.add_right_child(sensor_measurements);
 
   CubePositionFn cube_as_pendulum{[&pendulum]() {
-    const auto x{pendulum.position().component(1)};
-    const auto y{pendulum.position().component(2) + FLAGS_length / 2};
-    const auto z{pendulum.position().component(4)};
+    const auto x{pendulum.position().x()};
+    const auto y{pendulum.position().y() + FLAGS_length / 2};
+    const auto z{pendulum.position().z()};
     const auto theta{pendulum.theta()};
     return glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), theta,
                        glm::vec3{0, 0, 1});
