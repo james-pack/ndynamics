@@ -28,8 +28,7 @@ class PendulumModel final : public ui::UiModel {
   void update() override {
     const FloatT current_time{static_cast<FloatT>(ImGui::GetTime())};
 
-    // We scale the time of the pendulum so that every 5 seconds, we display one period.
-    pendulum_->goto_time(current_time * pendulum_->period() / 5);
+    pendulum_->goto_time(current_time);
 
     theta_series.update(current_time, {pendulum_->theta()});
     height_series.update(current_time, {pendulum_->height()});
