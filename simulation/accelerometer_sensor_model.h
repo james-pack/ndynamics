@@ -34,8 +34,7 @@ class AccelerometerSensorModel final : public ui::UiModel {
     const auto fuzzed_acceleration{
         characterization_->inject_noise(TEMPERATURE, source_->acceleration())};
 
-    acceleration_series.update(
-        current_time, {fuzzed_acceleration.component(1), fuzzed_acceleration.component(2)});
+    acceleration_series.update(current_time, {fuzzed_acceleration.x(), fuzzed_acceleration.y()});
   }
 };
 
