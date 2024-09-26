@@ -19,8 +19,8 @@ TEST(MultivectorTest, CanInitializeFromInitializerList) {
   static constexpr float REAL{1};
   static constexpr float IMAG{3};
   static constexpr ComplexMultivector<float> a{REAL, IMAG};
-  EXPECT_EQ(a.scalar(), REAL);
-  EXPECT_EQ(a.component(1), IMAG);
+  EXPECT_EQ(a.real(), REAL);
+  EXPECT_EQ(a.imag(), IMAG);
 }
 
 TEST(MultivectorTest, CanAddScalars) {
