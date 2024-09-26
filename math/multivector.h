@@ -57,8 +57,133 @@ class Multivector final {
   constexpr Multivector& operator=(const Multivector& rhs) = default;
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
-  constexpr const T& scalar() const { return coefficients_[SCALAR_COMPONENT_INDEX]; }
+  template <size_t n>
+  constexpr const T& component() const {
+    static_assert(n < component_count(), "Component index out of range.");
+    return coefficients_[n];
+  }
   constexpr const T& component(size_t n) const { return coefficients_.at(n); }
+
+  constexpr const T& scalar() const { return coefficients_[SCALAR_COMPONENT_INDEX]; }
+
+  constexpr const T& t() const {
+    if constexpr (NEGATIVE_BASES >= 1) {
+      // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
+      // algebra with negative space-like bases. In this case, t() is traditionally the first
+      // positive basis. Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
+      // Cl(3, 1). This decision is arbitrary and is based on the variant that seems to fit our
+      // problem space best.
+      return component<1>();
+    } else {
+      except<std::domain_error>(
+          "The t() component does not exist in this multivector. This selector is only designed to "
+          "work in Cl(1, 3), the spacetime algebra with negative space-like bases.");
+    }
+  }
+
+  constexpr const T& x() const {
+    if constexpr (NEGATIVE_BASES >= 1) {
+      // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
+      // algebra with negative space-like bases. In this case, x() is traditionally the first
+      // negative basis, y() is second, and z() is third.
+      return component<1 << POSITIVE_BASES>();
+    } else {
+      // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
+      // such as Cl(3,0). In this case, x() is traditionally the first positive basis, y() is
+      // second, and z() is third.
+      return component<1>();
+    }
+  }
+
+  constexpr const T& y() const {
+    if constexpr (NEGATIVE_BASES >= 1) {
+      // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
+      // algebra with negative space-like bases. In this case, x() is traditionally the first
+      // negative basis, y() is second, and z() is third.
+      return component<2 << POSITIVE_BASES>();
+    } else {
+      // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
+      // such as Cl(3,0). In this case, x() is traditionally the first positive basis, y() is
+      // second, and z() is third.
+      return component<2>();
+    }
+  }
+
+  constexpr const T& z() const {
+    if constexpr (NEGATIVE_BASES >= 1) {
+      // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
+      // algebra with negative space-like bases. In this case, x() is traditionally the first
+      // negative basis, y() is second, and z() is third.
+      return component<4 << POSITIVE_BASES>();
+    } else {
+      // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
+      // such as Cl(3,0). In this case, x() is traditionally the first positive basis, y() is
+      // second, and z() is third.
+      return component<4>();
+    }
+  }
+
+  constexpr const T& r() const {
+    if constexpr (NEGATIVE_BASES >= 1) {
+      // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
+      // variant of the spacetime algebra with negative space-like bases. In this case, r() is
+      // traditionally the first negative basis, theta() is second, and psi() (or z()) is third.
+      return component<1 << POSITIVE_BASES>();
+    } else {
+      // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
+      // such as Cl(3,0). In this case, r() is traditionally the first positive basis, theta() is
+      // second, and psi() (or z()) is third.
+      return component<1>();
+    }
+  }
+
+  constexpr const T& theta() const {
+    if constexpr (NEGATIVE_BASES >= 1) {
+      // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
+      // variant of the spacetime algebra with negative space-like bases. In this case, r() is
+      // traditionally the first negative basis, theta() is second, and psi() (or z()) is third.
+      return component<2 << POSITIVE_BASES>();
+    } else {
+      // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
+      // such as Cl(3,0). In this case, r() is traditionally the first positive basis, theta() is
+      // second, and psi() (or z()) is third.
+      return component<2>();
+    }
+  }
+
+  constexpr const T& psi() const {
+    if constexpr (NEGATIVE_BASES >= 1) {
+      // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
+      // variant of the spacetime algebra with negative space-like bases. In this case, r() is
+      // traditionally the first negative basis, theta() is second, and psi() (or z()) is third.
+      return component<4 << POSITIVE_BASES>();
+    } else {
+      // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
+      // such as Cl(3,0). In this case, r() is traditionally the first positive basis, theta() is
+      // second, and psi() (or z()) is third.
+      return component<4>();
+    }
+  }
+
+  /**
+   * Selector for the real component of a complex number.
+   */
+  constexpr const T& real() const {
+    // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
+    static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
+                  "The real() selector is only defined for the complex numbers.");
+    return component<0>();
+  }
+
+  /**
+   * Selector for the imaginary component of a complex number.
+   */
+  constexpr const T& imag() const {
+    // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
+    static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
+                  "The imag() selector is only defined for the complex numbers.");
+    return component<1>();
+  }
 
   constexpr Multivector grade(size_t grade) const {
     if (grade >= grade_count()) {
@@ -426,6 +551,9 @@ template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONT
 using VgaMultivector = Multivector<T, 3, 0, 0, INNER_PRODUCT_STYLE>;
 
 // The spacetime algebra is primarily used in relativistic physics applications and research.
+// Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
+// Cl(3, 1). This decision is arbitrary and is based on the variant that seems to fit our
+// problem space best.
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using SpacetimeMultivector = Multivector<T, 1, 3, 0, INNER_PRODUCT_STYLE>;
 
