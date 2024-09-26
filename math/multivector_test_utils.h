@@ -15,8 +15,8 @@ template <typename MultivectorT>
   using std::to_string;
   const auto difference{lhs - rhs};
   epsilon = abs(epsilon);
-  for (size_t i = 0; i < MultivectorT::component_count(); ++i) {
-    if (abs(difference.component(i)) > epsilon) {
+  for (size_t i = 0; i < MultivectorT::bases_count(); ++i) {
+    if (abs(difference.basis(i)) > epsilon) {
       return ::testing::AssertionFailure()
              << "lhs: " << lhs << ", rhs: " << rhs << ", difference: " << difference
              << " (epsilon: " << to_string(epsilon) << ")";

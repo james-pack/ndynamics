@@ -4,20 +4,20 @@
 namespace ndyn::math {
 
 TEST(MultivectorScalabilityTest, CanInstantiateSeveralBases) {
-  static constexpr size_t NUMBER_COMPONENTS{7};
+  static constexpr size_t NUMBER_BASES{7};
 
-  static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
+  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
   static constexpr auto u{1.f + x};
   EXPECT_EQ(x + 1.f, u);
 }
 
 TEST(MultivectorScalabilityTest, CanInstantiateManyBases) {
-  static constexpr size_t NUMBER_COMPONENTS{20};
+  static constexpr size_t NUMBER_BASES{20};
 
-  static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
-  static constexpr auto y{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<1>()};
-  static constexpr auto z{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<2>()};
-  static constexpr auto a{Multivector<float, NUMBER_COMPONENTS, 0, 0>{1.f}};
+  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
+  static constexpr auto y{Multivector<float, NUMBER_BASES, 0, 0>::e<1>()};
+  static constexpr auto z{Multivector<float, NUMBER_BASES, 0, 0>::e<2>()};
+  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
 
   static constexpr auto u{1.f + x};
   EXPECT_EQ(x + 1.f, u);
@@ -25,28 +25,28 @@ TEST(MultivectorScalabilityTest, CanInstantiateManyBases) {
 
 TEST(MultivectorScalabilityTest, CanMultiplyMultivectorsOfSeveralBases) {
   // Once we start using the Cayley tables, by multiplying Multivectors or taking inner or outer
-  // products, the number of components we can use decreases without setting the
+  // products, the number of bases we can use decreases without setting the
   // -fconstexpr-ops-limit compile flag.
-  static constexpr size_t NUMBER_COMPONENTS{6};
+  static constexpr size_t NUMBER_BASES{6};
 
-  static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
-  static constexpr auto a{Multivector<float, NUMBER_COMPONENTS, 0, 0>{1.f}};
+  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
+  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
 
   EXPECT_EQ(x, a * x);
 }
 
 TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
-  // For the smallest Cayley table sizes, the number of positive, negative, and zero components must
+  // For the smallest Cayley table sizes, the number of positive, negative, and zero bases must
   // sum to 7 or fewer.
-  // Also, with 7 components, we run into limits on the number of constexpr operations. This
+  // Also, with 7 bases, we run into limits on the number of constexpr operations. This
   // limit can be raised by setting the -fconstexpr-ops-limit compile flag. To keep the testing
   // configuration simpler, we set verify the lower limit below.
-  static constexpr size_t NUMBER_COMPONENTS{6};
+  static constexpr size_t NUMBER_BASES{6};
 
-  static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
-  static constexpr auto y{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<1>()};
-  static constexpr auto z{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<2>()};
-  static constexpr auto a{Multivector<float, NUMBER_COMPONENTS, 0, 0>{1.f}};
+  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
+  static constexpr auto y{Multivector<float, NUMBER_BASES, 0, 0>::e<1>()};
+  static constexpr auto z{Multivector<float, NUMBER_BASES, 0, 0>::e<2>()};
+  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
 
   static constexpr auto u{1.f + x};
   static constexpr auto v{1.f + 2.f * y};
@@ -62,7 +62,7 @@ TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
   ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
 
   // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
   // the rhs.
   EXPECT_EQ(v * w, u.left_contraction(v * w)) << "v * w: " << v * w;
   EXPECT_EQ(w * u, v.left_contraction(w * u));
@@ -77,11 +77,11 @@ TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
 }
 
 TEST(MultivectorScalabilityTest, DISABLED_CanHandleManyBases) {
-  // The expanded Cayley TableEntry class can handle many more components, but at the expensive of
+  // The expanded Cayley TableEntry class can handle many more bases, but at the expensive of
   // lots more memory and longer compile times.
   // The value below seems to be an upper limit given the current implementation strategy. I do not
   // know of any practical algebras that need more than this.
-  // Also, with this many components, we run into limits on the number of constexpr operations. This
+  // Also, with this many bases, we run into limits on the number of constexpr operations. This
   // limit can be raised by setting the -fconstexpr-ops-limit compile flag. See the
   // large_multivectors configuration in .bazelrc.
   // This test is commented out as it takes a very long time to compile and fails without setting
@@ -91,12 +91,12 @@ TEST(MultivectorScalabilityTest, DISABLED_CanHandleManyBases) {
   // are run.
 
   /*
-  static constexpr size_t NUMBER_COMPONENTS{10};
+  static constexpr size_t NUMBER_BASES{10};
 
-  static constexpr auto x{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<0>()};
-  static constexpr auto y{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<1>()};
-  static constexpr auto z{Multivector<float, NUMBER_COMPONENTS, 0, 0>::e<2>()};
-  static constexpr auto a{Multivector<float, NUMBER_COMPONENTS, 0, 0>{1.f}};
+  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
+  static constexpr auto y{Multivector<float, NUMBER_BASES, 0, 0>::e<1>()};
+  static constexpr auto z{Multivector<float, NUMBER_BASES, 0, 0>::e<2>()};
+  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
 
   static constexpr auto u{1.f + x};
   static constexpr auto v{1.f + 2.f * y};
@@ -112,7 +112,7 @@ TEST(MultivectorScalabilityTest, DISABLED_CanHandleManyBases) {
   ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
 
   // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
   // the rhs.
   EXPECT_EQ(v * w, u.left_contraction(v * w)) << "v * w: " << v * w;
   EXPECT_EQ(w * u, v.left_contraction(w * u));

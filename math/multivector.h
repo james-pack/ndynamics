@@ -28,17 +28,17 @@ class Multivector final {
  public:
   using ScalarType = T;
 
-  static constexpr size_t SCALAR_COMPONENT_INDEX{0};
+  static constexpr size_t SCALAR_BASIS_INDEX{0};
 
-  static constexpr size_t bases_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
-  static constexpr size_t grade_count() { return bases_count() + 1; }
+  static constexpr size_t vector_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
+  static constexpr size_t grade_count() { return vector_count() + 1; }
 
-  static constexpr size_t component_count() { return 1UL << bases_count(); }
+  static constexpr size_t bases_count() { return 1UL << vector_count(); }
 
  private:
   static constexpr CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> cayley_table_{};
 
-  std::array<T, component_count()> coefficients_{};
+  std::array<T, bases_count()> coefficients_{};
 
  public:
   constexpr Multivector() = default;
@@ -58,13 +58,13 @@ class Multivector final {
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
   template <size_t n>
-  constexpr const T& component() const {
-    static_assert(n < component_count(), "Component index out of range.");
+  constexpr const T& basis() const {
+    static_assert(n < bases_count(), "Basis index out of range.");
     return coefficients_[n];
   }
-  constexpr const T& component(size_t n) const { return coefficients_.at(n); }
+  constexpr const T& basis(size_t n) const { return coefficients_.at(n); }
 
-  constexpr const T& scalar() const { return coefficients_[SCALAR_COMPONENT_INDEX]; }
+  constexpr const T& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
 
   constexpr const T& t() const {
     if constexpr (NEGATIVE_BASES >= 1) {
@@ -73,10 +73,10 @@ class Multivector final {
       // positive basis. Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
       // Cl(3, 1). This decision is arbitrary and is based on the variant that seems to fit our
       // problem space best.
-      return component<1>();
+      return basis<1>();
     } else {
       except<std::domain_error>(
-          "The t() component does not exist in this multivector. This selector is only designed to "
+          "The t() basis does not exist in this multivector. This selector is only designed to "
           "work in Cl(1, 3), the spacetime algebra with negative space-like bases.");
     }
   }
@@ -86,12 +86,12 @@ class Multivector final {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
       // negative basis, y() is second, and z() is third.
-      return component<1 << POSITIVE_BASES>();
+      return basis<1 << POSITIVE_BASES>();
     } else {
       // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
       // such as Cl(3,0). In this case, x() is traditionally the first positive basis, y() is
       // second, and z() is third.
-      return component<1>();
+      return basis<1>();
     }
   }
 
@@ -100,12 +100,12 @@ class Multivector final {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
       // negative basis, y() is second, and z() is third.
-      return component<2 << POSITIVE_BASES>();
+      return basis<2 << POSITIVE_BASES>();
     } else {
       // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
       // such as Cl(3,0). In this case, x() is traditionally the first positive basis, y() is
       // second, and z() is third.
-      return component<2>();
+      return basis<2>();
     }
   }
 
@@ -114,12 +114,12 @@ class Multivector final {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
       // negative basis, y() is second, and z() is third.
-      return component<4 << POSITIVE_BASES>();
+      return basis<4 << POSITIVE_BASES>();
     } else {
       // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
       // such as Cl(3,0). In this case, x() is traditionally the first positive basis, y() is
       // second, and z() is third.
-      return component<4>();
+      return basis<4>();
     }
   }
 
@@ -128,12 +128,12 @@ class Multivector final {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
       // traditionally the first negative basis, theta() is second, and psi() (or z()) is third.
-      return component<1 << POSITIVE_BASES>();
+      return basis<1 << POSITIVE_BASES>();
     } else {
       // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
       // such as Cl(3,0). In this case, r() is traditionally the first positive basis, theta() is
       // second, and psi() (or z()) is third.
-      return component<1>();
+      return basis<1>();
     }
   }
 
@@ -142,12 +142,12 @@ class Multivector final {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
       // traditionally the first negative basis, theta() is second, and psi() (or z()) is third.
-      return component<2 << POSITIVE_BASES>();
+      return basis<2 << POSITIVE_BASES>();
     } else {
       // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
       // such as Cl(3,0). In this case, r() is traditionally the first positive basis, theta() is
       // second, and psi() (or z()) is third.
-      return component<2>();
+      return basis<2>();
     }
   }
 
@@ -156,12 +156,12 @@ class Multivector final {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
       // traditionally the first negative basis, theta() is second, and psi() (or z()) is third.
-      return component<4 << POSITIVE_BASES>();
+      return basis<4 << POSITIVE_BASES>();
     } else {
       // If there are no NEGATIVE_BASES, we assume that we are in a vectorspace geometric algebra,
       // such as Cl(3,0). In this case, r() is traditionally the first positive basis, theta() is
       // second, and psi() (or z()) is third.
-      return component<4>();
+      return basis<4>();
     }
   }
 
@@ -172,7 +172,7 @@ class Multivector final {
     // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
     static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
                   "The real() selector is only defined for the complex numbers.");
-    return component<0>();
+    return basis<0>();
   }
 
   /**
@@ -182,7 +182,7 @@ class Multivector final {
     // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
     static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
                   "The imag() selector is only defined for the complex numbers.");
-    return component<1>();
+    return basis<1>();
   }
 
   constexpr Multivector grade(size_t grade) const {
@@ -190,7 +190,7 @@ class Multivector final {
       except<std::domain_error>("Requested grade is larger than maximum grade of this multivector");
     }
     Multivector result{};
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       if (bit_count(i) == grade) {
         result.coefficients_[i] = coefficients_[i];
       }
@@ -200,13 +200,13 @@ class Multivector final {
 
   constexpr Multivector add(const T& rhs) const {
     Multivector result{*this};
-    result.coefficients_[SCALAR_COMPONENT_INDEX] += rhs;
+    result.coefficients_[SCALAR_BASIS_INDEX] += rhs;
     return result;
   }
 
   constexpr Multivector add(const Multivector& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       result.coefficients_[i] += rhs.coefficients_[i];
     }
     return result;
@@ -214,13 +214,13 @@ class Multivector final {
 
   constexpr Multivector subtract(const T& rhs) const {
     Multivector result{*this};
-    result.coefficients_[SCALAR_COMPONENT_INDEX] -= rhs;
+    result.coefficients_[SCALAR_BASIS_INDEX] -= rhs;
     return result;
   }
 
   constexpr Multivector subtract(const Multivector& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       result.coefficients_[i] -= rhs.coefficients_[i];
     }
     return result;
@@ -228,7 +228,7 @@ class Multivector final {
 
   constexpr Multivector multiply(const T& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       result.coefficients_[i] *= rhs;
     }
     return result;
@@ -236,8 +236,8 @@ class Multivector final {
 
   constexpr Multivector multiply(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < component_count(); ++i) {
-      for (size_t j = 0; j < component_count(); ++j) {
+    for (size_t i = 0; i < bases_count(); ++i) {
+      for (size_t j = 0; j < bases_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         result.coefficients_[cayley_entry.grade()] +=
             cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
@@ -248,7 +248,7 @@ class Multivector final {
 
   constexpr Multivector divide(const T& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       result.coefficients_[i] /= rhs;
     }
     return result;
@@ -261,16 +261,16 @@ class Multivector final {
    */
   constexpr Multivector left_contraction(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < component_count(); ++i) {
-      // Note the initialization in the for-loop below. All of the components where the grade of i
+    for (size_t i = 0; i < bases_count(); ++i) {
+      // Note the initialization in the for-loop below. All of the basiss where the grade of i
       // is less than the grade of j will not contribute to the result. Also, j must include every
-      // basis in i otherwise the two components are orthogonal to each other.
-      for (size_t j = i; j < component_count(); ++j) {
-        // Here we ensure that the two components are not orthogonal to each other, in the sense
-        // that the rhs component (j) must include all of the bases in the lhs component (i).
-        // Otherwise, the left_contraction of these components is zero, and the result is unchanged.
-        // Note that for i = 0 (the scalar component of the lhs), this case will always be true, and
-        // the effective result is that the left contraction of scalars onto other components adds a
+      // basis in i otherwise the two bases are orthogonal to each other.
+      for (size_t j = i; j < bases_count(); ++j) {
+        // Here we ensure that the two bases are not orthogonal to each other, in the sense
+        // that the rhs basis (j) must include all of the bases in the lhs basis (i).
+        // Otherwise, the left_contraction of these bases is zero, and the result is unchanged.
+        // Note that for i = 0 (the scalar basis of the lhs), this case will always be true, and
+        // the effective result is that the left contraction of scalars onto other bases adds a
         // scaled version of the rhs to the result.
         if ((i & j) == i) {
           const auto& cayley_entry{cayley_table_.entry(i, j)};
@@ -290,25 +290,25 @@ class Multivector final {
   }
 
   /**
-   * The bidirectional inner project projects each pair of components individually, according to
-   * which component has the lower grade. When the lhs component has the lower grade, the lhs
-   * component is projected onto the rhs component. Similarly, the rhs component is projected onto
-   * the lhs component when the rhs component has the lower grade. When the two have the same grade,
-   * the operation is symmetric and can be thought of as projecting the lhs component onto the rhs
-   * component or vice versa.
+   * The bidirectional inner project projects each pair of bases individually, according to
+   * which basis has the lower grade. When the lhs basis has the lower grade, the lhs
+   * basis is projected onto the rhs basis. Similarly, the rhs basis is projected onto
+   * the lhs basis when the rhs basis has the lower grade. When the two have the same grade,
+   * the operation is symmetric and can be thought of as projecting the lhs basis onto the rhs
+   * basis or vice versa.
    */
   constexpr Multivector bidirectional_inner(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < component_count(); ++i) {
-      for (size_t j = 0; j < component_count(); ++j) {
-        // If the lhs component is a lower grade, compute the inner product as the lhs component
-        // being projected on the rhs. Otherwise, project the rhs component on the lhs. The
+    for (size_t i = 0; i < bases_count(); ++i) {
+      for (size_t j = 0; j < bases_count(); ++j) {
+        // If the lhs basis is a lower grade, compute the inner product as the lhs basis
+        // being projected on the rhs. Otherwise, project the rhs basis on the lhs. The
         // implementation here is to simply select the appropriate Cayley table entry according to
-        // which component is being projected.
-        // Note that the grade of the component and value of the component are not the same. The
+        // which basis is being projected.
+        // Note that the grade of the basis and value of the basis are not the same. The
         // grade is the number of bits set in the value. But, if the value is lower and the grade is
         // higher (value of 3, meaning a grade of 2, is less than a value of 4, a grade of 1), the
-        // resulting components are orthogonal and the inner product will be zero.
+        // resulting bases are orthogonal and the inner product will be zero.
         if (i < j) {
           if ((i & j) == i) {
             const auto& cayley_entry{cayley_table_.entry(i, j)};
@@ -357,10 +357,10 @@ class Multivector final {
    */
   constexpr Multivector outer(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < component_count(); ++i) {
-      // Note the exit condition of this for-loop. We only loop while i+j is less than the component
-      // count.
-      for (size_t j = 0; i + j < component_count(); ++j) {
+    for (size_t i = 0; i < bases_count(); ++i) {
+      // Note the exit condition of this for-loop. We only loop while i+j is less than the number of
+      // bases.
+      for (size_t j = 0; i + j < bases_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         if (bit_count(cayley_entry.grade()) == bit_count(i) + bit_count(j)) {
           result.coefficients_[i + j] +=
@@ -376,7 +376,7 @@ class Multivector final {
    */
   constexpr Multivector conj() const {
     Multivector result{*this};
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       const auto num_bits_set{bit_count(i)};
       if (num_bits_set % 4 == 1 || num_bits_set % 4 == 2) {
         result.coefficients_[i] = -result.coefficients_[i];
@@ -389,7 +389,7 @@ class Multivector final {
   constexpr bool operator==(const Multivector& rhs) const {
     // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
     // we have to implement this ourselves for earlier versions.
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       if (coefficients_[i] != rhs.coefficients_[i]) {
         return false;
       }
@@ -420,14 +420,14 @@ class Multivector final {
 
   // Self-modifying operators.
   constexpr Multivector& operator+=(const Multivector& rhs) {
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       coefficients_[i] += rhs.coefficients_[i];
     }
     return *this;
   }
 
   constexpr Multivector& operator-=(const Multivector& rhs) {
-    for (size_t i = 0; i < component_count(); ++i) {
+    for (size_t i = 0; i < bases_count(); ++i) {
       coefficients_[i] -= rhs.coefficients_[i];
     }
     return *this;
@@ -440,24 +440,24 @@ class Multivector final {
   // Inner product.
   constexpr Multivector operator|(const Multivector& rhs) const { return inner(rhs); }
 
-  // Generate a Multivector of a single component. These can be combined to generate any
-  // Multivector. See the tests for examples.
+  // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
+  // any Multivector. See the tests for examples.
   template <size_t N>
   static constexpr Multivector e() {
-    if constexpr (N >= bases_count()) {
+    if constexpr (N >= vector_count()) {
       // Note: we use a static_assert here to generate an error message for the user. We could have
       // used a template parameter to restrict which basis creation functions are generated by the
       // compiler, but that approach resulted in a much more cryptic error message from the
       // compiler. For completeness, here is the function signature with the template restriction:
-      //   template <size_t N, std::enable_if_t<(N < bases_count()), bool> = true>
+      //   template <size_t N, std::enable_if_t<(N < vector_count()), bool> = true>
       //   static constexpr Multivector e();
       static_assert(
-          N < bases_count(),
+          N < vector_count(),
           "Template parameter to basis creation function is out of range of the number of "
-          "bases. Template parameter must be less than the bases_count().");
+          "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
     } else {
       Multivector result{};
-      result.coefficients_.at(1UL << N) = 1;
+      result.coefficients_[1UL << N] = 1;
       return result;
     }
   }
@@ -507,12 +507,12 @@ std::string to_string(
   std::string result{};
   result.append("[");
   bool need_comma{false};
-  for (size_t i = 0; i < v.component_count(); ++i) {
+  for (size_t i = 0; i < v.bases_count(); ++i) {
     if (need_comma) {
       result.append(", ");
     }
     need_comma = true;
-    result.append(to_string(v.component(i)));
+    result.append(to_string(v.basis(i)));
   }
   result.append("]");
   return result;

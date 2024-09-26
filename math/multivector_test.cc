@@ -313,7 +313,7 @@ TEST(MultivectorTest, CanDoLeftContractionOnVga) {
   ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
 
   // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
   // the rhs.
   EXPECT_EQ(v * w, u.left_contraction(v * w)) << "v * w: " << v * w;
   EXPECT_EQ(w * u, v.left_contraction(w * u));
@@ -372,7 +372,7 @@ TEST(MultivectorTest, CanDoLeftContractionOnSpacetime) {
   ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
 
   // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
   // the rhs.
   EXPECT_EQ(v * w, u.left_contraction(v * w)) << "v * w: " << v * w;
   EXPECT_EQ(w * u, v.left_contraction(w * u));
@@ -589,7 +589,7 @@ TEST(MultivectorTest, InnerProductStyleAsLeftContraction) {
   ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
 
   // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
   // the rhs.
   EXPECT_EQ(u.left_contraction(v * w), u.inner(v * w)) << "v * w: " << v * w;
   EXPECT_EQ(v.left_contraction(w * u), v.inner(w * u));
@@ -626,7 +626,7 @@ TEST(MultivectorTest, InnerProductStyleAsRightContraction) {
   ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
 
   // In these three cases, the lhs of the right contraction has a constant plus a term that is
-  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
   // the rhs.
   EXPECT_EQ(u.right_contraction(v * w), u.inner(v * w)) << "v * w: " << v * w;
   EXPECT_EQ(v.right_contraction(w * u), v.inner(w * u));
@@ -663,7 +663,7 @@ TEST(MultivectorTest, InnerProductStyleAsBidirectional) {
   ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
 
   // In these three cases, the lhs of the right contraction has a constant plus a term that is
-  // orthogonal to all the components of the rhs. So, all of the results will be that constant times
+  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
   // the rhs.
   EXPECT_EQ(u.bidirectional_inner(v * w), u.inner(v * w)) << "v * w: " << v * w;
   EXPECT_EQ(v.bidirectional_inner(w * u), v.inner(w * u));
