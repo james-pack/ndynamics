@@ -31,24 +31,23 @@ class PositionModel final : public ui::UiModel {
 
     {
       const auto position{source_->position()};
-      position_x = position.component(1);
-      position_y = position.component(2);
-      position_series.update(current_time, {position.component(1), position.component(2)});
+      position_x = position.x();
+      position_y = position.y();
+      position_series.update(current_time, {position.x(), position.y()});
     }
 
     {
       const auto velocity{source_->velocity()};
-      velocity_x = velocity.component(1);
-      velocity_y = velocity.component(2);
-      velocity_series.update(current_time, {velocity.component(1), velocity.component(2)});
+      velocity_x = velocity.x();
+      velocity_y = velocity.y();
+      velocity_series.update(current_time, {velocity.x(), velocity.y()});
     }
 
     {
       const auto acceleration{source_->acceleration()};
-      acceleration_x = acceleration.component(1);
-      acceleration_y = acceleration.component(2);
-      acceleration_series.update(current_time,
-                                 {acceleration.component(1), acceleration.component(2)});
+      acceleration_x = acceleration.x();
+      acceleration_y = acceleration.y();
+      acceleration_series.update(current_time, {acceleration.x(), acceleration.y()});
     }
   }
 };
