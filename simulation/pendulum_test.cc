@@ -68,16 +68,14 @@ template <typename PendulumT, typename ScalarType>
     pendulum.goto_time(i * 4 * quarter_period);
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_negative(pendulum.velocity().component(1))
-             << " Expected component(1) of velocity to be negative. velocity: "
-             << pendulum.velocity();
+    result = is_negative(pendulum.velocity().x())
+             << " Expected x() of velocity to be negative. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_negative(pendulum.velocity().component(2))
-             << " Expected component(2) of velocity to be negative. velocity: "
-             << pendulum.velocity();
+    result = is_negative(pendulum.velocity().y())
+             << " Expected y() of velocity to be negative. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
@@ -91,16 +89,14 @@ template <typename PendulumT, typename ScalarType>
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_negative(pendulum.velocity().component(1))
-             << " Expected component(1) of velocity to be negative. velocity: "
-             << pendulum.velocity();
+    result = is_negative(pendulum.velocity().x())
+             << " Expected x() of velocity to be negative. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_positive(pendulum.velocity().component(2))
-             << " Expected component(2) of velocity to be positive. velocity: "
-             << pendulum.velocity();
+    result = is_positive(pendulum.velocity().y())
+             << " Expected y() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ". Expected positive velocity in y-direction. velocity: "
@@ -115,16 +111,14 @@ template <typename PendulumT, typename ScalarType>
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_positive(pendulum.velocity().component(1))
-             << " Expected component(1) of velocity to be positive. velocity: "
-             << pendulum.velocity();
+    result = is_positive(pendulum.velocity().x())
+             << " Expected x() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_negative(pendulum.velocity().component(2))
-             << " Expected component(2) of velocity to be negative. velocity: "
-             << pendulum.velocity();
+    result = is_negative(pendulum.velocity().y())
+             << " Expected y() of velocity to be negative. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
@@ -138,16 +132,14 @@ template <typename PendulumT, typename ScalarType>
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_positive(pendulum.velocity().component(1))
-             << " Expected component(1) of velocity to be positive. velocity: "
-             << pendulum.velocity();
+    result = is_positive(pendulum.velocity().x())
+             << " Expected x() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_positive(pendulum.velocity().component(2))
-             << " Expected component(2) of velocity to be positive. velocity: "
-             << pendulum.velocity();
+    result = is_positive(pendulum.velocity().y())
+             << " Expected y() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
@@ -173,8 +165,6 @@ template <typename PendulumT, typename ScalarType>
 
   // Compare the expected and computed values to be within a percentage of the given angle.
   const ScalarType EPSILON{static_cast<ScalarType>(0.05) * angle};
-
-  static constexpr ScalarType ZERO_ANGLE{0};
 
   ScalarType STEP_SIZE{0.01};
   for (size_t i = 0; i < num_periods; ++i) {
