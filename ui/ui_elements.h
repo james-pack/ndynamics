@@ -15,11 +15,17 @@ class UiElement {
   virtual void update() {}
 };
 
+/**
+ * Top-level UI element that holds other UI elements.
+ */
 class Pane : public UiElement {
  public:
   virtual ~Pane() = 0;
 };
 
+/**
+ * Pane that renders its children in the center of the window.
+ */
 class CenterPane final : public Pane {
  private:
   std::vector<UiElement*> children_{};
@@ -35,6 +41,9 @@ class CenterPane final : public Pane {
   void add_child(UiElement& child) { children_.push_back(&child); }
 };
 
+/**
+ * Pane that renders children on the left and right sides of the window.
+ */
 class LeftRightPane final : public Pane {
  private:
   std::vector<UiElement*> left_children_{};

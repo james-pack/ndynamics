@@ -6,7 +6,7 @@
 namespace ndyn::ui {
 
 /**
- * A particular configuration of the UI.
+ * A particular set of UI elements, including data models. See the App class for more details.
  */
 class Scene {
  private:

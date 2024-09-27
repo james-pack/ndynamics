@@ -9,6 +9,10 @@ namespace ndyn::ui {
 
 class ShaderProgramBuilder;
 
+/**
+ * Representation of a compiled and linked shader program. The primary value in this class is the
+ * ShaderProgramBuilder which supports organizing, compiling, and linking the program.
+ */
 class ShaderProgram final {
  private:
   GLuint program_id_;
@@ -35,7 +39,7 @@ class ShaderProgramBuilder final {
     return *this;
   }
 
-  // Compile and link the shaders or abort in the event of a compilation or link error.
+  // Compile and link the shaders or abort the process in the event of a compilation or link error.
   ShaderProgram build();
 };
 
