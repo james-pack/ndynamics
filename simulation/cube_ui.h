@@ -7,6 +7,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "ui/direct_render_element.h"
 #include "ui/keyboard_shortcuts.h"
+#include "ui/scene.h"
 #include "ui/shader_program.h"
 
 namespace ndyn::simulation {
@@ -139,49 +140,6 @@ class Cube final : public ui::DirectRenderElement {
     mvp_dirty_ = true;
   }
 
-  void update() override {
-    if (position_fn_) {
-      sync_model_position();
-    } else {
-      rotate_model();
-    }
-
-    glUseProgram(program_.id());
-
-    if (mvp_dirty_) {
-      mvp_ = projection_ * view_ * model_ * glm::scale(glm::mat4{1.f}, glm::vec3{0.75});
-      glUniformMatrix4fv(mvp_matrix_id_, 1, GL_FALSE, &mvp_[0][0]);
-      mvp_dirty_ = false;
-    }
-
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
-    glVertexAttribPointer(
-        0,  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-        3,  // size
-        GL_FLOAT,  // type
-        GL_FALSE,  // normalized?
-        0,         // stride
-        (void*)0   // array buffer offset
-    );
-
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
-    glVertexAttribPointer(
-        1,  // attribute 1. No particular reason for 1, but must match the layout in the shader.
-        3,  // size
-        GL_FLOAT,  // type
-        GL_FALSE,  // normalized?
-        0,         // stride
-        (void*)0   // array buffer offset
-    );
-
-    // Draw the triangles for the cube!
-    glDrawArrays(GL_TRIANGLES, 0,
-                 12 * 3);  // 12*3 indices starting at 0 -> 12 triangles -> 6 squares
-    glDisableVertexAttribArray(0);
-  }
-
  public:
   Cube(GLFWwindow& window, const CubePositionFn& position_fn = CubePositionFn{})
       : program_(ui::ShaderProgramBuilder{}
@@ -226,6 +184,61 @@ class Cube final : public ui::DirectRenderElement {
                    mvp_dirty_ = true;
                  });
   }
+
+  void update() override {
+    if (position_fn_) {
+      sync_model_position();
+    } else {
+      rotate_model();
+    }
+
+    glUseProgram(program_.id());
+
+    if (mvp_dirty_) {
+      mvp_ = projection_ * view_ * model_ * glm::scale(glm::mat4{1.f}, glm::vec3{0.75});
+      glUniformMatrix4fv(mvp_matrix_id_, 1, GL_FALSE, &mvp_[0][0]);
+      mvp_dirty_ = false;
+    }
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
+    glVertexAttribPointer(
+        0,  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+        3,  // size
+        GL_FLOAT,  // type
+        GL_FALSE,  // normalized?
+        0,         // stride
+        (void*)0   // array buffer offset
+    );
+
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, color_buffer_);
+    glVertexAttribPointer(
+        1,  // attribute 1. No particular reason for 1, but must match the layout in the shader.
+        3,  // size
+        GL_FLOAT,  // type
+        GL_FALSE,  // normalized?
+        0,         // stride
+        (void*)0   // array buffer offset
+    );
+
+    // Draw the triangles for the cube!
+    glDrawArrays(GL_TRIANGLES, 0,
+                 12 * 3);  // 12*3 indices starting at 0 -> 12 triangles -> 6 squares
+    glDisableVertexAttribArray(0);
+  }
+};
+
+class CubeScene final : public ui::Scene {
+ private:
+  Cube cube;
+
+ public:
+  CubeScene(GLFWwindow& window) : Scene("3D Cube"), cube(window) {}
+
+  void update_models() override {}
+  void update_ui() override {}
+  void update_direct_render_elements() override { cube.update(); }
 };
 
 }  // namespace ndyn::simulation

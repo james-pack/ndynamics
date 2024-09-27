@@ -15,17 +15,36 @@ class UiElement {
   virtual void update() {}
 };
 
-class Window final : public UiElement {
+class Pane : public UiElement {
+ public:
+  virtual ~Pane() = 0;
+};
+
+class CenterPane final : public Pane {
+ private:
+  std::vector<UiElement*> children_{};
+
+  bool show_children_{true};
+
+ public:
+  CenterPane();
+
+  // Update, called once per frame to update any gui elements. Not called when paused.
+  void update() override;
+
+  void add_child(UiElement& child) { children_.push_back(&child); }
+};
+
+class LeftRightPane final : public Pane {
  private:
   std::vector<UiElement*> left_children_{};
   std::vector<UiElement*> right_children_{};
 
-  bool show_help_text_{false};
   bool show_left_children_{true};
   bool show_right_children_{true};
 
  public:
-  Window();
+  LeftRightPane();
 
   // Update, called once per frame to update any gui elements. Not called when paused.
   void update() override;

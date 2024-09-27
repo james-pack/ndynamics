@@ -13,6 +13,7 @@ cc_library(
         "direct_render_element.h",
         "imgui_utils.h",
         "keyboard_shortcuts.h",
+        "scene.h",
         "shader_program.h",
         "ui_elements.h",
         "ui_model.h",

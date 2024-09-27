@@ -21,6 +21,7 @@ cc_library(
         "cube_ui.h",
         "pendulum_graph_ui.h",
         "pendulum_model.h",
+        "pendulum_scene.h",
         "position_model.h",
         "sensor_measurement_graph_ui.h",
     ],

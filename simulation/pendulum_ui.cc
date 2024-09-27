@@ -6,110 +6,47 @@
 #include "base/pi.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "sensor/measurement_type.h"
-#include "simulation/accelerometer_sensor_model.h"
-#include "simulation/cube_ui.h"
-#include "simulation/pendulum.h"
-#include "simulation/pendulum_graph_ui.h"
-#include "simulation/sensor_measurement_graph_ui.h"
+#include "simulation/pendulum_scene.h"
 #include "ui/app.h"
-#include "ui/ui_elements.h"
 
-DEFINE_double(length, 1, "Length of the pendulum");
-DEFINE_double(gravity, 1, "Acceleration due to gravity");
+DEFINE_double(length, 3.5, "Length of the pendulum");
+DEFINE_double(gravity, 9.8, "Acceleration due to gravity");
 DEFINE_double(mass, 1, "Mass of the pendulum");
-DEFINE_double(angle, ndyn::pi / 4, "Initial angle of the pendulum in radians. Defaults to pi/4.");
+DEFINE_double(angle, ndyn::pi / 16, "Initial angle of the pendulum in radians. Defaults to pi/16.");
 
 DEFINE_bool(fullscreen, false, "Run in fullscreen mode (windowless)");
 
 int main(int argc, char* argv[]) {
-  using namespace ndyn::sensor;
-  using namespace ndyn::simulation;
-  using namespace ndyn::ui;
-
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
-
-  static constexpr size_t NUM_POINTS{1024};
-  using PendulumGraphType = PendulumGraph<NUM_POINTS>;
-  using FloatT = PendulumGraphType::FloatT;
-  using PendulumType = Pendulum<PendulumGraphType::T>;
-  using PendulumConfiguratorType = PendulumConfigurator<PendulumGraphType::T>;
-  using AccelerometerType = MeasurementValueType<MeasurementType::ACCELEROMETER>::type;
-  using TemperatureType = MeasurementValueType<MeasurementType::TEMPERATURE>::type;
 
   size_t width{FLAGS_fullscreen ? 0UL : 1920UL};
   size_t height{FLAGS_fullscreen ? 0UL : 1080UL};
 
-  App app{"Pendulum Simulation", width, height};
+  ndyn::ui::App app{"Pendulum Simulation", width, height};
 
-  PendulumType pendulum{PendulumConfiguratorType{}
-                            .set_length(FLAGS_length)
-                            .set_g(FLAGS_gravity)
-                            .set_mass(FLAGS_mass)
-                            .set_theta(FLAGS_angle)
-                            .create()};
+  ndyn::simulation::PendulumScene default_scene{
+      app.gl_window(), static_cast<float>(FLAGS_length), static_cast<float>(FLAGS_gravity),
+      static_cast<float>(FLAGS_mass), static_cast<float>(FLAGS_angle)};
+  app.add_scene(default_scene);
 
-  PendulumModel<NUM_POINTS> pendulum_model{pendulum};
-  PositionModel<PendulumType, FloatT, NUM_POINTS> position_model{pendulum};
+  ndyn::simulation::PendulumScene scene1{app.gl_window(), 3.5, 9.8, 1., ndyn::pi / 4};
+  app.add_scene(scene1);
 
-  static constexpr TemperatureType TEMPERATURE{25};
-  Characterization<AccelerometerType, FloatT> accelerometer_1_characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.025}, .offset_std{.05}}};
+  ndyn::simulation::PendulumScene scene3{app.gl_window(), 3.5, 9.8, 1., ndyn::pi /2 };
+  app.add_scene(scene3);
 
-  AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_1{
-      pendulum, accelerometer_1_characterization};
+  ndyn::simulation::PendulumScene scene4{app.gl_window(), 1, 9.8, 1., 3.};
+  app.add_scene(scene4);
 
-  Characterization<AccelerometerType, FloatT> accelerometer_2_characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.05}, .offset_std{.25}}};
+  ndyn::simulation::PendulumScene scene5{app.gl_window(), .25, 9.8, 1., 3.};
+  app.add_scene(scene5);
 
-  AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_2{
-      pendulum, accelerometer_2_characterization};
+  ndyn::simulation::PendulumScene scene6{app.gl_window(), 3.5, 50., 1., 3.};
+  app.add_scene(scene6);
 
-  Characterization<AccelerometerType, FloatT> gyroscope_1_characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.01}, .offset_std{.1}}};
-
-  AccelerometerSensorModel<PendulumType, NUM_POINTS> gyroscope_1{pendulum,
-                                                                 gyroscope_1_characterization};
-
-  Characterization<AccelerometerType, FloatT> gyroscope_2_characterization{
-      Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.15}, .offset_std{.5}}};
-
-  AccelerometerSensorModel<PendulumType, NUM_POINTS> gyroscope_2{pendulum,
-                                                                 gyroscope_2_characterization};
-
-  app.add_model(pendulum_model);
-  app.add_model(position_model);
-  app.add_model(accelerometer_1);
-  app.add_model(accelerometer_2);
-  app.add_model(gyroscope_1);
-  app.add_model(gyroscope_2);
-
-  Window ui{};
-  app.set_root_ui_element(ui);
-
-  PendulumGraphType statistics{pendulum_model, position_model};
-  ui.add_left_child(statistics);
-
-  SensorMeasurementGraph<PendulumType, NUM_POINTS> sensor_measurements{};
-  sensor_measurements.add_accelerometer(accelerometer_1);
-  sensor_measurements.add_accelerometer(accelerometer_2);
-  sensor_measurements.add_gyroscope(gyroscope_1);
-  sensor_measurements.add_gyroscope(gyroscope_2);
-  ui.add_right_child(sensor_measurements);
-
-  CubePositionFn cube_as_pendulum{[&pendulum]() {
-    const auto x{pendulum.position().x()};
-    const auto y{pendulum.position().y() + FLAGS_length / 2};
-    const auto z{pendulum.position().z()};
-    const auto theta{pendulum.theta()};
-    return glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), theta,
-                       glm::vec3{0, 0, 1});
-  }};
-  Cube cube{app.gl_window(), cube_as_pendulum};
-  app.add_direct_render_element(cube);
+  ndyn::simulation::PendulumScene scene7{app.gl_window(), .5, 50., 1., 3.};
+  app.add_scene(scene7);
 
   app.run();
 

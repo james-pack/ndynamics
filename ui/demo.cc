@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "implot.h"
 #include "ui/app.h"
+#include "ui/scene.h"
 #include "ui/ui_elements.h"
 #include "ui/ui_model.h"
 
@@ -92,6 +93,22 @@ class DemoUi final : public UiElement {
   }
 };
 
+class DemoScene final : public Scene {
+ private:
+  DemoModel model{};
+  DemoUi demo{model};
+  CenterPane ui{};
+
+ public:
+  DemoScene() : Scene("Demo showing some basic plotting capabilities") { ui.add_child(demo); }
+
+  void update_models() override { model.update(); }
+
+  void update_ui() override { ui.update(); }
+
+  void update_direct_render_elements() override {}
+};
+
 }  // namespace ndyn::ui
 
 int main(int argc, char* argv[]) {
@@ -99,13 +116,9 @@ int main(int argc, char* argv[]) {
 
   FLAGS_logtostderr = true;
   ndyn::initialize(&argc, &argv);
+  DemoScene scene{};
   App app{"Demo", 1920, 1080};
-  DemoModel model{};
-  DemoUi demo{model};
-  Window ui{};
-  ui.add_right_child(demo);
-  app.add_model(model);
-  app.set_root_ui_element(ui);
+  app.add_scene(0, scene);
   app.run();
   return 0;
 }

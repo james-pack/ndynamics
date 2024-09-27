@@ -124,7 +124,7 @@ static void glfw_error_callback(int error, const char *description) {
   LOG(ERROR) << "GLFW Error " << error << ": " << description;
 }
 
-App::App(std::string title, size_t width, size_t height) {
+App::App(std::string title, size_t width, size_t height) : default_window_title_(title) {
   // Setup window
   glfwSetErrorCallback(glfw_error_callback);
   if (!glfwInit()) abort();
@@ -157,9 +157,9 @@ App::App(std::string title, size_t width, size_t height) {
 
   // Create window with graphics context
   if (fullscreen) {
-    window_ = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
+    window_ = glfwCreateWindow(width, height, default_window_title_.c_str(), monitor, nullptr);
   } else {
-    window_ = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    window_ = glfwCreateWindow(width, height, default_window_title_.c_str(), nullptr, nullptr);
   }
   if (window_ == nullptr) {
     LOG(FATAL) << "Failed to initialize GLFW window!";
@@ -177,9 +177,8 @@ App::App(std::string title, size_t width, size_t height) {
 
   // Add the GPU details to the window title.
   const GLubyte *renderer = glGetString(GL_RENDERER);
-  title += " - ";
-  title += reinterpret_cast<const char *>(renderer);
-  glfwSetWindowTitle(window_, title.c_str());
+  default_window_title_.append(" - ").append(reinterpret_cast<const char *>(renderer));
+  glfwSetWindowTitle(window_, default_window_title_.c_str());
 
   // Enable depth test
   glEnable(GL_DEPTH_TEST);
@@ -224,6 +223,37 @@ App::App(std::string title, size_t width, size_t height) {
     request_close();
     pause();
   });
+
+  bind_key(ImGuiKey_F1, "Switch to scene bank 1", [this](ImGuiKeyChord) { goto_scene_bank(0); });
+  bind_key(ImGuiKey_F2, "Switch to scene bank 2", [this](ImGuiKeyChord) { goto_scene_bank(1); });
+  bind_key(ImGuiKey_F3, "Switch to scene bank 3", [this](ImGuiKeyChord) { goto_scene_bank(2); });
+  bind_key(ImGuiKey_F4, "Switch to scene bank 4", [this](ImGuiKeyChord) { goto_scene_bank(3); });
+  bind_key(ImGuiKey_F5, "Switch to scene bank 5", [this](ImGuiKeyChord) { goto_scene_bank(4); });
+  bind_key(ImGuiKey_F6, "Switch to scene bank 6", [this](ImGuiKeyChord) { goto_scene_bank(5); });
+  bind_key(ImGuiKey_F7, "Switch to scene bank 7", [this](ImGuiKeyChord) { goto_scene_bank(6); });
+  bind_key(ImGuiKey_F8, "Switch to scene bank 8", [this](ImGuiKeyChord) { goto_scene_bank(7); });
+  bind_key(ImGuiKey_F9, "Switch to scene bank 9", [this](ImGuiKeyChord) { goto_scene_bank(8); });
+  bind_key(ImGuiKey_F10, "Switch to scene bank 10", [this](ImGuiKeyChord) { goto_scene_bank(9); });
+
+  bind_key(ImGuiKey_F11, "Switch to prev scene bank",
+           [this](ImGuiKeyChord) { goto_prev_scene_bank(); });
+  bind_key(ImGuiKey_F12, "Switch to next scene bank",
+           [this](ImGuiKeyChord) { goto_next_scene_bank(); });
+
+  bind_key(ImGuiKey_1, "Load scene 1 in current bank", [this](ImGuiKeyChord) { load_scene(0); });
+  bind_key(ImGuiKey_2, "Load scene 2 in current bank", [this](ImGuiKeyChord) { load_scene(1); });
+  bind_key(ImGuiKey_3, "Load scene 3 in current bank", [this](ImGuiKeyChord) { load_scene(2); });
+  bind_key(ImGuiKey_4, "Load scene 4 in current bank", [this](ImGuiKeyChord) { load_scene(3); });
+  bind_key(ImGuiKey_5, "Load scene 5 in current bank", [this](ImGuiKeyChord) { load_scene(4); });
+  bind_key(ImGuiKey_6, "Load scene 6 in current bank", [this](ImGuiKeyChord) { load_scene(5); });
+  bind_key(ImGuiKey_7, "Load scene 7 in current bank", [this](ImGuiKeyChord) { load_scene(6); });
+  bind_key(ImGuiKey_8, "Load scene 8 in current bank", [this](ImGuiKeyChord) { load_scene(7); });
+  bind_key(ImGuiKey_9, "Load scene 9 in current bank", [this](ImGuiKeyChord) { load_scene(8); });
+  bind_key(ImGuiKey_0, "Load scene 10 in current bank", [this](ImGuiKeyChord) { load_scene(9); });
+
+  bind_key(ImGuiKey_H, "Help", [this](ImGuiKeyChord) { show_help_text_ = not show_help_text_; });
+  bind_key(/* question mark key: "?" */ ImGuiKey_Slash | ImGuiMod_Shift, "Help",
+           [this](ImGuiKeyChord) { show_help_text_ = not show_help_text_; });
 }
 
 App::~App() {
@@ -235,8 +265,70 @@ App::~App() {
   glfwTerminate();
 }
 
+void App::show_help_text() {
+  const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+  const ImVec2 work_pos = viewport->WorkPos;  // Use work area to avoid menu-bar/task-bar, if any!
+  const ImVec2 work_size = viewport->WorkSize;
+
+  ImVec2 window_size, window_pos;
+  window_size.x = 0.f;  // Auto-fit the x-axis.
+  window_size.y = 0.f;  // Auto-fit the y-axis.
+
+  // We are going to center this next window horizontally.
+  window_pos.x = work_pos.x + work_size.x / 2;
+  window_pos.y = work_pos.y;
+
+  VLOG(6) << "work_pos: " << work_pos << ", work_size: " << work_size
+          << ", window_pos: " << window_pos;
+
+  static constexpr ImVec2 WINDOW_POS_PIVOT_CENTER{0.5f, 0.f};
+  ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, WINDOW_POS_PIVOT_CENTER);
+  ImGui::SetNextWindowSize(window_size, ImGuiCond_Always);
+
+  Shortcuts::global_shortcuts().render_key_binding_help_text(&show_help_text_);
+}
+
+void App::render_missing_scene_ui() {
+  const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+  const ImVec2 work_pos = viewport->WorkPos;  // Use work area to avoid menu-bar/task-bar, if any!
+  const ImVec2 work_size = viewport->WorkSize;
+
+  ImVec2 window_size, window_pos;
+  window_size.x = 0.f;  // Auto-fit the x-axis.
+  window_size.y = 0.f;  // Auto-fit the y-axis.
+
+  // We are going to center this next window horizontally, but with the text at the bottom.
+  window_pos.x = work_pos.x + work_size.x / 2;
+  window_pos.y = work_pos.y + work_size.y;
+
+  VLOG(6) << "work_pos: " << work_pos << ", work_size: " << work_size
+          << ", window_pos: " << window_pos;
+
+  static constexpr ImVec2 WINDOW_POS_PIVOT_CENTER_BOTTOM{0.5f, 1.f};
+  ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, WINDOW_POS_PIVOT_CENTER_BOTTOM);
+  ImGui::SetNextWindowSize(window_size, ImGuiCond_Always);
+
+  static constexpr ImGuiWindowFlags WINDOW_FLAGS{
+      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
+      ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove};
+
+  ImGui::Begin("##No Scene Available", nullptr, WINDOW_FLAGS);
+
+  ImGui::Text("No Scene Available");
+  ImGui::Text("(Scene Bank: %ld)", current_bank_ + 1);
+
+  ImGui::End();
+}
+
 void App::run() {
   using namespace std::chrono_literals;
+
+  if (current_scene_ == nullptr) {
+    load_scene(0);
+  }
 
   while (!glfwWindowShouldClose(window_) && !close_requested()) {
     glfwPollEvents();
@@ -248,13 +340,11 @@ void App::run() {
 
     Shortcuts::global_shortcuts().process_key_presses();
 
-    for (auto *model : models_) {
-      model->update();
-    }
+    if (current_scene_ == nullptr) {
+      render_missing_scene_ui();
 
-    if (!is_paused()) {
-      if (root_element_ != nullptr) {
-        root_element_->update();
+      if (show_help_text_) {
+        show_help_text();
       }
 
       // Rendering
@@ -266,16 +356,42 @@ void App::run() {
       glClearColor(clear_color_.x, clear_color_.y, clear_color_.z, clear_color_.w);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      for (auto *direct : directs_) {
-        direct->update();
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+      glfwSwapBuffers(window_);
+
+      // Since we are not doing much work, we add a tiny sleep so the CPU doesn't waste energy.
+      std::this_thread::sleep_for(50ms);
+
+      continue;
+    }
+
+    current_scene_->update_models();
+
+    if (!is_paused()) {
+      current_scene_->update_ui();
+
+      if (show_help_text_) {
+        show_help_text();
       }
+
+      // Rendering
+      ImGui::Render();
+
+      int display_w, display_h;
+      glfwGetFramebufferSize(window_, &display_w, &display_h);
+      glViewport(0, 0, display_w, display_h);
+      glClearColor(clear_color_.x, clear_color_.y, clear_color_.z, clear_color_.w);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      current_scene_->update_direct_render_elements();
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       glfwSwapBuffers(window_);
     } else {
-      // Tiny sleep so the CPU doesn't waste energy.
-      std::this_thread::sleep_for(20ms);
+      // Since we are not doing much work, we add a tiny sleep so the CPU doesn't waste energy.
+      std::this_thread::sleep_for(50ms);
     }
 
     VLOG(1) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
