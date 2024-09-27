@@ -16,7 +16,18 @@
 
 namespace ndyn::ui {
 
-// Barebones Application Framework
+/**
+ * Barebones application framework based on the concept of scenes and scene banks.
+ *
+ * Scenes are preconfigured, independent interfaces. These interfaces could be different dashboards.
+ * They could be views in a sequence to tell a story.
+ *
+ * Scenes are organized into groups called banks. Each bank can have an unlimited number of scenes.
+ *
+ * Keyboard shortcuts are set up for the first 10 scene banks (F1-F10) and the first 10 scenes (1-9
+ * + 0 as ten) in each bank. To access scene banks beyond these first ten, the F11 & F12 keys can be
+ * used to iterate to the previous and next scene banks.
+ */
 class App final {
  private:
   using SceneBankType = std::vector<Scene*>;
@@ -73,72 +84,16 @@ class App final {
   void request_close() { close_requested_ = true; }
   bool close_requested() const { return close_requested_; }
 
-  size_t next_bank_index() const {
-    // Look for the first bank after current_bank_.
-    auto iter{std::upper_bound(scene_banks_.begin(), scene_banks_.end(), current_bank_,
-                               [](const auto& lhs, const auto& rhs) { return lhs < rhs.first; })};
-    // If we are pointing to a valid bank after the current bank, we return it.
-    if (iter != scene_banks_.end()) {
-      return iter->first;
-    }
+  // Determine the index of the next scene bank, cycling back to the beginning if we are on the last
+  // bank.
+  size_t next_bank_index() const;
 
-    // If there are no banks after the current bank, cycle around to the beginning.
-    iter = scene_banks_.begin();
-    if (iter != scene_banks_.end()) {
-      return iter->first;
-    } else {
-      // There are no banks at all.
-      return 0;
-    }
-  }
-
-  size_t prev_bank_index() const {
-    auto iter{std::lower_bound(scene_banks_.begin(), scene_banks_.end(), current_bank_,
-                               [](const auto& lhs, const auto& rhs) { return lhs.first < rhs; })};
-    if (iter != scene_banks_.begin()) {
-      --iter;
-      if (iter != scene_banks_.end()) {
-        return iter->first;
-      }
-    }
-
-    // If there are no banks before the current bank, cycle around to the end.
-    iter = scene_banks_.end();
-    --iter;
-    if (iter != scene_banks_.end()) {
-      return iter->first;
-    } else {
-      // There are no banks at all.
-      return 0;
-    }
-  }
+  // Determine the index of the previous scene bank, cycling back to the end if we are on the first
+  // bank.
+  size_t prev_bank_index() const;
 
   // Load a scene from the current bank of scenes.
-  void load_scene(size_t index) {
-    // Unload the current scene, if it exists.
-    if (current_scene_ != nullptr) {
-      current_scene_->handle_unloading();
-    }
-
-    current_scene_ = nullptr;
-
-    // Load the new scene, if it exists.
-    auto iter{scene_banks_.find(current_bank_)};
-    if (iter != scene_banks_.end()) {
-      const SceneBankType& bank{iter->second};
-      if (index < bank.size()) {
-        current_scene_ = bank[index];
-        if (current_scene_ != nullptr) {
-          glfwSetWindowTitle(window_, current_scene_->description().c_str());
-          current_scene_->handle_loading();
-        }
-      }
-    }
-
-    if (current_scene_ == nullptr) {
-      glfwSetWindowTitle(window_, default_window_title_.c_str());
-    }
-  }
+  void load_scene(size_t index);
 
   // Switch scene banks. Note that this is a no-op if the app has a valid scene from the requested
   // scene bank.

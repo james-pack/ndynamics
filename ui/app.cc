@@ -323,6 +323,72 @@ void App::render_missing_scene_ui() {
   ImGui::End();
 }
 
+size_t App::next_bank_index() const {
+  // Look for the first bank after current_bank_.
+  auto iter{std::upper_bound(scene_banks_.begin(), scene_banks_.end(), current_bank_,
+                             [](const auto &lhs, const auto &rhs) { return lhs < rhs.first; })};
+  // If we are pointing to a valid bank after the current bank, we return it.
+  if (iter != scene_banks_.end()) {
+    return iter->first;
+  }
+
+  // If there are no banks after the current bank, cycle around to the beginning.
+  iter = scene_banks_.begin();
+  if (iter != scene_banks_.end()) {
+    return iter->first;
+  } else {
+    // There are no banks at all.
+    return 0;
+  }
+}
+
+size_t App::prev_bank_index() const {
+  auto iter{std::lower_bound(scene_banks_.begin(), scene_banks_.end(), current_bank_,
+                             [](const auto &lhs, const auto &rhs) { return lhs.first < rhs; })};
+  if (iter != scene_banks_.begin()) {
+    --iter;
+    if (iter != scene_banks_.end()) {
+      return iter->first;
+    }
+  }
+
+  // If there are no banks before the current bank, cycle around to the end.
+  iter = scene_banks_.end();
+  --iter;
+  if (iter != scene_banks_.end()) {
+    return iter->first;
+  } else {
+    // There are no banks at all.
+    return 0;
+  }
+}
+
+void App::load_scene(size_t index) {
+  // Unload the current scene, if it exists.
+  if (current_scene_ != nullptr) {
+    current_scene_->handle_unloading();
+  }
+
+  current_scene_ = nullptr;
+
+  // Load the new scene, if it exists.
+  auto iter{scene_banks_.find(current_bank_)};
+  if (iter != scene_banks_.end()) {
+    const SceneBankType &bank{iter->second};
+    if (index < bank.size()) {
+      current_scene_ = bank[index];
+      if (current_scene_ != nullptr) {
+        glfwSetWindowTitle(window_, current_scene_->description().c_str());
+        current_scene_->handle_loading();
+      }
+    }
+  }
+
+  if (current_scene_ == nullptr) {
+    glfwSetWindowTitle(window_, default_window_title_.c_str());
+  }
+}
+
 void App::run() {
   using namespace std::chrono_literals;
 
@@ -390,8 +456,7 @@ void App::run() {
 
       glfwSwapBuffers(window_);
     } else {
-      // Since we are not doing much work, we add a tiny sleep so the CPU doesn't waste energy.
-      std::this_thread::sleep_for(50ms);
+      ImGui::EndFrame();
     }
 
     VLOG(1) << "Frame rate: " << ImGui::GetIO().Framerate << " fps";
