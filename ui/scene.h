@@ -19,9 +19,9 @@ class Scene {
   const std::string& description() const { return scene_description_; }
 
   // Called when this Scene is loaded as the active scene.
-  virtual void handle_loading() {}
+  virtual void handle_loading() = 0;
   // Called when this Scene is being unloaded.
-  virtual void handle_unloading() {}
+  virtual void handle_unloading() = 0;
 
   virtual void update_models() = 0;
 

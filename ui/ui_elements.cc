@@ -15,10 +15,12 @@ namespace ndyn::ui {
 
 Pane::~Pane() {}
 
-CenterPane::CenterPane() {
+void CenterPane::handle_loading() {
   bind_key(ImGuiKey_LeftBracket, "Toggle display of UI",
            [this](ImGuiKeyChord) { show_children_ = not show_children_; });
 }
+
+void CenterPane::handle_unloading() { unbind_key(ImGuiKey_LeftBracket); }
 
 void CenterPane::update() {
   // Fraction of the horizontal window size that will be used for the UI panes.
@@ -64,11 +66,16 @@ void CenterPane::update() {
   }
 }
 
-LeftRightPane::LeftRightPane() {
+void LeftRightPane::handle_loading() {
   bind_key(ImGuiKey_LeftBracket, "Toggle display of left pane",
            [this](ImGuiKeyChord) { show_left_children_ = not show_left_children_; });
   bind_key(ImGuiKey_RightBracket, "Toggle display of right pane",
            [this](ImGuiKeyChord) { show_right_children_ = not show_right_children_; });
+}
+
+void LeftRightPane::handle_unloading() {
+  unbind_key(ImGuiKey_LeftBracket);
+  unbind_key(ImGuiKey_RightBracket);
 }
 
 void LeftRightPane::update() {

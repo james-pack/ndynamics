@@ -11,6 +11,11 @@ class UiElement {
  public:
   virtual ~UiElement() = default;
 
+  // Called when this UI element is loaded as part of the active scene.
+  virtual void handle_loading() {}
+  // Called when this UI element is being unloaded.
+  virtual void handle_unloading() {}
+
   // Update, called once per frame to update any gui elements. Not called when paused.
   virtual void update() {}
 };
@@ -33,7 +38,10 @@ class CenterPane final : public Pane {
   bool show_children_{true};
 
  public:
-  CenterPane();
+  // Called when this UI element is loaded as part of the active scene.
+  void handle_loading() override;
+  // Called when this UI element is being unloaded.
+  void handle_unloading() override;
 
   // Update, called once per frame to update any gui elements. Not called when paused.
   void update() override;
@@ -53,7 +61,10 @@ class LeftRightPane final : public Pane {
   bool show_right_children_{true};
 
  public:
-  LeftRightPane();
+  // Called when this UI element is loaded as part of the active scene.
+  void handle_loading() override;
+  // Called when this UI element is being unloaded.
+  void handle_unloading() override;
 
   // Update, called once per frame to update any gui elements. Not called when paused.
   void update() override;

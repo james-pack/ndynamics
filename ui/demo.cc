@@ -102,6 +102,18 @@ class DemoScene final : public Scene {
  public:
   DemoScene() : Scene("Demo showing some basic plotting capabilities") { ui.add_child(demo); }
 
+  void handle_loading() override {
+    model.handle_loading();
+    demo.handle_loading();
+    ui.handle_loading();
+  }
+
+  void handle_unloading() override {
+    ui.handle_unloading();
+    demo.handle_unloading();
+    model.handle_unloading();
+  }
+
   void update_models() override { model.update(); }
 
   void update_ui() override { ui.update(); }

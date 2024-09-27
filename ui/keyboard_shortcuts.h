@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "imgui.h"
@@ -16,14 +17,11 @@ class Shortcuts final {
  private:
   std::vector<ImGuiKeyChord> chords_{};
   std::unordered_map<ImGuiKeyChord, ShortcutCallback> callbacks_{};
-  std::unordered_map<ImGuiKeyChord, std::string> help_text_{};
+  std::vector<std::pair<ImGuiKeyChord, std::string>> help_text_{};
 
  public:
-  void bind_key(ImGuiKeyChord chord, std::string_view help_text, const ShortcutCallback& callback) {
-    chords_.push_back(chord);
-    callbacks_.insert({chord, callback});
-    help_text_.insert({chord, std::string{help_text}});
-  }
+  void bind_key(ImGuiKeyChord chord, std::string_view help_text, const ShortcutCallback& callback);
+  void unbind_key(ImGuiKeyChord chord);
 
   void process_key_presses() const {
     for (auto chord : chords_) {
@@ -39,5 +37,6 @@ class Shortcuts final {
 };
 
 void bind_key(ImGuiKeyChord chord, std::string_view help_text, const ShortcutCallback& callback);
+void unbind_key(ImGuiKeyChord chord);
 
 }  // namespace ndyn::ui

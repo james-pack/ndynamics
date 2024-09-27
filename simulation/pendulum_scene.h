@@ -102,6 +102,28 @@ class PendulumScene final : public ui::Scene {
     ui.add_right_child(sensor_measurements);
   }
 
+  void handle_loading() override {
+    pendulum_model.handle_loading();
+    position_model.handle_loading();
+    accelerometer_1.handle_loading();
+    accelerometer_2.handle_loading();
+    gyroscope_1.handle_loading();
+    gyroscope_2.handle_loading();
+    cube.handle_loading();
+    ui.handle_loading();
+  }
+
+  void handle_unloading() override {
+    ui.handle_unloading();
+    cube.handle_unloading();
+    pendulum_model.handle_unloading();
+    position_model.handle_unloading();
+    accelerometer_1.handle_unloading();
+    accelerometer_2.handle_unloading();
+    gyroscope_1.handle_unloading();
+    gyroscope_2.handle_unloading();
+  }
+
   void update_models() override {
     pendulum_model.update();
     position_model.update();

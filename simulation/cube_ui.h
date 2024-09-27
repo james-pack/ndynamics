@@ -167,7 +167,10 @@ class Cube final : public ui::DirectRenderElement {
 
     glUseProgram(program_.id());
     mvp_matrix_id_ = glGetUniformLocation(program_.id(), "MVP");
+  }
 
+  // Called when this UI element is loaded as part of the active scene.
+  void handle_loading() override {
     ui::bind_key(ImGuiKey_O, "Toggle between perspective and orthographic projections",
                  [this](ImGuiKeyChord) {
                    use_perspective_projection_ = not use_perspective_projection_;
@@ -184,6 +187,9 @@ class Cube final : public ui::DirectRenderElement {
                    mvp_dirty_ = true;
                  });
   }
+
+  // Called when this UI element is being unloaded.
+  void handle_unloading() override { ui::unbind_key(ImGuiKey_O); }
 
   void update() override {
     if (position_fn_) {
