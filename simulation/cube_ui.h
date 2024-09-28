@@ -242,6 +242,9 @@ class CubeScene final : public ui::Scene {
  public:
   CubeScene(GLFWwindow& window) : Scene("3D Cube"), cube(window) {}
 
+  void handle_loading() override { cube.handle_loading(); }
+  void handle_unloading() override { cube.handle_unloading(); }
+
   void update_models() override {}
   void update_ui() override {}
   void update_direct_render_elements() override { cube.update(); }
