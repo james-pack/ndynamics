@@ -9,6 +9,8 @@
 #include "simulation/cube_ui.h"
 #include "simulation/pendulum.h"
 #include "simulation/pendulum_graph_ui.h"
+#include "simulation/pendulum_ui_model.h"
+#include "simulation/position_ui_model.h"
 #include "simulation/sensor_measurement_graph_ui.h"
 #include "ui/app.h"
 #include "ui/scene.h"
@@ -29,8 +31,8 @@ class PendulumScene final : public ui::Scene {
 
   PendulumType pendulum;
 
-  PendulumModel<NUM_POINTS> pendulum_model{pendulum};
-  PositionModel<PendulumType, FloatT, NUM_POINTS> position_model{pendulum};
+  PendulumUiModel<NUM_POINTS> pendulum_model{pendulum};
+  PositionUiModel<PendulumType, FloatT, NUM_POINTS> position_model{pendulum};
 
   static constexpr TemperatureType TEMPERATURE{25};
   Characterization<AccelerometerType, FloatT> accelerometer_1_characterization{

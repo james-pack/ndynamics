@@ -6,12 +6,12 @@
 namespace ndyn::simulation {
 
 template <typename DataSourceT, typename FloatT = float, size_t NUM_POINTS = 2048>
-class PositionModel final : public ui::UiModel {
+class PositionUiModel final : public ui::UiModel {
  private:
   const DataSourceT* source_;
 
  public:
-  PositionModel(const DataSourceT& source) : source_(&source) {}
+  PositionUiModel(const DataSourceT& source) : source_(&source) {}
 
   ui::DataSeries<FloatT, NUM_POINTS, 2> position_series{"t", {"x", "y"}};
   ui::DataSeries<FloatT, NUM_POINTS, 2> velocity_series{"t", {"x", "y"}};

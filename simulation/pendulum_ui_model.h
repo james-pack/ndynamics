@@ -9,7 +9,7 @@
 namespace ndyn::simulation {
 
 template <size_t NUM_POINTS = 2048>
-class PendulumModel final : public ui::UiModel {
+class PendulumUiModel final : public ui::UiModel {
  public:
   using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
   using FloatT = AccelerometerTypes::scalar_type;
@@ -19,7 +19,7 @@ class PendulumModel final : public ui::UiModel {
   Pendulum<T>* pendulum_;
 
  public:
-  PendulumModel(Pendulum<T>& pendulum) : pendulum_(&pendulum) {}
+  PendulumUiModel(Pendulum<T>& pendulum) : pendulum_(&pendulum) {}
 
   ui::DataSeries<FloatT, NUM_POINTS, 1> theta_series{"t", {"theta"}};
   ui::DataSeries<FloatT, NUM_POINTS, 1> height_series{"t", {"height"}};

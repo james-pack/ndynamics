@@ -3,8 +3,8 @@
 #include "imgui.h"
 #include "implot.h"
 #include "simulation/pendulum.h"
-#include "simulation/pendulum_model.h"
-#include "simulation/position_model.h"
+#include "simulation/pendulum_ui_model.h"
+#include "simulation/position_ui_model.h"
 #include "ui/ui_elements.h"
 
 namespace ndyn::simulation {
@@ -17,8 +17,8 @@ class PendulumGraph : public ui::UiElement {
   using T = AccelerometerTypes::type;
 
  private:
-  PendulumModel<NUM_POINTS>* pendulum_;
-  PositionModel<Pendulum<T>, FloatT, NUM_POINTS>* position_;
+  PendulumUiModel<NUM_POINTS>* pendulum_;
+  PositionUiModel<Pendulum<T>, FloatT, NUM_POINTS>* position_;
 
  protected:
   void update() override {
@@ -100,8 +100,8 @@ class PendulumGraph : public ui::UiElement {
   }
 
  public:
-  PendulumGraph(PendulumModel<NUM_POINTS>& pendulum,
-                PositionModel<Pendulum<T>, FloatT, NUM_POINTS>& position)
+  PendulumGraph(PendulumUiModel<NUM_POINTS>& pendulum,
+                PositionUiModel<Pendulum<T>, FloatT, NUM_POINTS>& position)
       : pendulum_(&pendulum), position_(&position) {}
 };
 
