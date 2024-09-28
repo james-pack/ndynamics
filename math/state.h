@@ -13,14 +13,14 @@ namespace ndyn::math {
  * is unspecified. For standard mechanical systems, the position is in element zero, the velocity in
  * element one, acceleration in element two, etc., as needed.
  */
-template <typename T, size_t SIZE>
+template <typename T, size_t DEPTH>
 class StateT final {
  private:
-  std::array<T, SIZE> elements_{};
+  std::array<T, DEPTH> elements_{};
 
  public:
   using ValueType = T;
-  static constexpr size_t size() { return SIZE; }
+  static constexpr size_t depth() { return DEPTH; }
 
   constexpr StateT() = default;
   constexpr StateT(const StateT& rhs) = default;
@@ -39,7 +39,7 @@ class StateT final {
 
   template <size_t INDEX>
   constexpr const T& element() const {
-    static_assert(INDEX < SIZE, "Attempt to reference out of bounds index");
+    static_assert(INDEX < DEPTH, "Attempt to reference out of bounds index");
     return elements_[INDEX];
   }
 
@@ -47,7 +47,7 @@ class StateT final {
 
   template <size_t INDEX>
   constexpr void set_element(const T& element) {
-    static_assert(INDEX < SIZE, "Attempt to reference out of bounds index");
+    static_assert(INDEX < DEPTH, "Attempt to reference out of bounds index");
     elements_[INDEX] = element;
   }
 
@@ -55,19 +55,19 @@ class StateT final {
 
   constexpr StateT shift() const {
     StateT result{};
-    for (size_t i = 0; i < SIZE - 1; ++i) {
+    for (size_t i = 0; i < DEPTH - 1; ++i) {
       result.elements_[i] = elements_[i + 1];
     }
     return result;
   }
 };
 
-template <typename T, size_t SIZE>
-std::string to_string(const StateT<T, SIZE>& state) {
+template <typename T, size_t DEPTH>
+std::string to_string(const StateT<T, DEPTH>& state) {
   using std::to_string;
   std::string result{"{"};
   bool need_comma{false};
-  for (size_t i = 0; i < StateT<T, SIZE>::size(); ++i) {
+  for (size_t i = 0; i < StateT<T, DEPTH>::depth(); ++i) {
     if (need_comma) {
       result.append(", ");
     }
@@ -78,8 +78,8 @@ std::string to_string(const StateT<T, SIZE>& state) {
   return result;
 }
 
-template <typename T, size_t SIZE>
-std::ostream& operator<<(std::ostream& os, const StateT<T, SIZE>& state) {
+template <typename T, size_t DEPTH>
+std::ostream& operator<<(std::ostream& os, const StateT<T, DEPTH>& state) {
   using std::to_string;
   os << to_string(state);
   return os;

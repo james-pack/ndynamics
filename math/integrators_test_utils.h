@@ -21,9 +21,9 @@ namespace ndyn::math {
   return ::testing::AssertionSuccess();
 }
 
-template <typename T, size_t SIZE>
-ComputePartials<T, SIZE> shift_state() {
-  return [](const StateT<T, SIZE>& state) { return state.shift(); };
+template <typename T, size_t DEPTH>
+ComputePartials<T, DEPTH> shift_state() {
+  return [](const StateT<T, DEPTH>& state) { return state.shift(); };
 }
 
 template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>

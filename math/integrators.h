@@ -7,8 +7,8 @@
 
 namespace ndyn::math {
 
-template <typename T, size_t SIZE>
-using ComputePartials = std::function<StateT<T, SIZE>(const StateT<T, SIZE>&)>;
+template <typename T, size_t DEPTH>
+using ComputePartials = std::function<StateT<T, DEPTH>(const StateT<T, DEPTH>&)>;
 
 /**
  * Implementation of the forward Euler algorithm for integrating the state of a system according to
@@ -16,20 +16,20 @@ using ComputePartials = std::function<StateT<T, SIZE>(const StateT<T, SIZE>&)>;
  * the elements in the state. Typically, the elements of the state are derivatives of each other,
  * but this implementation does not assume that.
  */
-template <typename ScalarT, typename T, size_t SIZE>
+template <typename ScalarT, typename T, size_t DEPTH>
 class ForwardEuler final {
  private:
-  ComputePartials<T, SIZE> compute_partials_{};
+  ComputePartials<T, DEPTH> compute_partials_{};
 
  public:
-  ForwardEuler(const ComputePartials<T, SIZE>& compute_partials)
+  ForwardEuler(const ComputePartials<T, DEPTH>& compute_partials)
       : compute_partials_(compute_partials) {}
 
-  StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
+  StateT<T, DEPTH> operator()(ScalarT interval, const StateT<T, DEPTH>& s1) {
     const auto f1{compute_partials_(s1)};
 
-    StateT<T, SIZE> result{};
-    for (size_t i = 0; i < SIZE; ++i) {
+    StateT<T, DEPTH> result{};
+    for (size_t i = 0; i < DEPTH; ++i) {
       result.set_element(i, s1.element(i) + interval * f1.element(i));
     }
 
@@ -73,26 +73,26 @@ class ForwardEuler<ScalarT, T, 2> final {
  * relationship between the elements in the state. Typically, the elements of the state are
  * derivatives of each other, but this implementation does not assume that.
  */
-template <typename ScalarT, typename T, size_t SIZE>
+template <typename ScalarT, typename T, size_t DEPTH>
 class RungeKutta2 final {
  private:
-  ComputePartials<T, SIZE> compute_partials_{};
+  ComputePartials<T, DEPTH> compute_partials_{};
 
  public:
-  RungeKutta2(const ComputePartials<T, SIZE>& compute_partials)
+  RungeKutta2(const ComputePartials<T, DEPTH>& compute_partials)
       : compute_partials_(compute_partials) {}
 
-  StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
+  StateT<T, DEPTH> operator()(ScalarT interval, const StateT<T, DEPTH>& s1) {
     const auto f1{compute_partials_(s1)};
 
-    StateT<T, SIZE> s2{};
-    for (size_t i = 0; i < SIZE; ++i) {
+    StateT<T, DEPTH> s2{};
+    for (size_t i = 0; i < DEPTH; ++i) {
       s2.set_element(i, s1.element(i) + interval / 2 * f1.element(i));
     }
     const auto f2{compute_partials_(s2)};
 
-    StateT<T, SIZE> result{};
-    for (size_t i = 0; i < SIZE; ++i) {
+    StateT<T, DEPTH> result{};
+    for (size_t i = 0; i < DEPTH; ++i) {
       result.set_element(i, s1.element(i) + interval * f2.element(i));
     }
 
@@ -145,39 +145,39 @@ class RungeKutta2<ScalarT, T, 2> final {
  * relationship between the elements in the state. Typically, the elements of the state are
  * derivatives of each other, but this implementation does not assume that.
  */
-template <typename ScalarT, typename T, size_t SIZE>
+template <typename ScalarT, typename T, size_t DEPTH>
 class RungeKutta4 final {
  private:
-  ComputePartials<T, SIZE> compute_partials_{};
+  ComputePartials<T, DEPTH> compute_partials_{};
 
  public:
-  RungeKutta4(const ComputePartials<T, SIZE>& compute_partials)
+  RungeKutta4(const ComputePartials<T, DEPTH>& compute_partials)
       : compute_partials_(compute_partials) {}
 
-  StateT<T, SIZE> operator()(ScalarT interval, const StateT<T, SIZE>& s1) {
+  StateT<T, DEPTH> operator()(ScalarT interval, const StateT<T, DEPTH>& s1) {
     const auto f1{compute_partials_(s1)};
 
-    StateT<T, SIZE> s2{};
-    for (size_t i = 0; i < SIZE; ++i) {
+    StateT<T, DEPTH> s2{};
+    for (size_t i = 0; i < DEPTH; ++i) {
       s2.set_element(i, s1.element(i) + interval / 2 * f1.element(i));
     }
     const auto f2{compute_partials_(s2)};
 
-    StateT<T, SIZE> s3{};
-    for (size_t i = 0; i < SIZE; ++i) {
+    StateT<T, DEPTH> s3{};
+    for (size_t i = 0; i < DEPTH; ++i) {
       s3.set_element(i, s1.element(i) + interval / 2 * f2.element(i));
     }
     const auto f3{compute_partials_(s3)};
 
-    StateT<T, SIZE> s4{};
-    for (size_t i = 0; i < SIZE; ++i) {
+    StateT<T, DEPTH> s4{};
+    for (size_t i = 0; i < DEPTH; ++i) {
       s4.set_element(i, s1.element(i) + interval * f3.element(i));
     }
     const auto f4{compute_partials_(s4)};
 
     static constexpr ScalarT TWO{2};
-    StateT<T, SIZE> result{};
-    for (size_t i = 0; i < SIZE; ++i) {
+    StateT<T, DEPTH> result{};
+    for (size_t i = 0; i < DEPTH; ++i) {
       result.set_element(i, s1.element(i) + interval / 6 *
                                                 (f1.element(i) + TWO * f2.element(i) +
                                                  TWO * f3.element(i) + f4.element(i)));

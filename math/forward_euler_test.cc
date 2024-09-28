@@ -19,7 +19,7 @@ TEST(ForwardEuler_1StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -30,7 +30,7 @@ TEST(ForwardEuler_1StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -44,7 +44,7 @@ TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -55,7 +55,7 @@ TEST(ForwardEuler_2StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -66,7 +66,7 @@ TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantAcceleration) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantAcceleration<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantAcceleration<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                            ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -76,7 +76,7 @@ TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using StateType = StateT<ScalarType, 2>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantAccelerationManySteps<
-      ForwardEuler<ScalarType, ScalarType, StateType::size()>, ScalarType, StateType>()};
+      ForwardEuler<ScalarType, ScalarType, StateType::depth()>, ScalarType, StateType>()};
   EXPECT_TRUE(result);
 }
 
@@ -86,7 +86,7 @@ TEST(ForwardEuler_2StateTest, CanUpdateAccelerationFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateAccelerationFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanUpdateAccelerationFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                         ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -100,7 +100,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -111,7 +111,7 @@ TEST(ForwardEuler_3StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -122,7 +122,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantAcceleration) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantAcceleration<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantAcceleration<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                            ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -132,7 +132,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using StateType = StateT<ScalarType, 3>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantAccelerationManySteps<
-      ForwardEuler<ScalarType, ScalarType, StateType::size()>, ScalarType, StateType>()};
+      ForwardEuler<ScalarType, ScalarType, StateType::depth()>, ScalarType, StateType>()};
   EXPECT_TRUE(result);
 }
 
@@ -142,7 +142,7 @@ TEST(ForwardEuler_3StateTest, CanUpdateAccelerationFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateAccelerationFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanUpdateAccelerationFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                         ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -153,7 +153,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantJerk) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantJerk<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantJerk<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                    ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -164,7 +164,7 @@ TEST(ForwardEuler_3StateTest, CanUpdateJerkFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateJerkFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>, ScalarType,
+      CanUpdateJerkFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>, ScalarType,
                                 ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -178,7 +178,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -189,7 +189,7 @@ TEST(ForwardEuler_4StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -200,7 +200,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantAcceleration) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantAcceleration<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantAcceleration<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                            ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -210,7 +210,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using StateType = StateT<ScalarType, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantAccelerationManySteps<
-      ForwardEuler<ScalarType, ScalarType, StateType::size()>, ScalarType, StateType>()};
+      ForwardEuler<ScalarType, ScalarType, StateType::depth()>, ScalarType, StateType>()};
   EXPECT_TRUE(result);
 }
 
@@ -220,7 +220,7 @@ TEST(ForwardEuler_4StateTest, CanUpdateAccelerationFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateAccelerationFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanUpdateAccelerationFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                         ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -231,7 +231,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantJerk) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantJerk<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantJerk<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                    ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -242,7 +242,7 @@ TEST(ForwardEuler_4StateTest, CanUpdateJerkFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateJerkFromPosition<ForwardEuler<ScalarType, ValueType, StateType::size()>, ScalarType,
+      CanUpdateJerkFromPosition<ForwardEuler<ScalarType, ValueType, StateType::depth()>, ScalarType,
                                 ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -253,7 +253,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantSnap) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantSnap<ForwardEuler<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantSnap<ForwardEuler<ScalarType, ValueType, StateType::depth()>,
                                    ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -264,7 +264,7 @@ TEST(ForwardEuler_4StateTest, CanUpdateSnap) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateSnap<ForwardEuler<ScalarType, ValueType, StateType::size()>, ScalarType, ValueType,
+      CanUpdateSnap<ForwardEuler<ScalarType, ValueType, StateType::depth()>, ScalarType, ValueType,
                     StateType>()};
   EXPECT_TRUE(result);
 }

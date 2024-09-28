@@ -19,7 +19,7 @@ TEST(RungeKutta4_1StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -30,7 +30,7 @@ TEST(RungeKutta4_1StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -44,7 +44,7 @@ TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -55,7 +55,7 @@ TEST(RungeKutta4_2StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -66,7 +66,7 @@ TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantAcceleration) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantAcceleration<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantAcceleration<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                            ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -76,7 +76,7 @@ TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using StateType = StateT<ScalarType, 2>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantAccelerationManySteps<
-      RungeKutta4<ScalarType, ScalarType, StateType::size()>, ScalarType, StateType>()};
+      RungeKutta4<ScalarType, ScalarType, StateType::depth()>, ScalarType, StateType>()};
   EXPECT_TRUE(result);
 }
 
@@ -86,7 +86,7 @@ TEST(RungeKutta4_2StateTest, CanUpdateAccelerationFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateAccelerationFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanUpdateAccelerationFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                         ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -100,7 +100,7 @@ TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -111,7 +111,7 @@ TEST(RungeKutta4_3StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -122,7 +122,7 @@ TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantAcceleration) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantAcceleration<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantAcceleration<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                            ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -133,7 +133,7 @@ TEST(RungeKutta4_3StateTest, CanUpdateAccelerationFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateAccelerationFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanUpdateAccelerationFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                         ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -144,7 +144,7 @@ TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantJerk) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantJerk<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantJerk<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                    ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -155,7 +155,7 @@ TEST(RungeKutta4_3StateTest, CanUpdateJerkFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateJerkFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>, ScalarType,
+      CanUpdateJerkFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>, ScalarType,
                                 ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -169,7 +169,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantVelocity) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantVelocity<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                        ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -180,7 +180,7 @@ TEST(RungeKutta4_4StateTest, CanUpdateVelocityFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanUpdateVelocityFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                     ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -191,7 +191,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantAcceleration) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantAcceleration<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantAcceleration<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                            ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -202,7 +202,7 @@ TEST(RungeKutta4_4StateTest, CanUpdateAccelerationFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateAccelerationFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanUpdateAccelerationFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                         ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -213,7 +213,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantJerk) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantJerk<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantJerk<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                    ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -224,7 +224,7 @@ TEST(RungeKutta4_4StateTest, CanUpdateJerkFromPosition) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateJerkFromPosition<RungeKutta4<ScalarType, ValueType, StateType::size()>, ScalarType,
+      CanUpdateJerkFromPosition<RungeKutta4<ScalarType, ValueType, StateType::depth()>, ScalarType,
                                 ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -235,7 +235,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantSnap) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanIntegrateOverConstantSnap<RungeKutta4<ScalarType, ValueType, StateType::size()>,
+      CanIntegrateOverConstantSnap<RungeKutta4<ScalarType, ValueType, StateType::depth()>,
                                    ScalarType, ValueType, StateType>()};
   EXPECT_TRUE(result);
 }
@@ -246,7 +246,7 @@ TEST(RungeKutta4_4StateTest, CanUpdateSnap) {
   using ValueType = typename StateType::ValueType;
 
   ::testing::AssertionResult result{
-      CanUpdateSnap<RungeKutta4<ScalarType, ValueType, StateType::size()>, ScalarType, ValueType,
+      CanUpdateSnap<RungeKutta4<ScalarType, ValueType, StateType::depth()>, ScalarType, ValueType,
                     StateType>()};
   EXPECT_TRUE(result);
 }
