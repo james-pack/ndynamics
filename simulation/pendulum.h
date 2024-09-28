@@ -23,10 +23,14 @@ template <typename ScalarType>
 inline constexpr ScalarType compute_period(ScalarType length, ScalarType g, ScalarType angle) {
   using std::abs;
   using std::cos;
+  using std::fmod;
   using std::log;
   using std::pow;
   using std::sin;
   using std::sqrt;
+
+  // Force the angle to be on the interval [0, 2*pi).
+  angle = fmod(abs(angle), 2 * pi);
 
   const ScalarType T0{static_cast<ScalarType>(2 * pi * sqrt(abs(length / g)))};
   if (angle < pi / 4) {
