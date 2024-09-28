@@ -63,7 +63,7 @@ class Pendulum final {
  public:
   using MultivectorType = MultivectorT;
   using ScalarType = typename MultivectorType::ScalarType;
-  using StateType = math::StateT<MultivectorType, 2>;
+  using StateType = math::State<MultivectorType, 2>;
 
  private:
   // Precomputed magnitude of the position vector. The length of the pendulum.

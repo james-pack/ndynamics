@@ -14,7 +14,7 @@ namespace ndyn::math {
  */
 TEST(ForwardEuler_1StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 1>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 1>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -22,7 +22,7 @@ TEST(ForwardEuler_1StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(ForwardEuler_1StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 1>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 1>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -33,7 +33,7 @@ TEST(ForwardEuler_1StateTest, CanUpdateVelocityFromPosition) {
  */
 TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -41,7 +41,7 @@ TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(ForwardEuler_2StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -49,7 +49,7 @@ TEST(ForwardEuler_2StateTest, CanUpdateVelocityFromPosition) {
 
 TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantAcceleration) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{
       CanIntegrateOverConstantAcceleration<ForwardEuler<StateType>>()};
@@ -58,7 +58,7 @@ TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantAcceleration) {
 
 TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using ScalarType = float;
-  using StateType = StateT<ScalarType, 2>;
+  using StateType = State<ScalarType, 2>;
 
   ::testing::AssertionResult result{
       CanIntegrateOverConstantAccelerationManySteps<ForwardEuler<StateType>>()};
@@ -67,7 +67,7 @@ TEST(ForwardEuler_2StateTest, CanIntegrateOverConstantAccelerationManySteps) {
 
 TEST(ForwardEuler_2StateTest, CanUpdateAccelerationFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{CanUpdateAccelerationFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -78,7 +78,7 @@ TEST(ForwardEuler_2StateTest, CanUpdateAccelerationFromPosition) {
  */
 TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -86,7 +86,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(ForwardEuler_3StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -94,7 +94,7 @@ TEST(ForwardEuler_3StateTest, CanUpdateVelocityFromPosition) {
 
 TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantAcceleration) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{
       CanIntegrateOverConstantAcceleration<ForwardEuler<StateType>>()};
@@ -103,7 +103,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantAcceleration) {
 
 TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using ScalarType = float;
-  using StateType = StateT<ScalarType, 3>;
+  using StateType = State<ScalarType, 3>;
 
   ::testing::AssertionResult result{
       CanIntegrateOverConstantAccelerationManySteps<ForwardEuler<StateType>>()};
@@ -112,7 +112,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantAccelerationManySteps) {
 
 TEST(ForwardEuler_3StateTest, CanUpdateAccelerationFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanUpdateAccelerationFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -120,7 +120,7 @@ TEST(ForwardEuler_3StateTest, CanUpdateAccelerationFromPosition) {
 
 TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantJerk) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantJerk<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -128,7 +128,7 @@ TEST(ForwardEuler_3StateTest, CanIntegrateOverConstantJerk) {
 
 TEST(ForwardEuler_3StateTest, CanUpdateJerkFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanUpdateJerkFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -139,7 +139,7 @@ TEST(ForwardEuler_3StateTest, CanUpdateJerkFromPosition) {
  */
 TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -147,7 +147,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(ForwardEuler_4StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -155,7 +155,7 @@ TEST(ForwardEuler_4StateTest, CanUpdateVelocityFromPosition) {
 
 TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantAcceleration) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{
       CanIntegrateOverConstantAcceleration<ForwardEuler<StateType>>()};
@@ -164,7 +164,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantAcceleration) {
 
 TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{
       CanIntegrateOverConstantAccelerationManySteps<ForwardEuler<StateType>>()};
@@ -173,7 +173,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantAccelerationManySteps) {
 
 TEST(ForwardEuler_4StateTest, CanUpdateAccelerationFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateAccelerationFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -181,7 +181,7 @@ TEST(ForwardEuler_4StateTest, CanUpdateAccelerationFromPosition) {
 
 TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantJerk) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantJerk<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -189,7 +189,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantJerk) {
 
 TEST(ForwardEuler_4StateTest, CanUpdateJerkFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateJerkFromPosition<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -197,7 +197,7 @@ TEST(ForwardEuler_4StateTest, CanUpdateJerkFromPosition) {
 
 TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantSnap) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantSnap<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);
@@ -205,7 +205,7 @@ TEST(ForwardEuler_4StateTest, CanIntegrateOverConstantSnap) {
 
 TEST(ForwardEuler_4StateTest, CanUpdateSnap) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateSnap<ForwardEuler<StateType>>()};
   EXPECT_TRUE(result);

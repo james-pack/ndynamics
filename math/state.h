@@ -37,7 +37,7 @@ class ScalarTypes<double> {
  * element one, acceleration in element two, etc., as needed.
  */
 template <typename T, size_t DEPTH>
-class StateT final {
+class State final {
  private:
   std::array<T, DEPTH> elements_{};
 
@@ -47,14 +47,14 @@ class StateT final {
 
   static constexpr size_t depth() { return DEPTH; }
 
-  constexpr StateT() = default;
-  constexpr StateT(const StateT& rhs) = default;
-  constexpr StateT(StateT&& rhs) = default;
+  constexpr State() = default;
+  constexpr State(const State& rhs) = default;
+  constexpr State(State&& rhs) = default;
 
-  constexpr StateT& operator=(const StateT& rhs) = default;
-  constexpr StateT& operator=(StateT&& rhs) = default;
+  constexpr State& operator=(const State& rhs) = default;
+  constexpr State& operator=(State&& rhs) = default;
 
-  constexpr StateT(std::initializer_list<T> elements) {
+  constexpr State(std::initializer_list<T> elements) {
     size_t i = 0;
     for (T element : elements) {
       elements_.at(i) = element;
@@ -78,8 +78,8 @@ class StateT final {
 
   constexpr void set_element(size_t index, const T& element) { elements_.at(index) = element; }
 
-  constexpr StateT shift() const {
-    StateT result{};
+  constexpr State shift() const {
+    State result{};
     for (size_t i = 0; i < DEPTH - 1; ++i) {
       result.elements_[i] = elements_[i + 1];
     }
@@ -88,11 +88,11 @@ class StateT final {
 };
 
 template <typename T, size_t DEPTH>
-std::string to_string(const StateT<T, DEPTH>& state) {
+std::string to_string(const State<T, DEPTH>& state) {
   using std::to_string;
   std::string result{"{"};
   bool need_comma{false};
-  for (size_t i = 0; i < StateT<T, DEPTH>::depth(); ++i) {
+  for (size_t i = 0; i < State<T, DEPTH>::depth(); ++i) {
     if (need_comma) {
       result.append(", ");
     }
@@ -104,7 +104,7 @@ std::string to_string(const StateT<T, DEPTH>& state) {
 }
 
 template <typename T, size_t DEPTH>
-std::ostream& operator<<(std::ostream& os, const StateT<T, DEPTH>& state) {
+std::ostream& operator<<(std::ostream& os, const State<T, DEPTH>& state) {
   using std::to_string;
   os << to_string(state);
   return os;

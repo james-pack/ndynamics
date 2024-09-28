@@ -14,7 +14,7 @@ namespace ndyn::math {
  */
 TEST(RungeKutta4_1StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 1>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 1>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -22,7 +22,7 @@ TEST(RungeKutta4_1StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(RungeKutta4_1StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 1>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 1>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -33,7 +33,7 @@ TEST(RungeKutta4_1StateTest, CanUpdateVelocityFromPosition) {
  */
 TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -41,7 +41,7 @@ TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(RungeKutta4_2StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -49,7 +49,7 @@ TEST(RungeKutta4_2StateTest, CanUpdateVelocityFromPosition) {
 
 TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantAcceleration) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantAcceleration<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -57,7 +57,7 @@ TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantAcceleration) {
 
 TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantAccelerationManySteps) {
   using ScalarType = float;
-  using StateType = StateT<ScalarType, 2>;
+  using StateType = State<ScalarType, 2>;
 
   ::testing::AssertionResult result{
       CanIntegrateOverConstantAccelerationManySteps<RungeKutta4<StateType>>()};
@@ -66,7 +66,7 @@ TEST(RungeKutta4_2StateTest, CanIntegrateOverConstantAccelerationManySteps) {
 
 TEST(RungeKutta4_2StateTest, CanUpdateAccelerationFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 2>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 2>;
 
   ::testing::AssertionResult result{CanUpdateAccelerationFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -77,7 +77,7 @@ TEST(RungeKutta4_2StateTest, CanUpdateAccelerationFromPosition) {
  */
 TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -85,7 +85,7 @@ TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(RungeKutta4_3StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -93,7 +93,7 @@ TEST(RungeKutta4_3StateTest, CanUpdateVelocityFromPosition) {
 
 TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantAcceleration) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantAcceleration<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -101,7 +101,7 @@ TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantAcceleration) {
 
 TEST(RungeKutta4_3StateTest, CanUpdateAccelerationFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanUpdateAccelerationFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -109,7 +109,7 @@ TEST(RungeKutta4_3StateTest, CanUpdateAccelerationFromPosition) {
 
 TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantJerk) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantJerk<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -117,7 +117,7 @@ TEST(RungeKutta4_3StateTest, CanIntegrateOverConstantJerk) {
 
 TEST(RungeKutta4_3StateTest, CanUpdateJerkFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 3>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 3>;
 
   ::testing::AssertionResult result{CanUpdateJerkFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -128,7 +128,7 @@ TEST(RungeKutta4_3StateTest, CanUpdateJerkFromPosition) {
  */
 TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantVelocity) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantVelocity<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -136,7 +136,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantVelocity) {
 
 TEST(RungeKutta4_4StateTest, CanUpdateVelocityFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateVelocityFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -144,7 +144,7 @@ TEST(RungeKutta4_4StateTest, CanUpdateVelocityFromPosition) {
 
 TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantAcceleration) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantAcceleration<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -152,7 +152,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantAcceleration) {
 
 TEST(RungeKutta4_4StateTest, CanUpdateAccelerationFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateAccelerationFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -160,7 +160,7 @@ TEST(RungeKutta4_4StateTest, CanUpdateAccelerationFromPosition) {
 
 TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantJerk) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantJerk<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -168,7 +168,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantJerk) {
 
 TEST(RungeKutta4_4StateTest, CanUpdateJerkFromPosition) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateJerkFromPosition<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -176,7 +176,7 @@ TEST(RungeKutta4_4StateTest, CanUpdateJerkFromPosition) {
 
 TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantSnap) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanIntegrateOverConstantSnap<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);
@@ -184,7 +184,7 @@ TEST(RungeKutta4_4StateTest, CanIntegrateOverConstantSnap) {
 
 TEST(RungeKutta4_4StateTest, CanUpdateSnap) {
   using ScalarType = float;
-  using StateType = StateT<Vga2dMultivector<ScalarType>, 4>;
+  using StateType = State<Vga2dMultivector<ScalarType>, 4>;
 
   ::testing::AssertionResult result{CanUpdateSnap<RungeKutta4<StateType>>()};
   EXPECT_TRUE(result);

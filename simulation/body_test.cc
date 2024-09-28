@@ -16,7 +16,7 @@ using FloatT = float;
 using VectorType = math::Multivector<FloatT, 2, 0, 0>;
 
 static constexpr size_t STATE_DEPTH{2};
-using StateType = math::StateT<VectorType, STATE_DEPTH>;
+using StateType = math::State<VectorType, STATE_DEPTH>;
 
 static constexpr FloatT ACCELERATION_GRAVITY{-9.8};
 static constexpr FloatT ALLOWED_ERROR_MULTIPLE{0.05};
