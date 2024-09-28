@@ -63,7 +63,7 @@ class Pendulum final {
  public:
   using MultivectorType = MultivectorT;
   using ScalarType = typename MultivectorType::ScalarType;
-  using StateType = math::State<MultivectorType, 2>;
+  using StateType = math::State<math::Coordinates::SPHERICAL, MultivectorType, 2>;
 
  private:
   // Precomputed magnitude of the position vector. The length of the pendulum.
@@ -123,7 +123,7 @@ class Pendulum final {
   constexpr ScalarType period() const { return period_; }
 
   // Actual state as held internally.
-  constexpr const StateType& angular_state() const { return angular_state_; }
+  constexpr const StateType& state() const { return angular_state_; }
 
   constexpr MultivectorType angular_acceleration() const {
     using std::sin;

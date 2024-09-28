@@ -31,12 +31,35 @@ class ScalarTypes<double> {
 
 }  // namespace internal
 
+enum class Coordinates : uint8_t {
+  CARTESIAN,
+  POLAR,  // Includes cylindrical, if in 3+ dimensions.
+  SPHERICAL,
+};
+
+std::string to_string(Coordinates coord) {
+  switch (coord) {
+    case Coordinates::CARTESIAN:
+      return "cartesian";
+    case Coordinates::POLAR:
+      return "polar";
+    case Coordinates::SPHERICAL:
+      return "spherical";
+    default:
+      return "<unknown coordinate system>";
+  }
+}
+
 /**
  * State vector of a particle or object for use in simulations. The meaning of the various elements
  * is unspecified. For standard mechanical systems, the position is in element zero, the velocity in
  * element one, acceleration in element two, etc., as needed.
+ *
+ * States are tied to a particular coordinate system to help avoid mistakes.
+ *
+ * TODO(james): Tie a State to a set of units, similar to how we tie them to a coordinate system.
  */
-template <typename T, size_t DEPTH>
+template <Coordinates COORDINATES, typename T, size_t DEPTH>
 class State final {
  private:
   std::array<T, DEPTH> elements_{};
@@ -46,6 +69,7 @@ class State final {
   using ScalarType = typename internal::ScalarTypes<ValueType>::ScalarType;
 
   static constexpr size_t depth() { return DEPTH; }
+  static constexpr Coordinates coordinates() { return COORDINATES; }
 
   constexpr State() = default;
   constexpr State(const State& rhs) = default;
@@ -87,24 +111,25 @@ class State final {
   }
 };
 
-template <typename T, size_t DEPTH>
-std::string to_string(const State<T, DEPTH>& state) {
+template <Coordinates COORDINATES, typename T, size_t DEPTH>
+std::string to_string(const State<COORDINATES, T, DEPTH>& state) {
   using std::to_string;
   std::string result{"{"};
   bool need_comma{false};
-  for (size_t i = 0; i < State<T, DEPTH>::depth(); ++i) {
+  for (size_t i = 0; i < State<COORDINATES, T, DEPTH>::depth(); ++i) {
     if (need_comma) {
       result.append(", ");
     }
     result.append(to_string(state.element(i)));
     need_comma = true;
   }
+  result.append("<").append(to_string(COORDINATES)).append(">");
   result.append("}");
   return result;
 }
 
-template <typename T, size_t DEPTH>
-std::ostream& operator<<(std::ostream& os, const State<T, DEPTH>& state) {
+template <Coordinates COORDINATES, typename T, size_t DEPTH>
+std::ostream& operator<<(std::ostream& os, const State<COORDINATES, T, DEPTH>& state) {
   using std::to_string;
   os << to_string(state);
   return os;

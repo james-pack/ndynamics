@@ -5,12 +5,6 @@
 
 namespace ndyn::simulation {
 
-enum class Coordinates : uint8_t {
-  CARTESIAN,
-  POLAR,  // Includes cylindrical, if in 3+ dimensions.
-  SPHERICAL,
-};
-
 /**
  * Representation of single particles or objects that evolve according to a differential equation.
  *
@@ -22,8 +16,7 @@ enum class Coordinates : uint8_t {
  * - For now, we are using the same integrator (4th order Runge-Kutta) for all Bodies. That makes
  * sense until we need to handle more rigid or chaotic systems.
  */
-template <Coordinates COORDINATES, typename StateT,
-          typename IntegratorT = math::RungeKutta4<StateT>>
+template <typename StateT, typename IntegratorT = math::RungeKutta4<StateT>>
 class Body final {
  public:
   using StateType = StateT;
@@ -33,7 +26,7 @@ class Body final {
   using ComputePartialsType = math::ComputePartials<StateType>;
 
   static constexpr size_t state_depth() { return StateType::depth(); }
-  static constexpr Coordinates coordinates() { return COORDINATES; }
+  static constexpr math::Coordinates coordinates() { return StateType::coordinate(); }
 
   static constexpr ScalarType DEFAULT_STEP_SIZE{0.001};
 
@@ -50,6 +43,7 @@ class Body final {
   constexpr Body(StateType initial_state, const ComputePartialsType& compute_partials)
       : state_(initial_state), integrator_(compute_partials) {}
 
+  constexpr const StateType& state() const { return state_; }
   constexpr const VectorType& position() const { return state_.template element<0>(); }
   constexpr const VectorType& velocity() const { return state_.template element<1>(); }
   constexpr const VectorType& acceleration() const { return state_.template element<2>(); }

@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-#include "glog/logging.h"
 #include "gtest/gtest.h"
 #include "math/integrators.h"
 #include "math/multivector.h"
@@ -73,37 +72,42 @@ template <typename Integrator>
   using ValueType = typename StateType::ValueType;
   using ScalarType = typename StateType::ScalarType;
 
-  static constexpr ScalarType delta_t{0.1f};
-  static constexpr ScalarType acceleration{5.f};
-  static constexpr ScalarType initial_velocity{1.f};
-  static constexpr ScalarType initial_position{3.f};
+  if constexpr (StateType::depth() >= 2) {
+    static constexpr ScalarType delta_t{0.1f};
+    static constexpr ScalarType acceleration{5.f};
+    static constexpr ScalarType initial_velocity{1.f};
+    static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{{0.f, initial_position, 0.f}, {0.f, initial_velocity, 0.f}};
+    static constexpr StateType s0{{0.f, initial_position, 0.f}, {0.f, initial_velocity, 0.f}};
 
-  static constexpr ValueType expected_position{
-      0.f,
-      initial_position + delta_t * initial_velocity +
-          static_cast<ScalarType>(0.5) * acceleration * delta_t * delta_t,
-      0.f};
-  static constexpr ValueType expected_velocity{0.f, initial_velocity + delta_t * acceleration, 0.f};
+    static constexpr ValueType expected_position{
+        0.f,
+        initial_position + delta_t * initial_velocity +
+            static_cast<ScalarType>(0.5) * acceleration * delta_t * delta_t,
+        0.f};
+    static constexpr ValueType expected_velocity{0.f, initial_velocity + delta_t * acceleration,
+                                                 0.f};
 
-  Integrator integrator{[](const StateType& state) -> StateType {
-    StateType result{state.shift()};
-    result.template set_element<1>({0.f, acceleration, 0.f});
+    Integrator integrator{[](const StateType& state) -> StateType {
+      StateType result{state.shift()};
+      result.template set_element<1>({0.f, acceleration, 0.f});
+      return result;
+    }};
+
+    StateType s1 = integrator(delta_t, s0);
+
+    ::testing::AssertionResult result{::testing::AssertionSuccess()};
+    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+             << " <- element<0>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+             << " <- element<1>";
     return result;
-  }};
-
-  StateType s1 = integrator(delta_t, s0);
-
-  ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
-           << " <- element<0>";
-  if (!result) {
-    return result;
+  } else {
+    return ::testing::AssertionSuccess();
   }
-  result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
-           << " <- element<1>";
-  return result;
 }
 
 template <typename Integrator>
@@ -128,47 +132,53 @@ template <typename Integrator>
   using ValueType = typename StateType::ValueType;
   using ScalarType = typename StateType::ScalarType;
 
-  static constexpr ScalarType delta_t{0.1f};
-  static constexpr ScalarType jerk{7.f};
-  static constexpr ScalarType initial_acceleration{5.f};
-  static constexpr ScalarType initial_velocity{1.f};
-  static constexpr ScalarType initial_position{3.f};
+  if constexpr (StateType::depth() >= 3) {
+    static constexpr ScalarType delta_t{0.1f};
+    static constexpr ScalarType jerk{7.f};
+    static constexpr ScalarType initial_acceleration{5.f};
+    static constexpr ScalarType initial_velocity{1.f};
+    static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{
-      {0.f, initial_position, 0.f}, {0.f, initial_velocity, 0.f}, {0.f, initial_acceleration, 0.f}};
+    static constexpr StateType s0{{0.f, initial_position, 0.f},
+                                  {0.f, initial_velocity, 0.f},
+                                  {0.f, initial_acceleration, 0.f}};
 
-  static constexpr ValueType expected_position{
-      0.f,
-      initial_position +
-          delta_t * (initial_velocity +
-                     0.5f * delta_t * (initial_acceleration + 1.f / 3.f * delta_t * jerk)),
-      0.f};
-  static constexpr ValueType expected_velocity{
-      0.f, initial_velocity + delta_t * (initial_acceleration + 0.5f * delta_t * jerk), 0.f};
-  static constexpr ValueType expected_acceleration{0.f, initial_acceleration + delta_t * jerk, 0.f};
+    static constexpr ValueType expected_position{
+        0.f,
+        initial_position +
+            delta_t * (initial_velocity +
+                       0.5f * delta_t * (initial_acceleration + 1.f / 3.f * delta_t * jerk)),
+        0.f};
+    static constexpr ValueType expected_velocity{
+        0.f, initial_velocity + delta_t * (initial_acceleration + 0.5f * delta_t * jerk), 0.f};
+    static constexpr ValueType expected_acceleration{0.f, initial_acceleration + delta_t * jerk,
+                                                     0.f};
 
-  Integrator integrator{[](const StateType& state) -> StateType {
-    StateType result{state.shift()};
-    result.template set_element<2>({0.f, jerk, 0.f});
+    Integrator integrator{[](const StateType& state) -> StateType {
+      StateType result{state.shift()};
+      result.template set_element<2>({0.f, jerk, 0.f});
+      return result;
+    }};
+
+    StateType s1 = integrator(delta_t, s0);
+
+    ::testing::AssertionResult result{::testing::AssertionSuccess()};
+    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+             << " <- element<0>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+             << " <- element<1>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
+             << " <- element<2>";
     return result;
-  }};
-
-  StateType s1 = integrator(delta_t, s0);
-
-  ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
-           << " <- element<0>";
-  if (!result) {
-    return result;
+  } else {
+    return ::testing::AssertionSuccess();
   }
-  result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
-           << " <- element<1>";
-  if (!result) {
-    return result;
-  }
-  result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
-           << " <- element<2>";
-  return result;
 }
 
 template <typename Integrator>
@@ -194,60 +204,65 @@ template <typename Integrator>
   using ValueType = typename StateType::ValueType;
   using ScalarType = typename StateType::ScalarType;
 
-  static constexpr ScalarType delta_t{0.1f};
-  static constexpr ScalarType snap{2.f};
-  static constexpr ScalarType initial_jerk{7.f};
-  static constexpr ScalarType initial_acceleration{5.f};
-  static constexpr ScalarType initial_velocity{1.f};
-  static constexpr ScalarType initial_position{3.f};
+  if constexpr (StateType::depth() >= 4) {
+    static constexpr ScalarType delta_t{0.1f};
+    static constexpr ScalarType snap{2.f};
+    static constexpr ScalarType initial_jerk{7.f};
+    static constexpr ScalarType initial_acceleration{5.f};
+    static constexpr ScalarType initial_velocity{1.f};
+    static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{{0.f, initial_position, 0.f},
-                                {0.f, initial_velocity, 0.f},
-                                {0.f, initial_acceleration, 0.f},
-                                {0.f, initial_jerk, 0.f}};
+    static constexpr StateType s0{{0.f, initial_position, 0.f},
+                                  {0.f, initial_velocity, 0.f},
+                                  {0.f, initial_acceleration, 0.f},
+                                  {0.f, initial_jerk, 0.f}};
 
-  static constexpr ValueType expected_position{
-      0.f,
-      initial_position +
-          delta_t * (initial_velocity + delta_t / 2 *
-                                            (initial_acceleration +
-                                             delta_t / 3 * (initial_jerk + delta_t / 4 * snap))),
-      0.f};
-  static constexpr ValueType expected_velocity{
-      0.f,
-      initial_velocity +
-          delta_t * (initial_acceleration + delta_t / 2 * (initial_jerk + delta_t / 3 * snap)),
-      0.f};
-  static constexpr ValueType expected_acceleration{
-      0.f, initial_acceleration + delta_t * (initial_jerk + delta_t / 2 * snap), 0.f};
-  static constexpr ValueType expected_jerk{0.f, initial_jerk + delta_t * snap, 0.f};
+    static constexpr ValueType expected_position{
+        0.f,
+        initial_position +
+            delta_t * (initial_velocity + delta_t / 2 *
+                                              (initial_acceleration +
+                                               delta_t / 3 * (initial_jerk + delta_t / 4 * snap))),
+        0.f};
+    static constexpr ValueType expected_velocity{
+        0.f,
+        initial_velocity +
+            delta_t * (initial_acceleration + delta_t / 2 * (initial_jerk + delta_t / 3 * snap)),
+        0.f};
+    static constexpr ValueType expected_acceleration{
+        0.f, initial_acceleration + delta_t * (initial_jerk + delta_t / 2 * snap), 0.f};
+    static constexpr ValueType expected_jerk{0.f, initial_jerk + delta_t * snap, 0.f};
 
-  Integrator integrator{[](const StateType& state) -> StateType {
-    StateType result{state.shift()};
-    result.template set_element<3>({0.f, snap, 0.f});
+    Integrator integrator{[](const StateType& state) -> StateType {
+      StateType result{state.shift()};
+      result.template set_element<3>({0.f, snap, 0.f});
+      return result;
+    }};
+
+    StateType s1 = integrator(delta_t, s0);
+
+    ::testing::AssertionResult result{::testing::AssertionSuccess()};
+    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+             << " <- element<0>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+             << " <- element<1>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
+             << " <- element<2>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_jerk, s1.template element<3>(), sqrt(2 * delta_t))
+             << " <- element<3>";
     return result;
-  }};
-
-  StateType s1 = integrator(delta_t, s0);
-
-  ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
-           << " <- element<0>";
-  if (!result) {
-    return result;
+  } else {
+    return ::testing::AssertionSuccess();
   }
-  result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
-           << " <- element<1>";
-  if (!result) {
-    return result;
-  }
-  result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
-           << " <- element<2>";
-  if (!result) {
-    return result;
-  }
-  result = AreNear(expected_jerk, s1.template element<3>(), sqrt(2 * delta_t)) << " <- element<3>";
-  return result;
 }
 
 template <typename Integrator>
@@ -301,32 +316,36 @@ template <typename Integrator>
   using StateType = typename Integrator::StateType;
   using ScalarType = typename StateType::ScalarType;
 
-  static constexpr ScalarType delta_t{0.5f};
-  static constexpr ScalarType initial_velocity{1.f};
-  static constexpr ScalarType initial_position{3.f};
+  if constexpr (StateType::depth() >= 2) {
+    static constexpr ScalarType delta_t{0.5f};
+    static constexpr ScalarType initial_velocity{1.f};
+    static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{{0.f, initial_position, 0.f}, {0.f, initial_velocity, 0.f}};
+    static constexpr StateType s0{{0.f, initial_position, 0.f}, {0.f, initial_velocity, 0.f}};
 
-  static constexpr StateType expected{{0.f, initial_position * cos(delta_t), 0.f},  //
-                                      {0.f, -initial_position * sin(delta_t), 0.f}};
+    static constexpr StateType expected{{0.f, initial_position * cos(delta_t), 0.f},  //
+                                        {0.f, -initial_position * sin(delta_t), 0.f}};
 
-  Integrator integrator{[](const StateType& state) -> StateType {
-    StateType result{state.shift()};
-    result.template set_element<1>(-state.template element<0>());
+    Integrator integrator{[](const StateType& state) -> StateType {
+      StateType result{state.shift()};
+      result.template set_element<1>(-state.template element<0>());
+      return result;
+    }};
+
+    StateType s1 = integrator(delta_t, s0);
+
+    ::testing::AssertionResult result{::testing::AssertionSuccess()};
+    result = AreNear(expected.template element<0>(), s1.template element<0>(), sqrt(2 * delta_t))
+             << " <- element<0>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected.template element<1>(), s1.template element<1>(), sqrt(2 * delta_t))
+             << " <- element<1>";
     return result;
-  }};
-
-  StateType s1 = integrator(delta_t, s0);
-
-  ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  result = AreNear(expected.template element<0>(), s1.template element<0>(), sqrt(2 * delta_t))
-           << " <- element<0>";
-  if (!result) {
-    return result;
+  } else {
+    return ::testing::AssertionSuccess();
   }
-  result = AreNear(expected.template element<1>(), s1.template element<1>(), sqrt(2 * delta_t))
-           << " <- element<1>";
-  return result;
 }
 
 template <typename Integrator>
@@ -337,43 +356,48 @@ template <typename Integrator>
   using ValueType = typename StateType::ValueType;
   using ScalarType = typename StateType::ScalarType;
 
-  static constexpr ScalarType delta_t{0.1f};
-  static constexpr ScalarType initial_acceleration{5.f};
-  static constexpr ScalarType initial_velocity{1.f};
-  static constexpr ScalarType initial_position{3.f};
+  if constexpr (StateType::depth() >= 3) {
+    static constexpr ScalarType delta_t{0.1f};
+    static constexpr ScalarType initial_acceleration{5.f};
+    static constexpr ScalarType initial_velocity{1.f};
+    static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{
-      {0.f, initial_position, 0.f}, {0.f, initial_velocity, 0.f}, {0.f, initial_acceleration, 0.f}};
+    static constexpr StateType s0{{0.f, initial_position, 0.f},
+                                  {0.f, initial_velocity, 0.f},
+                                  {0.f, initial_acceleration, 0.f}};
 
-  static constexpr ValueType expected_position{0.f, initial_position + delta_t * initial_velocity,
-                                               0.f};
-  static constexpr ValueType expected_velocity{
-      0.f, initial_velocity + delta_t * initial_acceleration, 0.f};
-  static constexpr ValueType expected_acceleration{
-      0.f, initial_acceleration + delta_t * initial_position, 0.f};
+    static constexpr ValueType expected_position{0.f, initial_position + delta_t * initial_velocity,
+                                                 0.f};
+    static constexpr ValueType expected_velocity{
+        0.f, initial_velocity + delta_t * initial_acceleration, 0.f};
+    static constexpr ValueType expected_acceleration{
+        0.f, initial_acceleration + delta_t * initial_position, 0.f};
 
-  Integrator integrator{[](const StateType& state) -> StateType {
-    StateType result{state.shift()};
-    result.template set_element<2>(state.template element<0>());
+    Integrator integrator{[](const StateType& state) -> StateType {
+      StateType result{state.shift()};
+      result.template set_element<2>(state.template element<0>());
+      return result;
+    }};
+
+    StateType s1 = integrator(delta_t, s0);
+
+    ::testing::AssertionResult result{::testing::AssertionSuccess()};
+    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+             << " <- element<0>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+             << " <- element<1>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
+             << " <- element<2>";
     return result;
-  }};
-
-  StateType s1 = integrator(delta_t, s0);
-
-  ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
-           << " <- element<0>";
-  if (!result) {
-    return result;
+  } else {
+    return ::testing::AssertionSuccess();
   }
-  result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
-           << " <- element<1>";
-  if (!result) {
-    return result;
-  }
-  result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
-           << " <- element<2>";
-  return result;
 }
 
 template <typename Integrator>
@@ -405,47 +429,51 @@ template <typename Integrator>
   using StateType = typename Integrator::StateType;
   using ScalarType = typename StateType::ScalarType;
 
-  static constexpr ScalarType delta_t{0.1f};
-  static constexpr ScalarType initial_position{3.f};
+  if constexpr (StateType::depth() >= 4) {
+    static constexpr ScalarType delta_t{0.1f};
+    static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{{0.f, 0.f, 0.f}, {0.f, initial_position, 0.f}};
+    static constexpr StateType s0{{0.f, 0.f, 0.f}, {0.f, initial_position, 0.f}};
 
-  static constexpr StateType expected{
-      {0.f, initial_position * sin(delta_t), 0.f},   //
-      {0.f, initial_position * cos(delta_t), 0.f},   //
-      {0.f, -initial_position * sin(delta_t), 0.f},  //
-      // For one step, this value for element 3 is more inline with our expectations. The cos() term
-      // won't become dominant for serveral iterations.
-      {0.f, -initial_position * delta_t, 0.f}};
+    static constexpr StateType expected{
+        {0.f, initial_position * sin(delta_t), 0.f},   //
+        {0.f, initial_position * cos(delta_t), 0.f},   //
+        {0.f, -initial_position * sin(delta_t), 0.f},  //
+        // For one step, this value for element 3 is more inline with our expectations. The cos()
+        // term won't become dominant for serveral iterations.
+        {0.f, -initial_position * delta_t, 0.f}};
 
-  Integrator integrator{[](const StateType& state) -> StateType {
-    StateType result{state.shift()};
-    // Acceleration is in element 3, and position is in element 1.
-    result.template set_element<3>(-state.template element<1>());
+    Integrator integrator{[](const StateType& state) -> StateType {
+      StateType result{state.shift()};
+      // Acceleration is in element 3, and position is in element 1.
+      result.template set_element<3>(-state.template element<1>());
+      return result;
+    }};
+
+    StateType s1 = integrator(delta_t, s0);
+
+    ::testing::AssertionResult result{::testing::AssertionSuccess()};
+    result = AreNear(expected.template element<0>(), s1.template element<0>(), sqrt(2 * delta_t))
+             << " <- element<0>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected.template element<1>(), s1.template element<1>(), sqrt(2 * delta_t))
+             << " <- element<1>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected.template element<2>(), s1.template element<2>(), sqrt(2 * delta_t))
+             << " <- element<2>";
+    if (!result) {
+      return result;
+    }
+    result = AreNear(expected.template element<3>(), s1.template element<3>(), sqrt(2 * delta_t))
+             << " <- element<3>";
     return result;
-  }};
-
-  StateType s1 = integrator(delta_t, s0);
-
-  ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  result = AreNear(expected.template element<0>(), s1.template element<0>(), sqrt(2 * delta_t))
-           << " <- element<0>";
-  if (!result) {
-    return result;
+  } else {
+    return ::testing::AssertionSuccess();
   }
-  result = AreNear(expected.template element<1>(), s1.template element<1>(), sqrt(2 * delta_t))
-           << " <- element<1>";
-  if (!result) {
-    return result;
-  }
-  result = AreNear(expected.template element<2>(), s1.template element<2>(), sqrt(2 * delta_t))
-           << " <- element<2>";
-  if (!result) {
-    return result;
-  }
-  result = AreNear(expected.template element<3>(), s1.template element<3>(), sqrt(2 * delta_t))
-           << " <- element<3>";
-  return result;
 }
 
 template <typename Integrator>
@@ -468,46 +496,45 @@ template <typename Integrator>
   using ScalarType = typename StateType::ScalarType;
   using ValueType = typename StateType::ValueType;
 
-  static constexpr ScalarType delta_t{0.01f};
-  static constexpr ScalarType acceleration{2.f};
-  static constexpr ValueType initial_velocity{1.f};
-  static constexpr ValueType initial_position{3.f};
+  if constexpr (StateType::depth() >= 2) {
+    static constexpr ScalarType delta_t{0.01f};
+    static constexpr ScalarType acceleration{2.f};
+    static constexpr ValueType initial_velocity{1.f};
+    static constexpr ValueType initial_position{3.f};
 
-  static constexpr StateType s0{initial_position, initial_velocity};
+    static constexpr StateType s0{initial_position, initial_velocity};
 
-  Integrator integrator{[](const StateType& state) -> StateType {
-    StateType result{state.shift()};
-    result.template set_element<1>(ValueType{acceleration});
+    Integrator integrator{[](const StateType& state) -> StateType {
+      StateType result{state.shift()};
+      result.template set_element<1>(ValueType{acceleration});
+      return result;
+    }};
+
+    static constexpr size_t NUM_STEPS{10};
+    ::testing::AssertionResult result{::testing::AssertionSuccess()};
+    StateType current_state{s0};
+    for (size_t i = 0; i < NUM_STEPS; ++i) {
+      current_state = integrator(delta_t, current_state);
+      ValueType expected_position{initial_position + (i + 1) * delta_t * initial_velocity +
+                                  (i + 1) * delta_t * delta_t / 2 * acceleration};
+      result =
+          AreNear(expected_position, current_state.template element<0>(), acceleration * delta_t)
+          << " <- element<0>; i: " << i;
+      if (!result) {
+        return result;
+      }
+      ValueType expected_velocity{initial_velocity + (i + 1) * delta_t * acceleration};
+      result = AreNear(expected_velocity, current_state.template element<1>(),
+                       acceleration * sqrt(delta_t))
+               << " <- element<1>; i: " << i;
+      if (!result) {
+        return result;
+      }
+    }
     return result;
-  }};
-
-  static constexpr size_t NUM_STEPS{10};
-  ::testing::AssertionResult result{::testing::AssertionSuccess()};
-  StateType current_state{s0};
-  LOG(INFO) << "current_state: " << current_state;
-  for (size_t i = 0; i < NUM_STEPS; ++i) {
-    current_state = integrator(delta_t, current_state);
-    LOG(INFO) << "current_state: " << current_state;
-    ValueType expected_position{initial_position + (i + 1) * delta_t * initial_velocity +
-                                (i + 1) * delta_t * delta_t / 2 * acceleration};
-    LOG(INFO) << "expected_position: " << expected_position
-              << ", difference: " << (expected_position - current_state.template element<0>());
-    result = AreNear(expected_position, current_state.template element<0>(), acceleration * delta_t)
-             << " <- element<0>; i: " << i;
-    if (!result) {
-      return result;
-    }
-    ValueType expected_velocity{initial_velocity + (i + 1) * delta_t * acceleration};
-    LOG(INFO) << "expected_velocity: " << expected_velocity
-              << ", difference: " << (expected_velocity - current_state.template element<1>());
-    result = AreNear(expected_velocity, current_state.template element<1>(),
-                     acceleration * sqrt(delta_t))
-             << " <- element<1>; i: " << i;
-    if (!result) {
-      return result;
-    }
+  } else {
+    return ::testing::AssertionSuccess();
   }
-  return result;
 }
 
 }  // namespace ndyn::math
