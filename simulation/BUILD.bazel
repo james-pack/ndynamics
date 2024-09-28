@@ -3,6 +3,7 @@ load("//platforms:hex.bzl", "hex")
 cc_library(
     name = "simulation",
     hdrs = [
+        "body.h",
         "characterization.h",
         "pendulum.h",
     ],
@@ -20,8 +21,8 @@ cc_library(
         "accelerometer_sensor_model.h",
         "cube_ui.h",
         "pendulum_graph_ui.h",
-        "pendulum_ui_model.h",
         "pendulum_scene.h",
+        "pendulum_ui_model.h",
         "position_ui_model.h",
         "sensor_measurement_graph_ui.h",
     ],
@@ -46,6 +47,18 @@ cc_test(
     srcs = ["characterization_test.cc"],
     deps = [
         ":simulation",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "body_test",
+    srcs = ["body_test.cc"],
+    deps = [
+        ":simulation",
+        "//base",
         "//math",
         "//math:testing",
         "//third_party/gtest",
