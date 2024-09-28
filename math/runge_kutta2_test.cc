@@ -6,7 +6,6 @@
 #include "math/integrators_test_utils.h"
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
-#include "math/states.h"
 
 namespace ndyn::math {
 

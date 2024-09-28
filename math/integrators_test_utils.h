@@ -7,9 +7,17 @@
 #include "math/integrators.h"
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
-#include "math/states.h"
 
 namespace ndyn::math {
+
+template <typename T>
+using State = StateT<VgaMultivector<T>, 3>;
+
+template <typename T>
+using State2d = StateT<Vga2dMultivector<T>, 3>;
+
+template <typename T>
+using RelativisticState = StateT<SpacetimeMultivector<T>, 3>;
 
 ::testing::AssertionResult AreNear(float lhs, float rhs, float epsilon) {
   using std::abs;
