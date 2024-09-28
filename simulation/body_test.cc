@@ -34,8 +34,8 @@ FloatT compute_step_size(FloatT angle) {
   }
 }
 
-math::ComputePartials<VectorType, STATE_DEPTH> configure_pendulum_partials() {
-  return [](const StateType& state) {
+math::ComputePartials<StateType> configure_pendulum_partials() {
+  return [](const StateType& state) -> StateType {
     using std::sin;
     const FloatT length{state.element<0>().r()};
     const FloatT theta{state.element<0>().theta()};
@@ -53,7 +53,7 @@ TEST_P(BodyTest, CanCompile) {
   FloatT LENGTH{1};
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   EXPECT_EQ(initial_position, body.position());
 }
@@ -65,7 +65,7 @@ TEST_P(BodyTest, CanEvolveFullPeriodTrivial) {
 
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   body.evolve(PERIOD, compute_step_size(INITIAL_ANGLE));
 
@@ -81,7 +81,7 @@ TEST_P(BodyTest, CanEvolveHalfPeriod) {
 
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
 
@@ -98,7 +98,7 @@ TEST_P(BodyTest, CanEvolveQuarterPeriod) {
 
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   body.evolve(PERIOD / 4, compute_step_size(INITIAL_ANGLE));
 
@@ -115,7 +115,7 @@ TEST_P(BodyTest, CanEvolveFullPeriod) {
 
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   VectorType quarter_position{LENGTH * VectorType::e<0>()};
   VectorType half_position{LENGTH * VectorType::e<0>() - INITIAL_ANGLE * VectorType::e<1>()};
@@ -150,7 +150,7 @@ TEST_P(BodyTest, CanEvolveMultiplePeriods) {
 
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   VectorType half_position{LENGTH * VectorType::e<0>() - INITIAL_ANGLE * VectorType::e<1>()};
 
@@ -176,7 +176,7 @@ TEST_P(BodyTest, CanEvolveManyPeriods) {
 
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   VectorType half_position{LENGTH * VectorType::e<0>() - INITIAL_ANGLE * VectorType::e<1>()};
 
@@ -202,7 +202,7 @@ TEST_P(BodyTest, CanEvolveManyMorePeriods) {
 
   VectorType initial_position{LENGTH * VectorType::e<0>() + INITIAL_ANGLE * VectorType::e<1>()};
   const auto partials{configure_pendulum_partials()};
-  Body<Coordinates::SPHERICAL, VectorType, STATE_DEPTH> body{StateType{initial_position}, partials};
+  Body<Coordinates::SPHERICAL, StateType> body{StateType{initial_position}, partials};
 
   VectorType half_position{LENGTH * VectorType::e<0>() - INITIAL_ANGLE * VectorType::e<1>()};
 

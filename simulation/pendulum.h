@@ -87,16 +87,14 @@ class Pendulum final {
   ScalarType t_;
   StateType angular_state_;
 
-  math::RungeKutta4<ScalarType, MultivectorType, 2> integrator_{
-      [this](const StateType& state) -> StateType {
-        using std::sin;
-        StateType partials{state.shift()};
-        const MultivectorType& angular_position{state.element(0)};
-        partials.template set_element<1>(-g_ / angular_position.r() *
-                                         sin(angular_position.theta()) *
-                                         MultivectorType::template e<1>());
-        return partials;
-      }};
+  math::RungeKutta4<StateType> integrator_{[this](const StateType& state) -> StateType {
+    using std::sin;
+    StateType partials{state.shift()};
+    const MultivectorType& angular_position{state.element(0)};
+    partials.template set_element<1>(-g_ / angular_position.r() * sin(angular_position.theta()) *
+                                     MultivectorType::template e<1>());
+    return partials;
+  }};
 
   const ScalarType mass_;
 

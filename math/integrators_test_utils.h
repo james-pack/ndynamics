@@ -10,15 +10,6 @@
 
 namespace ndyn::math {
 
-template <typename T>
-using State = StateT<VgaMultivector<T>, 3>;
-
-template <typename T>
-using State2d = StateT<Vga2dMultivector<T>, 3>;
-
-template <typename T>
-using RelativisticState = StateT<SpacetimeMultivector<T>, 3>;
-
 ::testing::AssertionResult AreNear(float lhs, float rhs, float epsilon) {
   using std::abs;
   if (abs(lhs - rhs) > abs(epsilon)) {
@@ -29,19 +20,24 @@ using RelativisticState = StateT<SpacetimeMultivector<T>, 3>;
   return ::testing::AssertionSuccess();
 }
 
-template <typename T, size_t DEPTH>
-ComputePartials<T, DEPTH> shift_state() {
-  return [](const StateT<T, DEPTH>& state) { return state.shift(); };
+template <typename StateType>
+ComputePartials<StateType> shift_state() {
+  return [](const StateType& state) { return state.shift(); };
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanIntegrateOverConstantVelocity() {
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ValueType = typename StateType::ValueType;
+  using ScalarType = typename StateType::ScalarType;
+
   static constexpr ScalarType delta_t{0.1f};
   static constexpr ScalarType velocity{1.f};
   static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{{0.f, initial_position, 0.f}};
+  static constexpr StateType s0{ValueType{0.f, initial_position, 0.f}};
   static constexpr ValueType expected_position{0.f, initial_position + delta_t * velocity, 0.f};
 
   Integrator integrator{[](const StateType& state) -> StateType {
@@ -56,7 +52,7 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
          << " <- element<0>";
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanIntegrateOverConstantAcceleration() {
   /**
    * This test models an object falling in gravity, but with all signs positive. The analytic
@@ -72,6 +68,11 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
    */
 
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ValueType = typename StateType::ValueType;
+  using ScalarType = typename StateType::ScalarType;
+
   static constexpr ScalarType delta_t{0.1f};
   static constexpr ScalarType acceleration{5.f};
   static constexpr ScalarType initial_velocity{1.f};
@@ -105,7 +106,7 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   return result;
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanIntegrateOverConstantJerk() {
   /**
    * This test models an object falling in gravity but with some form of motion control to gradually
@@ -122,6 +123,11 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
    * We test that the given integration method approximately arrives at this solution.
    */
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ValueType = typename StateType::ValueType;
+  using ScalarType = typename StateType::ScalarType;
+
   static constexpr ScalarType delta_t{0.1f};
   static constexpr ScalarType jerk{7.f};
   static constexpr ScalarType initial_acceleration{5.f};
@@ -165,7 +171,7 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   return result;
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanIntegrateOverConstantSnap() {
   /**
    * I have no idea what this models, but we have a simple differential equation of a constant 4th
@@ -183,6 +189,11 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
    * We test that the given integration method approximately arrives at this solution.
    */
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ValueType = typename StateType::ValueType;
+  using ScalarType = typename StateType::ScalarType;
+
   static constexpr ScalarType delta_t{0.1f};
   static constexpr ScalarType snap{2.f};
   static constexpr ScalarType initial_jerk{7.f};
@@ -239,13 +250,18 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   return result;
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanUpdateVelocityFromPosition() {
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ValueType = typename StateType::ValueType;
+  using ScalarType = typename StateType::ScalarType;
+
   static constexpr ScalarType delta_t{0.1f};
   static constexpr ScalarType initial_position{3.f};
 
-  static constexpr StateType s0{{0.f, initial_position, 0.f}};
+  static constexpr StateType s0{ValueType{0.f, initial_position, 0.f}};
 
   static constexpr ValueType expected_position{0.f, initial_position + delta_t * initial_position,
                                                0.f};
@@ -262,7 +278,7 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
          << " <- element<0>";
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanUpdateAccelerationFromPosition() {
   /**
    * This test is simulating an harmonic oscillator.
@@ -281,6 +297,10 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   using std::cos;
   using std::sin;
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ScalarType = typename StateType::ScalarType;
+
   static constexpr ScalarType delta_t{0.5f};
   static constexpr ScalarType initial_velocity{1.f};
   static constexpr ScalarType initial_position{3.f};
@@ -309,9 +329,14 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   return result;
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanUpdateJerkFromPosition() {
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ValueType = typename StateType::ValueType;
+  using ScalarType = typename StateType::ScalarType;
+
   static constexpr ScalarType delta_t{0.1f};
   static constexpr ScalarType initial_acceleration{5.f};
   static constexpr ScalarType initial_velocity{1.f};
@@ -351,7 +376,7 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   return result;
 }
 
-template <typename Integrator, typename ScalarType, typename ValueType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanUpdateSnap() {
   /**
    * This test is simulating an harmonic oscillator but with an odometer that takes off distance
@@ -376,6 +401,9 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   using std::cos;
   using std::sin;
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ScalarType = typename StateType::ScalarType;
 
   static constexpr ScalarType delta_t{0.1f};
   static constexpr ScalarType initial_position{3.f};
@@ -420,7 +448,7 @@ template <typename Integrator, typename ScalarType, typename ValueType, typename
   return result;
 }
 
-template <typename Integrator, typename ScalarType, typename StateType>
+template <typename Integrator>
 ::testing::AssertionResult CanIntegrateOverConstantAccelerationManySteps() {
   /**
    * This test models an object falling in gravity, but with all signs positive. The analytic
@@ -435,16 +463,21 @@ template <typename Integrator, typename ScalarType, typename StateType>
    * We test that the given integration method approximately arrives at this solution.
    */
   using std::sqrt;
+
+  using StateType = typename Integrator::StateType;
+  using ScalarType = typename StateType::ScalarType;
+  using ValueType = typename StateType::ValueType;
+
   static constexpr ScalarType delta_t{0.01f};
   static constexpr ScalarType acceleration{2.f};
-  static constexpr ScalarType initial_velocity{1.f};
-  static constexpr ScalarType initial_position{3.f};
+  static constexpr ValueType initial_velocity{1.f};
+  static constexpr ValueType initial_position{3.f};
 
   static constexpr StateType s0{initial_position, initial_velocity};
 
   Integrator integrator{[](const StateType& state) -> StateType {
     StateType result{state.shift()};
-    result.template set_element<1>(acceleration);
+    result.template set_element<1>(ValueType{acceleration});
     return result;
   }};
 
@@ -455,8 +488,8 @@ template <typename Integrator, typename ScalarType, typename StateType>
   for (size_t i = 0; i < NUM_STEPS; ++i) {
     current_state = integrator(delta_t, current_state);
     LOG(INFO) << "current_state: " << current_state;
-    ScalarType expected_position{initial_position + (i + 1) * delta_t * initial_velocity +
-                                 (i + 1) * delta_t * delta_t / 2 * acceleration};
+    ValueType expected_position{initial_position + (i + 1) * delta_t * initial_velocity +
+                                (i + 1) * delta_t * delta_t / 2 * acceleration};
     LOG(INFO) << "expected_position: " << expected_position
               << ", difference: " << (expected_position - current_state.template element<0>());
     result = AreNear(expected_position, current_state.template element<0>(), acceleration * delta_t)
@@ -464,7 +497,7 @@ template <typename Integrator, typename ScalarType, typename StateType>
     if (!result) {
       return result;
     }
-    ScalarType expected_velocity{initial_velocity + (i + 1) * delta_t * acceleration};
+    ValueType expected_velocity{initial_velocity + (i + 1) * delta_t * acceleration};
     LOG(INFO) << "expected_velocity: " << expected_velocity
               << ", difference: " << (expected_velocity - current_state.template element<1>());
     result = AreNear(expected_velocity, current_state.template element<1>(),

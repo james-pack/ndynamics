@@ -22,18 +22,17 @@ enum class Coordinates : uint8_t {
  * - For now, we are using the same integrator (4th order Runge-Kutta) for all Bodies. That makes
  * sense until we need to handle more rigid or chaotic systems.
  */
-template <Coordinates COORDINATES, typename VectorT, size_t STATE_DEPTH,
-          typename IntegratorT =
-              math::RungeKutta4<typename VectorT::ScalarType, VectorT, STATE_DEPTH>>
+template <Coordinates COORDINATES, typename StateT,
+          typename IntegratorT = math::RungeKutta4<StateT>>
 class Body final {
  public:
-  using VectorType = VectorT;
-  using ScalarType = typename VectorType::ScalarType;
-  using StateType = math::StateT<VectorType, STATE_DEPTH>;
+  using StateType = StateT;
+  using VectorType = typename StateType::ValueType;
+  using ScalarType = typename StateType::ScalarType;
   using IntegratorType = IntegratorT;
-  using ComputePartialsType = math::ComputePartials<VectorType, STATE_DEPTH>;
+  using ComputePartialsType = math::ComputePartials<StateType>;
 
-  static constexpr size_t state_depth() { return STATE_DEPTH; }
+  static constexpr size_t state_depth() { return StateType::depth(); }
   static constexpr Coordinates coordinates() { return COORDINATES; }
 
   static constexpr ScalarType DEFAULT_STEP_SIZE{0.001};

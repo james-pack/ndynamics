@@ -5,8 +5,31 @@
 #include <initializer_list>
 #include <ostream>
 #include <string>
+#include <type_traits>
 
 namespace ndyn::math {
+
+namespace internal {
+
+template <typename T>
+class ScalarTypes {
+ public:
+  using ScalarType = typename T::ScalarType;
+};
+
+template <>
+class ScalarTypes<float> {
+ public:
+  using ScalarType = float;
+};
+
+template <>
+class ScalarTypes<double> {
+ public:
+  using ScalarType = double;
+};
+
+}  // namespace internal
 
 /**
  * State vector of a particle or object for use in simulations. The meaning of the various elements
@@ -20,6 +43,8 @@ class StateT final {
 
  public:
   using ValueType = T;
+  using ScalarType = typename internal::ScalarTypes<ValueType>::ScalarType;
+
   static constexpr size_t depth() { return DEPTH; }
 
   constexpr StateT() = default;
