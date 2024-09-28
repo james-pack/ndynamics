@@ -21,13 +21,14 @@ namespace ndyn::simulation {
  */
 template <typename ScalarType>
 inline constexpr ScalarType compute_period(ScalarType length, ScalarType g, ScalarType angle) {
+  using std::abs;
   using std::cos;
   using std::log;
   using std::pow;
   using std::sin;
   using std::sqrt;
 
-  const ScalarType T0{static_cast<ScalarType>(2 * pi * sqrt(length / g))};
+  const ScalarType T0{static_cast<ScalarType>(2 * pi * sqrt(abs(length / g)))};
   if (angle < pi / 4) {
     return T0 * (1 + pow(angle, 2) / 16 +                                    //
                  11 * pow(angle, 4) / 3072 + 173 * pow(angle, 6) / 737280 +  //
