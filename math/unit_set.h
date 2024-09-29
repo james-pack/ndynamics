@@ -47,26 +47,19 @@ class UnitSet final {
 
   static constexpr size_t size() { return 1 /* For the Unit parameter */ + sizeof...(Units); }
 
+  // If the number of units is fewer than the index, we assume that the last unit is repeated. This
+  // saves a lot of work when dealing with vectors and other tuple-like structures when the types
+  // are the same. For example for a vector in Cartesian coordinates where all of the bases are in
+  // meters, we could just use UnitSet<CARTESIAN, unit::length::meter_t>, regardless of the size of
+  // the vector.
   template <size_t INDEX>
   using type = typename internal::TypeSelector<INDEX, sizeof...(Units), Unit, Units...>::type;
 };
 
 template <typename UnitSetT, size_t INDEX, typename T>
 auto with_unit(const T& value) {
-  if constexpr (INDEX < UnitSetT::size()) {
-    using ResultT = typename UnitSetT::template type<INDEX>;
-    return ResultT(value);
-  }
-
-  // If the number of units is fewer than the index, we assume that the last unit is repeated. This
-  // saves a lot of work when dealing with vectors and other tuple-like structures when the types
-  // are the same. For example for a vector in Cartesian coordinates where all of the bases are in
-  // meters, we could just use UnitSet<CARTESIAN, unit::length::meter_t>, regardless of the size of
-  // the vector.
-  if constexpr (INDEX >= UnitSetT::size()) {
-    using ResultT = typename UnitSetT::template type<UnitSetT::size() - 1>;
-    return ResultT(value);
-  }
+  using ResultT = typename UnitSetT::template type<INDEX>;
+  return ResultT(value);
 }
 
 }  // namespace ndyn::math
