@@ -12,6 +12,19 @@ enum class Coordinates : uint8_t {
   SPHERICAL,
 };
 
+std::string to_string(Coordinates coord) {
+  switch (coord) {
+    case Coordinates::CARTESIAN:
+      return "cartesian";
+    case Coordinates::POLAR:
+      return "polar";
+    case Coordinates::SPHERICAL:
+      return "spherical";
+    default:
+      return "<unknown coordinate system>";
+  }
+}
+
 namespace {
 
 /**
@@ -60,6 +73,13 @@ class UnitSet final {
   template <size_t INDEX>
   using type = typename RepeatingTypeSelector<INDEX, size(), Unit, Units...>::type;
 };
+
+// Common sets of units for us.
+using CartesianMeters = UnitSet<Coordinates::CARTESIAN, units::length::meter_t>;
+using PolarMeters = UnitSet<Coordinates::POLAR, units::length::meter_t, units::angle::radian_t,
+                            units::length::meter_t>;
+using SphericalMeters =
+    UnitSet<Coordinates::SPHERICAL, units::length::meter_t, units::angle::radian_t>;
 
 template <typename UnitSetT, size_t INDEX, typename T>
 auto with_unit(const T& value) {

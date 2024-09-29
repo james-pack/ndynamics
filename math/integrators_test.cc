@@ -5,6 +5,8 @@
 #include "gtest/gtest.h"
 #include "math/integrators_test_utils.h"
 #include "math/multivector.h"
+#include "math/unit_set.h"
+#include "units.h"
 
 namespace ndyn::math {
 
@@ -12,30 +14,30 @@ template <typename IntegratorT>
 class IntegratorTest : public ::testing::Test {};
 
 using IntegratorTypes =
-    ::testing::Types<ForwardEuler<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 1>>,
-                     ForwardEuler<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 2>>,
-                     ForwardEuler<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 3>>,
-                     ForwardEuler<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 4>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 1>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 2>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 3>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 4>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 1>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 2>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 3>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, Vga2dMultivector<float>, 4>>,
-                     ForwardEuler<State<Coordinates::CARTESIAN, VgaMultivector<float>, 1>>,
-                     ForwardEuler<State<Coordinates::CARTESIAN, VgaMultivector<float>, 2>>,
-                     ForwardEuler<State<Coordinates::CARTESIAN, VgaMultivector<float>, 3>>,
-                     ForwardEuler<State<Coordinates::CARTESIAN, VgaMultivector<float>, 4>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, VgaMultivector<float>, 1>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, VgaMultivector<float>, 2>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, VgaMultivector<float>, 3>>,
-                     RungeKutta2<State<Coordinates::CARTESIAN, VgaMultivector<float>, 4>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, VgaMultivector<float>, 1>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, VgaMultivector<float>, 2>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, VgaMultivector<float>, 3>>,
-                     RungeKutta4<State<Coordinates::CARTESIAN, VgaMultivector<float>, 4>>>;
+    ::testing::Types<ForwardEuler<State<Vga2dMultivector<float>, 1, CartesianMeters>>,
+                     ForwardEuler<State<Vga2dMultivector<float>, 2, CartesianMeters>>,
+                     ForwardEuler<State<Vga2dMultivector<float>, 3, CartesianMeters>>,
+                     ForwardEuler<State<Vga2dMultivector<float>, 4, CartesianMeters>>,
+                     RungeKutta2<State<Vga2dMultivector<float>, 1, CartesianMeters>>,
+                     RungeKutta2<State<Vga2dMultivector<float>, 2, CartesianMeters>>,
+                     RungeKutta2<State<Vga2dMultivector<float>, 3, CartesianMeters>>,
+                     RungeKutta2<State<Vga2dMultivector<float>, 4, CartesianMeters>>,
+                     RungeKutta4<State<Vga2dMultivector<float>, 1, CartesianMeters>>,
+                     RungeKutta4<State<Vga2dMultivector<float>, 2, CartesianMeters>>,
+                     RungeKutta4<State<Vga2dMultivector<float>, 3, CartesianMeters>>,
+                     RungeKutta4<State<Vga2dMultivector<float>, 4, CartesianMeters>>,
+                     ForwardEuler<State<VgaMultivector<float>, 1, CartesianMeters>>,
+                     ForwardEuler<State<VgaMultivector<float>, 2, CartesianMeters>>,
+                     ForwardEuler<State<VgaMultivector<float>, 3, CartesianMeters>>,
+                     ForwardEuler<State<VgaMultivector<float>, 4, CartesianMeters>>,
+                     RungeKutta2<State<VgaMultivector<float>, 1, CartesianMeters>>,
+                     RungeKutta2<State<VgaMultivector<float>, 2, CartesianMeters>>,
+                     RungeKutta2<State<VgaMultivector<float>, 3, CartesianMeters>>,
+                     RungeKutta2<State<VgaMultivector<float>, 4, CartesianMeters>>,
+                     RungeKutta4<State<VgaMultivector<float>, 1, CartesianMeters>>,
+                     RungeKutta4<State<VgaMultivector<float>, 2, CartesianMeters>>,
+                     RungeKutta4<State<VgaMultivector<float>, 3, CartesianMeters>>,
+                     RungeKutta4<State<VgaMultivector<float>, 4, CartesianMeters>>>;
 TYPED_TEST_SUITE(IntegratorTest, IntegratorTypes);
 
 TYPED_TEST(IntegratorTest, CanIntegrateOverConstantVelocity) {

@@ -8,6 +8,7 @@
 #include "math/multivector.h"
 #include "math/multivector_utils.h"
 #include "math/state.h"
+#include "math/unit_set.h"
 
 namespace ndyn::simulation {
 
@@ -63,7 +64,7 @@ class Pendulum final {
  public:
   using MultivectorType = MultivectorT;
   using ScalarType = typename MultivectorType::ScalarType;
-  using StateType = math::State<math::Coordinates::SPHERICAL, MultivectorType, 2>;
+  using StateType = math::State<MultivectorType, 2, math::SphericalMeters>;
 
  private:
   // Precomputed magnitude of the position vector. The length of the pendulum.

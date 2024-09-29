@@ -2,6 +2,7 @@
 
 #include "math/integrators.h"
 #include "math/state.h"
+#include "math/unit_set.h"
 
 namespace ndyn::simulation {
 

@@ -8,6 +8,7 @@
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
 #include "math/state.h"
+#include "math/unit_set.h"
 #include "simulation/pendulum.h"
 
 namespace ndyn::simulation {
@@ -16,7 +17,7 @@ using FloatT = float;
 using VectorType = math::Multivector<FloatT, 2, 0, 0>;
 
 static constexpr size_t STATE_DEPTH{2};
-using StateType = math::State<math::Coordinates::SPHERICAL, VectorType, STATE_DEPTH>;
+using StateType = math::State<VectorType, STATE_DEPTH, math::SphericalMeters>;
 
 static constexpr FloatT ACCELERATION_GRAVITY{-9.8};
 static constexpr FloatT ALLOWED_ERROR_MULTIPLE{0.05};
