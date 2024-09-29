@@ -103,7 +103,7 @@ def load_source_dependencies():
     if not native.existing_rule("com_github_gtruc_glm"):
         http_archive(
             name = "com_github_gtruc_glm",
-            #sha256 = "4ff18a3377da465386374d8127e7b7349b685288cb8e17122f7e1179f73769d5",
+            sha256 = "9f3174561fd26904b23f0db5e560971cbf9b3cbda0b280f04d5c379d03bf234c",
             strip_prefix = "glm-1.0.1",
             urls = ["https://github.com/g-truc/glm/archive/refs/tags/1.0.1.tar.gz"],
             build_file = "//third_party/glm:glm.BUILD",
@@ -121,7 +121,7 @@ def load_source_dependencies():
     if not native.existing_rule("com_github_epezent_implot"):
         http_archive(
             name = "com_github_epezent_implot",
-            #sha256 = "2c13a8909f75222c836abc9b3f60cef31c445f3f41f95d8242118ea789d145ca",
+            sha256 = "961df327d8a756304d1b0a67316eebdb1111d13d559f0d3415114ec0eb30abd1",
             strip_prefix = "implot-0.16",
             urls = ["https://github.com/epezent/implot/archive/v0.16.tar.gz"],
             build_file = "//third_party/implot:implot.BUILD",
