@@ -64,7 +64,8 @@ class Pendulum final {
  public:
   using MultivectorType = MultivectorT;
   using ScalarType = typename MultivectorType::ScalarType;
-  using StateType = math::State<MultivectorType, 2, math::SphericalMeters>;
+  using StateType = math::State<MultivectorType, 3, math::CartesianMeters>;
+  using InternalStateType = math::State<MultivectorType, 2, math::SphericalMeters>;
 
  private:
   // Precomputed magnitude of the position vector. The length of the pendulum.
@@ -86,16 +87,18 @@ class Pendulum final {
   const ScalarType initial_time_;
 
   ScalarType t_;
-  StateType angular_state_;
+  InternalStateType angular_state_;
 
-  math::RungeKutta4<StateType> integrator_{[this](const StateType& state) -> StateType {
-    using std::sin;
-    StateType partials{state.shift()};
-    const MultivectorType& angular_position{state.element(0)};
-    partials.template set_element<1>(-g_ / angular_position.r() * sin(angular_position.theta()) *
-                                     MultivectorType::template e<1>());
-    return partials;
-  }};
+  math::RungeKutta4<InternalStateType> integrator_{
+      [this](const InternalStateType& state) -> InternalStateType {
+        using std::sin;
+        InternalStateType partials{state.shift()};
+        const MultivectorType& angular_position{state.element(0)};
+        partials.template set_element<1>(-g_ / angular_position.r() *
+                                         sin(angular_position.theta()) *
+                                         MultivectorType::template e<1>());
+        return partials;
+      }};
 
   const ScalarType mass_;
 
@@ -124,7 +127,9 @@ class Pendulum final {
   constexpr ScalarType period() const { return period_; }
 
   // Actual state as held internally.
-  constexpr const StateType& state() const { return angular_state_; }
+  constexpr const InternalStateType& internal_state() const { return angular_state_; }
+
+  constexpr StateType state() const { return StateType{position(), velocity(), acceleration()}; }
 
   constexpr MultivectorType angular_acceleration() const {
     using std::sin;

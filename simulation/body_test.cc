@@ -56,7 +56,7 @@ TEST_P(BodyTest, CanCompile) {
   const auto partials{configure_pendulum_partials()};
   Body<StateType> body{StateType{initial_position}, partials};
 
-  EXPECT_EQ(initial_position, body.position());
+  EXPECT_EQ(initial_position, body.state().template element<0>());
 }
 
 TEST_P(BodyTest, CanEvolveFullPeriodTrivial) {
@@ -70,7 +70,7 @@ TEST_P(BodyTest, CanEvolveFullPeriodTrivial) {
 
   body.evolve(PERIOD, compute_step_size(INITIAL_ANGLE));
 
-  EXPECT_TRUE(math::AreNear(initial_position, body.position(),
+  EXPECT_TRUE(math::AreNear(initial_position, body.state().template element<0>(),
                             ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
       << "INITIAL_ANGLE: " << INITIAL_ANGLE;
 }
@@ -87,7 +87,7 @@ TEST_P(BodyTest, CanEvolveHalfPeriod) {
   body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
 
   VectorType expected_position{LENGTH * VectorType::e<0>() - INITIAL_ANGLE * VectorType::e<1>()};
-  EXPECT_TRUE(math::AreNear(expected_position, body.position(),
+  EXPECT_TRUE(math::AreNear(expected_position, body.state().template element<0>(),
                             ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
       << "INITIAL_ANGLE: " << INITIAL_ANGLE;
 }
@@ -104,7 +104,7 @@ TEST_P(BodyTest, CanEvolveQuarterPeriod) {
   body.evolve(PERIOD / 4, compute_step_size(INITIAL_ANGLE));
 
   VectorType expected_position{LENGTH * VectorType::e<0>()};
-  EXPECT_TRUE(math::AreNear(expected_position, body.position(),
+  EXPECT_TRUE(math::AreNear(expected_position, body.state().template element<0>(),
                             ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
       << "INITIAL_ANGLE: " << INITIAL_ANGLE;
 }
@@ -122,22 +122,22 @@ TEST_P(BodyTest, CanEvolveFullPeriod) {
   VectorType half_position{LENGTH * VectorType::e<0>() - INITIAL_ANGLE * VectorType::e<1>()};
 
   body.evolve(PERIOD / 4, compute_step_size(INITIAL_ANGLE));
-  EXPECT_TRUE(math::AreNear(quarter_position, body.position(),
+  EXPECT_TRUE(math::AreNear(quarter_position, body.state().template element<0>(),
                             ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
       << "INITIAL_ANGLE: " << INITIAL_ANGLE;
 
   body.evolve(PERIOD / 4, compute_step_size(INITIAL_ANGLE));
-  EXPECT_TRUE(math::AreNear(half_position, body.position(),
+  EXPECT_TRUE(math::AreNear(half_position, body.state().template element<0>(),
                             ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
       << "INITIAL_ANGLE: " << INITIAL_ANGLE;
 
   body.evolve(PERIOD / 4, compute_step_size(INITIAL_ANGLE));
-  EXPECT_TRUE(math::AreNear(quarter_position, body.position(),
+  EXPECT_TRUE(math::AreNear(quarter_position, body.state().template element<0>(),
                             ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
       << "INITIAL_ANGLE: " << INITIAL_ANGLE;
 
   body.evolve(PERIOD / 4, compute_step_size(INITIAL_ANGLE));
-  EXPECT_TRUE(math::AreNear(initial_position, body.position(),
+  EXPECT_TRUE(math::AreNear(initial_position, body.state().template element<0>(),
                             ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
       << "INITIAL_ANGLE: " << INITIAL_ANGLE;
 }
@@ -157,12 +157,12 @@ TEST_P(BodyTest, CanEvolveMultiplePeriods) {
 
   for (size_t i = 0; i < NUM_PERIODS; ++i) {
     body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
-    EXPECT_TRUE(math::AreNear(half_position, body.position(),
+    EXPECT_TRUE(math::AreNear(half_position, body.state().template element<0>(),
                               ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
         << "INITIAL_ANGLE: " << INITIAL_ANGLE << ", i: " << i;
 
     body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
-    EXPECT_TRUE(math::AreNear(initial_position, body.position(),
+    EXPECT_TRUE(math::AreNear(initial_position, body.state().template element<0>(),
                               ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
         << "INITIAL_ANGLE: " << INITIAL_ANGLE << ", i: " << i;
   }
@@ -183,12 +183,12 @@ TEST_P(BodyTest, CanEvolveManyPeriods) {
 
   for (size_t i = 0; i < NUM_PERIODS; ++i) {
     body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
-    EXPECT_TRUE(math::AreNear(half_position, body.position(),
+    EXPECT_TRUE(math::AreNear(half_position, body.state().template element<0>(),
                               ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
         << "INITIAL_ANGLE: " << INITIAL_ANGLE << ", i: " << i;
 
     body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
-    EXPECT_TRUE(math::AreNear(initial_position, body.position(),
+    EXPECT_TRUE(math::AreNear(initial_position, body.state().template element<0>(),
                               ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
         << "INITIAL_ANGLE: " << INITIAL_ANGLE << ", i: " << i;
   }
@@ -209,12 +209,12 @@ TEST_P(BodyTest, CanEvolveManyMorePeriods) {
 
   for (size_t i = 0; i < NUM_PERIODS; ++i) {
     body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
-    EXPECT_TRUE(math::AreNear(half_position, body.position(),
+    EXPECT_TRUE(math::AreNear(half_position, body.state().template element<0>(),
                               ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
         << "INITIAL_ANGLE: " << INITIAL_ANGLE << ", i: " << i;
 
     body.evolve(PERIOD / 2, compute_step_size(INITIAL_ANGLE));
-    EXPECT_TRUE(math::AreNear(initial_position, body.position(),
+    EXPECT_TRUE(math::AreNear(initial_position, body.state().template element<0>(),
                               ALLOWED_ERROR_MULTIPLE * INITIAL_ANGLE + ALLOWED_ERROR_ABSOLUTE))
         << "INITIAL_ANGLE: " << INITIAL_ANGLE << ", i: " << i;
   }

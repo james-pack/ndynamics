@@ -7,15 +7,14 @@
 namespace ndyn::simulation {
 
 /**
- * Representation of single particles or objects that evolve according to a differential equation.
+ * Generic representation of single particles or objects that evolve according to a differential
+ * equation.
  *
  * Areas for future abstraction:
  * - Include the concept of an external potential. The problem is that an external potential's frame
  * of reference is different from the Body's. For now, this concept is implicit in the definition of
  * the compute_partials functions.
  * - We should include the ability to calculate a step size, possibly at every step.
- * - For now, we are using the same integrator (4th order Runge-Kutta) for all Bodies. That makes
- * sense until we need to handle more rigid or chaotic systems.
  */
 template <typename StateT, typename IntegratorT = math::RungeKutta4<StateT>>
 class Body final {
@@ -45,9 +44,6 @@ class Body final {
       : state_(initial_state), integrator_(compute_partials) {}
 
   constexpr const StateType& state() const { return state_; }
-  constexpr const VectorType& position() const { return state_.template element<0>(); }
-  constexpr const VectorType& velocity() const { return state_.template element<1>(); }
-  constexpr const VectorType& acceleration() const { return state_.template element<2>(); }
 
   /**
    * Set the state of the system to the new_time using the given step_size. A default step_size
