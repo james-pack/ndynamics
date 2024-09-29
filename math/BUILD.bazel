@@ -11,10 +11,12 @@ cc_library(
         "multivector.h",
         "multivector_utils.h",
         "state.h",
+        "unit_set.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//base",
+        "//third_party/units",
     ],
 )
 
@@ -89,6 +91,16 @@ cc_test(
 cc_test(
     name = "integrators_test",
     srcs = ["integrators_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "unit_set_test",
+    srcs = ["unit_set_test.cc"],
     deps = [
         ":math",
         ":testing",
