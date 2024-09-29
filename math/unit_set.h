@@ -27,13 +27,13 @@ class TypeSelector<0, NUM_TYPES, T, Ts...> final {
 };
 
 template <size_t INDEX, typename T, typename... Ts>
-class TypeSelector<INDEX, 0, T, Ts...> final {
+class TypeSelector<INDEX, 1, T, Ts...> final {
  public:
   using type = T;
 };
 
 template <typename T, typename... Ts>
-class TypeSelector<0, 0, T, Ts...> final {
+class TypeSelector<0, 1, T, Ts...> final {
  public:
   using type = T;
 };
@@ -53,7 +53,7 @@ class UnitSet final {
   // meters, we could just use UnitSet<CARTESIAN, unit::length::meter_t>, regardless of the size of
   // the vector.
   template <size_t INDEX>
-  using type = typename internal::TypeSelector<INDEX, sizeof...(Units), Unit, Units...>::type;
+  using type = typename internal::TypeSelector<INDEX, size(), Unit, Units...>::type;
 };
 
 template <typename UnitSetT, size_t INDEX, typename T>
