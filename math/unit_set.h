@@ -12,33 +12,38 @@ enum class Coordinates : uint8_t {
   SPHERICAL,
 };
 
-namespace internal {
+namespace {
 
-template <size_t INDEX, size_t NUM_TYPES, typename T, typename... Ts>
-class TypeSelector final {
+/**
+ * Create a class to access the type at position INDEX of a list of types. If INDEX is greater than
+ * the number of types, create a class that gives access to the last type. In essence, this allows
+ * us access to the list of types by index but with the last type repeating as necessary.
+ */
+template <size_t INDEX, size_t NUM_TYPES, typename Type, typename... Types>
+class RepeatingTypeSelector final {
  public:
-  using type = typename TypeSelector<INDEX - 1, NUM_TYPES - 1, Ts...>::type;
+  using type = typename RepeatingTypeSelector<INDEX - 1, NUM_TYPES - 1, Types...>::type;
 };
 
-template <size_t NUM_TYPES, typename T, typename... Ts>
-class TypeSelector<0, NUM_TYPES, T, Ts...> final {
+template <size_t NUM_TYPES, typename Type, typename... Types>
+class RepeatingTypeSelector<0, NUM_TYPES, Type, Types...> final {
  public:
-  using type = T;
+  using type = Type;
 };
 
-template <size_t INDEX, typename T, typename... Ts>
-class TypeSelector<INDEX, 1, T, Ts...> final {
+template <size_t INDEX, typename Type, typename... Types>
+class RepeatingTypeSelector<INDEX, 1, Type, Types...> final {
  public:
-  using type = T;
+  using type = Type;
 };
 
-template <typename T, typename... Ts>
-class TypeSelector<0, 1, T, Ts...> final {
+template <typename Type, typename... Types>
+class RepeatingTypeSelector<0, 1, Type, Types...> final {
  public:
-  using type = T;
+  using type = Type;
 };
 
-}  // namespace internal
+}  // namespace
 
 template <Coordinates COORDINATES, typename Unit, typename... Units>
 class UnitSet final {
@@ -53,7 +58,7 @@ class UnitSet final {
   // meters, we could just use UnitSet<CARTESIAN, unit::length::meter_t>, regardless of the size of
   // the vector.
   template <size_t INDEX>
-  using type = typename internal::TypeSelector<INDEX, size(), Unit, Units...>::type;
+  using type = typename RepeatingTypeSelector<INDEX, size(), Unit, Units...>::type;
 };
 
 template <typename UnitSetT, size_t INDEX, typename T>
