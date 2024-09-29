@@ -1,0 +1,16 @@
+cc_library(
+    name = "units",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_nholthaus_units//:units",
+    ],
+)
+
+cc_test(
+    name = "units_test",
+    deps = [
+        ":units",
+        "//third_party/gtest",
+        "@com_github_nholthaus_units//:units_test",
+    ],
+)

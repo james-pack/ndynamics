@@ -126,3 +126,13 @@ def load_source_dependencies():
             urls = ["https://github.com/epezent/implot/archive/v0.16.tar.gz"],
             build_file = "//third_party/implot:implot.BUILD",
         )
+
+    if not native.existing_rule("com_github_nholthaus_units"):
+        http_archive(
+            name = "com_github_nholthaus_units",
+            sha256 = "b1f3c1dd11afa2710a179563845ce79f13ebf0c8c090d6aa68465b18bd8bd5fc",
+            strip_prefix = "units-2.3.3",
+            urls = ["https://github.com/nholthaus/units/archive/v2.3.3.tar.gz"],
+            build_file = "//third_party/units:units.BUILD",
+            patches = ["//third_party/units:main.cpp.patch"],
+        )
