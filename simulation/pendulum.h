@@ -93,7 +93,7 @@ class Pendulum final {
       [this](const AngularStateType& state) -> AngularStateType {
         using std::sin;
         AngularStateType partials{state.shift()};
-        const MultivectorType& angular_position{state.element(0)};
+        const MultivectorType& angular_position{state.template element<0>()};
         partials.template set_element<1>(-g_ / angular_position.r() *
                                          sin(angular_position.theta()) *
                                          MultivectorType::template e<1>());
