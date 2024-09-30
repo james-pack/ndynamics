@@ -11,8 +11,6 @@
 
 namespace ndyn::math {
 
-namespace {
-
 template <typename T>
 class ScalarTypes {
  public:
@@ -30,8 +28,6 @@ class ScalarTypes<double> {
  public:
   using ScalarType = double;
 };
-
-}  // namespace
 
 /**
  * State vector of a particle or object for use in simulations. The meaning of the various elements
