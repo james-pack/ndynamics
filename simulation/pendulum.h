@@ -65,7 +65,7 @@ class Pendulum final {
   using MultivectorType = MultivectorT;
   using ScalarType = typename MultivectorType::ScalarType;
   using StateType = math::State<MultivectorType, 3, math::CartesianMeters>;
-  using InternalStateType = math::State<MultivectorType, 2, math::SphericalMeters>;
+  using AngularStateType = math::State<MultivectorType, 2, math::SphericalMeters>;
 
  private:
   // Precomputed magnitude of the position vector. The length of the pendulum.
@@ -87,12 +87,12 @@ class Pendulum final {
   const ScalarType initial_time_;
 
   ScalarType t_;
-  InternalStateType angular_state_;
+  AngularStateType angular_state_;
 
-  math::RungeKutta4<InternalStateType> integrator_{
-      [this](const InternalStateType& state) -> InternalStateType {
+  math::RungeKutta4<AngularStateType> integrator_{
+      [this](const AngularStateType& state) -> AngularStateType {
         using std::sin;
-        InternalStateType partials{state.shift()};
+        AngularStateType partials{state.shift()};
         const MultivectorType& angular_position{state.element(0)};
         partials.template set_element<1>(-g_ / angular_position.r() *
                                          sin(angular_position.theta()) *
@@ -126,8 +126,8 @@ class Pendulum final {
 
   constexpr ScalarType period() const { return period_; }
 
-  // Actual state as held internally.
-  constexpr const InternalStateType& internal_state() const { return angular_state_; }
+  // Actual state as held and processed internally.
+  constexpr const AngularStateType& angular_state() const { return angular_state_; }
 
   constexpr StateType state() const { return StateType{position(), velocity(), acceleration()}; }
 
