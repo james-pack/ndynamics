@@ -44,7 +44,7 @@ class State final {
  public:
   using ValueType = T;
   using ScalarType = typename ScalarTypes<ValueType>::ScalarType;
-  using UnitsType = UnitsT;
+  using Units = UnitsT;
 
   static constexpr size_t depth() { return DEPTH; }
 

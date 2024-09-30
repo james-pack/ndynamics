@@ -42,7 +42,7 @@ FloatT compute_step_size(FloatT angle) {
 static UniformPotential<VectorType, Units> gravity{ACCELERATION_GRAVITY * VectorType::e<0>()};
 
 math::ComputePartials<StateType> configure_pendulum_partials() {
-  static_assert(std::is_same_v<StateType::UnitsType, decltype(gravity)::Units>,
+  static_assert(std::is_same_v<StateType::Units, decltype(gravity)::Units>,
                 "Not using the same units.");
   return [](const StateType& state) -> StateType {
     using std::sin;

@@ -11,12 +11,12 @@ class PositionUiModel final : public ui::UiModel {
  public:
   using DataSourceType = DataSourceT;
   using StateType = typename DataSourceType::StateType;
-  using UnitsType = typename StateType::UnitsType;
+  using Units = typename StateType::Units;
 
  private:
   const DataSourceT* source_;
 
-  static_assert(UnitsType::coordinates() == math::Coordinates::CARTESIAN,
+  static_assert(Units::coordinates() == math::Coordinates::CARTESIAN,
                 "Only Cartesian coordinates are supported");
 
  public:

@@ -27,7 +27,7 @@ class Body final {
   using ScalarType = typename StateType::ScalarType;
   using IntegratorType = IntegratorT;
   using ComputePartialsType = math::ComputePartials<StateType>;
-  using Units = typename StateType::UnitsType;
+  using Units = typename StateType::Units;
 
   static constexpr size_t state_depth() { return StateType::depth(); }
   static constexpr math::Coordinates coordinates() { return StateType::coordinate(); }
