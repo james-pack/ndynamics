@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cmath>
+#include <type_traits>
+
 #include "math/integrators.h"
 #include "math/state.h"
 #include "math/unit_set.h"
@@ -24,6 +27,7 @@ class Body final {
   using ScalarType = typename StateType::ScalarType;
   using IntegratorType = IntegratorT;
   using ComputePartialsType = math::ComputePartials<StateType>;
+  using Units = typename StateType::UnitsType;
 
   static constexpr size_t state_depth() { return StateType::depth(); }
   static constexpr math::Coordinates coordinates() { return StateType::coordinate(); }
@@ -43,7 +47,12 @@ class Body final {
   constexpr Body(StateType initial_state, const ComputePartialsType& compute_partials)
       : state_(initial_state), integrator_(compute_partials) {}
 
-  constexpr const StateType& state() const { return state_; }
+  template <typename RequestedUnits>
+  constexpr const StateType& state() const {
+    static_assert(std::is_same_v<RequestedUnits, Units>,
+                  "Requested state in units that are not supported.");
+    return state_;
+  }
 
   /**
    * Set the state of the system to the new_time using the given step_size. A default step_size
