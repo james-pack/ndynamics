@@ -102,49 +102,6 @@ TEST(ConvertCartesianPolarTest, ThreeDimensionAllPositiveBases) {
   }
 }
 
-TEST(ConvertCartesianSphericalTest, TwoDimensionAllPositiveBases) {
-  using std::sqrt;
-
-  using ScalarType = float;
-  using VectorType = Multivector<ScalarType, 2, 0, 0>;
-  using IncomingUnits = math::CartesianMeters;
-  using ResultUnits = math::SphericalMeters;
-
-  Convert<VectorType, IncomingUnits, ResultUnits> convert{};
-
-  {
-    const VectorType incoming{VectorType::template e<0>() + VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "First quadrant";
-  }
-
-  {
-    const VectorType incoming{-VectorType::template e<0>() + VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Second quadrant";
-  }
-
-  {
-    const VectorType incoming{-VectorType::template e<0>() - VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              -3 * pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Third quadrant";
-  }
-
-  {
-    const VectorType incoming{VectorType::template e<0>() - VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fourth quadrant";
-  }
-}
-
 TEST(ConvertCartesianSphericalTest, ThreeDimensionAllPositiveBases) {
   using std::sqrt;
 

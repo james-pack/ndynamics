@@ -14,53 +14,25 @@ class Convert final {
   VectorT operator()(const VectorT& incoming) const;
 };
 
-template <typename ScalarT, InnerProduct INNER_PRODUCT_STYLE>
-class Convert<Multivector<ScalarT, 2, 0, 0, INNER_PRODUCT_STYLE>, CartesianMeters, PolarMeters>
+template <typename ScalarT, InnerProduct INNER_PRODUCT_STYLE, size_t POSITIVE_BASES,
+          size_t NEGATIVE_BASES, size_t ZERO_BASES>
+class Convert<Multivector<ScalarT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>,
+              CartesianMeters, PolarMeters>
     final {
  public:
-  using VectorT = Multivector<ScalarT, 2, 0, 0, INNER_PRODUCT_STYLE>;
+  using VectorT =
+      Multivector<ScalarT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
 
   VectorT operator()(const VectorT& incoming) const {
-    using std::abs;
-    using std::acos;
-    using std::copysign;
-    const ScalarT length{abs(incoming)};
-    const ScalarT theta{copysign(acos(incoming.x() / length), incoming.y())};
-    return length * VectorT::template e<0>() + theta * VectorT::template e<1>();
-  }
-};
-
-template <typename ScalarT, InnerProduct INNER_PRODUCT_STYLE>
-class Convert<Multivector<ScalarT, 3, 0, 0, INNER_PRODUCT_STYLE>, CartesianMeters, PolarMeters>
-    final {
- public:
-  using VectorT = Multivector<ScalarT, 3, 0, 0, INNER_PRODUCT_STYLE>;
-
-  VectorT operator()(const VectorT& incoming) const {
-    using std::abs;
     using std::acos;
     using std::copysign;
     using std::hypot;
+    VectorT result{incoming};
     const ScalarT length{hypot(incoming.x(), incoming.y())};
     const ScalarT theta{copysign(acos(incoming.x() / length), incoming.y())};
-    return length * VectorT::template e<0>() + theta * VectorT::template e<1>() +
-           incoming.z() * VectorT::template e<2>();
-  }
-};
-
-template <typename ScalarT, InnerProduct INNER_PRODUCT_STYLE>
-class Convert<Multivector<ScalarT, 2, 0, 0, INNER_PRODUCT_STYLE>, CartesianMeters, SphericalMeters>
-    final {
- public:
-  using VectorT = Multivector<ScalarT, 2, 0, 0, INNER_PRODUCT_STYLE>;
-
-  VectorT operator()(const VectorT& incoming) const {
-    using std::abs;
-    using std::acos;
-    using std::copysign;
-    const ScalarT length{abs(incoming)};
-    const ScalarT theta{copysign(acos(incoming.x() / length), incoming.y())};
-    return length * VectorT::template e<0>() + theta * VectorT::template e<1>();
+    result.set_r(length);
+    result.set_theta(theta);
+    return result;
   }
 };
 
