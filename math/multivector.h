@@ -151,7 +151,7 @@ class Multivector final {
     }
   }
 
-  constexpr const T& psi() const {
+  constexpr const T& phi() const {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
