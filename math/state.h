@@ -42,7 +42,8 @@ class State final {
   std::array<T, DEPTH> elements_{};
 
  public:
-  using ValueType = T;
+  using VectorType = T;
+  using ValueType = VectorType;
   using ScalarType = typename ScalarTypes<ValueType>::ScalarType;
   using Units = UnitsT;
 
