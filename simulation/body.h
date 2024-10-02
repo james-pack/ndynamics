@@ -50,7 +50,8 @@ class Body final {
   template <typename RequestedUnits>
   constexpr const StateType& state() const {
     static_assert(std::is_same_v<RequestedUnits, Units>,
-                  "Requested state in units that are not supported.");
+                  "Unit mismatch. The state was requested in the wrong units. Check the calling "
+                  "code and the body definition to ensure that the units are the same.");
     return state_;
   }
 
