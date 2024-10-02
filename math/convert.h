@@ -36,6 +36,26 @@ class Convert<Multivector<ScalarT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, I
   }
 };
 
+template <typename ScalarT, InnerProduct INNER_PRODUCT_STYLE, size_t POSITIVE_BASES,
+          size_t NEGATIVE_BASES, size_t ZERO_BASES>
+class Convert<Multivector<ScalarT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>,
+              PolarMeters, CartesianMeters>
+    final {
+ public:
+  using VectorT =
+      Multivector<ScalarT, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
+
+  VectorT operator()(const VectorT& incoming) const {
+    using std::cos;
+    using std::sin;
+
+    VectorT result{incoming};
+    result.set_x(incoming.r() * cos(incoming.theta()));
+    result.set_y(incoming.r() * sin(incoming.theta()));
+    return result;
+  }
+};
+
 template <typename ScalarT, InnerProduct INNER_PRODUCT_STYLE>
 class Convert<Multivector<ScalarT, 3, 0, 0, INNER_PRODUCT_STYLE>, CartesianMeters, SphericalMeters>
     final {
@@ -52,6 +72,25 @@ class Convert<Multivector<ScalarT, 3, 0, 0, INNER_PRODUCT_STYLE>, CartesianMeter
 
     return length * VectorT::template e<0>() + theta * VectorT::template e<1>() +
            phi * VectorT::template e<2>();
+  }
+};
+
+template <typename ScalarT, InnerProduct INNER_PRODUCT_STYLE>
+class Convert<Multivector<ScalarT, 3, 0, 0, INNER_PRODUCT_STYLE>, SphericalMeters, CartesianMeters>
+    final {
+ public:
+  using VectorT = Multivector<ScalarT, 3, 0, 0, INNER_PRODUCT_STYLE>;
+
+  VectorT operator()(const VectorT& incoming) const {
+    using std::cos;
+    using std::sin;
+
+    const ScalarT x{incoming.r() * cos(incoming.phi()) * sin(incoming.theta())};
+    const ScalarT y{incoming.r() * sin(incoming.phi()) * sin(incoming.theta())};
+    const ScalarT z{incoming.r() * cos(incoming.theta())};
+
+    return x * VectorT::template e<0>() + y * VectorT::template e<1>() +
+           z * VectorT::template e<2>();
   }
 };
 
