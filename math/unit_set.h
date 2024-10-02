@@ -67,7 +67,7 @@ class UnitSet final {
 
   // If the number of units is fewer than the index, we assume that the last unit is repeated. This
   // saves a lot of work when dealing with vectors and other tuple-like structures when the types
-  // are the same. For example for a vector in Cartesian coordinates where all of the bases are in
+  // are the same. For example, for a vector in Cartesian coordinates where all of the bases are in
   // meters, we could just use UnitSet<CARTESIAN, unit::length::meter_t>, regardless of the size of
   // the vector.
   template <size_t INDEX>
