@@ -72,6 +72,12 @@ class UnitSet final {
   // the vector.
   template <size_t INDEX>
   using type = typename RepeatingTypeSelector<INDEX, size(), Unit, Units...>::type;
+
+  /**
+   * Facility to get the type of this same set of units, but with a different coordinate system.
+   */
+  template <Coordinates NEW_COORDINATES>
+  using with_changed_coordinates = UnitSet<NEW_COORDINATES, Unit, Units...>;
 };
 
 // Common sets of units for us.
@@ -80,6 +86,9 @@ using PolarMeters = UnitSet<Coordinates::POLAR, units::length::meter_t, units::a
                             units::length::meter_t>;
 using SphericalMeters =
     UnitSet<Coordinates::SPHERICAL, units::length::meter_t, units::angle::radian_t>;
+
+// Generally discouraged, but useful for transforming external units.
+using CartesianFeet = UnitSet<Coordinates::CARTESIAN, units::length::foot_t>;
 
 template <typename UnitSetT, size_t INDEX, typename T>
 auto with_unit(const T& value) {
