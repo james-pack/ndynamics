@@ -1,63 +1,72 @@
 #pragma once
 
+#include "math/state_view.h"
 #include "math/unit_set.h"
 #include "ui/data_series.h"
 #include "ui/ui_model.h"
 
 namespace ndyn::simulation {
 
-template <typename DataSourceT, typename FloatT = float, size_t NUM_POINTS = 2048>
+template <typename ViewT, size_t NUM_POINTS = 2048>
 class PositionUiModel final : public ui::UiModel {
  public:
-  using DataSourceType = DataSourceT;
-  using StateType = typename DataSourceType::StateType;
-  using Units = typename StateType::Units;
+  using ViewType = ViewT;
+  using ViewStateType = typename ViewType::StateType;
+  using Units = typename ViewStateType::Units;
+  using ScalarType = typename ViewStateType::ScalarType;
 
  private:
-  const DataSourceT* source_;
+  const ViewType* view_;
 
   static_assert(Units::coordinates() == math::Coordinates::CARTESIAN,
                 "Only Cartesian coordinates are supported");
 
  public:
-  PositionUiModel(const DataSourceT& source) : source_(&source) {}
+  PositionUiModel(const ViewType& view) : view_(&view) {}
 
-  ui::DataSeries<FloatT, NUM_POINTS, 2> position_series{"t", {"x", "y"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> velocity_series{"t", {"x", "y"}};
-  ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
+  ui::DataSeries<ScalarType, NUM_POINTS, 3> position_series{"t", {"x", "y", "z"}};
+  ui::DataSeries<ScalarType, NUM_POINTS, 3> velocity_series{"t", {"x", "y", "z"}};
+  ui::DataSeries<ScalarType, NUM_POINTS, 3> acceleration_series{"t", {"x", "y", "z"}};
 
-  FloatT position_x{};
-  FloatT position_y{};
+  ScalarType position_x{};
+  ScalarType position_y{};
+  ScalarType position_z{};
 
-  FloatT velocity_x{};
-  FloatT velocity_y{};
+  ScalarType velocity_x{};
+  ScalarType velocity_y{};
+  ScalarType velocity_z{};
 
-  FloatT acceleration_x{};
-  FloatT acceleration_y{};
+  ScalarType acceleration_x{};
+  ScalarType acceleration_y{};
+  ScalarType acceleration_z{};
 
   void update() override {
-    const FloatT current_time{static_cast<FloatT>(ImGui::GetTime())};
+    view_->clear_cache();
+    const ScalarType current_time{static_cast<ScalarType>(ImGui::GetTime())};
 
-    const StateType& state{source_->state()};
-    if constexpr (StateType::depth() > 0) {
-      const auto& position{state.template element<0>()};
+    if constexpr (ViewStateType::depth() > 0) {
+      const auto& position{view_->template element<0>()};
       position_x = position.x();
       position_y = position.y();
-      position_series.update(current_time, {position.x(), position.y()});
+      position_z = position.z();
+      position_series.update(current_time, {position.x(), position.y(), position.z()});
     }
 
-    if constexpr (StateType::depth() > 1) {
-      const auto& velocity{state.template element<1>()};
+    if constexpr (ViewStateType::depth() > 1) {
+      const auto& velocity{view_->template element<1>()};
       velocity_x = velocity.x();
       velocity_y = velocity.y();
-      velocity_series.update(current_time, {velocity.x(), velocity.y()});
+      velocity_z = velocity.z();
+      velocity_series.update(current_time, {velocity.x(), velocity.y(), velocity.z()});
     }
 
-    if constexpr (StateType::depth() > 2) {
-      const auto& acceleration{state.template element<2>()};
+    if constexpr (ViewStateType::depth() > 2) {
+      const auto& acceleration{view_->template element<2>()};
       acceleration_x = acceleration.x();
       acceleration_y = acceleration.y();
-      acceleration_series.update(current_time, {acceleration.x(), acceleration.y()});
+      acceleration_z = acceleration.z();
+      acceleration_series.update(current_time,
+                                 {acceleration.x(), acceleration.y(), acceleration.z()});
     }
   }
 };

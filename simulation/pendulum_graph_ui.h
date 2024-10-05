@@ -9,16 +9,11 @@
 
 namespace ndyn::simulation {
 
-template <size_t NUM_POINTS = 2048>
+template <typename PendulumModelT, typename PositionModelT>
 class PendulumGraph : public ui::UiElement {
- public:
-  using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
-  using FloatT = AccelerometerTypes::scalar_type;
-  using T = AccelerometerTypes::type;
-
  private:
-  PendulumUiModel<NUM_POINTS>* pendulum_;
-  PositionUiModel<Pendulum<T>, FloatT, NUM_POINTS>* position_;
+  PendulumModelT* pendulum_;
+  PositionModelT* position_;
 
  protected:
   void update() override {
@@ -100,8 +95,7 @@ class PendulumGraph : public ui::UiElement {
   }
 
  public:
-  PendulumGraph(PendulumUiModel<NUM_POINTS>& pendulum,
-                PositionUiModel<Pendulum<T>, FloatT, NUM_POINTS>& position)
+  PendulumGraph(PendulumModelT& pendulum, PositionModelT& position)
       : pendulum_(&pendulum), position_(&position) {}
 };
 

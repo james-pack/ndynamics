@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 #include "math/convert.h"
 #include "math/state.h"
 
@@ -20,40 +18,38 @@ class StateView final {
   using VectorType = typename StateType::VectorType;
 
  private:
-  static constexpr Convert<VectorType, IncomingUnits, Units> convert{};
+  static constexpr ConvertState<IncomingStateType, StateType> convert{};
 
   const IncomingStateType* state_;
   mutable StateType view_{};
-  mutable std::array<bool, StateType::depth()> is_dirty_{};
+  mutable bool is_dirty_{true};
 
-  template <size_t INDEX>
   constexpr void transform() const {
-    view_.template set_element<INDEX>(convert(state_->template element<INDEX>()));
-  }
-
-  constexpr void transform(size_t index) const {
-    view_.set_element(index, convert(state_->element(index)));
+    view_ = convert(*state_);
+    is_dirty_ = false;
   }
 
  public:
-  StateView(const IncomingStateType& state) : state_(&state) { is_dirty_.fill(true); }
+  StateView(const IncomingStateType& state) : state_(&state) {}
 
   template <size_t INDEX>
   constexpr const VectorType& element() const {
     static_assert(INDEX < StateType::depth(), "Attempt to reference out of bounds index");
-    if (is_dirty_[INDEX]) {
-      transform<INDEX>();
+    if (is_dirty_) {
+      transform();
     }
     return view_.template element<INDEX>();
   }
 
   constexpr const VectorType& element(size_t index) const {
-    if (is_dirty_.at(index)) {
-      transform(index);
+    if (is_dirty_) {
+      transform();
     }
 
     return view_.at(index);
   }
+
+  void clear_cache() const { is_dirty_ = true; }
 };
 
 /**
@@ -70,18 +66,20 @@ class StateView<StateT, StateT> final {
   using VectorType = typename StateType::VectorType;
 
  private:
-  const IncomingStateType* view_;
+  const IncomingStateType* state_;
 
  public:
-  StateView(const IncomingStateType& state) : view_(&state) {}
+  StateView(const IncomingStateType& state) : state_(&state) {}
 
   template <size_t INDEX>
   constexpr const VectorType& element() const {
     static_assert(INDEX < StateType::depth(), "Attempt to reference out of bounds index");
-    return view_.template element<INDEX>();
+    return state_->template element<INDEX>();
   }
 
-  constexpr const VectorType& element(size_t index) const { return view_.at(index); }
+  constexpr const VectorType& element(size_t index) const { return state_->at(index); }
+
+  void clear_cache() const {}
 };
 
 }  // namespace ndyn::math

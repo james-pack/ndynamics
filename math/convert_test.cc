@@ -5,380 +5,77 @@
 #include "gtest/gtest.h"
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
+#include "math/state_test_utils.h"
 
 namespace ndyn::math {
 
-TEST(ConvertCartesianPolarTest, TwoDimensionAllPositiveBases) {
-  using std::sqrt;
+template <typename State1, typename State2>
+::testing::AssertionResult CanRoundTripState(const State1 incoming) {
+  static constexpr ConvertState<State1, State2> transform{};
+  static constexpr ConvertState<State2, State1> inverse{};
 
-  using ScalarType = float;
-  using VectorType = Multivector<ScalarType, 2, 0, 0>;
-  using IncomingUnits = math::CartesianMeters;
-  using ResultUnits = math::PolarMeters;
-
-  Convert<VectorType, IncomingUnits, ResultUnits> convert{};
+  const State2 transform_1{transform(incoming)};
+  const State1 transform_2{inverse(transform_1)};
+  const State2 transform_3{transform(transform_2)};
+  const State1 transform_4{inverse(transform_3)};
 
   {
-    const VectorType incoming{VectorType::template e<0>() + VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "First quadrant";
+    // Verifies that we can do a transform followed by an inverse and get the original state.
+    ::testing::AssertionResult result{AreStatesNear(incoming, transform_2, 0.0001)};
+    if (!result) {
+      return result;
+    }
   }
 
   {
-    const VectorType incoming{-VectorType::template e<0>() + VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Second quadrant";
+    // Verifies that we can do the inverse transform followed by the forward transform and get back
+    // the first state.
+    ::testing::AssertionResult result{AreStatesNear(transform_1, transform_3, 0.0001)};
+    if (!result) {
+      return result;
+    }
   }
 
   {
-    const VectorType incoming{-VectorType::template e<0>() - VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              -3 * pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Third quadrant";
+    // Possibly overkill, but checks for numerical stability in the transforms.
+    ::testing::AssertionResult result{AreStatesNear(transform_2, transform_4, 0.0001)};
+    if (!result) {
+      return result;
+    }
   }
 
-  {
-    const VectorType incoming{VectorType::template e<0>() - VectorType::template e<1>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fourth quadrant";
-  }
+  return ::testing::AssertionSuccess();
 }
 
-TEST(ConvertCartesianPolarTest, TwoDimensionAllPositiveBasesReverseDirection) {
-  using std::sqrt;
-
-  using ScalarType = float;
-  using VectorType = Multivector<ScalarType, 2, 0, 0>;
-  using ResultUnits = math::CartesianMeters;
-  using IncomingUnits = math::PolarMeters;
-
-  Convert<VectorType, IncomingUnits, ResultUnits> convert{};
-
-  {
-    const VectorType expected{VectorType::template e<0>() + VectorType::template e<1>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "First quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() + VectorType::template e<1>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Second quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() - VectorType::template e<1>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              -3 * pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Third quadrant";
-  }
-
-  {
-    const VectorType expected{VectorType::template e<0>() - VectorType::template e<1>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fourth quadrant";
-  }
-}
-
-TEST(ConvertCartesianPolarTest, ThreeDimensionAllPositiveBases) {
-  using std::sqrt;
-
+TEST(ConvertVectorCartesianSphericalTest, CanRoundTripStatesUnitsOnly) {
   using ScalarType = float;
   using VectorType = Multivector<ScalarType, 3, 0, 0>;
-  using IncomingUnits = math::CartesianMeters;
-  using ResultUnits = math::PolarMeters;
-
-  Convert<VectorType, IncomingUnits, ResultUnits> convert{};
+  using Units1 = CartesianMeters;
+  using Units2 = CartesianFeet;
 
   {
-    const VectorType incoming{VectorType::template e<0>() + VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "First quadrant";
+    using State1 = State<VectorType, /* depth */ 1, Units1>;
+    using State2 = State<VectorType, /* depth */ 1, Units2>;
+    State1 state{static_cast<ScalarType>(2) * VectorType::e<0>() +
+                 static_cast<ScalarType>(3) * VectorType::e<1>() +
+                 static_cast<ScalarType>(5) * VectorType::e<2>()};
+
+    auto result{CanRoundTripState<State1, State2>(state)};
+    EXPECT_TRUE(result);
   }
 
   {
-    const VectorType incoming{-VectorType::template e<0>() + VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Second quadrant";
-  }
+    using State1 = State<VectorType, /* depth */ 2, Units1>;
+    using State2 = State<VectorType, /* depth */ 2, Units2>;
+    State1 state{static_cast<ScalarType>(2) * VectorType::e<0>() +
+                     static_cast<ScalarType>(3) * VectorType::e<1>() +
+                     static_cast<ScalarType>(5) * VectorType::e<2>(),
+                 static_cast<ScalarType>(1) * VectorType::e<0>() +
+                     static_cast<ScalarType>(7) * VectorType::e<1>() +
+                     static_cast<ScalarType>(11) * VectorType::e<2>()};
 
-  {
-    const VectorType incoming{-VectorType::template e<0>() - VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              -3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Third quadrant";
-  }
-
-  {
-    const VectorType incoming{VectorType::template e<0>() - VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fourth quadrant";
-  }
-}
-
-TEST(ConvertCartesianPolarTest, ThreeDimensionAllPositiveBasesReverseDirection) {
-  using std::sqrt;
-
-  using ScalarType = float;
-  using VectorType = Multivector<ScalarType, 3, 0, 0>;
-  using ResultUnits = math::CartesianMeters;
-  using IncomingUnits = math::PolarMeters;
-
-  Convert<VectorType, IncomingUnits, ResultUnits> convert{};
-
-  {
-    const VectorType expected{VectorType::template e<0>() + VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "First quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() + VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Second quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() - VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() +
-                              -3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Third quadrant";
-  }
-
-  {
-    const VectorType expected{VectorType::template e<0>() - VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(sqrt(2)) * VectorType::template e<0>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fourth quadrant";
-  }
-}
-
-TEST(ConvertCartesianSphericalTest, ThreeDimensionAllPositiveBases) {
-  using std::sqrt;
-
-  using ScalarType = float;
-  using VectorType = Multivector<ScalarType, 3, 0, 0>;
-  using IncomingUnits = math::CartesianMeters;
-  using ResultUnits = math::SphericalMeters;
-
-  static constexpr ScalarType SQRT_2{sqrt(2)};
-
-  Convert<VectorType, IncomingUnits, ResultUnits> convert{};
-
-  {
-    const VectorType incoming{VectorType::template e<0>() + VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "First quadrant";
-  }
-
-  {
-    const VectorType incoming{-VectorType::template e<0>() + VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Second quadrant";
-  }
-
-  {
-    const VectorType incoming{-VectorType::template e<0>() - VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Third quadrant";
-  }
-
-  {
-    const VectorType incoming{VectorType::template e<0>() - VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fourth quadrant";
-  }
-
-  {
-    const VectorType incoming{VectorType::template e<0>() + VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fifth quadrant";
-  }
-
-  {
-    const VectorType incoming{-VectorType::template e<0>() + VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Sixth quadrant";
-  }
-
-  {
-    const VectorType incoming{-VectorType::template e<0>() - VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Seventh quadrant";
-  }
-
-  {
-    const VectorType incoming{VectorType::template e<0>() - VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType expected{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Eigth quadrant";
-  }
-}
-
-TEST(ConvertCartesianSphericalTest, ThreeDimensionAllPositiveBasesReverseDirection) {
-  using std::sqrt;
-
-  using ScalarType = float;
-  using VectorType = Multivector<ScalarType, 3, 0, 0>;
-  using ResultUnits = math::CartesianMeters;
-  using IncomingUnits = math::SphericalMeters;
-
-  static constexpr ScalarType SQRT_2{sqrt(2)};
-
-  Convert<VectorType, IncomingUnits, ResultUnits> convert{};
-
-  {
-    const VectorType expected{VectorType::template e<0>() + VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "First quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() + VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Second quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() - VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Third quadrant";
-  }
-
-  {
-    const VectorType expected{VectorType::template e<0>() - VectorType::template e<1>() +
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fourth quadrant";
-  }
-
-  {
-    const VectorType expected{VectorType::template e<0>() + VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Fifth quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() + VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Sixth quadrant";
-  }
-
-  {
-    const VectorType expected{-VectorType::template e<0>() - VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Seventh quadrant";
-  }
-
-  {
-    const VectorType expected{VectorType::template e<0>() - VectorType::template e<1>() -
-                              SQRT_2 * VectorType::template e<2>()};
-    const VectorType incoming{static_cast<ScalarType>(2) * VectorType::template e<0>() +
-                              3 * pi_v<ScalarType> / 4 * VectorType::template e<1>() -
-                              pi_v<ScalarType> / 4 * VectorType::template e<2>()};
-    const VectorType result{convert(incoming)};
-    EXPECT_TRUE(AreNear(expected, result, 0.0001)) << "Eigth quadrant";
+    auto result{CanRoundTripState<State1, State2>(state)};
+    EXPECT_TRUE(result);
   }
 }
 

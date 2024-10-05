@@ -4,6 +4,8 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "math/state.h"
+#include "math/state_view.h"
 #include "sensor/measurement_type.h"
 #include "simulation/accelerometer_sensor_model.h"
 #include "simulation/cube_ui.h"
@@ -15,25 +17,60 @@
 #include "ui/app.h"
 #include "ui/scene.h"
 #include "ui/ui_elements.h"
+#include "units.h"
 
 namespace ndyn::simulation {
 
 class PendulumScene final : public ui::Scene {
  private:
   static constexpr size_t NUM_POINTS{1024};
-  using PendulumGraphType = PendulumGraph<NUM_POINTS>;
-  using FloatT = PendulumGraphType::FloatT;
-  using PendulumType = Pendulum<PendulumGraphType::T>;
-  using PendulumConfiguratorType = PendulumConfigurator<PendulumGraphType::T>;
-  using AccelerometerType =
-      sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>::type;
+
+  // We base all of the types off of what accelerometers provide, since this is primarily a UI to
+  // visualize accelerometer readings, especially as compared to actual motion.
+  using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
+
+  using VectorType = typename AccelerometerTypes::type;
+  using AccelerometerType = VectorType;
+  using FloatT = typename AccelerometerTypes::scalar_type;
+  using LinearUnit = units::length::meter_t;
+
+  using PendulumConfiguratorType = PendulumConfigurator<VectorType, LinearUnit>;
+  using PendulumType = typename PendulumConfiguratorType::PendulumType;
+  using PendulumStateType = typename PendulumConfiguratorType::StateType;
+
+  using CartesianViewType =
+      math::StateView<math::State<VectorType, 3, math::CartesianMeters>, PendulumStateType>;
+
   using TemperatureType = sensor::MeasurementValueType<sensor::MeasurementType::TEMPERATURE>::type;
 
+  /**
+   * Numeric simulation of the motion of a pendulum.
+   */
   PendulumType pendulum;
 
-  PendulumUiModel<NUM_POINTS> pendulum_model{pendulum};
-  PositionUiModel<PendulumType, FloatT, NUM_POINTS> position_model{pendulum};
+  /**
+   * View of the state of the pendulum in Cartesian coordinates.
+   */
+  CartesianViewType cartesian_view{pendulum.state()};
 
+  /**
+   * UI models of this motion. These save major motion parameters over time and make them available
+   * to graph.
+   */
+  PendulumUiModel<PendulumStateType, NUM_POINTS> pendulum_model{pendulum};
+  PositionUiModel<CartesianViewType, NUM_POINTS> position_model{cartesian_view};
+
+  /**
+   * UI that displays graphs of the pendulum's state over time. This graph unifies the data from the
+   * pendulum-specific UI model and the generic position model.
+   */
+  PendulumGraph<PendulumUiModel<PendulumStateType, NUM_POINTS>,
+                PositionUiModel<CartesianViewType, NUM_POINTS>>
+      statistics{pendulum_model, position_model};
+
+  /**
+   * Sensor simulations and their accompanying characterizations.
+   */
   static constexpr TemperatureType TEMPERATURE{25};
   Characterization<AccelerometerType, FloatT> accelerometer_1_characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.025}, .offset_std{.05}}};
@@ -58,13 +95,19 @@ class PendulumScene final : public ui::Scene {
 
   AccelerometerSensorModel<PendulumType, NUM_POINTS> gyroscope_2{pendulum,
                                                                  gyroscope_2_characterization};
-
-  ui::LeftRightPane ui{};
-
-  PendulumGraphType statistics{pendulum_model, position_model};
-
+  /**
+   * UI to display graphs of these sensor simulations.
+   */
   SensorMeasurementGraph<PendulumType, NUM_POINTS> sensor_measurements{};
 
+  /**
+   * Top-level UI pane.
+   */
+  ui::LeftRightPane ui{};
+
+  /**
+   * Directly render a cube to visualize the motion of the mass at the end of the pendulum.
+   */
   CubePositionFn cube_as_pendulum{[this]() {
     const auto x{pendulum.position().x()};
     const auto y{pendulum.position().y() + pendulum.length() / 2};
@@ -75,6 +118,10 @@ class PendulumScene final : public ui::Scene {
   }};
   Cube cube;
 
+  /**
+   * Construct a description of the scene based on the pendulum's parameters. This description gets
+   * rendered as the window title, if using a windowing system.
+   */
   static std::string build_scene_description(float length, float gravity, float mass, float theta) {
     using std::to_string;
     std::string result{"Pendulum -- "};

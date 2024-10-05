@@ -28,6 +28,7 @@ cc_library(
     hdrs = [
         "integrators_test_utils.h",
         "multivector_test_utils.h",
+        "state_test_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [

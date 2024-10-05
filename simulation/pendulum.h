@@ -9,6 +9,7 @@
 #include "math/multivector_utils.h"
 #include "math/state.h"
 #include "math/unit_set.h"
+#include "units.h"
 
 namespace ndyn::simulation {
 
@@ -59,13 +60,12 @@ inline constexpr ScalarType compute_period(ScalarType length, ScalarType g, Scal
  * Note that this simulation does NOT use a small angle approximation; it numerically approximates
  * the full 2nd order differential equation of motion.
  */
-template <typename MultivectorT>
+template <typename StateT>
 class Pendulum final {
  public:
-  using MultivectorType = MultivectorT;
-  using ScalarType = typename MultivectorType::ScalarType;
-  using StateType = math::State<MultivectorType, 3, math::CartesianMeters>;
-  using AngularStateType = math::State<MultivectorType, 2, math::SphericalMeters>;
+  using StateType = StateT;
+  using MultivectorType = typename StateType::VectorType;
+  using ScalarType = typename StateType::ScalarType;
 
  private:
   // Precomputed magnitude of the position vector. The length of the pendulum.
@@ -87,18 +87,21 @@ class Pendulum final {
   const ScalarType initial_time_;
 
   ScalarType t_;
-  AngularStateType angular_state_;
+  StateType angular_state_;
 
-  math::RungeKutta4<AngularStateType> integrator_{
-      [this](const AngularStateType& state) -> AngularStateType {
-        using std::sin;
-        AngularStateType partials{state.shift()};
-        const MultivectorType& angular_position{state.template element<0>()};
-        partials.template set_element<1>(-g_ / angular_position.r() *
-                                         sin(angular_position.theta()) *
-                                         MultivectorType::template e<1>());
-        return partials;
-      }};
+  constexpr MultivectorType compute_angular_acceleration(const StateType& state) const {
+    using std::sin;
+    const MultivectorType& angular_position{state.template element<0>()};
+    return -g_ / angular_position.r() * sin(angular_position.theta()) *
+           MultivectorType::template e<1>();
+  }
+
+  math::RungeKutta4<StateType> integrator_{[this](const StateType& state) -> StateType {
+    using std::sin;
+    StateType partials{state.shift()};
+    partials.template set_element<1>(compute_angular_acceleration(state));
+    return partials;
+  }};
 
   const ScalarType mass_;
 
@@ -127,15 +130,7 @@ class Pendulum final {
   constexpr ScalarType period() const { return period_; }
 
   // Actual state as held and processed internally.
-  constexpr const AngularStateType& angular_state() const { return angular_state_; }
-
-  constexpr StateType state() const { return StateType{position(), velocity(), acceleration()}; }
-
-  constexpr MultivectorType angular_acceleration() const {
-    using std::sin;
-    return -g_ / angular_state_.element(0).r() * sin(angular_state_.element(0).theta()) *
-           MultivectorType::template e<1>();
-  }
+  constexpr const StateType& state() const { return angular_state_; }
 
   // Rectilinear state. These are transformations of the actual state.
   constexpr MultivectorType position() const {
@@ -180,7 +175,9 @@ class Pendulum final {
   constexpr ScalarType length() const { return angular_state_.template element<0>().r(); }
   constexpr ScalarType theta() const { return angular_state_.template element<0>().theta(); }
   constexpr ScalarType theta_dot() const { return angular_state_.template element<1>().theta(); }
-  constexpr ScalarType theta_double_dot() const { return angular_acceleration().theta(); }
+  constexpr ScalarType theta_double_dot() const {
+    return angular_state_.template element<2>().theta();
+  }
   constexpr ScalarType current_time() const { return t_; }
 
   /**
@@ -219,6 +216,11 @@ class Pendulum final {
         VLOG(4) << "t_: " << t_ << ", theta(): " << theta() << ", theta_dot(): " << theta_dot();
       } while (abs(t_ - new_time) > abs(step_size));
     }
+
+    // Update the acceleration component of the state, if it is expected to be tracked.
+    if constexpr (StateType::depth() >= 3) {
+      angular_state_.template set_element<2>(compute_angular_acceleration(angular_state_));
+    }
   }
 
   void evolve(ScalarType time_increment, ScalarType step_size = 0) {
@@ -226,11 +228,16 @@ class Pendulum final {
   }
 };
 
-template <typename MultivectorT>
+template <typename VectorT, typename Unit = units::length::meter_t>
 class PendulumConfigurator final {
  public:
-  using MultivectorType = MultivectorT;
-  using ScalarType = typename MultivectorType::ScalarType;
+  using VectorType = VectorT;
+  using ScalarType = typename VectorType::ScalarType;
+  using Units = math::UnitSet<math::Coordinates::SPHERICAL, Unit, units::angle::radian_t>;
+  using StateType = math::State<VectorType, 3, Units>;
+
+  // Type of the resulting pendulum.
+  using PendulumType = Pendulum<StateType>;
 
  private:
   ScalarType mass_{1};
@@ -239,8 +246,8 @@ class PendulumConfigurator final {
   ScalarType theta_{};
   ScalarType g_{1};
 
-  static constexpr auto e0 = MultivectorType::template e<0>();
-  static constexpr auto e1 = MultivectorType::template e<1>();
+  static constexpr auto e0 = VectorType::template e<0>();
+  static constexpr auto e1 = VectorType::template e<1>();
 
  public:
   /**
@@ -297,17 +304,16 @@ class PendulumConfigurator final {
     return *this;
   }
 
-  MultivectorType calculate_position() const { return length_ * e0 + theta_ * e1; }
+  VectorType calculate_position() const { return length_ * e0 + theta_ * e1; }
 
-  MultivectorType gravitational_acceleration() const { return -g_ * e1; }
+  VectorType gravitational_acceleration() const { return -g_ * e1; }
 
   /**
    * Create the pendulum as configured. Note that the PendulumConfigurator object can be
    * reused, if desired, and its state is not changed after calling this method.
    */
-  Pendulum<MultivectorType> create() const {
-    return Pendulum<MultivectorType>{mass_, gravitational_acceleration(), initial_time_,
-                                     calculate_position()};
+  PendulumType create() const {
+    return PendulumType{mass_, gravitational_acceleration(), initial_time_, calculate_position()};
   }
 };
 
