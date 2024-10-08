@@ -14,7 +14,7 @@
 namespace ndyn::ui {
 
 template <GLenum SHADER_TYPE>
-GLuint initialize_shader(std::filesystem::path path) {
+GLuint initialize_shader(const std::filesystem::path& path) {
   GLuint shader_id = glCreateShader(SHADER_TYPE);
 
   GLint result{GL_FALSE};
@@ -45,19 +45,19 @@ ShaderProgram ShaderProgramBuilder::build() {
   shader_ids.reserve(vertex_shader_paths_.size() + fragment_shader_paths_.size());
 
   // Initialize each of the vertex shaders, including compiling them.
-  for (const auto path : vertex_shader_paths_) {
+  for (const auto& path : vertex_shader_paths_) {
     shader_ids.push_back(initialize_shader<GL_VERTEX_SHADER>(path));
   }
 
   // Same for fragment shaders.
-  for (const auto path : fragment_shader_paths_) {
+  for (const auto& path : fragment_shader_paths_) {
     shader_ids.push_back(initialize_shader<GL_FRAGMENT_SHADER>(path));
   }
 
   // Link the program
   GLuint program_id = glCreateProgram();
 
-  for (const auto shader_id : shader_ids) {
+  for (const auto& shader_id : shader_ids) {
     glAttachShader(program_id, shader_id);
   }
 
