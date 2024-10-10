@@ -4,9 +4,11 @@ cc_library(
     name = "math",
     hdrs = [
         "bitset.h",
+        "cartesian_vector.h",
         "cayley.h",
         "cayley_entry_calculator.h",
         "convert.h",
+        "coordinates.h",
         "integrators.h",
         "magnitude.h",
         "multivector.h",
@@ -14,6 +16,7 @@ cc_library(
         "state.h",
         "state_view.h",
         "unit_set.h",
+        "vector.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
