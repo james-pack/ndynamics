@@ -4,12 +4,11 @@
 
 namespace ndyn::simulation {
 
-template <typename VectorT, typename UnitSetT>
+template <typename VectorT>
 class Potential {
  public:
   using VectorType = VectorT;
   using ScalarType = typename math::ScalarTypes<VectorType>::ScalarType;
-  using Units = UnitSetT;
 
   Potential() = default;
   virtual ~Potential() = default;
@@ -21,15 +20,14 @@ class Potential {
   virtual void evolve(ScalarType time_increment, ScalarType step_size = 0) = 0;
 };
 
-template <typename VectorT, typename UnitSetT>
-class UniformPotential final : public Potential<VectorT, UnitSetT> {
+template <typename VectorT>
+class UniformPotential final : public Potential<VectorT> {
  private:
   VectorT value_{};
 
  public:
   using VectorType = VectorT;
   using ScalarType = typename math::ScalarTypes<VectorType>::ScalarType;
-  using Units = UnitSetT;
 
   // Uniform zero potential.
   UniformPotential() = default;

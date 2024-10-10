@@ -36,7 +36,7 @@ class ScalarTypes<double> {
  *
  * States are tied to a particular set of units and coordinate system to help avoid mistakes.
  */
-template <typename T, size_t DEPTH, typename UnitsT>
+template <typename T, size_t DEPTH>
 class State final {
  private:
   std::array<T, DEPTH> elements_{};
@@ -45,7 +45,6 @@ class State final {
   using VectorType = T;
   using ValueType = VectorType;
   using ScalarType = typename ScalarTypes<ValueType>::ScalarType;
-  using Units = UnitsT;
 
   static constexpr size_t depth() { return DEPTH; }
 
@@ -89,12 +88,12 @@ class State final {
   }
 };
 
-template <typename T, size_t DEPTH, typename UnitsT>
-std::string to_string(const State<T, DEPTH, UnitsT>& state) {
+template <typename T, size_t DEPTH>
+std::string to_string(const State<T, DEPTH>& state) {
   using std::to_string;
   std::string result{"{"};
   bool need_comma{false};
-  for (size_t i = 0; i < State<T, DEPTH, UnitsT>::depth(); ++i) {
+  for (size_t i = 0; i < DEPTH; ++i) {
     if (need_comma) {
       result.append(", ");
     }
@@ -105,8 +104,8 @@ std::string to_string(const State<T, DEPTH, UnitsT>& state) {
   return result;
 }
 
-template <typename T, size_t DEPTH, typename UnitsT>
-std::ostream& operator<<(std::ostream& os, const State<T, DEPTH, UnitsT>& state) {
+template <typename T, size_t DEPTH>
+std::ostream& operator<<(std::ostream& os, const State<T, DEPTH>& state) {
   using std::to_string;
   os << to_string(state);
   return os;

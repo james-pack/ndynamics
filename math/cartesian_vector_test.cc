@@ -10,11 +10,9 @@
 namespace ndyn::math {
 
 using FloatT = float;
-using Vec2 =
-    Vector<Coordinates::CARTESIAN, FloatT, 2,
-           UnitSet<Coordinates::CARTESIAN, units::length::meter_t, units::length::meter_t>>;
-using Vec3 = Vector<Coordinates::CARTESIAN, FloatT, 3,
-                    UnitSet<Coordinates::CARTESIAN, units::length::meter_t>>;
+using Vec2 = Vector<Coordinates::CARTESIAN, FloatT, 2,
+                    UnitSet<units::length::meter_t, units::length::meter_t>>;
+using Vec3 = Vector<Coordinates::CARTESIAN, FloatT, 3, UnitSet<units::length::meter_t>>;
 
 TEST(Cartesian2DVectorTest, CanEmptyListInitialize) {
   const Vec2 v{};

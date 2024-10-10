@@ -38,8 +38,7 @@ class PendulumScene final : public ui::Scene {
   using PendulumType = typename PendulumConfiguratorType::PendulumType;
   using PendulumStateType = typename PendulumConfiguratorType::StateType;
 
-  using CartesianViewType =
-      math::StateView<math::State<VectorType, 3, math::CartesianMeters>, PendulumStateType>;
+  using CartesianViewType = math::StateView<math::State<VectorType, 3>, PendulumStateType>;
 
   using TemperatureType = sensor::MeasurementValueType<sensor::MeasurementType::TEMPERATURE>::type;
 
@@ -51,7 +50,10 @@ class PendulumScene final : public ui::Scene {
   /**
    * View of the state of the pendulum in Cartesian coordinates.
    */
-  CartesianViewType cartesian_view{pendulum.state()};
+  CartesianViewType cartesian_view{
+      pendulum.state(),
+      math::convert_coordinates<math::Coordinates::SPHERICAL, math::Coordinates::CARTESIAN,
+                                PendulumStateType, typename CartesianViewType::StateType>};
 
   /**
    * UI models of this motion. These save major motion parameters over time and make them available

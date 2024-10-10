@@ -40,11 +40,9 @@ class RepeatingTypeSelector<0, 1, Type, Types...> final {
 
 }  // namespace
 
-template <Coordinates COORDINATES, typename Unit, typename... Units>
+template <typename Unit, typename... Units>
 class UnitSet final {
  public:
-  static constexpr Coordinates coordinates() { return COORDINATES; }
-
   static constexpr size_t size() { return 1 /* For the Unit parameter */ + sizeof...(Units); }
 
   // If the number of units is fewer than the index, we assume that the last unit is repeated. This
@@ -54,23 +52,7 @@ class UnitSet final {
   // the vector.
   template <size_t INDEX>
   using type = typename RepeatingTypeSelector<INDEX, size(), Unit, Units...>::type;
-
-  /**
-   * Facility to get the type of this same set of units, but with a different coordinate system.
-   */
-  template <Coordinates NEW_COORDINATES>
-  using with_changed_coordinates = UnitSet<NEW_COORDINATES, Unit, Units...>;
 };
-
-// Common sets of units for us.
-using CartesianMeters = UnitSet<Coordinates::CARTESIAN, units::length::meter_t>;
-using PolarMeters = UnitSet<Coordinates::POLAR, units::length::meter_t, units::angle::radian_t,
-                            units::length::meter_t>;
-using SphericalMeters =
-    UnitSet<Coordinates::SPHERICAL, units::length::meter_t, units::angle::radian_t>;
-
-// Generally discouraged, but useful for transforming external units.
-using CartesianFeet = UnitSet<Coordinates::CARTESIAN, units::length::foot_t>;
 
 template <typename UnitSetT, size_t INDEX, typename T>
 auto with_unit(const T& value) {

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <type_traits>
 
+#include "math/coordinates.h"
 #include "math/multivector.h"
 #include "math/multivector_utils.h"
 #include "math/state.h"
@@ -11,46 +12,17 @@
 namespace ndyn::math {
 
 /**
- * Conversion that just converts the units of a vector. It requires
- * that the incoming and resulting coordinate systems are the same.
- */
-template <typename VectorType, typename IncomingUnits, typename ResultUnits>
-VectorType convert_vector_units(const VectorType& incoming) {
-  // TODO(james): Implement convert_units(VectorType).
-  return incoming;
-}
-
-/**
- * Conversion that just converts the units of each vector in the state independently. It requires
- * that the incoming and resulting coordinate systems are the same.
- */
-template <typename VectorType, size_t DEPTH, typename IncomingUnits, typename ResultUnits>
-State<VectorType, DEPTH, ResultUnits> convert_units(
-    const State<VectorType, DEPTH, IncomingUnits>& incoming) {
-  static_assert(IncomingUnits::coordinates() == ResultUnits::coordinates(),
-                "Can only convert units, not coordinates");
-
-  State<VectorType, DEPTH, ResultUnits> result{};
-  for (size_t i = 0; i < DEPTH; ++i) {
-    result.set_element(
-        i, convert_vector_units<VectorType, IncomingUnits, ResultUnits>(incoming.element(i)));
-  }
-  return result;
-}
-
-/**
  * Conversion that converts the coordinates of a state.
  */
-template <typename IncomingStateType, typename ResultStateType>
-void convert_coordinates(const IncomingStateType& incoming, ResultStateType& result) {
+template <Coordinates INCOMING_COORDINATES, Coordinates RESULT_COORDINATES,
+          typename IncomingStateType, typename ResultStateType>
+ResultStateType convert_coordinates(const IncomingStateType& incoming) {
   using std::acos;
   using std::atan2;
   using std::cos;
   using std::hypot;
   using std::sin;
 
-  static constexpr Coordinates INCOMING_COORDINATES{IncomingStateType::Units::coordinates()};
-  static constexpr Coordinates RESULT_COORDINATES{ResultStateType::Units::coordinates()};
   static constexpr size_t CONVERSION_DEPTH{
       std::min(IncomingStateType::depth(), ResultStateType::depth())};
 
@@ -69,6 +41,8 @@ void convert_coordinates(const IncomingStateType& incoming, ResultStateType& res
 
   static_assert(CONVERSION_DEPTH < 4,
                 "Coordinate conversions are not implemented beyond a state depth of 3");
+
+  ResultStateType result{};
 
   if constexpr (INCOMING_COORDINATES == Coordinates::CARTESIAN) {
     if constexpr (RESULT_COORDINATES == Coordinates::POLAR) {
@@ -205,68 +179,8 @@ void convert_coordinates(const IncomingStateType& incoming, ResultStateType& res
                     "Conversion from spherical to polar not implemented.");
     }
   }
+
+  return result;
 }
-
-template <typename IncomingStateT, typename ResultStateT>
-class ConvertState final {
- public:
-  using IncomingStateType = IncomingStateT;
-  using ResultStateType = ResultStateT;
-
-  using IncomingVectorType = typename IncomingStateType::VectorType;
-  using ResultVectorType = typename ResultStateType::VectorType;
-
-  static constexpr size_t INCOMING_DEPTH{IncomingStateType::depth()};
-  static constexpr size_t RESULT_DEPTH{ResultStateType::depth()};
-
-  using IncomingUnits = typename IncomingStateType::Units;
-  using ResultUnits = typename ResultStateType::Units;
-
-  static constexpr Coordinates INCOMING_COORDINATES{IncomingUnits::coordinates()};
-  static constexpr Coordinates RESULT_COORDINATES{ResultUnits::coordinates()};
-
- private:
- public:
-  ResultStateType operator()(const IncomingStateType& incoming) const {
-    // Change the vector type.
-    using IncomingStateWithResultVectorType =
-        State<ResultVectorType, INCOMING_DEPTH, IncomingUnits>;
-
-    IncomingStateWithResultVectorType with_result_vector_type{};
-
-    if constexpr (!std::is_same_v<IncomingVectorType, ResultVectorType>) {
-      static_assert(std::is_same_v<IncomingVectorType, ResultVectorType>,
-                    "TODO(james): Implement vector type conversion");
-    } else {
-      with_result_vector_type = incoming;
-    }
-
-    // Change coordinates.
-    using IncomingUnitsWithResultCoordinates =
-        typename IncomingUnits::template with_changed_coordinates<RESULT_COORDINATES>;
-
-    using IncomingStateWithResultCoordinates =
-        State<ResultVectorType, INCOMING_DEPTH, IncomingUnitsWithResultCoordinates>;
-
-    IncomingStateWithResultCoordinates with_result_coordinates{};
-    if constexpr (INCOMING_COORDINATES != RESULT_COORDINATES) {
-      convert_coordinates(with_result_vector_type, with_result_coordinates);
-    } else {
-      with_result_coordinates = with_result_vector_type;
-    }
-
-    // Change the other units.
-    ResultStateType result{};
-    if constexpr (!std::is_same_v<IncomingUnitsWithResultCoordinates, ResultUnits>) {
-      result =
-          convert_units<ResultVectorType, std::min(INCOMING_DEPTH, RESULT_DEPTH),
-                        IncomingUnitsWithResultCoordinates, ResultUnits>(with_result_coordinates);
-    } else {
-      result = with_result_coordinates;
-    }
-
-    return result;
-  }
-};
 
 }  // namespace ndyn::math

@@ -233,8 +233,8 @@ class PendulumConfigurator final {
  public:
   using VectorType = VectorT;
   using ScalarType = typename VectorType::ScalarType;
-  using Units = math::UnitSet<math::Coordinates::SPHERICAL, Unit, units::angle::radian_t>;
-  using StateType = math::State<VectorType, 3, Units>;
+  using Units = math::UnitSet<Unit, units::angle::radian_t>;
+  using StateType = math::State<VectorType, 3>;
 
   // Type of the resulting pendulum.
   using PendulumType = Pendulum<StateType>;

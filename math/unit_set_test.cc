@@ -23,15 +23,8 @@ struct ValuesWithUnits {
   }
 };
 
-TEST(UnitSetTest, CanGetCoordinatesFromUnitSet) {
-  using Units =
-      UnitSet<Coordinates::CARTESIAN, units::length::meter_t, units::velocity::miles_per_hour_t>;
-  EXPECT_EQ(Coordinates::CARTESIAN, Units::coordinates());
-}
-
 TEST(UnitSetTest, CanGetUnitsFromUnitSet) {
-  using Units =
-      UnitSet<Coordinates::CARTESIAN, units::length::meter_t, units::velocity::miles_per_hour_t>;
+  using Units = UnitSet<units::length::meter_t, units::velocity::miles_per_hour_t>;
 
   bool result{std::is_same_v<units::length::meter_t, Units::type<0>>};
   EXPECT_TRUE(result);
@@ -41,7 +34,7 @@ TEST(UnitSetTest, CanGetUnitsFromUnitSet) {
 }
 
 TEST(UnitSetTest, CanGetUnitsFromUnitSetWhenRepeatingUnits) {
-  using Units = UnitSet<Coordinates::CARTESIAN, units::length::meter_t>;
+  using Units = UnitSet<units::length::meter_t>;
 
   bool result{std::is_same_v<units::length::meter_t, Units::type<0>>};
   EXPECT_TRUE(result);
@@ -54,17 +47,8 @@ TEST(UnitSetTest, CanGetUnitsFromUnitSetWhenRepeatingUnits) {
   EXPECT_TRUE(result);
 }
 
-TEST(UnitSetTest, CanGetCoordinates) {
-  ValuesWithUnits<
-      UnitSet<Coordinates::CARTESIAN, units::length::meter_t, units::velocity::miles_per_hour_t>>
-      values{1, 2};
-  EXPECT_EQ(Coordinates::CARTESIAN, decltype(values)::Units::coordinates());
-}
-
 TEST(UnitSetTest, CanGetUnits) {
-  ValuesWithUnits<
-      UnitSet<Coordinates::CARTESIAN, units::length::meter_t, units::velocity::miles_per_hour_t>>
-      values{1, 2};
+  ValuesWithUnits<UnitSet<units::length::meter_t, units::velocity::miles_per_hour_t>> values{1, 2};
 
   bool result{std::is_same_v<units::length::meter_t, decltype(values)::Units::type<0>>};
   EXPECT_TRUE(result);
@@ -74,9 +58,7 @@ TEST(UnitSetTest, CanGetUnits) {
 }
 
 TEST(UnitSetTest, CanValuesWithUnits) {
-  ValuesWithUnits<
-      UnitSet<Coordinates::CARTESIAN, units::length::meter_t, units::velocity::miles_per_hour_t>>
-      values{1, 2};
+  ValuesWithUnits<UnitSet<units::length::meter_t, units::velocity::miles_per_hour_t>> values{1, 2};
 
   {
     auto unit_value_0{values.get<0>()};
@@ -91,7 +73,7 @@ TEST(UnitSetTest, CanValuesWithUnits) {
 }
 
 TEST(UnitSetTest, CanGetUnitsWhenRepeatingUnits) {
-  ValuesWithUnits<UnitSet<Coordinates::CARTESIAN, units::length::meter_t>> values{1, 2};
+  ValuesWithUnits<UnitSet<units::length::meter_t>> values{1, 2};
 
   bool result{std::is_same_v<units::length::meter_t, decltype(values)::Units::type<0>>};
   EXPECT_TRUE(result);
@@ -101,7 +83,7 @@ TEST(UnitSetTest, CanGetUnitsWhenRepeatingUnits) {
 }
 
 TEST(UnitSetTest, CanValuesWithUnitsWhenRepeatingUnits) {
-  ValuesWithUnits<UnitSet<Coordinates::CARTESIAN, units::length::meter_t>> values{1, 2};
+  ValuesWithUnits<UnitSet<units::length::meter_t>> values{1, 2};
 
   {
     auto unit_value_0{values.get<0>()};

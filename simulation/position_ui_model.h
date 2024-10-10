@@ -12,14 +12,10 @@ class PositionUiModel final : public ui::UiModel {
  public:
   using ViewType = ViewT;
   using ViewStateType = typename ViewType::StateType;
-  using Units = typename ViewStateType::Units;
   using ScalarType = typename ViewStateType::ScalarType;
 
  private:
   const ViewType* view_;
-
-  static_assert(Units::coordinates() == math::Coordinates::CARTESIAN,
-                "Only Cartesian coordinates are supported");
 
  public:
   PositionUiModel(const ViewType& view) : view_(&view) {}

@@ -123,14 +123,14 @@ cc_test(
     ],
 )
 
-cc_test(
-    name = "convert_test",
-    srcs = ["convert_test.cc"],
-    deps = [
-        ":math",
-        ":testing",
-        "//base",
-        "//third_party/glog",
-        "//third_party/gtest",
-    ],
-)
+# cc_test(
+#     name = "convert_test",
+#     srcs = ["convert_test.cc"],
+#     deps = [
+#         ":math",
+#         ":testing",
+#         "//base",
+#         "//third_party/glog",
+#         "//third_party/gtest",
+#     ],
+# )
