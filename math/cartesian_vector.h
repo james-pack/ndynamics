@@ -3,7 +3,6 @@
 #include <array>
 #include <cmath>
 #include <initializer_list>
-#include <utility>
 
 #include "math/coordinates.h"
 #include "math/vector.h"
@@ -16,8 +15,13 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
   using ScalarType = ScalarT;
   using UnitsType = UnitsT;
 
-  static constexpr Coordinates COORDINATES{COORD};
+  static constexpr Coordinates COORDINATES{Coordinates::CARTESIAN};
   static constexpr size_t DIMENSIONS{DIM};
+
+  static constexpr size_t size() { return DIMENSIONS; }
+
+  static_assert(UnitsType::size() <= DIMENSIONS,
+                "Too many units specified for the size of the vector.");
 
  private:
   std::array<ScalarT, DIMENSIONS> elements_{};
@@ -28,9 +32,9 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
   constexpr Vector(const Vector& rhs) = default;
   constexpr Vector(Vector&& rhs) = default;
 
-  constexpr Vector(std::initializer_list<T> values) {
+  constexpr Vector(std::initializer_list<ScalarType> values) {
     size_t i = 0;
-    for (T value : values) {
+    for (const auto& value : values) {
       elements_.at(i) = value;
       ++i;
     }
@@ -39,7 +43,23 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
   constexpr Vector& operator=(const Vector& rhs) = default;
   constexpr Vector& operator=(Vector&& rhs) = default;
 
-  constexpr bool operator==(const Vector& rhs) const = default;
+  constexpr bool operator==(const Vector& rhs) const {
+    for (size_t i = 0; i < DIMENSIONS; ++i) {
+      if (elements_[i] != rhs.elements_[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  constexpr bool operator!=(const Vector& rhs) const {
+    for (size_t i = 0; i < DIMENSIONS; ++i) {
+      if (elements_[i] != rhs.elements_[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   template <size_t INDEX>
   constexpr const ScalarType& element() const {
@@ -92,7 +112,7 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
     return result;
   }
 
-  constexpr Vector inner(const Vector& rhs) const {
+  constexpr ScalarType inner(const Vector& rhs) const {
     ScalarType result{};
     for (size_t i = 0; i < DIMENSIONS; ++i) {
       result += elements_[i] * rhs.elements_[i];
@@ -100,11 +120,15 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
     return result;
   }
 
-  constexpr std::pair<Vector, Vector> decompose(const Vector& axis) const;
+  constexpr Vector parallel(const Vector& axis) const {
+    return inner(axis) / axis.square_magnitude() * axis;
+  }
+
+  constexpr Vector orthogonal(const Vector& axis) const { return subtract(parallel(axis)); }
 
   constexpr ScalarType square_magnitude() const {
     ScalarType result{};
-    for (size_t i = 0; i < DIMENSIONS; ++i;) {
+    for (size_t i = 0; i < DIMENSIONS; ++i) {
       result += elements_[i] * elements_[i];
     }
     return result;

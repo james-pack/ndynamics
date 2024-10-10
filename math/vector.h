@@ -1,7 +1,6 @@
 #pragma once
 
 #include <initializer_list>
-#include <utility>
 
 #include "math/coordinates.h"
 
@@ -16,17 +15,23 @@ class Vector final {
   static constexpr Coordinates COORDINATES{COORD};
   static constexpr size_t DIMENSIONS{DIM};
 
+  static constexpr size_t size() { return DIMENSIONS; }
+
+  static_assert(UnitsType::size() <= DIMENSIONS,
+                "Too many units specified for the size of the vector.");
+
   constexpr Vector() = default;
 
   constexpr Vector(const Vector& rhs) = default;
   constexpr Vector(Vector&& rhs) = default;
 
-  constexpr Vector(std::initializer_list<T> values);
+  constexpr Vector(std::initializer_list<ScalarType> values);
 
   constexpr Vector& operator=(const Vector& rhs) = default;
   constexpr Vector& operator=(Vector&& rhs) = default;
 
-  constexpr bool operator==(const Vector& rhs) const = default;
+  constexpr bool operator==(const Vector& rhs) const;
+  constexpr bool operator!=(const Vector& rhs) const;
 
   template <size_t INDEX>
   constexpr const ScalarType& element() const;
@@ -45,9 +50,10 @@ class Vector final {
   constexpr Vector add(const Vector& rhs) const;
   constexpr Vector subtract(const Vector& rhs) const;
 
-  constexpr Vector inner(const Vector& rhs) const;
+  constexpr ScalarType inner(const Vector& rhs) const;
 
-  constexpr std::pair<Vector, Vector> decompose(const Vector& axis) const;
+  constexpr Vector parallel(const Vector& axis) const;
+  constexpr Vector orthogonal(const Vector& axis) const;
 
   constexpr ScalarType square_magnitude() const;
   constexpr ScalarType abs() const;
@@ -62,5 +68,38 @@ class Vector final {
   template <size_t N>
   static constexpr Vector e();
 };
+
+template <Coordinates COORDINATES, typename ScalarType, size_t DIMENSIONS, typename UnitsType>
+constexpr Vector<COORDINATES, ScalarType, DIMENSIONS, UnitsType> operator*(
+    const ScalarType& scalar,
+    const Vector<COORDINATES, ScalarType, DIMENSIONS, UnitsType>& vector) {
+  return vector * scalar;
+}
+
+// String and printing operations.
+
+template <Coordinates COORDINATES, typename ScalarType, size_t DIMENSIONS, typename UnitsType>
+std::string to_string(const Vector<COORDINATES, ScalarType, DIMENSIONS, UnitsType>& v) {
+  using std::to_string;
+  std::string result{};
+  result.append("[");
+  bool need_comma{false};
+  for (size_t i = 0; i < v.size(); ++i) {
+    if (need_comma) {
+      result.append(", ");
+    }
+    need_comma = true;
+    result.append(to_string(v.element(i)));
+  }
+  result.append("]");
+  return result;
+}
+
+template <Coordinates COORDINATES, typename ScalarType, size_t DIMENSIONS, typename UnitsType>
+std::ostream& operator<<(std::ostream& os,
+                         const Vector<COORDINATES, ScalarType, DIMENSIONS, UnitsType>& v) {
+  os << to_string(v);
+  return os;
+}
 
 }  // namespace ndyn::math

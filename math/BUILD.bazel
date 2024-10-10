@@ -67,6 +67,15 @@ cc_test(
 )
 
 cc_test(
+    name = "cartesian_vector_test",
+    srcs = ["cartesian_vector_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
     name = "multivector_test",
     srcs = ["multivector_test.cc"],
     deps = [
