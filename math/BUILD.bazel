@@ -13,6 +13,7 @@ cc_library(
         "magnitude.h",
         "multivector.h",
         "multivector_utils.h",
+        "spherical_vector.h",
         "state.h",
         "state_view.h",
         "unit_set.h",
@@ -84,6 +85,17 @@ cc_test(
     deps = [
         ":math",
         ":vector_tests",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "spherical_vector_test",
+    srcs = ["spherical_vector_test.cc"],
+    deps = [
+        ":math",
+        ":vector_tests",
+        "//base",
         "//third_party/gtest",
     ],
 )
