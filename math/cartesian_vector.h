@@ -82,15 +82,12 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
   constexpr void set_element(size_t index, const ScalarType& value) { elements_.at(index) = value; }
 
   constexpr const ScalarType& x() const { return element<0>(); }
-  constexpr ScalarType& x() { return element<0>(); }
   constexpr void set_x(const ScalarType& value) { set_element<0>(value); }
 
   constexpr const ScalarType& y() const { return element<1>(); }
-  constexpr ScalarType& y() { return element<1>(); }
   constexpr void set_y(const ScalarType& value) { set_element<1>(value); }
 
   constexpr const ScalarType& z() const { return element<2>(); }
-  constexpr ScalarType& z() { return element<2>(); }
   constexpr void set_z(const ScalarType& value) { set_element<2>(value); }
 
   constexpr Vector multiply(const ScalarType& scalar) const {
