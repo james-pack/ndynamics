@@ -1,163 +1,85 @@
 #include "math/cartesian_vector.h"
 
 #include <cmath>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "math/coordinates.h"
 #include "math/unit_set.h"
+#include "math/vector_tests.h"
 #include "units.h"
 
 namespace ndyn::math {
 
-using FloatT = float;
-using Vec2 = Vector<Coordinates::CARTESIAN, FloatT, 2,
-                    UnitSet<units::length::meter_t, units::length::meter_t>>;
-using Vec3 = Vector<Coordinates::CARTESIAN, FloatT, 3, UnitSet<units::length::meter_t>>;
+class Cartesian2DVectorTest : public VectorTest<Coordinates::CARTESIAN, 2> {
+ public:
+  void SetUp() override {
+    additive_sets.emplace_back(AdditiveSet{{}, {}, {}});
+    additive_sets.emplace_back(AdditiveSet{{1, 2}, {2, 3}, {3, 5}});
+    additive_sets.emplace_back(AdditiveSet{{1, 2}, {0, 0}, {1, 2}});
 
-TEST(Cartesian2DVectorTest, CanEmptyListInitialize) {
-  const Vec2 v{};
-  EXPECT_EQ(0, v.element<0>());
-}
+    multiplicative_sets.emplace_back(MultiplicativeSet{2, {1, 2}, {2, 4}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{1, {1, 2}, {1, 2}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{0, {}, {}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{0, {1, 1}, {}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{-2, {1, 2}, {-2, -4}});
 
-TEST(Cartesian2DVectorTest, CanListInitialize) {
-  const Vec2 v{1, 2};
-  EXPECT_EQ(1, v.element<0>());
-  EXPECT_EQ(2, v.element<1>());
-}
+    magnitudes.emplace_back(Magnitude{{1, 2}, 5});
+    magnitudes.emplace_back(Magnitude{{2, 2}, 8});
+    magnitudes.emplace_back(Magnitude{{3, 4}, 25});
 
-TEST(Cartesian2DVectorTest, CanCompareVectors) {
-  const Vec2 v1{1, 2};
-  const Vec2 v2{3, 4};
-  const Vec2 v3{1, 2};
-  EXPECT_NE(v1, v2);
-  EXPECT_EQ(v1, v3);
-}
+    inner_products.emplace_back(InnerProduct{{1, 1}, {0, 1}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 1}, {1, 0}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 0}, {1, 0}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 0}, {0, 1}, 0});
+    inner_products.emplace_back(InnerProduct{{1, 2}, {3, 7}, 17});
 
-TEST(Cartesian2DVectorTest, CanMultiplyByScalar) {
-  Vec2 v{1, 2};
-  v = v * 2;
-  EXPECT_EQ(2, v.element<0>());
-  EXPECT_EQ(4, v.element<1>());
-  v = static_cast<FloatT>(2) * v;
-  EXPECT_EQ(4, v.element<0>());
-  EXPECT_EQ(8, v.element<1>());
-}
-
-TEST(Cartesian2DVectorTest, CanAccessWithRuntimeIndex) {
-  Vec2 v{1, 2};
-  v = v * 2;
-  EXPECT_EQ(2, v.element(0));
-  EXPECT_EQ(4, v.element(1));
-  v = static_cast<FloatT>(2) * v;
-  EXPECT_EQ(4, v.element(0));
-  EXPECT_EQ(8, v.element(1));
-}
-
-TEST(Cartesian2DVectorTest, CanSetValueWithRuntimeIndex) {
-  Vec2 v{};
-  for (size_t i = 0; i < v.size(); ++i) {
-    v.set_element(i, 2 * i);
+    basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 0}, {}, {}});
+    basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 1}, {}, {}});
+    basis_decompositions.emplace_back(BasisDecomposition{{1, 2}, {1, 0}, {1, 0}, {0, 2}});
+    basis_decompositions.emplace_back(BasisDecomposition{{1, 2}, {1, 1}, {1.5, 1.5}, {-0.5, 0.5}});
   }
-  EXPECT_EQ(0, v.element(0));
-  EXPECT_EQ(2, v.element(1));
-}
+};
 
-TEST(Cartesian2DVectorTest, CanDivideByScalar) {
-  Vec2 v{4, 8};
-  v = v / 2;
-  EXPECT_EQ(2, v.element<0>());
-  EXPECT_EQ(4, v.element<1>());
-}
+class Cartesian3DVectorTest : public VectorTest<Coordinates::CARTESIAN, 3> {
+ public:
+  void SetUp() override {
+    additive_sets.emplace_back(AdditiveSet{{}, {}, {}});
+    additive_sets.emplace_back(AdditiveSet{{1}, {}, {1}});
+    additive_sets.emplace_back(AdditiveSet{{0, 1}, {1}, {1, 1}});
+    additive_sets.emplace_back(AdditiveSet{{1, 2, 3}, {2, 3, 4}, {3, 5, 7}});
+    additive_sets.emplace_back(AdditiveSet{{1, 2, 3}, {0, 0, 0}, {1, 2, 3}});
 
-TEST(Cartesian2DVectorTest, CanAddVectors) {
-  const Vec2 v1{1, 2};
-  const Vec2 v2{4, 8};
-  auto v3 = v1 + v2;
-  EXPECT_EQ(5, v3.element<0>());
-  EXPECT_EQ(10, v3.element<1>());
-}
+    multiplicative_sets.emplace_back(MultiplicativeSet{2, {1, 2, 3}, {2, 4, 6}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{1, {1, 2, 3}, {1, 2, 3}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{0, {}, {}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{0, {1, 1}, {}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{-2, {1, 2, 7}, {-2, -4, -14}});
 
-TEST(Cartesian2DVectorTest, CanSubtractVectors) {
-  const Vec2 v1{1, 2};
-  const Vec2 v2{4, 8};
-  auto v3 = v2 - v1;
-  EXPECT_EQ(3, v3.element<0>());
-  EXPECT_EQ(6, v3.element<1>());
-}
+    magnitudes.emplace_back(Magnitude{{1, 2, 5}, 30});
+    magnitudes.emplace_back(Magnitude{{2, 2, 2}, 12});
+    magnitudes.emplace_back(Magnitude{{3, 4, 5}, 50});
 
-TEST(Cartesian2DVectorTest, CanComputeMagnitude) {
-  using std::sqrt;
-  const Vec2 v{1, 2};
-  EXPECT_EQ(5, v.square_magnitude());
-  EXPECT_NEAR(sqrt(5), v.abs(), 0.00001);
-}
+    inner_products.emplace_back(InnerProduct{{1, 1, 1}, {0, 1, 0}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 1, 1}, {1, 0, 0}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 0, 1}, {1, 0, 0}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 0, 1}, {0, 0, 1}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 0, 1}, {0, 1, 1}, 1});
+    inner_products.emplace_back(InnerProduct{{1, 0, 0}, {0, 1, 0}, 0});
+    inner_products.emplace_back(InnerProduct{{1, 0, 0}, {0, 0, 1}, 0});
+    inner_products.emplace_back(InnerProduct{{1, 2, 3}, {3, 7, 11}, 50});
 
-TEST(Cartesian2DVectorTest, CanComputeInnerProduct) {
-  const Vec2 v1{1, 2};
-  EXPECT_EQ(v1.square_magnitude(), v1.inner(v1));
+    basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 0, 0}, {}, {}});
+    basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 1, 1}, {}, {}});
+    basis_decompositions.emplace_back(
+        BasisDecomposition{{1, 2, 0}, {1, 0, 0}, {1, 0, 0}, {0, 2, 0}});
+    basis_decompositions.emplace_back(
+        BasisDecomposition{{1, 2, 0}, {1, 1, 0}, {1.5, 1.5, 0}, {-0.5, 0.5, 0}});
+  }
+};
 
-  const Vec2 v2{3, 7};
-  EXPECT_EQ(17, v1.inner(v2));
+TEST_F(Cartesian2DVectorTest, RunAllTests) { RunAllTests(); }
 
-  EXPECT_EQ(v1.inner(v2), v2.inner(v1));
-}
-
-TEST(Cartesian2DVectorTest, CanDecomposeParallelToAxis) {
-  using std::sqrt;
-
-  const Vec2 v1{1, 2};
-
-  const Vec2 axis1{1, 0};
-  const Vec2 axis2{0, 1};
-
-  const Vec2 expected1{1, 0};
-  const Vec2 expected2{0, 2};
-  EXPECT_EQ(expected1, v1.parallel(axis1));
-  EXPECT_EQ(expected2, v1.parallel(axis2));
-
-  const Vec2 axis3{1, 1};
-  const Vec2 expected3{static_cast<FloatT>(3) / 2, static_cast<FloatT>(3) / 2};
-  EXPECT_EQ(expected3, v1.parallel(axis3));
-}
-
-TEST(Cartesian2DVectorTest, CanDecomposeOrthogonalToAxis) {
-  using std::sqrt;
-
-  const Vec2 v1{1, 2};
-
-  const Vec2 axis1{1, 0};
-  const Vec2 axis2{0, 1};
-
-  const Vec2 expected1{0, 2};
-  const Vec2 expected2{1, 0};
-  EXPECT_EQ(expected1, v1.orthogonal(axis1));
-  EXPECT_EQ(expected2, v1.orthogonal(axis2));
-
-  const Vec2 axis3{1, 1};
-  const Vec2 expected3{static_cast<FloatT>(-1) / 2, static_cast<FloatT>(1) / 2};
-  EXPECT_EQ(expected3, v1.orthogonal(axis3));
-}
-
-// A few simple tests to verify that we can work with dimensions > 2.
-TEST(Cartesian3DVectorTest, CanEmptyListInitialize) {
-  Vec3 v{};
-  EXPECT_EQ(0, v.element<0>());
-}
-
-TEST(Cartesian3DVectorTest, CanListInitialize) {
-  Vec3 v{1, 2, 3};
-  EXPECT_EQ(1, v.element<0>());
-  EXPECT_EQ(2, v.element<1>());
-  EXPECT_EQ(3, v.element<2>());
-}
-
-TEST(Cartesian3DVectorTest, CanAddVectors) {
-  const Vec3 v1{1, 2, 7};
-  const Vec3 v2{4, 8, 11};
-  auto v3 = v1 + v2;
-  EXPECT_EQ(5, v3.element<0>());
-  EXPECT_EQ(10, v3.element<1>());
-  EXPECT_EQ(18, v3.element<2>());
-}
+TEST_F(Cartesian3DVectorTest, RunAllTests) { RunAllTests(); }
 
 }  // namespace ndyn::math

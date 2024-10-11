@@ -66,11 +66,24 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "vector_tests",
+    testonly = True,
+    hdrs = [
+        "vector_tests.h",
+    ],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
 cc_test(
     name = "cartesian_vector_test",
     srcs = ["cartesian_vector_test.cc"],
     deps = [
         ":math",
+        ":vector_tests",
         "//third_party/gtest",
     ],
 )
