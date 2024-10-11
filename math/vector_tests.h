@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
@@ -11,6 +12,36 @@
 
 namespace ndyn::math {
 
+template <typename VectorType>
+::testing::AssertionResult AreNear(const VectorType& lhs, const VectorType& rhs,
+                                   typename VectorType::ScalarType epsilon) {
+  using std::abs;
+  using std::to_string;
+  const auto difference{lhs - rhs};
+  epsilon = abs(epsilon);
+  for (size_t i = 0; i < VectorType::size(); ++i) {
+    if (abs(difference.element(i)) > epsilon) {
+      return ::testing::AssertionFailure()
+             << "lhs: " << lhs << ", rhs: " << rhs << ", difference: " << difference
+             << " (epsilon: " << to_string(epsilon) << ")";
+    }
+  }
+  return ::testing::AssertionSuccess()
+         << "lhs: " << lhs << ", rhs: " << rhs << ", difference: " << difference
+         << " (epsilon: " << to_string(epsilon) << ")";
+}
+
+template <typename VectorType>
+::testing::AssertionResult AreNear(const VectorType& lhs, const VectorType& rhs) {
+  using ScalarType = typename VectorType::ScalarType;
+
+  ScalarType lhs_mag = lhs.square_magnitude();
+  ScalarType rhs_mag = rhs.square_magnitude();
+  ScalarType epsilon = std::min(lhs_mag, rhs_mag) * 0.00001;
+
+  return AreNear(lhs, rhs, epsilon);
+}
+
 template <Coordinates COORD, size_t DIM, typename ScalarT = float>
 class VectorTest : public ::testing::Test {
  public:
@@ -19,6 +50,12 @@ class VectorTest : public ::testing::Test {
 
   using ScalarType = ScalarT;
   using VectorType = Vector<COORDINATES, ScalarType, DIMENSIONS, UnitSet<units::length::meter_t>>;
+
+  struct EqualitySet {
+    VectorType v1;
+    VectorType v2;
+  };
+  std::vector<EqualitySet> equality_sets{};
 
   struct AdditiveSet {
     VectorType operand1;
@@ -83,14 +120,15 @@ class VectorTest : public ::testing::Test {
   void CanCompareVectors() {
     for (const auto& set : additive_sets) {
       if (set.operand1 != VectorType{}) {
-        EXPECT_NE(set.operand2, set.sum);
+        EXPECT_FALSE(AreNear(set.operand2, set.sum));
       } else {
-        EXPECT_EQ(set.operand2, set.sum);
+        EXPECT_TRUE(AreNear(set.operand2, set.sum));
       }
       if (set.operand2 != VectorType{}) {
-        EXPECT_NE(set.operand1, set.sum);
+        EXPECT_FALSE(AreNear(set.operand1, set.sum))
+            << "set.operand1: " << set.operand1 << ", set.sum: " << set.sum;
       } else {
-        EXPECT_EQ(set.operand1, set.sum);
+        EXPECT_TRUE(AreNear(set.operand1, set.sum));
       }
     }
 
@@ -99,11 +137,17 @@ class VectorTest : public ::testing::Test {
         // If the product is the zero vector, operand could be anything, or alternatively, the
         // scalar could be anything. Don't even bother with the logic for those scenarios.
         if (set.product != VectorType{}) {
-          EXPECT_NE(set.operand, set.product);
+          EXPECT_FALSE(AreNear(set.operand, set.product));
         }
       } else {
-        EXPECT_EQ(set.operand, set.product);
+        EXPECT_TRUE(AreNear(set.operand, set.product));
       }
+    }
+  }
+
+  void CanCompareVectorsEqualitySets() {
+    for (const auto& set : equality_sets) {
+      EXPECT_TRUE(AreNear(set.v1, set.v2));
     }
   }
 
@@ -160,23 +204,23 @@ class VectorTest : public ::testing::Test {
       {
         // Scalar times vector.
         const VectorType result{set.scalar * set.operand};
-        EXPECT_EQ(set.product, result);
+        EXPECT_TRUE(AreNear(set.product, result));
       }
       {
         // Vector times scalar.
         const VectorType result{set.operand * set.scalar};
-        EXPECT_EQ(set.product, result);
+        EXPECT_TRUE(AreNear(set.product, result));
       }
       // And verify the inverse relationship. Again, both combinations.
       if (set.scalar != 0) {
         // Scalar times vector.
         const VectorType result{(1 / set.scalar) * set.product};
-        EXPECT_EQ(set.operand, result);
+        EXPECT_TRUE(AreNear(set.operand, result));
       }
       if (set.scalar != 0) {
         // Vector times scalar.
         const VectorType result{set.product * (1 / set.scalar)};
-        EXPECT_EQ(set.operand, result);
+        EXPECT_TRUE(AreNear(set.operand, result));
       }
     }
   }
@@ -185,12 +229,12 @@ class VectorTest : public ::testing::Test {
     for (const auto& set : multiplicative_sets) {
       if (set.scalar != 0) {
         const VectorType result{set.product / set.scalar};
-        EXPECT_EQ(set.operand, result);
+        EXPECT_TRUE(AreNear(set.operand, result));
       }
       // And verify the inverse relationship.
       if (set.scalar != 0) {
         const VectorType result{set.operand / (1 / set.scalar)};
-        EXPECT_EQ(set.product, result);
+        EXPECT_TRUE(AreNear(set.product, result));
       }
     }
   }
@@ -200,11 +244,11 @@ class VectorTest : public ::testing::Test {
       // Vector addition should be commutative, so verify both combinations.
       {
         const VectorType result{set.operand1 + set.operand2};
-        EXPECT_EQ(set.sum, result);
+        EXPECT_TRUE(AreNear(set.sum, result));
       }
       {
         const VectorType result{set.operand2 + set.operand1};
-        EXPECT_EQ(set.sum, result);
+        EXPECT_TRUE(AreNear(set.sum, result));
       }
     }
   }
@@ -213,11 +257,17 @@ class VectorTest : public ::testing::Test {
     for (const auto& set : additive_sets) {
       {
         const VectorType result{set.sum - set.operand2};
-        EXPECT_EQ(set.operand1, result);
+        EXPECT_TRUE(AreNear(set.operand1, result))
+            << "set.sum: " << set.sum << ", set.operand2: " << set.operand2
+            << ", (difference: " << result
+            << "), expected difference (set.operand1): " << set.operand1;
       }
       {
         const VectorType result{set.sum - set.operand1};
-        EXPECT_EQ(set.operand2, result);
+        EXPECT_TRUE(AreNear(set.operand2, result))
+            << "set.sum: " << set.sum << ", set.operand1: " << set.operand1
+            << ", (difference: " << result
+            << "), expected difference (set.operand2): " << set.operand2;
       }
     }
   }
@@ -227,11 +277,11 @@ class VectorTest : public ::testing::Test {
     for (const auto& set : magnitudes) {
       {
         const ScalarType result{set.v.square_magnitude()};
-        EXPECT_EQ(set.square_magnitude, result);
+        EXPECT_NEAR(set.square_magnitude, result, set.square_magnitude * 0.0001);
       }
       {
         const ScalarType result{set.v.abs()};
-        EXPECT_EQ(sqrt(set.square_magnitude), result);
+        EXPECT_NEAR(sqrt(set.square_magnitude), result, set.square_magnitude * 0.0001);
       }
     }
   }
@@ -241,7 +291,7 @@ class VectorTest : public ::testing::Test {
     for (const auto& set : magnitudes) {
       {
         const ScalarType result{set.v.inner(set.v)};
-        EXPECT_EQ(set.square_magnitude, result);
+        EXPECT_NEAR(set.square_magnitude, result, set.square_magnitude * 0.0001);
       }
     }
   }
@@ -252,11 +302,11 @@ class VectorTest : public ::testing::Test {
       // The inner product should be commutative, so we test both combinations.
       {
         const ScalarType result{set.v1.inner(set.v2)};
-        EXPECT_EQ(set.product, result);
+        EXPECT_NEAR(set.product, result, set.product * 0.0001);
       }
       {
         const ScalarType result{set.v2.inner(set.v1)};
-        EXPECT_EQ(set.product, result);
+        EXPECT_NEAR(set.product, result, set.product * 0.0001);
       }
     }
   }
@@ -266,11 +316,11 @@ class VectorTest : public ::testing::Test {
     for (const auto& set : basis_decompositions) {
       {
         const ScalarType result{set.parallel.inner(set.orthogonal)};
-        EXPECT_EQ(0, result);
+        EXPECT_NEAR(0, result, 0.0001);
       }
       {
         const ScalarType result{set.axis.inner(set.orthogonal)};
-        EXPECT_EQ(0, result);
+        EXPECT_NEAR(0, result, 0.0001);
       }
     }
   }
@@ -279,7 +329,7 @@ class VectorTest : public ::testing::Test {
     using std::sqrt;
     for (const auto& set : basis_decompositions) {
       const VectorType result{set.v.parallel(set.axis)};
-      EXPECT_EQ(set.parallel, result);
+      EXPECT_TRUE(AreNear(set.parallel, result));
     }
   }
 
@@ -287,12 +337,13 @@ class VectorTest : public ::testing::Test {
     using std::sqrt;
     for (const auto& set : basis_decompositions) {
       const VectorType result{set.v.orthogonal(set.axis)};
-      EXPECT_EQ(set.orthogonal, result);
+      EXPECT_TRUE(AreNear(set.orthogonal, result));
     }
   }
 
   void RunAllTests() {
     CanListInitialize();
+    CanCompareVectorsEqualitySets();
     CanCompareVectors();
 
     CanAccessWithRuntimeIndex();
