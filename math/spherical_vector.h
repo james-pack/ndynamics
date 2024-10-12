@@ -228,7 +228,19 @@ class Vector<Coordinates::SPHERICAL, ScalarT, DIM, UnitsT> final {
 
   constexpr Vector subtract(const Vector& rhs) const { return add(rhs.multiply(-1)); }
 
-  constexpr ScalarType inner(const Vector& rhs) const {}
+  constexpr ScalarType inner(const Vector& rhs) const {
+    using std::cos;
+    using std::sin;
+    if constexpr (DIMENSIONS == 2) {
+      return r() * rhs.r() * cos(theta() - rhs.theta());
+    }
+
+    if constexpr (DIMENSIONS == 3) {
+      return r() * rhs.r() *
+             (sin(theta()) * sin(rhs.theta()) * cos(phi() - rhs.phi()) +
+              cos(theta()) * cos(rhs.theta()));
+    }
+  }
 
   constexpr Vector parallel(const Vector& axis) const {
     return inner(axis) / axis.square_magnitude() * axis;
@@ -252,7 +264,7 @@ class Vector<Coordinates::SPHERICAL, ScalarT, DIM, UnitsT> final {
 
   template <size_t N>
   static constexpr Vector e() {
-    static_assert(N < DIMENSIONS, "No such basis vector. Index N out of range");
+    static_assert(N < DIMENSIONS, "No such basis vector. Index N out of range.");
     Vector result{};
     result.elements_[N] = 1;
     return result;

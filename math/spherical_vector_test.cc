@@ -101,6 +101,12 @@ class Spherical2DVectorTest : public VectorTest<Coordinates::SPHERICAL, 2> {
   void SetUp() override {
     using std::sqrt;
 
+    // Theta symmetries.
+    equality_sets.emplace_back(EqualitySet{{1, pi}, {1, -pi}});
+    equality_sets.emplace_back(EqualitySet{{1, pi}, {-1, 0}});
+    equality_sets.emplace_back(EqualitySet{{1, 2 * pi}, {1, -2 * pi}});
+    equality_sets.emplace_back(EqualitySet{{1, pi / 4}, {-1, -3 * pi / 4}});
+
     additive_sets.emplace_back(AdditiveSet{{}, {}, {}});
     additive_sets.emplace_back(AdditiveSet{{1, pi / 2}, {1, pi}, {sqrt(2), 3 * pi / 4}});
     additive_sets.emplace_back(AdditiveSet{{1, pi / 2}, {0, 0}, {1, pi / 2}});
@@ -113,6 +119,13 @@ class Spherical2DVectorTest : public VectorTest<Coordinates::SPHERICAL, 2> {
     additive_sets.emplace_back(AdditiveSet{{1, pi / 4}, {1, -pi / 4}, {sqrt(2), 0}});
     additive_sets.emplace_back(AdditiveSet{{1, -pi / 4}, {1, -3 * pi / 4}, {sqrt(2), -pi / 2}});
     additive_sets.emplace_back(AdditiveSet{{1, 3 * pi / 4}, {1, -3 * pi / 4}, {sqrt(2), pi}});
+
+    inner_products.emplace_back(InnerProduct{{sqrt(2), pi / 4}, {1, 0}, 1});
+    inner_products.emplace_back(InnerProduct{{sqrt(2), pi / 4}, {1, pi / 2}, 1});
+    inner_products.emplace_back(InnerProduct{{sqrt(2), pi / 4}, {1, pi}, -1});
+    inner_products.emplace_back(InnerProduct{{sqrt(2), pi / 4}, {1, -pi / 2}, -1});
+
+    inner_products.emplace_back(InnerProduct{{1, pi / 4}, {1, 3 * pi / 4}, 0});
   }
 };
 
@@ -132,15 +145,19 @@ class Spherical3DVectorTest : public VectorTest<Coordinates::SPHERICAL, 3> {
       }
     }
 
-    // Theta is on [0, pi]. Outside of that range, we consider theta traversing an angle on the
-    // plane defined by the z-axis and the x-y hypotenuse and normalize the values accordingly.
+    // Theta symmetries.
     equality_sets.emplace_back(EqualitySet{{1, pi}, {1, -pi}});
-    equality_sets.emplace_back(EqualitySet{{-1, pi / 2}, {1, pi / 2, pi}});
-    equality_sets.emplace_back(EqualitySet{{1, 0, 0}, {1, 2 * pi, 0}});
+    equality_sets.emplace_back(EqualitySet{{1, pi}, {-1, 0}});
+    equality_sets.emplace_back(EqualitySet{{1, 2 * pi}, {1, -2 * pi}});
+
+    // Phi symmetries.
+    equality_sets.emplace_back(EqualitySet{{1, pi / 2, 2 * pi}, {1, pi / 2, -2 * pi}});
+    equality_sets.emplace_back(EqualitySet{{1, pi / 2, pi}, {1, pi / 2, -pi}});
+    equality_sets.emplace_back(EqualitySet{{1, pi / 2, pi}, {-1, pi / 2, 0}});
+
     equality_sets.emplace_back(EqualitySet{{1, pi / 4, 0}, {1, 7 * pi / 4, pi}});
 
-    equality_sets.emplace_back(EqualitySet{{1, -pi / 2}, {1, pi / 2, pi}});
-
+    // Vector addition.
     additive_sets.emplace_back(AdditiveSet{{}, {}, {}});
     additive_sets.emplace_back(
         AdditiveSet{{1, pi / 2, pi / 2}, {1, pi / 2, pi}, {sqrt(2), pi / 2, 3 * pi / 4}});
@@ -163,6 +180,75 @@ class Spherical3DVectorTest : public VectorTest<Coordinates::SPHERICAL, 3> {
     additive_sets.emplace_back(AdditiveSet{{1, pi / 4}, {1, -pi / 4}, {sqrt(2), 0}});
     additive_sets.emplace_back(AdditiveSet{{1, -pi / 4}, {1, -3 * pi / 4}, {sqrt(2), -pi / 2}});
     additive_sets.emplace_back(AdditiveSet{{1, 3 * pi / 4}, {1, -3 * pi / 4}, {sqrt(2), pi}});
+
+    // Multiplication by a scalar.
+    multiplicative_sets.emplace_back(MultiplicativeSet{2, {1, pi / 2, 0}, {2, pi / 2, 0}});
+    multiplicative_sets.emplace_back(
+        MultiplicativeSet{1, {1, pi / 4, pi / 2}, {1, pi / 4, pi / 2}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{0, {}, {}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{0, {1, 3 * pi / 4}, {}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{-1, {1, pi / 4, pi}, {1, 3 * pi / 4, 0}});
+    multiplicative_sets.emplace_back(MultiplicativeSet{-2, {1, pi / 4, 0}, {2, 3 * pi / 4, pi}});
+
+    // Inner products.
+    inner_products.emplace_back(InnerProduct{{1, pi / 4, 0}, {1, pi / 2}, 1 / sqrt(2)});
+    inner_products.emplace_back(InnerProduct{{1, pi / 4, 0}, {1, 0}, 1 / sqrt(2)});
+
+    inner_products.emplace_back(InnerProduct{{1, pi / 4, 0}, {1, pi}, -1 / sqrt(2)});
+
+    inner_products.emplace_back(InnerProduct{{1, pi / 4, 0}, {1, 3 * pi / 4}, 0});
+    inner_products.emplace_back(InnerProduct{{1, pi / 4, pi / 4}, {1, 3 * pi / 4, pi / 4}, 0});
+    inner_products.emplace_back(InnerProduct{{1, pi / 4, pi / 2}, {1, 3 * pi / 4, pi / 2}, 0});
+
+    // Cartesian equivalent: [1/sqrt(2), 1/sqrt(2), 1] ⋅ [1/sqrt(2), -1/sqrt(2), 1]
+    inner_products.emplace_back(
+        InnerProduct{{sqrt(2), pi / 4, pi / 4}, {sqrt(2), pi / 4, -pi / 4}, 1});
+
+    // Cartesian equivalent: [1/sqrt(2), 1/sqrt(2), 1] ⋅ [1/sqrt(2), -1/sqrt(2), -1]
+    inner_products.emplace_back(
+        InnerProduct{{sqrt(2), pi / 4, pi / 4}, {sqrt(2), 3 * pi / 4, -pi / 4}, -1});
+
+    // Cartesian equivalent: [1/sqrt(2), 1/sqrt(2), 1] ⋅ [-1/sqrt(2), 1/sqrt(2), 1]
+    inner_products.emplace_back(
+        InnerProduct{{sqrt(2), pi / 4, pi / 4}, {sqrt(2), -pi / 4, -pi / 4}, 1});
+
+    // Cartesian equivalent: [1/sqrt(2), 1/sqrt(2), 1] ⋅ [-1/sqrt(2), -1/sqrt(2), 1]
+    inner_products.emplace_back(
+        InnerProduct{{sqrt(2), pi / 4, pi / 4}, {sqrt(2), -pi / 4, pi / 4}, 0});
+
+    // Cartesian equivalent: [1/sqrt(2), 0, 1/sqrt(2)] ⋅ [1/sqrt(2), 0, -1/sqrt(2)]
+    inner_products.emplace_back(InnerProduct{{1, pi / 4, 0}, {sqrt(2), 3 * pi / 4}, 0});
+
+    // Cartesian equivalent: [1, 2, 3] ⋅ [3, 5, -7] = 3 + 10 - 21 = -8
+    inner_products.emplace_back(
+        InnerProduct{{3.742, 0.203922 * pi, 0.35245 * pi}, {9.11, 0.77894 * pi, 0.3275 * pi}, -8});
+
+    for (const ScalarType r : {1., -1., 2., -2., 3., -3., 5., pi}) {
+      for (const ScalarType theta : {0., 2 * pi, 3 * pi / 2, pi, pi / 2, pi / 3, pi / 4, pi / 6}) {
+        for (const ScalarType phi : {0., 2 * pi, 3 * pi / 2, pi, pi / 2, pi / 3, pi / 4, pi / 6}) {
+          magnitudes.emplace_back(Magnitude{{r, theta, phi}, r * r});
+          magnitudes.emplace_back(Magnitude{{r, -theta, phi}, r * r});
+          magnitudes.emplace_back(Magnitude{{r, theta, -phi}, r * r});
+          magnitudes.emplace_back(Magnitude{{r, -theta, -phi}, r * r});
+        }
+      }
+    }
+
+    basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 0, 0}, {}, {}});
+    basis_decompositions.emplace_back(BasisDecomposition{{}, {1, pi / 2, pi / 4}, {}, {}});
+    basis_decompositions.emplace_back(
+        BasisDecomposition{{sqrt(2), pi / 4, 0}, {1, 0, 0}, {1, 0, 0}, {1, pi / 2, 0}});
+
+    basis_decompositions.emplace_back(BasisDecomposition{
+        {sqrt(2), pi / 2, pi / 4}, {1, 0, 0}, {0, 0, 0}, {sqrt(2), pi / 2, pi / 4}});
+
+    basis_decompositions.emplace_back(BasisDecomposition{
+        {sqrt(2), pi / 2, pi / 4}, {1, pi / 2, 0}, {1, pi / 2, 0}, {1, pi / 2, pi / 2}});
+
+    basis_decompositions.emplace_back(BasisDecomposition{{1, pi / 2, 0},
+                                                         {1, pi / 2, pi / 4},
+                                                         {1 / sqrt(2), pi / 2, pi / 4},
+                                                         {1 / sqrt(2), pi / 2, -pi / 4}});
   }
 };
 
