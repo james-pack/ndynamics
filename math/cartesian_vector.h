@@ -157,7 +157,7 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
 
   template <size_t N>
   static constexpr Vector e() {
-    static_assert(N < DIMENSIONS, "No such basis vector. Index N out of range");
+    static_assert(N < DIMENSIONS, "No such basis vector. Index N out of range.");
     Vector result{};
     result.elements_[N] = 1;
     return result;
