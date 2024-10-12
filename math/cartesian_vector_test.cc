@@ -32,6 +32,11 @@ class Cartesian2DVectorTest : public VectorTest<Coordinates::CARTESIAN, 2> {
     inner_products.emplace_back(InnerProduct{{1, 1}, {1, 0}, 1});
     inner_products.emplace_back(InnerProduct{{1, 0}, {1, 0}, 1});
     inner_products.emplace_back(InnerProduct{{1, 0}, {0, 1}, 0});
+    inner_products.emplace_back(InnerProduct{{1, 1}, {0, -1}, -1});
+    inner_products.emplace_back(InnerProduct{{1, 1}, {-1, 0}, -1});
+    inner_products.emplace_back(InnerProduct{{1, 1}, {-1, -1}, -2});
+    inner_products.emplace_back(InnerProduct{{1, 1}, {1, -1}, 0});
+
     inner_products.emplace_back(InnerProduct{{1, 2}, {3, 7}, 17});
 
     basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 0}, {}, {}});
@@ -68,6 +73,8 @@ class Cartesian3DVectorTest : public VectorTest<Coordinates::CARTESIAN, 3> {
     inner_products.emplace_back(InnerProduct{{1, 0, 0}, {0, 1, 0}, 0});
     inner_products.emplace_back(InnerProduct{{1, 0, 0}, {0, 0, 1}, 0});
     inner_products.emplace_back(InnerProduct{{1, 2, 3}, {3, 7, 11}, 50});
+
+    inner_products.emplace_back(InnerProduct{{1, 1, 1}, {-1, -1, 1}, -1});
 
     basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 0, 0}, {}, {}});
     basis_decompositions.emplace_back(BasisDecomposition{{}, {1, 1, 1}, {}, {}});
