@@ -12,6 +12,12 @@
 
 namespace ndyn::math {
 
+template <typename ScalarType>
+ScalarType epsilon(ScalarType scale, ScalarType absolute = 0.0001) {
+  using std::abs;
+  return std::max(abs(scale * static_cast<ScalarType>(0.00001)), abs(absolute));
+}
+
 template <typename VectorType>
 ::testing::AssertionResult AreNear(const VectorType& lhs, const VectorType& rhs,
                                    typename VectorType::ScalarType epsilon) {
@@ -34,12 +40,8 @@ template <typename VectorType>
 template <typename VectorType>
 ::testing::AssertionResult AreNear(const VectorType& lhs, const VectorType& rhs) {
   using ScalarType = typename VectorType::ScalarType;
-
-  ScalarType lhs_mag = lhs.square_magnitude();
-  ScalarType rhs_mag = rhs.square_magnitude();
-  ScalarType epsilon = std::min(lhs_mag, rhs_mag) * 0.00001;
-
-  return AreNear(lhs, rhs, epsilon);
+  const ScalarType greater_mag{std::max(lhs.square_magnitude(), rhs.square_magnitude())};
+  return AreNear(lhs, rhs, epsilon(greater_mag));
 }
 
 template <Coordinates COORD, size_t DIM, typename ScalarT = float>
@@ -145,7 +147,7 @@ class VectorTest : public ::testing::Test {
     }
   }
 
-  void CanCompareVectorsEqualitySets() {
+  void CanCompareVectorsUsingEqualitySets() {
     for (const auto& set : equality_sets) {
       EXPECT_TRUE(AreNear(set.v1, set.v2));
     }
@@ -277,42 +279,39 @@ class VectorTest : public ::testing::Test {
     for (const auto& set : magnitudes) {
       {
         const ScalarType result{set.v.square_magnitude()};
-        EXPECT_NEAR(set.square_magnitude, result, set.square_magnitude * 0.0001);
+        EXPECT_NEAR(set.square_magnitude, result, epsilon(set.square_magnitude));
       }
       {
         const ScalarType result{set.v.abs()};
-        EXPECT_NEAR(sqrt(set.square_magnitude), result, set.square_magnitude * 0.0001);
+        EXPECT_NEAR(sqrt(set.square_magnitude), result, epsilon(set.square_magnitude));
       }
     }
   }
 
   void CanComputeInnerProductOnSelf() {
-    using std::sqrt;
     for (const auto& set : magnitudes) {
       {
         const ScalarType result{set.v.inner(set.v)};
-        EXPECT_NEAR(set.square_magnitude, result, set.square_magnitude * 0.0001);
+        EXPECT_NEAR(set.square_magnitude, result, epsilon(set.square_magnitude));
       }
     }
   }
 
   void CanComputeInnerProduct() {
-    using std::sqrt;
     for (const auto& set : inner_products) {
       // The inner product should be commutative, so we test both combinations.
       {
         const ScalarType result{set.v1.inner(set.v2)};
-        EXPECT_NEAR(set.product, result, set.product * 0.0001);
+        EXPECT_NEAR(set.product, result, epsilon(set.product));
       }
       {
         const ScalarType result{set.v2.inner(set.v1)};
-        EXPECT_NEAR(set.product, result, set.product * 0.0001);
+        EXPECT_NEAR(set.product, result, epsilon(set.product));
       }
     }
   }
 
   void CanComputeInnerProductOnOrthogonalVectors() {
-    using std::sqrt;
     for (const auto& set : basis_decompositions) {
       {
         const ScalarType result{set.parallel.inner(set.orthogonal)};
@@ -343,7 +342,7 @@ class VectorTest : public ::testing::Test {
 
   void RunAllTests() {
     CanListInitialize();
-    CanCompareVectorsEqualitySets();
+    CanCompareVectorsUsingEqualitySets();
     CanCompareVectors();
 
     CanAccessWithRuntimeIndex();
