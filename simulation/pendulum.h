@@ -133,7 +133,7 @@ class Pendulum final {
   constexpr ScalarType period() const { return period_; }
 
   // Rectilinear state. These are transformations of the actual state.
-  constexpr const StateType& cartesian_state() const {
+  constexpr const StateType& state() const {
     if (cartesian_state_dirty_) {
       StateType angular_state_external{angular_state_};
       {
@@ -147,9 +147,9 @@ class Pendulum final {
         angular_state_external.template set_element<1>(angular_velocity);
       }
       {
-        // MultivectorType angular_acceleration{angular_state_external.template element<2>()};
-        // angular_acceleration.set_theta(-angular_acceleration.theta());
-        // angular_state_external.template set_element<2>(angular_acceleration);
+        MultivectorType angular_acceleration{angular_state_external.template element<2>()};
+        angular_acceleration.set_theta(-angular_acceleration.theta());
+        angular_state_external.template set_element<2>(angular_acceleration);
       }
       cartesian_state_ =
           math::convert_spherical_to_cartesian<StateType, math::State<MultivectorType, 3>>(
@@ -159,9 +159,9 @@ class Pendulum final {
     return cartesian_state_;
   }
 
-  constexpr MultivectorType position() const { return cartesian_state().template element<0>(); }
-  constexpr MultivectorType velocity() const { return cartesian_state().template element<1>(); }
-  constexpr MultivectorType acceleration() const { return cartesian_state().template element<2>(); }
+  constexpr MultivectorType position() const { return state().template element<0>(); }
+  constexpr MultivectorType velocity() const { return state().template element<1>(); }
+  constexpr MultivectorType acceleration() const { return state().template element<2>(); }
 
   constexpr const MultivectorType& graviational_acceleration() const {
     return gravitational_acceleration_;
@@ -177,6 +177,7 @@ class Pendulum final {
 
   constexpr ScalarType length() const { return angular_state_.template element<0>().r(); }
   constexpr ScalarType theta() const { return angular_state_.template element<0>().theta(); }
+  constexpr ScalarType phi() const { return angular_state_.template element<0>().phi(); }
 
   constexpr ScalarType current_time() const { return t_; }
 
