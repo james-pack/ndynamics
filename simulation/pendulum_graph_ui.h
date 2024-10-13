@@ -81,13 +81,13 @@ class PendulumGraph : public ui::UiElement {
     }
 
     if (ImPlot::BeginPlot("Angle", size)) {
-      ImPlot::SetupAxes(pendulum_->theta_series.x_clabel(), "Theta", ImPlotAxisFlags_AutoFit,
+      ImPlot::SetupAxes(pendulum_->angle_series.x_clabel(), "Angle", ImPlotAxisFlags_AutoFit,
                         ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < pendulum_->theta_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(pendulum_->theta_series.y_clabel(i), pendulum_->theta_series.x_data(),
-                            pendulum_->theta_series.y_data(i), pendulum_->theta_series.size());
+      for (size_t i = 0; i < pendulum_->angle_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(pendulum_->angle_series.y_clabel(i), pendulum_->angle_series.x_data(),
+                            pendulum_->angle_series.y_data(i), pendulum_->angle_series.size());
       }
 
       ImPlot::EndPlot();

@@ -7,27 +7,34 @@
 
 namespace ndyn::simulation {
 
-template <typename StateT, size_t NUM_POINTS = 2048>
+template <typename PendulumT, size_t NUM_POINTS = 2048>
 class PendulumUiModel final : public ui::UiModel {
  public:
-  using StateType = StateT;
+  using PendulumType = PendulumT;
+  using StateType = typename PendulumType::StateType;
   using ScalarType = typename StateType::ScalarType;
 
  private:
-  Pendulum<StateType>* pendulum_;
+  PendulumType* pendulum_;
 
  public:
-  PendulumUiModel(Pendulum<StateType>& pendulum) : pendulum_(&pendulum) {}
-  ui::DataSeries<ScalarType, NUM_POINTS, 1> theta_series{"t", {"theta"}};
+  PendulumUiModel(PendulumType& pendulum) : pendulum_(&pendulum) {}
+  ui::DataSeries<ScalarType, NUM_POINTS, 2> angle_series{"t", {"theta", "phi"}};
   ui::DataSeries<ScalarType, NUM_POINTS, 1> height_series{"t", {"height"}};
   ui::DataSeries<ScalarType, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
+
+  ScalarType theta{};
+  ScalarType phi{};
 
   void update() override {
     const ScalarType current_time{static_cast<ScalarType>(ImGui::GetTime())};
 
     pendulum_->goto_time(current_time);
 
-    theta_series.update(current_time, {pendulum_->theta()});
+    theta = pendulum_->theta();
+    phi = pendulum_->phi();
+    angle_series.update(current_time, {theta, phi});
+
     height_series.update(current_time, {pendulum_->height()});
 
     const auto kinetic_energy{pendulum_->compute_kinetic_energy()};

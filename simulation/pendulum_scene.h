@@ -48,14 +48,14 @@ class PendulumScene final : public ui::Scene {
    * UI models of this motion. These save major motion parameters over time and make them available
    * to graph.
    */
-  PendulumUiModel<PendulumStateType, NUM_POINTS> pendulum_model{pendulum};
+  PendulumUiModel<PendulumType, NUM_POINTS> pendulum_model{pendulum};
   PositionUiModel<PendulumType, NUM_POINTS> position_model{pendulum};
 
   /**
    * UI that displays graphs of the pendulum's state over time. This graph unifies the data from the
    * pendulum-specific UI model and the generic position model.
    */
-  PendulumGraph<PendulumUiModel<PendulumStateType, NUM_POINTS>,
+  PendulumGraph<PendulumUiModel<PendulumType, NUM_POINTS>,
                 PositionUiModel<PendulumType, NUM_POINTS>>
       statistics{pendulum_model, position_model};
 
@@ -100,12 +100,14 @@ class PendulumScene final : public ui::Scene {
    * Directly render a cube to visualize the motion of the mass at the end of the pendulum.
    */
   CubePositionFn cube_as_pendulum{[this]() {
-    const auto x{pendulum.position().x()};
-    const auto y{pendulum.position().z() + pendulum.length() / 2};
-    const auto z{pendulum.position().y()};
-    const auto theta{pendulum.theta()};
-    return glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), theta,
-                       glm::vec3{0, 0, 1});
+    const auto x{position_model.position_x};
+    const auto y{position_model.position_z + pendulum.length() / 2};
+    const auto z{position_model.position_y};
+    const auto theta{pendulum_model.theta};
+    const auto phi{pendulum_model.phi};
+    return glm::rotate(
+        glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), phi, glm::vec3{1, 0, 0}),
+        theta, glm::vec3{0, 0, 1});
   }};
   Cube cube;
 
