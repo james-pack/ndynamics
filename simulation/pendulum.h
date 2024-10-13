@@ -4,6 +4,7 @@
 
 #include "base/pi.h"
 #include "glog/logging.h"
+#include "math/convert.h"
 #include "math/integrators.h"
 #include "math/multivector.h"
 #include "math/multivector_utils.h"
@@ -88,6 +89,8 @@ class Pendulum final {
 
   ScalarType t_;
   StateType angular_state_;
+  mutable StateType cartesian_state_{};
+  mutable bool cartesian_state_dirty_{true};
 
   constexpr MultivectorType compute_angular_acceleration(const StateType& state) const {
     using std::sin;
@@ -129,42 +132,42 @@ class Pendulum final {
 
   constexpr ScalarType period() const { return period_; }
 
-  // Actual state as held and processed internally.
-  constexpr const StateType& state() const { return angular_state_; }
-
   // Rectilinear state. These are transformations of the actual state.
-  constexpr MultivectorType position() const {
-    using std::cos;
-    using std::sin;
-    return length() * sin(theta()) * MultivectorType::template e<0>() -
-           length() * cos(theta()) * MultivectorType::template e<1>();
+  constexpr const StateType& cartesian_state() const {
+    if (cartesian_state_dirty_) {
+      StateType angular_state_external{angular_state_};
+      {
+        MultivectorType angular_position{angular_state_external.template element<0>()};
+        angular_position.set_theta(pi_v<ScalarType> - angular_position.theta());
+        angular_state_external.template set_element<0>(angular_position);
+      }
+      {
+        MultivectorType angular_velocity{angular_state_external.template element<1>()};
+        angular_velocity.set_theta(-angular_velocity.theta());
+        angular_state_external.template set_element<1>(angular_velocity);
+      }
+      {
+        // MultivectorType angular_acceleration{angular_state_external.template element<2>()};
+        // angular_acceleration.set_theta(-angular_acceleration.theta());
+        // angular_state_external.template set_element<2>(angular_acceleration);
+      }
+      cartesian_state_ =
+          math::convert_spherical_to_cartesian<StateType, math::State<MultivectorType, 3>>(
+              angular_state_external);
+      cartesian_state_dirty_ = false;
+    }
+    return cartesian_state_;
   }
 
-  constexpr MultivectorType velocity() const {
-    using std::abs;
-    using std::cos;
-    using std::sin;
-    const auto angle{theta()};
-    const auto angle_dot{theta_dot()};
-    return length() * cos(angle) * angle_dot * MultivectorType::template e<0>() +
-           length() * sin(angle) * angle_dot * MultivectorType::template e<1>();
-  }
-
-  constexpr MultivectorType acceleration() const {
-    using std::cos;
-    using std::sin;
-    const auto r{length()};
-    const auto angle{theta()};
-    const auto theta_double_dot{-g_ / r * sin(angle)};
-    return r * cos(angle) * theta_double_dot * MultivectorType::template e<0>() +
-           r * sin(angle) * theta_double_dot * MultivectorType::template e<1>();
-  }
+  constexpr MultivectorType position() const { return cartesian_state().template element<0>(); }
+  constexpr MultivectorType velocity() const { return cartesian_state().template element<1>(); }
+  constexpr MultivectorType acceleration() const { return cartesian_state().template element<2>(); }
 
   constexpr const MultivectorType& graviational_acceleration() const {
     return gravitational_acceleration_;
   }
 
-  constexpr ScalarType height() const { return length() + position().y(); }
+  constexpr ScalarType height() const { return length() + position().z(); }
 
   constexpr ScalarType compute_potential_energy() const { return mass_ * g_ * height(); }
 
@@ -174,10 +177,7 @@ class Pendulum final {
 
   constexpr ScalarType length() const { return angular_state_.template element<0>().r(); }
   constexpr ScalarType theta() const { return angular_state_.template element<0>().theta(); }
-  constexpr ScalarType theta_dot() const { return angular_state_.template element<1>().theta(); }
-  constexpr ScalarType theta_double_dot() const {
-    return angular_state_.template element<2>().theta();
-  }
+
   constexpr ScalarType current_time() const { return t_; }
 
   /**
@@ -213,7 +213,7 @@ class Pendulum final {
         angular_state_ = integrator_(step_size, angular_state_);
         // }
 
-        VLOG(4) << "t_: " << t_ << ", theta(): " << theta() << ", theta_dot(): " << theta_dot();
+        VLOG(4) << "t_: " << t_ << ", theta(): " << theta();
       } while (abs(t_ - new_time) > abs(step_size));
     }
 
@@ -221,6 +221,7 @@ class Pendulum final {
     if constexpr (StateType::depth() >= 3) {
       angular_state_.template set_element<2>(compute_angular_acceleration(angular_state_));
     }
+    cartesian_state_dirty_ = true;
   }
 
   void evolve(ScalarType time_increment, ScalarType step_size = 0) {

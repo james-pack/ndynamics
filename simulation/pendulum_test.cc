@@ -9,7 +9,10 @@
 namespace ndyn::simulation {
 
 using FloatT = float;
-using MultivectorType = math::Multivector<FloatT, 2, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+using MultivectorType = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+
+static constexpr size_t HORIZONTAL_ELEMENT_INDEX{0};
+static constexpr size_t VERTICAL_ELEMENT_INDEX{2};
 
 static constexpr size_t ONE_PERIOD{1};
 static constexpr size_t MULTIPLE_PERIODS{5};
@@ -68,13 +71,15 @@ template <typename PendulumT, typename ScalarType>
     pendulum.goto_time(i * 4 * quarter_period);
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_negative(pendulum.velocity().x())
-             << " Expected x() of velocity to be negative. velocity: " << pendulum.velocity();
+    result = is_negative(pendulum.velocity().template element<HORIZONTAL_ELEMENT_INDEX>())
+             << " Expected x() of velocity to be negative. velocity: " << pendulum.velocity()
+             << ", pendulum.velocity().template element<HORIZONTAL_ELEMENT_INDEX>(): "
+             << pendulum.velocity().template element<HORIZONTAL_ELEMENT_INDEX>();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_negative(pendulum.velocity().y())
+    result = is_negative(pendulum.velocity().template element<VERTICAL_ELEMENT_INDEX>())
              << " Expected y() of velocity to be negative. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
@@ -89,13 +94,13 @@ template <typename PendulumT, typename ScalarType>
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_negative(pendulum.velocity().x())
+    result = is_negative(pendulum.velocity().template element<HORIZONTAL_ELEMENT_INDEX>())
              << " Expected x() of velocity to be negative. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_positive(pendulum.velocity().y())
+    result = is_positive(pendulum.velocity().template element<VERTICAL_ELEMENT_INDEX>())
              << " Expected y() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
@@ -111,13 +116,13 @@ template <typename PendulumT, typename ScalarType>
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_positive(pendulum.velocity().x())
+    result = is_positive(pendulum.velocity().template element<HORIZONTAL_ELEMENT_INDEX>())
              << " Expected x() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_negative(pendulum.velocity().y())
+    result = is_negative(pendulum.velocity().template element<VERTICAL_ELEMENT_INDEX>())
              << " Expected y() of velocity to be negative. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
@@ -132,13 +137,13 @@ template <typename PendulumT, typename ScalarType>
     }
 
     pendulum.evolve(quarter_period / 2, STEP_SIZE);
-    result = is_positive(pendulum.velocity().x())
+    result = is_positive(pendulum.velocity().template element<HORIZONTAL_ELEMENT_INDEX>())
              << " Expected x() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
                     << ", pendulum.period(): " << pendulum.period();
     }
-    result = is_positive(pendulum.velocity().y())
+    result = is_positive(pendulum.velocity().template element<VERTICAL_ELEMENT_INDEX>())
              << " Expected y() of velocity to be positive. velocity: " << pendulum.velocity();
     if (!result) {
       return result << ", pendulum.current_time(): " << pendulum.current_time()
@@ -202,7 +207,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaZero) {
   PendulumConfigurator<T> config{};
   config.set_theta(0);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(-T::template e<1>(), p.position(), 0.0001));
+  EXPECT_TRUE(math::AreNear(-T::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
@@ -210,7 +215,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
   PendulumConfigurator<T> config{};
   config.set_theta(pi / 2);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(T::template e<0>(), p.position(), 0.0001));
+  EXPECT_TRUE(math::AreNear(T::template e<HORIZONTAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
@@ -218,7 +223,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
   PendulumConfigurator<T> config{};
   config.set_theta(-pi / 2);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(-T::template e<0>(), p.position(), 0.0001));
+  EXPECT_TRUE(math::AreNear(-T::template e<HORIZONTAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaPi) {
@@ -226,7 +231,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaPi) {
   PendulumConfigurator<T> config{};
   config.set_theta(pi);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(T::template e<1>(), p.position(), 0.0001));
+  EXPECT_TRUE(math::AreNear(T::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
@@ -234,7 +239,7 @@ TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
   PendulumConfigurator<T> config{};
   config.set_theta(-pi);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(T::template e<1>(), p.position(), 0.0001));
+  EXPECT_TRUE(math::AreNear(T::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, ThetaSameAfterCreation) {
