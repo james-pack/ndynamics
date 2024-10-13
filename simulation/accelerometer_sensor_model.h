@@ -26,7 +26,7 @@ class AccelerometerSensorModel final : public ui::UiModel {
   AccelerometerSensorModel(const DataSourceT& source, Characterization<T, FloatT>& characterization)
       : source_(&source), characterization_(&characterization) {}
 
-  ui::DataSeries<FloatT, NUM_POINTS, 2> acceleration_series{"t", {"x", "y"}};
+  ui::DataSeries<FloatT, NUM_POINTS, 3> acceleration_series{"t", {"x", "y", "z"}};
 
   void update() override {
     const FloatT current_time{static_cast<FloatT>(ImGui::GetTime())};
@@ -34,7 +34,8 @@ class AccelerometerSensorModel final : public ui::UiModel {
     const auto fuzzed_acceleration{
         characterization_->inject_noise(TEMPERATURE, source_->acceleration())};
 
-    acceleration_series.update(current_time, {fuzzed_acceleration.x(), fuzzed_acceleration.y()});
+    acceleration_series.update(
+        current_time, {fuzzed_acceleration.x(), fuzzed_acceleration.y(), fuzzed_acceleration.z()});
   }
 };
 
