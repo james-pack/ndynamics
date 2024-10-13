@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
   ndyn::simulation::PendulumScene scene1{app.gl_window(), 3.5, 9.8, 1., ndyn::pi / 4};
   app.add_scene(scene1);
 
-  ndyn::simulation::PendulumScene scene3{app.gl_window(), 3.5, 9.8, 1., ndyn::pi /2 };
+  ndyn::simulation::PendulumScene scene3{app.gl_window(), 3.5, 9.8, 1., ndyn::pi / 2};
   app.add_scene(scene3);
 
   ndyn::simulation::PendulumScene scene4{app.gl_window(), 1, 9.8, 1., 3.};
