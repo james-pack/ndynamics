@@ -556,6 +556,15 @@ class Multivector final {
   // Inner product.
   constexpr Multivector operator|(const Multivector& rhs) const { return inner(rhs); }
 
+  template <size_t N>
+  constexpr const T& element() {
+    static_assert(
+        N < vector_count(),
+        "Template parameter to vector element function is out of range of the number of "
+        "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
+    return coefficients_[1UL << N];
+  }
+
   // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
   // any Multivector. See the tests for examples.
   template <size_t N>
