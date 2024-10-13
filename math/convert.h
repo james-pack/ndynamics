@@ -59,7 +59,51 @@ ResultStateType convert_spherical_to_cartesian(const IncomingStateType& incoming
                                      z1 * VectorType::template e<2>());
 
       if constexpr (CONVERSION_DEPTH >= 3) {
-        // TODO(james): Handle derivative cases.
+        const IncomingVectorType& in2{incoming.template element<2>()};
+
+        const ScalarType x2{
+            in2.r() * cos(in0.phi()) * sin(in0.theta()) -
+            in1.r() * sin(in0.phi()) * in1.phi() * sin(in0.theta()) +
+            in1.r() * cos(in0.phi()) * cos(in0.theta()) * in1.theta() +
+
+            -(in1.r() * sin(in0.phi()) * in1.phi() * sin(in0.theta()) +
+              in0.r() * cos(in0.phi()) * in1.phi() * in1.phi() * sin(in0.theta()) +
+              in0.r() * sin(in0.phi()) * in2.phi() * sin(in0.theta()) +
+              in0.r() * sin(in0.phi()) * in1.phi() * cos(in0.theta()) * in1.theta()) +
+
+            in1.r() * cos(in0.phi()) * cos(in0.theta()) * in1.theta() -
+            in0.r() * sin(in0.phi()) * in1.phi() * cos(in0.theta()) * in1.theta() -
+            in0.r() * cos(in0.phi()) * sin(in0.theta()) * in1.theta() * in1.theta() +
+            in0.r() * cos(in0.phi()) * cos(in0.theta()) * in2.theta()
+
+        };
+
+        const ScalarType y2{
+            in2.r() * sin(in0.phi()) * sin(in0.theta()) +
+            in1.r() * cos(in0.phi()) * in1.phi() * sin(in0.theta()) +
+            in1.r() * sin(in0.phi()) * cos(in0.theta()) * in1.theta() +
+
+            in1.r() * cos(in0.phi()) * in1.phi() * sin(in0.theta()) +
+            in0.r() * sin(in0.phi()) * in1.phi() * in1.phi() * sin(in0.theta()) -
+            in0.r() * cos(in0.phi()) * in2.phi() * sin(in0.theta()) +
+            in0.r() * cos(in0.phi()) * in1.phi() * cos(in0.theta()) * in1.theta() +
+
+            in1.r() * sin(in0.phi()) * cos(in0.theta()) * in1.theta() +
+            in0.r() * cos(in0.phi()) * in1.phi() * cos(in0.theta()) * in1.theta() -
+            in0.r() * sin(in0.phi()) * sin(in0.theta()) * in1.theta() * in1.theta() +
+            in0.r() * sin(in0.phi()) * cos(in0.theta()) * in2.theta()
+
+        };
+
+        const ScalarType z2{in2.r() * cos(in0.theta())                                   //
+                            - in1.r() * sin(in0.theta()) * in1.theta()                   //
+                            - (in1.r() * sin(in0.theta()) * in1.theta() +                //
+                               in0.r() * cos(in0.theta()) * in1.theta() * in1.theta() +  //
+                               in0.r() * sin(in0.theta()) * in2.theta())};
+
+        result.template set_element<2>(x2 * VectorType::template e<0>() +
+                                       y2 * VectorType::template e<1>() +
+                                       z2 * VectorType::template e<2>());
       }
     }
   }
