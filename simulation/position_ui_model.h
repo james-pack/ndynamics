@@ -9,6 +9,7 @@ template <typename ObjectT, size_t NUM_POINTS = 2048>
 class PositionUiModel final : public ui::UiModel {
  public:
   using ObjectType = ObjectT;
+  using StateType = typename ObjectType::StateType;
   using ScalarType = typename ObjectType::ScalarType;
 
  private:
@@ -35,25 +36,32 @@ class PositionUiModel final : public ui::UiModel {
 
   void update() override {
     const ScalarType current_time{static_cast<ScalarType>(ImGui::GetTime())};
+    const StateType& state{object_->state()};
 
-    const auto& position{object_->position()};
-    position_x = position.x();
-    position_y = position.y();
-    position_z = position.z();
-    position_series.update(current_time, {position.x(), position.y(), position.z()});
+    if constexpr (StateType::depth() >= 1) {
+      const auto& position{state.template element<0>()};
+      position_x = position.x();
+      position_y = position.y();
+      position_z = position.z();
+      position_series.update(current_time, {position.x(), position.y(), position.z()});
+    }
 
-    const auto& velocity{object_->velocity()};
-    velocity_x = velocity.x();
-    velocity_y = velocity.y();
-    velocity_z = velocity.z();
-    velocity_series.update(current_time, {velocity.x(), velocity.y(), velocity.z()});
+    if constexpr (StateType::depth() >= 2) {
+      const auto& velocity{state.template element<1>()};
+      velocity_x = velocity.x();
+      velocity_y = velocity.y();
+      velocity_z = velocity.z();
+      velocity_series.update(current_time, {velocity.x(), velocity.y(), velocity.z()});
+    }
 
-    const auto& acceleration{object_->acceleration()};
-    acceleration_x = acceleration.x();
-    acceleration_y = acceleration.y();
-    acceleration_z = acceleration.z();
-    acceleration_series.update(current_time,
-                               {acceleration.x(), acceleration.y(), acceleration.z()});
+    if constexpr (StateType::depth() >= 3) {
+      const auto& acceleration{state.template element<2>()};
+      acceleration_x = acceleration.x();
+      acceleration_y = acceleration.y();
+      acceleration_z = acceleration.z();
+      acceleration_series.update(current_time,
+                                 {acceleration.x(), acceleration.y(), acceleration.z()});
+    }
   }
 };
 
