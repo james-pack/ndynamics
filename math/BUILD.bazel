@@ -18,6 +18,7 @@ cc_library(
         "state_view.h",
         "unit_set.h",
         "vector.h",
+        "vector_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -33,6 +34,7 @@ cc_library(
         "integrators_test_utils.h",
         "multivector_test_utils.h",
         "state_test_utils.h",
+        "vector_test_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -75,6 +77,7 @@ cc_library(
     ],
     deps = [
         ":math",
+        ":testing",
         "//third_party/gtest",
     ],
 )
