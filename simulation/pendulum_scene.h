@@ -5,7 +5,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "math/state.h"
-#include "math/state_view.h"
 #include "sensor/measurement_type.h"
 #include "simulation/accelerometer_sensor_model.h"
 #include "simulation/cube_ui.h"
@@ -38,8 +37,6 @@ class PendulumScene final : public ui::Scene {
   using PendulumType = typename PendulumConfiguratorType::PendulumType;
   using PendulumStateType = typename PendulumConfiguratorType::StateType;
 
-  using CartesianViewType = math::StateView<math::State<VectorType, 3>, PendulumStateType>;
-
   using TemperatureType = sensor::MeasurementValueType<sensor::MeasurementType::TEMPERATURE>::type;
 
   /**
@@ -48,26 +45,18 @@ class PendulumScene final : public ui::Scene {
   PendulumType pendulum;
 
   /**
-   * View of the state of the pendulum in Cartesian coordinates.
-   */
-  CartesianViewType cartesian_view{
-      pendulum.state(),
-      math::convert_coordinates<math::Coordinates::SPHERICAL, math::Coordinates::CARTESIAN,
-                                PendulumStateType, typename CartesianViewType::StateType>};
-
-  /**
    * UI models of this motion. These save major motion parameters over time and make them available
    * to graph.
    */
   PendulumUiModel<PendulumStateType, NUM_POINTS> pendulum_model{pendulum};
-  PositionUiModel<CartesianViewType, NUM_POINTS> position_model{cartesian_view};
+  PositionUiModel<PendulumType, NUM_POINTS> position_model{pendulum};
 
   /**
    * UI that displays graphs of the pendulum's state over time. This graph unifies the data from the
    * pendulum-specific UI model and the generic position model.
    */
   PendulumGraph<PendulumUiModel<PendulumStateType, NUM_POINTS>,
-                PositionUiModel<CartesianViewType, NUM_POINTS>>
+                PositionUiModel<PendulumType, NUM_POINTS>>
       statistics{pendulum_model, position_model};
 
   /**
