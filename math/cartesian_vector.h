@@ -13,14 +13,14 @@ template <typename ScalarT, size_t DIM, typename UnitsT>
 class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
  public:
   using ScalarType = ScalarT;
-  using UnitsType = UnitsT;
+  using Units = UnitsT;
 
   static constexpr Coordinates COORDINATES{Coordinates::CARTESIAN};
   static constexpr size_t DIMENSIONS{DIM};
 
   static constexpr size_t size() { return DIMENSIONS; }
 
-  static_assert(UnitsType::size() <= DIMENSIONS,
+  static_assert(Units::size() <= DIMENSIONS,
                 "Too many units specified for the size of the vector.");
 
  private:
@@ -154,6 +154,9 @@ class Vector<Coordinates::CARTESIAN, ScalarT, DIM, UnitsT> final {
 
   constexpr Vector operator+(const Vector& rhs) const { return add(rhs); }
   constexpr Vector operator-(const Vector& rhs) const { return subtract(rhs); }
+
+  // Unary minus.
+  constexpr Vector operator-() const { return multiply(-1); }
 
   template <size_t N>
   static constexpr Vector e() {

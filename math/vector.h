@@ -10,14 +10,14 @@ template <Coordinates COORD, typename ScalarT, size_t DIM, typename UnitsT>
 class Vector final {
  public:
   using ScalarType = ScalarT;
-  using UnitsType = UnitsT;
+  using Units = UnitsT;
 
   static constexpr Coordinates COORDINATES{COORD};
   static constexpr size_t DIMENSIONS{DIM};
 
   static constexpr size_t size() { return DIMENSIONS; }
 
-  static_assert(UnitsType::size() <= DIMENSIONS,
+  static_assert(Units::size() <= DIMENSIONS,
                 "Too many units specified for the size of the vector.");
 
   constexpr Vector() = default;
@@ -64,6 +64,9 @@ class Vector final {
 
   constexpr Vector operator+(const Vector& rhs) const;
   constexpr Vector operator-(const Vector& rhs) const;
+
+  // Unary minus.
+  constexpr Vector operator-() const;
 
   template <size_t N>
   static constexpr Vector e();
