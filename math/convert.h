@@ -37,10 +37,12 @@ ResultStateType convert_spherical_to_cartesian(const IncomingStateType& incoming
     const ScalarType y0{in0.r() * sin(in0.phi()) * sin(in0.theta())};
     const ScalarType z0{in0.r() * cos(in0.theta())};
 
-    result.template set_element<0>(VectorType{x0, y0, z0});
+    result.template set_element<0>(x0 * VectorType::template e<0>() +
+                                   y0 * VectorType::template e<1>() +
+                                   z0 * VectorType::template e<2>());
 
     if constexpr (CONVERSION_DEPTH >= 2) {
-      const IncomingVectorType& in1{incoming.template element<0>()};
+      const IncomingVectorType& in1{incoming.template element<1>()};
 
       const ScalarType x1{in1.r() * cos(in0.phi()) * sin(in0.theta()) -
                           in0.r() * sin(in0.phi()) * in1.phi() * sin(in0.theta()) +
@@ -52,7 +54,9 @@ ResultStateType convert_spherical_to_cartesian(const IncomingStateType& incoming
 
       const ScalarType z1{in1.r() * cos(in0.theta()) - in0.r() * sin(in0.theta()) * in1.theta()};
 
-      result.template set_element<1>(VectorType{x1, y1, z1});
+      result.template set_element<1>(x1 * VectorType::template e<0>() +
+                                     y1 * VectorType::template e<1>() +
+                                     z1 * VectorType::template e<2>());
 
       if constexpr (CONVERSION_DEPTH >= 3) {
         // TODO(james): Handle derivative cases.
