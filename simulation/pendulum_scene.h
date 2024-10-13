@@ -101,8 +101,8 @@ class PendulumScene final : public ui::Scene {
    */
   CubePositionFn cube_as_pendulum{[this]() {
     const auto x{pendulum.position().x()};
-    const auto y{pendulum.position().y() + pendulum.length() / 2};
-    const auto z{pendulum.position().z()};
+    const auto y{pendulum.position().z() + pendulum.length() / 2};
+    const auto z{pendulum.position().y()};
     const auto theta{pendulum.theta()};
     return glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), theta,
                        glm::vec3{0, 0, 1});
