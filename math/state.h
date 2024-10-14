@@ -40,6 +40,7 @@ template <typename T, size_t DEPTH>
 class State final {
  private:
   std::array<T, DEPTH> elements_{};
+  T orientation_{};
 
  public:
   using VectorType = T;
@@ -62,6 +63,21 @@ class State final {
       ++i;
     }
   }
+
+  // Explicit accessors for the orientation.
+  // TODO(james): Track the physics of the orientation along with the other elements of motion.
+  constexpr const T& orientation() const { return orientation_; }
+  constexpr void set_orientation(const T& orientation) { orientation_ = orientation; }
+
+  // Named accessors for the "elements".
+  constexpr const T& position() const { return element<0>(); }
+  constexpr void set_position(const T& position) { set_element<0>(position); }
+
+  constexpr const T& velocity() const { return element<1>(); }
+  constexpr void set_velocity(const T& velocity) { set_element<1>(velocity); }
+
+  constexpr const T& acceleration() const { return element<2>(); }
+  constexpr void set_acceleration(const T& acceleration) { set_element<2>(acceleration); }
 
   template <size_t INDEX>
   constexpr const T& element() const {
