@@ -19,21 +19,13 @@ class PendulumUiModel final : public ui::UiModel {
 
  public:
   PendulumUiModel(PendulumType& pendulum) : pendulum_(&pendulum) {}
-  ui::DataSeries<ScalarType, NUM_POINTS, 2> angle_series{"t", {"theta", "phi"}};
   ui::DataSeries<ScalarType, NUM_POINTS, 1> height_series{"t", {"height"}};
   ui::DataSeries<ScalarType, NUM_POINTS, 3> energy_series{"t", {"kinetic", "potential", "total"}};
-
-  ScalarType theta{};
-  ScalarType phi{};
 
   void update() override {
     const ScalarType current_time{static_cast<ScalarType>(ImGui::GetTime())};
 
     pendulum_->goto_time(current_time);
-
-    theta = pendulum_->theta();
-    phi = pendulum_->phi();
-    angle_series.update(current_time, {theta, phi});
 
     height_series.update(current_time, {pendulum_->height()});
 

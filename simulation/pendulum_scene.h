@@ -103,8 +103,8 @@ class PendulumScene final : public ui::Scene {
     const auto x{position_model.position_x};
     const auto y{position_model.position_z + pendulum.length() / 2};
     const auto z{position_model.position_y};
-    const auto theta{pendulum_model.theta};
-    const auto phi{pendulum_model.phi};
+    const auto theta{position_model.theta};
+    const auto phi{position_model.phi};
     return glm::rotate(
         glm::rotate(glm::translate(glm::mat4{1.f}, glm::vec3{x, y, z}), phi, glm::vec3{1, 0, 0}),
         theta, glm::vec3{0, 0, 1});

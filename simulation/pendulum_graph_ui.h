@@ -80,14 +80,15 @@ class PendulumGraph : public ui::UiElement {
       ImPlot::EndPlot();
     }
 
-    if (ImPlot::BeginPlot("Angle", size)) {
-      ImPlot::SetupAxes(pendulum_->angle_series.x_clabel(), "Angle", ImPlotAxisFlags_AutoFit,
-                        ImPlotAxisFlags_AutoFit);
+    if (ImPlot::BeginPlot("Orientation", size)) {
+      ImPlot::SetupAxes(position_->orientation_series.x_clabel(), "Orientation",
+                        ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
       ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 
-      for (size_t i = 0; i < pendulum_->angle_series.num_functions(); ++i) {
-        ImPlot::PlotScatter(pendulum_->angle_series.y_clabel(i), pendulum_->angle_series.x_data(),
-                            pendulum_->angle_series.y_data(i), pendulum_->angle_series.size());
+      for (size_t i = 0; i < position_->orientation_series.num_functions(); ++i) {
+        ImPlot::PlotScatter(
+            position_->orientation_series.y_clabel(i), position_->orientation_series.x_data(),
+            position_->orientation_series.y_data(i), position_->orientation_series.size());
       }
 
       ImPlot::EndPlot();
