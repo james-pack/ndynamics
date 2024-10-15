@@ -181,7 +181,8 @@ class Cube final : public ui::DirectRenderElement {
                      projection_ = glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f);
                    } else {
                      // Orthographic camera.
-                     projection_ = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f,
+                     projection_ = glm::ortho(-10.0f * aspect_ratio_, 10.0f * aspect_ratio_, -10.0f,
+                                              10.0f, 0.0f,
                                               100.0f);  // In world coordinates
                    }
                    mvp_dirty_ = true;
