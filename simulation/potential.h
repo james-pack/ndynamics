@@ -1,49 +1,54 @@
 #pragma once
 
+#include <functional>
+
 #include "math/state.h"
 
 namespace ndyn::simulation {
 
 template <typename VectorT>
-class Potential {
+class Potential final {
  public:
   using VectorType = VectorT;
   using ScalarType = typename math::ScalarTypes<VectorType>::ScalarType;
+  using FnType = std::function<VectorType(const ScalarType&, const VectorType&)>;
 
-  Potential() = default;
-  virtual ~Potential() = default;
-
-  virtual VectorT at(const VectorT& position) const = 0;
-
-  virtual void goto_time(ScalarType new_time, ScalarType step_size = 0) = 0;
-
-  virtual void evolve(ScalarType time_increment, ScalarType step_size = 0) = 0;
-};
-
-template <typename VectorT>
-class UniformPotential final : public Potential<VectorT> {
  private:
-  VectorT value_{};
+  ScalarType t_{};
+  FnType fn_{};
+  VectorType value_{};
 
  public:
-  using VectorType = VectorT;
-  using ScalarType = typename math::ScalarTypes<VectorType>::ScalarType;
+  Potential() = default;
+  explicit Potential(const FnType& fn) : fn_(fn) {}
+  explicit Potential(const VectorType& value) : value_(value) {}
 
-  // Uniform zero potential.
-  UniformPotential() = default;
+  void set_function(const FnType& fn) { fn_ = fn; }
 
-  // Uniform potential of the given value.
-  UniformPotential(const VectorT& value) : value_(value) {}
-
-  VectorT at(const VectorT& position) const override { return value_; }
-
-  void goto_time(ScalarType new_time, ScalarType step_size = 0) override {
-    // Do nothing. A UniformPotential does not change over time.
+  void set_value(const VectorType& value) {
+    fn_ = FnType{};
+    value_ = value;
   }
 
-  void evolve(ScalarType time_increment, ScalarType step_size = 0) override {
-    // Do nothing. A UniformPotential does not change over time.
+  constexpr VectorType at(const VectorType& position) const {
+    if (fn_) {
+      return fn_(t_, position);
+    } else {
+      return value_;
+    }
   }
+
+  constexpr ScalarType magnitude() const {
+    using std::abs;
+    return abs(at(VectorType{}));
+  }
+
+  constexpr ScalarType magnitude(const VectorT& position) const {
+    using std::abs;
+    return abs(at(position));
+  }
+
+  void update(const ScalarType& t) { t_ = t; }
 };
 
 }  // namespace ndyn::simulation

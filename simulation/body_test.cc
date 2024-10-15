@@ -37,8 +37,8 @@ FloatT compute_step_size(FloatT angle) {
   }
 }
 
-// 9.8 in the direction of zero theta and zero psi, if in three dimensions.
-static UniformPotential<VectorType> gravity{ACCELERATION_GRAVITY * VectorType::e<0>()};
+// 9.8 in the direction of negative x.
+static Potential<VectorType> gravity{ACCELERATION_GRAVITY * VectorType::e<0>()};
 
 math::ComputePartials<StateType> configure_pendulum_partials() {
   return [](const StateType& state) -> StateType {
