@@ -74,6 +74,12 @@ class Multivector final {
   constexpr const T& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
   constexpr void set_scalar(T v) { coefficients_[SCALAR_BASIS_INDEX] = v; }
 
+  /*****************************************
+   * This set of accessors is incorrect for most implementations.
+   *
+   * TODO(james): Remove them and port usages to the geometric abstractions, rather than using
+   * Multivectors directly.
+   *****************************************/
   constexpr const T& t() const {
     // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
     // algebra with negative space-like bases. In this case, t() is traditionally the first
