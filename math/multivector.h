@@ -499,8 +499,8 @@ class Multivector final {
   constexpr Multivector conj() const {
     Multivector result{*this};
     for (size_t i = 0; i < bases_count(); ++i) {
-      const auto num_bits_set{bit_count(i)};
-      if (num_bits_set % 4 == 1 || num_bits_set % 4 == 2) {
+      const auto grade{bit_count(i)};
+      if (grade % 4 == 1 || grade % 4 == 2) {
         result.coefficients_[i] = -result.coefficients_[i];
       }
     }
@@ -532,6 +532,9 @@ class Multivector final {
 
   // Unary minus.
   constexpr Multivector operator-() const { return multiply(-1); }
+
+  // Conjugation.
+  constexpr Multivector operator~() const { return conj(); }
 
   // Geometric product.
   constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }

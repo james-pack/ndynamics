@@ -892,6 +892,7 @@ TEST(MultivectorTest, CanDoComplexConjugate) {
   static constexpr auto v{1.f - i};
   static constexpr auto w{ComplexMultivector<float>{-1.f}};
 
+  EXPECT_EQ(1.f, i * i.conj());
   EXPECT_EQ(2.f, u * u.conj());
   EXPECT_EQ(2.f, v * v.conj());
   EXPECT_EQ(1.f, w * w.conj());
