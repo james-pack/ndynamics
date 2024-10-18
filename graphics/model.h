@@ -29,7 +29,16 @@ class Model final {
 
   GLfloat aspect_ratio_;
 
-  glm::mat4 projection_{glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f)};
+  glm::mat4 perspective_projection_{
+      glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f)};
+
+  glm::mat4 orthographic_projection_{
+      glm::ortho(-10.0f * aspect_ratio_, 10.0f * aspect_ratio_, -10.0f, 10.0f, 0.f,
+                 100.0f)  // In world coordinates
+  };
+
+  glm::mat4* active_projection_{&perspective_projection_};
+
   glm::mat4 camera_{glm::lookAt(
       glm::vec3{0, 2, 10},  // Camera location in World Space
       glm::vec3{0, 0, 0},   // and looks at this location in World Space
@@ -54,13 +63,22 @@ class Model final {
 
   void clear_all_elements() { top_level_elements_.clear(); }
 
+  void toggle_perspective_orthographic_projections() {
+    if (active_projection_ == &perspective_projection_) {
+      active_projection_ = &orthographic_projection_;
+    } else {
+      active_projection_ = &perspective_projection_;
+    }
+    projection_matrix_dirty_ = true;
+  }
+
   void update(ScalarType t) {
     glUseProgram(active_program_->id());
 
     if (projection_matrix_dirty_) {
       const GLuint projection_matrix_id{
           glGetUniformLocation(active_program_->id(), "projection_matrix")};
-      glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, &projection_[0][0]);
+      glUniformMatrix4fv(projection_matrix_id, 1, GL_FALSE, &(*active_projection_)[0][0]);
       projection_matrix_dirty_ = false;
     }
 
