@@ -9,6 +9,7 @@ cc_library(
         "cayley_entry_calculator.h",
         "convert.h",
         "coordinates.h",
+        "geometry.h",
         "integrators.h",
         "magnitude.h",
         "multivector.h",

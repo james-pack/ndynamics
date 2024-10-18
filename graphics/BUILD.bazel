@@ -4,14 +4,21 @@ cc_library(
         "shader_program.cc",
     ],
     hdrs = [
+        "box.h",
+        "gpu_element.h",
+        "model.h",
         "shader_program.h",
+    ],
+    data = [
+        "default_fragment_shader.glsl",
+        "default_vertex_shader.glsl",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//io",
+        "//math",
         "//third_party/glad",
         "//third_party/glfw",
         "//third_party/glog",
-        "//time",
     ],
 )

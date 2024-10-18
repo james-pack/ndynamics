@@ -22,7 +22,6 @@ cc_library(
         "accelerometer_sensor_model.h",
         "cube_ui.h",
         "pendulum_graph_ui.h",
-        "pendulum_scene.h",
         "pendulum_ui_model.h",
         "position_ui_model.h",
         "sensor_measurement_graph_ui.h",
@@ -80,7 +79,11 @@ cc_test(
 
 cc_binary(
     name = "pendulum",
-    srcs = ["pendulum_ui.cc"],
+    srcs = [
+        "old_cube_ui.h",
+        "pendulum_scene.h",
+        "pendulum_ui.cc",
+    ],
     deps = [
         ":simulation",
         ":simulation_ui",

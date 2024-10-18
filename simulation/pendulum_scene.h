@@ -7,7 +7,7 @@
 #include "math/state.h"
 #include "sensor/measurement_type.h"
 #include "simulation/accelerometer_sensor_model.h"
-#include "simulation/cube_ui.h"
+#include "simulation/old_cube_ui.h"
 #include "simulation/pendulum.h"
 #include "simulation/pendulum_graph_ui.h"
 #include "simulation/pendulum_ui_model.h"
