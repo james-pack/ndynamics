@@ -307,7 +307,7 @@ class Multivector final {
     set_basis<1>(v);
   }
 
-  constexpr Multivector grade(size_t grade) const {
+  constexpr Multivector grade_projection(size_t grade) const {
     if (grade >= grade_count()) {
       except<std::domain_error>("Requested grade is larger than maximum grade of this multivector");
     }

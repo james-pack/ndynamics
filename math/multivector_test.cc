@@ -140,18 +140,18 @@ TEST(MultivectorTest, ValidGradeOperatorOnTrivialComplexNumbers) {
   const auto i{ComplexMultivector<float>::e<0>()};
   const auto zero{ComplexMultivector<float>{0.f}};
 
-  EXPECT_EQ(i, i.grade(1));
-  EXPECT_EQ(zero, i.grade(0));
-  EXPECT_EQ(zero, zero.grade(0));
-  EXPECT_EQ(zero, zero.grade(1));
+  EXPECT_EQ(i, i.grade_projection(1));
+  EXPECT_EQ(zero, i.grade_projection(0));
+  EXPECT_EQ(zero, zero.grade_projection(0));
+  EXPECT_EQ(zero, zero.grade_projection(1));
 }
 
 TEST(MultivectorTest, ValidGradeOperatorOnComplexNumbers) {
   const auto i{ComplexMultivector<float>::e<0>()};
   const auto one{ComplexMultivector<float>{1.f}};
 
-  EXPECT_EQ(10.f * i, (10.f * i - 3).grade(1));
-  EXPECT_EQ(-3.f * one, (10.f * i - 3).grade(0));
+  EXPECT_EQ(10.f * i, (10.f * i - 3).grade_projection(1));
+  EXPECT_EQ(-3.f * one, (10.f * i - 3).grade_projection(0));
 }
 
 TEST(MultivectorTest, ValidGradeOperatorOnTrivialSpacetimeNumbers) {
@@ -162,12 +162,12 @@ TEST(MultivectorTest, ValidGradeOperatorOnTrivialSpacetimeNumbers) {
   const auto zero{SpacetimeMultivector<float>{0.f}};
 
   for (const auto& m : {t, x, y, z}) {
-    EXPECT_EQ(m, m.grade(1));
-    EXPECT_EQ(zero, m.grade(0));
+    EXPECT_EQ(m, m.grade_projection(1));
+    EXPECT_EQ(zero, m.grade_projection(0));
   }
 
-  EXPECT_EQ(zero, zero.grade(0));
-  EXPECT_EQ(zero, zero.grade(1));
+  EXPECT_EQ(zero, zero.grade_projection(0));
+  EXPECT_EQ(zero, zero.grade_projection(1));
 }
 
 TEST(MultivectorTest, ValidGradeOperatorOnSimpleSpacetimeNumbers) {
@@ -184,9 +184,9 @@ TEST(MultivectorTest, ValidGradeOperatorOnSimpleSpacetimeNumbers) {
           const auto sum{a + b + c + d};
           for (size_t i = 0; i < SpacetimeMultivector<float>::grade_count(); ++i) {
             if (i == 1) {
-              EXPECT_EQ(sum, sum.grade(i));
+              EXPECT_EQ(sum, sum.grade_projection(i));
             } else {
-              EXPECT_EQ(zero, sum.grade(i));
+              EXPECT_EQ(zero, sum.grade_projection(i));
             }
           }
         }
@@ -221,17 +221,17 @@ TEST(MultivectorTest, ValidGradeOperatorOnSpacetimeNumbers) {
       16.f * t * x * y * z  //
   };
 
-  EXPECT_EQ(SpacetimeMultivector<float>{1.f}, all_bases.grade(0));
+  EXPECT_EQ(SpacetimeMultivector<float>{1.f}, all_bases.grade_projection(0));
 
-  EXPECT_EQ(2.f * t + 3.f * x + 4.f * y + 5.f * z, all_bases.grade(1));
+  EXPECT_EQ(2.f * t + 3.f * x + 4.f * y + 5.f * z, all_bases.grade_projection(1));
 
   EXPECT_EQ(6.f * t * x + 7.f * t * y + 8.f * t * z + 9.f * x * y + 10.f * x * z + 11.f * y * z,
-            all_bases.grade(2));
+            all_bases.grade_projection(2));
 
   EXPECT_EQ(12.f * t * x * y + 13.f * t * x * z + 14.f * t * y * z + 15.f * x * y * z,
-            all_bases.grade(3));
+            all_bases.grade_projection(3));
 
-  EXPECT_EQ(16.f * t * x * y * z, all_bases.grade(4));
+  EXPECT_EQ(16.f * t * x * y * z, all_bases.grade_projection(4));
 }
 
 TEST(MultivectorTest, CanDoLeftContractionOnComplexNumbers) {
