@@ -2,7 +2,7 @@
 #include "glad/gl.h"
 // clang-format on
 
-#include "ui/shader_program.h"
+#include "graphics/shader_program.h"
 
 #include <filesystem>
 #include <string>
@@ -11,7 +11,7 @@
 #include "glog/logging.h"
 #include "io/utils.h"
 
-namespace ndyn::ui {
+namespace ndyn::graphics {
 
 template <GLenum SHADER_TYPE>
 GLuint initialize_shader(const std::filesystem::path& path) {
@@ -22,7 +22,7 @@ GLuint initialize_shader(const std::filesystem::path& path) {
 
   const std::string shader_code{io::read_file(path)};
   VLOG(2) << "shader source:\n" << shader_code << "\n";
-  const char *source_pointer = shader_code.c_str();
+  const char* source_pointer = shader_code.c_str();
   glShaderSource(shader_id, 1, &source_pointer, nullptr);
   glCompileShader(shader_id);
 
@@ -89,4 +89,4 @@ ShaderProgram ShaderProgramBuilder::build() {
   return ShaderProgram{program_id};
 }
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::graphics

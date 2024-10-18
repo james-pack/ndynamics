@@ -5,10 +5,10 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "graphics/shader_program.h"
 #include "ui/direct_render_element.h"
 #include "ui/keyboard_shortcuts.h"
 #include "ui/scene.h"
-#include "ui/shader_program.h"
 
 namespace ndyn::simulation {
 
@@ -104,7 +104,7 @@ class Cube final : public ui::DirectRenderElement {
       0.982f, 0.099f, 0.879f   //
   };
 
-  const ui::ShaderProgram program_;
+  const graphics::ShaderProgram program_;
   CubePositionFn position_fn_;
 
   GLuint vertex_buffer_{};
@@ -142,7 +142,7 @@ class Cube final : public ui::DirectRenderElement {
 
  public:
   Cube(GLFWwindow& window, const CubePositionFn& position_fn = CubePositionFn{})
-      : program_(ui::ShaderProgramBuilder{}
+      : program_(graphics::ShaderProgramBuilder{}
                      .add_vertex_shader("simulation/sample_vertex_shader.vertexshader")
                      .add_fragment_shader("simulation/sample_fragment_shader.fragmentshader")
                      .build()),

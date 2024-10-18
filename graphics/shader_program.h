@@ -5,7 +5,7 @@
 
 #include "GLFW/glfw3.h"
 
-namespace ndyn::ui {
+namespace ndyn::graphics {
 
 class ShaderProgramBuilder;
 
@@ -43,4 +43,4 @@ class ShaderProgramBuilder final {
   ShaderProgram build();
 };
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::graphics

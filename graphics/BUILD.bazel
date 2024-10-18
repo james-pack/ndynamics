@@ -1,0 +1,17 @@
+cc_library(
+    name = "graphics",
+    srcs = [
+        "shader_program.cc",
+    ],
+    hdrs = [
+        "shader_program.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//io",
+        "//third_party/glad",
+        "//third_party/glfw",
+        "//third_party/glog",
+        "//time",
+    ],
+)

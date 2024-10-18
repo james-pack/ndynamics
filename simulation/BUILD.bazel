@@ -34,6 +34,7 @@ cc_library(
     deps = [
         ":simulation",
         "//base",
+        "//graphics",
         "//math",
         "//third_party/glfw",
         "//third_party/glm",

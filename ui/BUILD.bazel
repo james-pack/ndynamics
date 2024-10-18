@@ -4,7 +4,6 @@ cc_library(
         "app.cc",
         "imgui_utils.cc",
         "keyboard_shortcuts.cc",
-        "shader_program.cc",
         "ui_elements.cc",
     ],
     hdrs = [
@@ -14,13 +13,11 @@ cc_library(
         "imgui_utils.h",
         "keyboard_shortcuts.h",
         "scene.h",
-        "shader_program.h",
         "ui_elements.h",
         "ui_model.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//io",
         "//third_party/glad",
         "//third_party/glfw",
         "//third_party/glog",
