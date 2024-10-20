@@ -28,12 +28,13 @@ class Multivector final {
  public:
   using ScalarType = T;
 
-  static constexpr size_t SCALAR_BASIS_INDEX{0};
-
   static constexpr size_t vector_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
   static constexpr size_t grade_count() { return vector_count() + 1; }
 
   static constexpr size_t bases_count() { return 1UL << vector_count(); }
+
+  static constexpr size_t SCALAR_BASIS_INDEX{0};
+  static constexpr size_t PSEUDOSCALAR_BASIS_INDEX{bases_count() - 1};
 
  private:
   static constexpr CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> cayley_table_{};
@@ -57,6 +58,10 @@ class Multivector final {
   constexpr Multivector& operator=(const Multivector& rhs) = default;
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
+  // TODO(james): This is way too slow. Rewrite using a more explicit sum of a function of the
+  // coefficients.
+  constexpr ScalarType square_magnitude() const { return multiply(reverse()).scalar(); }
+
   template <size_t n>
   constexpr const T& basis() const {
     static_assert(n < bases_count(), "Basis index out of range.");
@@ -74,12 +79,345 @@ class Multivector final {
   constexpr const T& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
   constexpr void set_scalar(T v) { coefficients_[SCALAR_BASIS_INDEX] = v; }
 
-  /*****************************************
+  constexpr Multivector grade_projection(size_t grade) const {
+    if (grade >= grade_count()) {
+      except<std::domain_error>("Requested grade is larger than maximum grade of this multivector");
+    }
+    Multivector result{};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      if (bit_count(i) == grade) {
+        result.coefficients_[i] = coefficients_[i];
+      }
+    }
+    return result;
+  }
+
+  constexpr Multivector add(const T& rhs) const {
+    Multivector result{*this};
+    result.coefficients_[SCALAR_BASIS_INDEX] += rhs;
+    return result;
+  }
+
+  constexpr Multivector add(const Multivector& rhs) const {
+    Multivector result{*this};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      result.coefficients_[i] += rhs.coefficients_[i];
+    }
+    return result;
+  }
+
+  constexpr Multivector subtract(const T& rhs) const {
+    Multivector result{*this};
+    result.coefficients_[SCALAR_BASIS_INDEX] -= rhs;
+    return result;
+  }
+
+  constexpr Multivector subtract(const Multivector& rhs) const {
+    Multivector result{*this};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      result.coefficients_[i] -= rhs.coefficients_[i];
+    }
+    return result;
+  }
+
+  constexpr Multivector multiply(const T& rhs) const {
+    Multivector result{*this};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      result.coefficients_[i] *= rhs;
+    }
+    return result;
+  }
+
+  constexpr Multivector multiply(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      for (size_t j = 0; j < bases_count(); ++j) {
+        const auto& cayley_entry{cayley_table_.entry(i, j)};
+        result.coefficients_[cayley_entry.grade()] +=
+            cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+      }
+    }
+    return result;
+  }
+
+  constexpr Multivector divide(const T& rhs) const {
+    Multivector result{*this};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      result.coefficients_[i] /= rhs;
+    }
+    return result;
+  }
+
+  // Inner product variations.
+
+  /**
+   * Left contraction projects the lhs (this Multivector) onto the rhs.
+   */
+  constexpr Multivector left_contraction(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      // Note the initialization in the for-loop below. All of the basiss where the grade of i
+      // is less than the grade of j will not contribute to the result. Also, j must include every
+      // basis in i otherwise the two bases are orthogonal to each other.
+      for (size_t j = i; j < bases_count(); ++j) {
+        // Here we ensure that the two bases are not orthogonal to each other, in the sense
+        // that the rhs basis (j) must include all of the bases in the lhs basis (i).
+        // Otherwise, the left_contraction of these bases is zero, and the result is unchanged.
+        // Note that for i = 0 (the scalar basis of the lhs), this case will always be true, and
+        // the effective result is that the left contraction of scalars onto other bases adds a
+        // scaled version of the rhs to the result.
+        if ((i & j) == i) {
+          const auto& cayley_entry{cayley_table_.entry(i, j)};
+          result.coefficients_[j - i] +=
+              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Right contraction projects the rhs onto this Multivector, the lhs.
+   */
+  constexpr Multivector right_contraction(const Multivector& rhs) const {
+    return rhs.left_contraction(*this);
+  }
+
+  /**
+   * The bidirectional inner project projects each pair of bases individually, according to
+   * which basis has the lower grade. When the lhs basis has the lower grade, the lhs
+   * basis is projected onto the rhs basis. Similarly, the rhs basis is projected onto
+   * the lhs basis when the rhs basis has the lower grade. When the two have the same grade,
+   * the operation is symmetric and can be thought of as projecting the lhs basis onto the rhs
+   * basis or vice versa.
+   */
+  constexpr Multivector bidirectional_inner(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      for (size_t j = 0; j < bases_count(); ++j) {
+        // If the lhs basis is a lower grade, compute the inner product as the lhs basis
+        // being projected on the rhs. Otherwise, project the rhs basis on the lhs. The
+        // implementation here is to simply select the appropriate Cayley table entry according to
+        // which basis is being projected.
+        // Note that the grade of the basis and value of the basis are not the same. The
+        // grade is the number of bits set in the value. But, if the value is lower and the grade is
+        // higher (value of 3, meaning a grade of 2, is less than a value of 4, a grade of 1), the
+        // resulting bases are orthogonal and the inner product will be zero.
+        if (i < j) {
+          if ((i & j) == i) {
+            const auto& cayley_entry{cayley_table_.entry(i, j)};
+            result.coefficients_[j - i] +=
+                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+          }
+        } else {
+          if ((i & j) == j) {
+            const auto& cayley_entry{cayley_table_.entry(j, i)};
+            result.coefficients_[i - j] +=
+                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * The inner product. Note that the inner product is not uniformly defined across geometric
+   * algebra texts. In some texts, particularly those by Hestenes, the inner product is defined as
+   * the bidirectional_inner(). In other texts, usually those more focused on the mathematical
+   * structure, the inner product is defined as the left_contraction(). The right_contraction()
+   * style is provided for completeness. All of these approaches are useful, so the Multivector
+   * includes the style of the inner product as part of the type. The inner() method below
+   * implements selecting the style based on the type definition. Finally, all three approaches are
+   * exposed in the API of this class, so they may be used explicitly as needed.
+   */
+  constexpr Multivector inner(const Multivector& rhs) const {
+    static_assert(
+        INNER_PRODUCT_STYLE != InnerProduct::NO_IMPLICIT_DEFINITION,
+        "inner() method not defined since Multivector type has no implicit definition of "
+        "the inner product. Must explicitly use either the left contraction, right "
+        "contraction, or bidirectional inner product operations on this Multivector type.");
+    if constexpr (INNER_PRODUCT_STYLE == InnerProduct::LEFT_CONTRACTION) {
+      return left_contraction(rhs);
+    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::RIGHT_CONTRACTION) {
+      return right_contraction(rhs);
+    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::BIDIRECTIONAL) {
+      return bidirectional_inner(rhs);
+    }
+  }
+
+  /**
+   * The outer product, also known as the wedge operator and the progressive product.
+   */
+  constexpr Multivector outer(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      // Note the exit condition of this for-loop. We only loop while i+j is less than the number of
+      // bases.
+      for (size_t j = 0; i + j < bases_count(); ++j) {
+        const auto& cayley_entry{cayley_table_.entry(i, j)};
+        if (bit_count(cayley_entry.grade()) == bit_count(i) + bit_count(j)) {
+          result.coefficients_[i + j] +=
+              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * The regressive product, also known as the 'V' product. The dual of the regressive product is
+   * the outer product of the duals of the operands. The regressive product then is the outer
+   * product of the duals multiplied by the inverse of the pseudoscalar.
+   */
+  constexpr Multivector regress(const Multivector& rhs) const {
+    return dual().outer(rhs.dual()) * inverse_pseudoscalar();
+  }
+
+  /**
+   * The reverse of this Multivector.
+   */
+  constexpr Multivector reverse() const {
+    Multivector result{*this};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      const auto grade{bit_count(i)};
+      if (grade % 4 == 2 || grade % 4 == 3) {
+        result.coefficients_[i] *= -1;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * The conjugate of this Multivector.
+   */
+  constexpr Multivector conj() const {
+    Multivector result{*this};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      const auto grade{bit_count(i)};
+      if (grade % 4 == 1 || grade % 4 == 2) {
+        result.coefficients_[i] *= -1;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * The inverse of a Multivector. The product of a multivector and its inverse should be 1.
+   */
+  constexpr Multivector inverse() const { return reverse() / square_magnitude(); }
+
+  /**
+   * The dual of a Multivector. The product of a multivector and its dual should be the
+   * unit pseudoscalar.
+   */
+  constexpr Multivector dual() const {
+    Multivector result{};
+    const ScalarType magnitude{square_magnitude()};
+    for (size_t i = 0; i < bases_count(); ++i) {
+      const size_t dual_basis{bases_count() - i - 1};
+      const auto& cayley_entry{cayley_table_.entry(i, dual_basis)};
+      result.coefficients_[dual_basis] = cayley_entry.quadratic_multiplier() / magnitude;
+    }
+    return result;
+  }
+
+  // Operator overloads.
+  constexpr bool operator==(const Multivector& rhs) const {
+    // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
+    // we have to implement this ourselves for earlier versions.
+    for (size_t i = 0; i < bases_count(); ++i) {
+      if (coefficients_[i] != rhs.coefficients_[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Equality.
+  constexpr bool operator==(const T& rhs) const { return *this == Multivector{rhs}; }
+
+  // Addition.
+  constexpr Multivector operator+(const T& rhs) const { return add(rhs); }
+  constexpr Multivector operator+(const Multivector& rhs) const { return add(rhs); }
+
+  // Subtraction.
+  constexpr Multivector operator-(const T& rhs) const { return subtract(rhs); }
+  constexpr Multivector operator-(const Multivector& rhs) const { return subtract(rhs); }
+
+  // Unary minus.
+  constexpr Multivector operator-() const { return multiply(-1); }
+
+  // Reversion.
+  constexpr Multivector operator~() const { return reverse(); }
+
+  // Geometric product.
+  constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
+  constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
+
+  // Division by a scalar.
+  constexpr Multivector operator/(const T& rhs) const { return divide(rhs); }
+
+  // Self-modifying operators.
+  constexpr Multivector& operator+=(const Multivector& rhs) {
+    for (size_t i = 0; i < bases_count(); ++i) {
+      coefficients_[i] += rhs.coefficients_[i];
+    }
+    return *this;
+  }
+
+  constexpr Multivector& operator-=(const Multivector& rhs) {
+    for (size_t i = 0; i < bases_count(); ++i) {
+      coefficients_[i] -= rhs.coefficients_[i];
+    }
+    return *this;
+  }
+
+  template <size_t N>
+  constexpr const T& element() {
+    static_assert(
+        N < vector_count(),
+        "Template parameter to vector element function is out of range of the number of "
+        "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
+    return coefficients_[1UL << N];
+  }
+
+  // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
+  // any Multivector. See the tests for examples.
+  template <size_t N>
+  static constexpr Multivector e() {
+    if constexpr (N >= vector_count()) {
+      // Note: we use a static_assert here to generate an error message for the user. We could have
+      // used a template parameter to restrict which basis creation functions are generated by the
+      // compiler, but that approach resulted in a much more cryptic error message from the
+      // compiler. For completeness, here is the function signature with the template restriction:
+      //   template <size_t N, std::enable_if_t<(N < vector_count()), bool> = true>
+      //   static constexpr Multivector e();
+      static_assert(
+          N < vector_count(),
+          "Template parameter to basis creation function is out of range of the number of "
+          "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
+    } else {
+      Multivector result{};
+      result.coefficients_[1UL << N] = 1;
+      return result;
+    }
+  }
+
+  static constexpr Multivector pseudoscalar() {
+    Multivector result{};
+    result.coefficients_[(1UL << bases_count()) - 1] = 1;
+    return result;
+  }
+
+  static constexpr Multivector inverse_pseudoscalar() { return -pseudoscalar(); }
+
+  /*************************************************************************************************
    * This set of accessors is incorrect for most implementations.
    *
    * TODO(james): Remove them and port usages to the geometric abstractions, rather than using
-   * Multivectors directly.
-   *****************************************/
+   * Multivectors directly in most applications.
+   *************************************************************************************************/
   constexpr const T& t() const {
     // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
     // algebra with negative space-like bases. In this case, t() is traditionally the first
@@ -306,295 +644,6 @@ class Multivector final {
                   "The imag() selector is only defined for the complex numbers.");
     set_basis<1>(v);
   }
-
-  constexpr Multivector grade_projection(size_t grade) const {
-    if (grade >= grade_count()) {
-      except<std::domain_error>("Requested grade is larger than maximum grade of this multivector");
-    }
-    Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      if (bit_count(i) == grade) {
-        result.coefficients_[i] = coefficients_[i];
-      }
-    }
-    return result;
-  }
-
-  constexpr Multivector add(const T& rhs) const {
-    Multivector result{*this};
-    result.coefficients_[SCALAR_BASIS_INDEX] += rhs;
-    return result;
-  }
-
-  constexpr Multivector add(const Multivector& rhs) const {
-    Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      result.coefficients_[i] += rhs.coefficients_[i];
-    }
-    return result;
-  }
-
-  constexpr Multivector subtract(const T& rhs) const {
-    Multivector result{*this};
-    result.coefficients_[SCALAR_BASIS_INDEX] -= rhs;
-    return result;
-  }
-
-  constexpr Multivector subtract(const Multivector& rhs) const {
-    Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      result.coefficients_[i] -= rhs.coefficients_[i];
-    }
-    return result;
-  }
-
-  constexpr Multivector multiply(const T& rhs) const {
-    Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      result.coefficients_[i] *= rhs;
-    }
-    return result;
-  }
-
-  constexpr Multivector multiply(const Multivector& rhs) const {
-    Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      for (size_t j = 0; j < bases_count(); ++j) {
-        const auto& cayley_entry{cayley_table_.entry(i, j)};
-        result.coefficients_[cayley_entry.grade()] +=
-            cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
-      }
-    }
-    return result;
-  }
-
-  constexpr Multivector divide(const T& rhs) const {
-    Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      result.coefficients_[i] /= rhs;
-    }
-    return result;
-  }
-
-  // Inner product variations.
-
-  /**
-   * Left contraction projects the lhs (this Multivector) onto the rhs.
-   */
-  constexpr Multivector left_contraction(const Multivector& rhs) const {
-    Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      // Note the initialization in the for-loop below. All of the basiss where the grade of i
-      // is less than the grade of j will not contribute to the result. Also, j must include every
-      // basis in i otherwise the two bases are orthogonal to each other.
-      for (size_t j = i; j < bases_count(); ++j) {
-        // Here we ensure that the two bases are not orthogonal to each other, in the sense
-        // that the rhs basis (j) must include all of the bases in the lhs basis (i).
-        // Otherwise, the left_contraction of these bases is zero, and the result is unchanged.
-        // Note that for i = 0 (the scalar basis of the lhs), this case will always be true, and
-        // the effective result is that the left contraction of scalars onto other bases adds a
-        // scaled version of the rhs to the result.
-        if ((i & j) == i) {
-          const auto& cayley_entry{cayley_table_.entry(i, j)};
-          result.coefficients_[j - i] +=
-              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
-        }
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Right contraction projects the rhs onto this Multivector, the lhs.
-   */
-  constexpr Multivector right_contraction(const Multivector& rhs) const {
-    return rhs.left_contraction(*this);
-  }
-
-  /**
-   * The bidirectional inner project projects each pair of bases individually, according to
-   * which basis has the lower grade. When the lhs basis has the lower grade, the lhs
-   * basis is projected onto the rhs basis. Similarly, the rhs basis is projected onto
-   * the lhs basis when the rhs basis has the lower grade. When the two have the same grade,
-   * the operation is symmetric and can be thought of as projecting the lhs basis onto the rhs
-   * basis or vice versa.
-   */
-  constexpr Multivector bidirectional_inner(const Multivector& rhs) const {
-    Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      for (size_t j = 0; j < bases_count(); ++j) {
-        // If the lhs basis is a lower grade, compute the inner product as the lhs basis
-        // being projected on the rhs. Otherwise, project the rhs basis on the lhs. The
-        // implementation here is to simply select the appropriate Cayley table entry according to
-        // which basis is being projected.
-        // Note that the grade of the basis and value of the basis are not the same. The
-        // grade is the number of bits set in the value. But, if the value is lower and the grade is
-        // higher (value of 3, meaning a grade of 2, is less than a value of 4, a grade of 1), the
-        // resulting bases are orthogonal and the inner product will be zero.
-        if (i < j) {
-          if ((i & j) == i) {
-            const auto& cayley_entry{cayley_table_.entry(i, j)};
-            result.coefficients_[j - i] +=
-                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
-          }
-        } else {
-          if ((i & j) == j) {
-            const auto& cayley_entry{cayley_table_.entry(j, i)};
-            result.coefficients_[i - j] +=
-                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  /**
-   * The inner product. Note that the inner product is not uniformly defined across geometric
-   * algebra texts. In some texts, particularly those by Hestenes, the inner product is defined as
-   * the bidirectional_inner(). In other texts, usually those more focused on the mathematical
-   * structure, the inner product is defined as the left_contraction(). The right_contraction()
-   * style is provided for completeness. All of these approaches are useful, so the Multivector
-   * includes the style of the inner product as part of the type. The inner() method below
-   * implements selecting the style based on the type definition. Finally, all three approaches are
-   * exposed in the API of this class, so they may be used explicitly as needed.
-   */
-  constexpr Multivector inner(const Multivector& rhs) const {
-    static_assert(
-        INNER_PRODUCT_STYLE != InnerProduct::NO_IMPLICIT_DEFINITION,
-        "inner() method not defined since Multivector type has no implicit definition of "
-        "the inner product. Must explicitly use either the left contraction, right "
-        "contraction, or bidirectional inner product operations on this Multivector type.");
-    if constexpr (INNER_PRODUCT_STYLE == InnerProduct::LEFT_CONTRACTION) {
-      return left_contraction(rhs);
-    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::RIGHT_CONTRACTION) {
-      return right_contraction(rhs);
-    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::BIDIRECTIONAL) {
-      return bidirectional_inner(rhs);
-    }
-  }
-
-  /**
-   * The outer product, also known as the wedge operator.
-   */
-  constexpr Multivector outer(const Multivector& rhs) const {
-    Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      // Note the exit condition of this for-loop. We only loop while i+j is less than the number of
-      // bases.
-      for (size_t j = 0; i + j < bases_count(); ++j) {
-        const auto& cayley_entry{cayley_table_.entry(i, j)};
-        if (bit_count(cayley_entry.grade()) == bit_count(i) + bit_count(j)) {
-          result.coefficients_[i + j] +=
-              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
-        }
-      }
-    }
-    return result;
-  }
-
-  /**
-   * The conjugate of this Multivector.
-   */
-  constexpr Multivector conj() const {
-    Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      const auto grade{bit_count(i)};
-      if (grade % 4 == 1 || grade % 4 == 2) {
-        result.coefficients_[i] = -result.coefficients_[i];
-      }
-    }
-    return result;
-  }
-
-  // Operator overloads.
-  constexpr bool operator==(const Multivector& rhs) const {
-    // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
-    // we have to implement this ourselves for earlier versions.
-    for (size_t i = 0; i < bases_count(); ++i) {
-      if (coefficients_[i] != rhs.coefficients_[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // Equality.
-  constexpr bool operator==(const T& rhs) const { return *this == Multivector{rhs}; }
-
-  // Addition.
-  constexpr Multivector operator+(const T& rhs) const { return add(rhs); }
-  constexpr Multivector operator+(const Multivector& rhs) const { return add(rhs); }
-
-  // Subtraction.
-  constexpr Multivector operator-(const T& rhs) const { return subtract(rhs); }
-  constexpr Multivector operator-(const Multivector& rhs) const { return subtract(rhs); }
-
-  // Unary minus.
-  constexpr Multivector operator-() const { return multiply(-1); }
-
-  // Conjugation.
-  constexpr Multivector operator~() const { return conj(); }
-
-  // Geometric product.
-  constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
-  constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
-
-  // Division by a scalar.
-  constexpr Multivector operator/(const T& rhs) const { return divide(rhs); }
-
-  // Self-modifying operators.
-  constexpr Multivector& operator+=(const Multivector& rhs) {
-    for (size_t i = 0; i < bases_count(); ++i) {
-      coefficients_[i] += rhs.coefficients_[i];
-    }
-    return *this;
-  }
-
-  constexpr Multivector& operator-=(const Multivector& rhs) {
-    for (size_t i = 0; i < bases_count(); ++i) {
-      coefficients_[i] -= rhs.coefficients_[i];
-    }
-    return *this;
-  }
-
-  // The inner product operator below is based on the operator expressions defined on
-  // https://bivecctor.net/. Not completely sure this notation is useful, and it may actually create
-  // readability issues, since it isn't standardized.
-
-  // Inner product.
-  constexpr Multivector operator|(const Multivector& rhs) const { return inner(rhs); }
-
-  template <size_t N>
-  constexpr const T& element() {
-    static_assert(
-        N < vector_count(),
-        "Template parameter to vector element function is out of range of the number of "
-        "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
-    return coefficients_[1UL << N];
-  }
-
-  // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
-  // any Multivector. See the tests for examples.
-  template <size_t N>
-  static constexpr Multivector e() {
-    if constexpr (N >= vector_count()) {
-      // Note: we use a static_assert here to generate an error message for the user. We could have
-      // used a template parameter to restrict which basis creation functions are generated by the
-      // compiler, but that approach resulted in a much more cryptic error message from the
-      // compiler. For completeness, here is the function signature with the template restriction:
-      //   template <size_t N, std::enable_if_t<(N < vector_count()), bool> = true>
-      //   static constexpr Multivector e();
-      static_assert(
-          N < vector_count(),
-          "Template parameter to basis creation function is out of range of the number of "
-          "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
-    } else {
-      Multivector result{};
-      result.coefficients_[1UL << N] = 1;
-      return result;
-    }
-  }
 };
 
 // Operator overloads where the multivector is not on the left side.
@@ -674,15 +723,25 @@ using DualMultivector = Multivector<T, 0, 0, 1, INNER_PRODUCT_STYLE>;
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using SplitComplexMultivector = Multivector<T, 1, 0, 0, INNER_PRODUCT_STYLE>;
 
-// VGA 2D is a standard 2D vectorspace geometric algebra. It is used in non-relativistic physics and
-// engineering applications.
+// VGA 2D is a standard ("vanilla") 2D vectorspace geometric algebra. It is used in non-relativistic
+// physics and engineering applications.
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using Vga2dMultivector = Multivector<T, 2, 0, 0, INNER_PRODUCT_STYLE>;
 
-// VGA is a standard 3D vectorspace geometric algebra. It is used in non-relativistic physics and
-// engineering applications.
+// VGA is a standard ("vanilla") 3D vectorspace geometric algebra. It is used in non-relativistic
+// physics and engineering applications.
 template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 using VgaMultivector = Multivector<T, 3, 0, 0, INNER_PRODUCT_STYLE>;
+
+// PGA 2D is a 2D vectorspace geometric algebra with an additional zero dimension. It is used in
+// computer graphics, non-relativistic physics, and engineering applications.
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using Pga2dMultivector = Multivector<T, 2, 0, 1, INNER_PRODUCT_STYLE>;
+
+// PGA is a 3D vectorspace geometric algebra with an additional zero dimension. It is used in
+// computer graphics, non-relativistic physics, and engineering applications.
+template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+using PgaMultivector = Multivector<T, 3, 0, 1, INNER_PRODUCT_STYLE>;
 
 // The spacetime algebra is primarily used in relativistic physics applications and research.
 // Note that we assume Cl(1, 3) as the spacetime algebra here, rather than

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <utility>
 
 #include "math/magnitude.h"
@@ -10,17 +11,17 @@ namespace ndyn::math {
 // Utility functions for Multivectors, especially overloads of functions that might be applicable to
 // scalars and built-in types as well.
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+template <typename ScalarType, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
           InnerProduct INNER_PRODUCT_STYLE>
-constexpr T square_magnitude(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
-  return (value * value).scalar();
+constexpr ScalarType square_magnitude(const Multivector<ScalarType, POSITIVE_BASES, NEGATIVE_BASES,
+                                                        ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
+  return value.square_magnitude();
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+template <typename ScalarType, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
           InnerProduct INNER_PRODUCT_STYLE>
-constexpr T abs(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
+constexpr ScalarType abs(const Multivector<ScalarType, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES,
+                                           INNER_PRODUCT_STYLE>& value) {
   using std::sqrt;
   return sqrt(square_magnitude(value));
 }

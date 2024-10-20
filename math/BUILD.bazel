@@ -109,6 +109,17 @@ cc_test(
     srcs = ["multivector_test.cc"],
     deps = [
         ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "multivector_bivector_net_test",
+    srcs = ["multivector_bivector_net_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
         "//third_party/gtest",
     ],
 )
