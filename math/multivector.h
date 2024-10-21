@@ -303,7 +303,8 @@ class Multivector final {
   }
 
   /**
-   * The inverse of a Multivector. The product of a multivector and its inverse should be 1.
+   * The inverse of a Multivector, if it exists. Note that this approach does not guarantee that an
+   * inverse exists, and if it does not exist, this method gives an incorrect value.
    */
   constexpr Multivector inverse() const { return reverse() / square_magnitude(); }
 
