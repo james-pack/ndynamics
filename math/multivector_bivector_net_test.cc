@@ -183,7 +183,6 @@ TEST(R100BivectorNetTest, ReverseMatches) {
   constexpr VectorType v{as_multivector<ScalarType, P, N, Z>({0, 1})};
   constexpr VectorType result{v.reverse()};
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>({0, 1})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
@@ -196,7 +195,6 @@ TEST(R200BivectorNetTest, ReverseMatches) {
   constexpr VectorType v{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3})};
   constexpr VectorType result{v.reverse()};
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>({0, 1, 2, -3})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
@@ -209,7 +207,6 @@ TEST(R101BivectorNetTest, ReverseMatches) {
   constexpr VectorType v{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3})};
   constexpr VectorType result{v.reverse()};
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>({0, 1, 2, -3})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
@@ -222,7 +219,6 @@ TEST(R110BivectorNetTest, ReverseMatches) {
   constexpr VectorType v{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3})};
   constexpr VectorType result{v.reverse()};
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>({0, 1, 2, -3})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
@@ -235,7 +231,6 @@ TEST(R300BivectorNetTest, ReverseMatches) {
   constexpr VectorType v{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3, 4, 5, 6, 7})};
   constexpr VectorType result{v.reverse()};
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3, -4, -5, -6, -7})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
@@ -248,7 +243,6 @@ TEST(R111BivectorNetTest, ReverseMatches) {
   constexpr VectorType v{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3, 4, 5, 6, 7})};
   constexpr VectorType result{v.reverse()};
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3, -4, -5, -6, -7})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
@@ -261,7 +255,6 @@ TEST(R210BivectorNetTest, ReverseMatches) {
   constexpr VectorType v{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3, 4, 5, 6, 7})};
   constexpr VectorType result{v.reverse()};
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>({0, 1, 2, 3, -4, -5, -6, -7})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
@@ -278,7 +271,6 @@ TEST(R410BivectorNetTest, ReverseMatches) {
   constexpr VectorType expected{as_multivector<ScalarType, P, N, Z>(
       {0,   1,   2,   3,   4,   5,   -6,  -7,  -8,  -9,  -10, -11, -12, -13, -14, -15,
        -16, -17, -18, -19, -20, -21, -22, -23, -24, -25, 26,  27,  28,  29,  30,  31})};
-  LOG(INFO) << "expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
