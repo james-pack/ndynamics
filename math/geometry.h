@@ -1,10 +1,21 @@
 /**
- * Geometric primitives and transformations using 3D PGA (Projective Geometric Algebra) also known
- * as Cl(3,0,1).
+ * Geometric primitives and transformations using "plane-based" 3D PGA (Projective Geometric
+ * Algebra) also known as Cl(3,0,1). In this form of the 3D PGA, planes are represented by grade 1
+ * multivectors (that is, vectors) and points are represented by grade 3 multivectors (trivectors).
+ * In this form, the intersect() method below represents the join of two primitives, and the span()
+ * represents the meet.
+ *
+ * A primary alternative form exists where planes are trivectors and points are vectors. In this
+ * alternative form, the span() method would be the join operation, and intersect() would be the
+ * meet. Superficially, these two forms are functionally identical but with opposite geometric
+ * interpretations.
  *
  * For more details on this setup, please see https://youtu.be/v-WG02ILMXA and
- * https://youtu.be/ichOiuBoBoQ.
+ * https://youtu.be/ichOiuBoBoQ. For the distinction between plane- and point-based PGA, this
+ * article clarifies the different representation and operators:
+ * https://discourse.bivector.net/t/join-and-meet-in-projective-geometric-algebra/660
  */
+
 #pragma once
 
 #include <cmath>
@@ -14,14 +25,18 @@
 namespace ndyn::math {
 
 template <typename ScalarT>
+class Transform;
+
+template <typename ScalarT>
 class Primitive final {
  public:
   using ScalarType = ScalarT;
 
+ private:
   // Our vector type is the 3D PGA.
   using VectorType = Multivector<ScalarType, 3, 0, 1>;
 
- private:
+  static constexpr VectorType one_{VectorType{1}};
   static constexpr VectorType e0_{VectorType::template e<0>()};
   static constexpr VectorType e1_{VectorType::template e<1>()};
   static constexpr VectorType e2_{VectorType::template e<2>()};
@@ -35,7 +50,7 @@ class Primitive final {
   static constexpr VectorType e23_{e2_ * e3_};
 
   // Special basis combinations to represent lines.
-  // TODO(james): Explain why the canonical ordering of these basis vectors aren't sufficient;
+  // TODO(james): Explain why the canonical ordering of these basis vectors isn't sufficient;
   // describe what complexity they would introduce.
   // These bases are equivalent to Plucker coordinates.
   static constexpr VectorType e31_{e3_ * e1_};
@@ -46,7 +61,7 @@ class Primitive final {
   static constexpr VectorType e123_{e1_ * e2_ * e3_};
 
   // Special basis combinations to represent points.
-  // TODO(james): Explain why the canonical ordering of these basis vectors aren't sufficient;
+  // TODO(james): Explain why the canonical ordering of these basis vectors isn't sufficient;
   // describe what complexity they would introduce.
   // These bases are equivalent to homogenous coordinates for points.
   static constexpr VectorType e021_{e0_ * e2_ * e1_};
@@ -54,21 +69,23 @@ class Primitive final {
 
   static constexpr VectorType e0123_{e0_ * e1_ * e2_ * e3_};
 
-  VectorType p_{};
+  VectorType vec_{};
 
-  Primitive(const VectorType& p) : p_(p) {}
-  Primitive(VectorType&& p) : p_(std::move(p)) {}
+  friend class Transform<ScalarType>;
+
+  constexpr Primitive() = default;
+  constexpr Primitive(const VectorType& v) : vec_(v) {}
+  constexpr Primitive(VectorType&& v) : vec_(std::move(v)) {}
 
  public:
-  Primitive() = default;
-  Primitive(const Primitive&) = default;
-  Primitive(Primitive&&) = default;
+  constexpr Primitive(const Primitive&) = default;
+  constexpr Primitive(Primitive&&) = default;
 
-  Primitive& operator=(const Primitive&) = default;
-  Primitive& operator=(Primitive&&) = default;
+  constexpr Primitive& operator=(const Primitive&) = default;
+  constexpr Primitive& operator=(Primitive&&) = default;
 
-  bool operator==(const Primitive& rhs) { return p_ == rhs.p_; }
-  bool operator!=(const Primitive& rhs) { return p_ != rhs.p_; }
+  constexpr bool operator==(const Primitive& rhs) { return vec_ == rhs.vec_; }
+  constexpr bool operator!=(const Primitive& rhs) { return vec_ != rhs.vec_; }
 
   /**
    * Create a Primitive representing a point specified in Cartesian coordinates.
@@ -78,37 +95,38 @@ class Primitive final {
   }
 
   /**
-   * Create a Primitive representing a point specified in cylindrical coordinates.
+   * Create a Primitive representing the point at the origin.
    */
-  static constexpr Primitive cylindrical_point(const ScalarType& r, const ScalarType& theta,
-                                               const ScalarType& z) {
-    using std::cos;
-    using std::sin;
-    return Primitive{r * cos(theta) * e032_ + r * sin(theta) * e013_ + z * e021_ + e123_};
+  static constexpr Primitive origin() { return Primitive{e123_}; }
+
+  /**
+   * Create Primitives for each of the 3 Cartesian axes.
+   */
+  static constexpr Primitive x_axis() { return intersect(point(1, 0, 0), origin()); }
+  static constexpr Primitive y_axis() { return intersect(point(0, 1, 0), origin()); }
+  static constexpr Primitive z_axis() { return intersect(point(0, 0, 1), origin()); }
+
+  static constexpr Primitive xy_plane() { return intersect(x_axis, y_axis); }
+  static constexpr Primitive yz_plane() { return intersect(y_axis, z_axis); }
+  static constexpr Primitive zx_plane() { return intersect(z_axis, x_axis); }
+
+  /**
+   * Create a Primitive representing the intersection of two primitives. For two points, this
+   * creates the line that joins them.
+   */
+  static constexpr Primitive intersect(const Primitive& p1, const Primitive& p2) {
+    return p1.vec_.regress(p2.vec_);
   }
 
   /**
-   * Create a Primitive representing a point specified in spherical coordinates.
+   * Create a Primitive representing the span (the outer product null-space) of two primitives. For
+   * two planes, this creates the line where the two planes meet.
+   *
+   * This is the grade-raising form of multiplication.
    */
-  static constexpr Primitive spherical_point(const ScalarType& r, const ScalarType& theta,
-                                             const ScalarType& phi) {
-    using std::cos;
-    using std::sin;
-    return Primitive{r * sin(theta) * cos(phi) * e032_ + r * sin(theta) * sin(phi) * e013_ +
-                     r * cos(theta) * e021_ + e123_};
+  static constexpr Primitive span(const Primitive& p1, const Primitive& p2) {
+    return Primitive{p1.vec_.outer(p2.vec_)};
   }
-
-  /**
-   * Create a Primitive representing a line specified by two points.
-   */
-  static constexpr Primitive join_line(const Primitive& point1, const Primitive& point2) {
-    return point1.inner(point2);
-  }
-
-  static constexpr Primitive meet_line(const Primitive& plane1, const Primitive& plane2);
-
-  static constexpr Primitive plane(const Primitive& point1, const Primitive& point2,
-                                   const Primitive& point3);
 };
 
 template <typename ScalarT>
@@ -116,36 +134,56 @@ class Transform final {
  public:
   using ScalarType = ScalarT;
   using PrimitiveType = Primitive<ScalarType>;
-  using VectorType = typename PrimitiveType::VectorType;
 
  private:
+  using VectorType = typename PrimitiveType::VectorType;
+
+  // This creates the identity transformation by default.
+  VectorType vec_{1.f};
+
+  constexpr Transform() = default;
+  constexpr Transform(const VectorType& v) : vec_(v) {}
+  constexpr Transform(VectorType&& v) : vec_(std::move(v)) {}
+
  public:
+  constexpr Transform(const Transform& rhs) = default;
+  constexpr Transform(Transform&& rhs) = default;
+
+  constexpr Transform& operator=(const Transform& rhs) = default;
+  constexpr Transform& operator=(Transform&& rhs) = default;
+
+  constexpr bool operator==(const Transform& rhs) const { return vec_ == rhs.vec_; }
+  constexpr bool operator!=(const Transform& rhs) const { return vec_ != rhs.vec_; }
+
   /**
    * Compose a combination of this transform with another transform. The other transform is applied
    * first. This ordering is consistent with standard mathematical semantics for matrices,
    * transforms, operators, etc., where multiplication is used to combine the transformations:
    * (*this) * first.
    */
-  constexpr Transform compose(const Transform& first) const {
-    Transform result{};
-    return result;
-  }
+  constexpr Transform compose(const Transform& first) const { return Transform{vec_ * first.vec_}; }
 
-  constexpr Transform operator*(const Transform& first) const { return combine(first); }
+  constexpr Transform operator*(const Transform& first) const { return compose(first); }
 
   constexpr PrimitiveType apply(const PrimitiveType& primitive) const {
-    PrimitiveType result{};
-    return result;
+    return PrimitiveType{vec_ * primitive.vec_};
   }
 
   constexpr PrimitiveType operator*(const PrimitiveType& primitive) const {
     return apply(primitive);
   }
 
+  constexpr Transform reverse() const { return Transform{~vec_}; }
+
+  constexpr Transform operator~() const { return reverse(); }
+
   /**
    * Create a Transform that does nothing.
    */
-  static constexpr Transform identity() { return Transform{}; }
+  static constexpr Transform identity() {
+    // The default constructed Transform is the identity.
+    return Transform{};
+  }
 
   /**
    * Create a Transform that is a reflection across the Primitive p.
