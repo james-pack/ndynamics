@@ -11,6 +11,7 @@
 #include "base/bits.h"
 #include "base/except.h"
 #include "math/cayley.h"
+#include "math/unitary_op_signs.h"
 
 namespace ndyn::math {
 
@@ -33,11 +34,15 @@ class Multivector final {
 
   static constexpr size_t bases_count() { return 1UL << vector_count(); }
 
+  static constexpr size_t NUM_POSITIVE_BASES{POSITIVE_BASES};
+  static constexpr size_t NUM_NEGATIVE_BASES{NEGATIVE_BASES};
+  static constexpr size_t NUM_ZERO_BASES{ZERO_BASES};
+
   static constexpr size_t SCALAR_BASIS_INDEX{0};
-  static constexpr size_t PSEUDOSCALAR_BASIS_INDEX{bases_count() - 1};
 
  private:
   static constexpr CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> cayley_table_{};
+  using UnitaryOpSignsType = UnitaryOpSigns<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>;
 
   std::array<T, bases_count()> coefficients_{};
 
@@ -268,11 +273,9 @@ class Multivector final {
   /**
    * The regressive product, also known as the 'V' product. The dual of the regressive product is
    * the outer product of the duals of the operands. The regressive product then is the outer
-   * product of the duals multiplied by the inverse of the pseudoscalar.
+   * product of the duals.
    */
-  constexpr Multivector regress(const Multivector& rhs) const {
-    return dual().outer(rhs.dual()) * inverse_pseudoscalar();
-  }
+  constexpr Multivector regress(const Multivector& rhs) const { return dual().outer(rhs.dual()); }
 
   /**
    * The reverse of this Multivector.
@@ -314,11 +317,8 @@ class Multivector final {
    */
   constexpr Multivector dual() const {
     Multivector result{};
-    const ScalarType magnitude{square_magnitude()};
     for (size_t i = 0; i < bases_count(); ++i) {
-      const size_t dual_basis{bases_count() - i - 1};
-      const auto& cayley_entry{cayley_table_.entry(i, dual_basis)};
-      result.coefficients_[dual_basis] = cayley_entry.quadratic_multiplier() / magnitude;
+      result.coefficients_[bases_count() - 1 - i] = UnitaryOpSignsType::dual[i] * coefficients_[i];
     }
     return result;
   }
@@ -335,8 +335,20 @@ class Multivector final {
     return true;
   }
 
+  constexpr bool operator!=(const Multivector& rhs) const {
+    // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
+    // we have to implement this ourselves for earlier versions.
+    for (size_t i = 0; i < bases_count(); ++i) {
+      if (coefficients_[i] != rhs.coefficients_[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Equality.
   constexpr bool operator==(const T& rhs) const { return *this == Multivector{rhs}; }
+  constexpr bool operator!=(const T& rhs) const { return *this != Multivector{rhs}; }
 
   // Addition.
   constexpr Multivector operator+(const T& rhs) const { return add(rhs); }
@@ -404,14 +416,6 @@ class Multivector final {
       return result;
     }
   }
-
-  static constexpr Multivector pseudoscalar() {
-    Multivector result{};
-    result.coefficients_[(1UL << bases_count()) - 1] = 1;
-    return result;
-  }
-
-  static constexpr Multivector inverse_pseudoscalar() { return -pseudoscalar(); }
 
   /*************************************************************************************************
    * This set of accessors is incorrect for most implementations.
@@ -687,18 +691,44 @@ template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_
           InnerProduct INNER_PRODUCT_STYLE>
 std::string to_string(
     const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
+  using std::abs;
   using std::to_string;
+
   std::string result{};
-  result.append("[");
   bool need_comma{false};
   for (size_t i = 0; i < v.bases_count(); ++i) {
-    if (need_comma) {
-      result.append(", ");
+    // Don't show bases with zero coefficients.
+    if (abs(v.basis(i)) > 0.000001) {
+      if (need_comma) {
+        result.append(" + ");
+      }
+
+      need_comma = true;
+      result.append(to_string(v.basis(i)));
+      if (i > 0) {
+        result.append("*");
+        if constexpr (ZERO_BASES > 0) {
+          static constexpr std::array<const char*, 32> zero_basis_names{
+              "",    "e0",   "e1",   "e01",   "e2",   "e02",   "e12",   "e012",    //
+              "e3",  "e03",  "e13",  "e013",  "e23",  "e023",  "e123",  "e0123",   //
+              "e4",  "e04",  "e14",  "e014",  "e24",  "e024",  "e124",  "e0124",   //
+              "e34", "e034", "e134", "e0134", "e234", "e0234", "e1234", "e01234",  //
+          };
+
+          result.append(zero_basis_names[i]);
+        } else {
+          static constexpr std::array<const char*, 32> basis_names{
+              "",    "e1",   "e2",   "e12",   "e3",   "e13",   "e23",   "e123",    //
+              "e4",  "e14",  "e24",  "e124",  "e34",  "e134",  "e234",  "e1234",   //
+              "e5",  "e15",  "e25",  "e125",  "e35",  "e135",  "e235",  "e1235",   //
+              "e45", "e145", "e245", "e1245", "e345", "e1345", "e2345", "e12345",  //
+          };
+
+          result.append(basis_names[i]);
+        }
+      }
     }
-    need_comma = true;
-    result.append(to_string(v.basis(i)));
   }
-  result.append("]");
   return result;
 }
 
