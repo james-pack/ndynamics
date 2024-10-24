@@ -5,6 +5,7 @@
 #include "GLFW/glfw3.h"
 #include "graphics/box.h"
 #include "graphics/model.h"
+#include "graphics/revolute_joint.h"
 #include "graphics/shader_program.h"
 #include "imgui.h"
 #include "ui/keyboard_shortcuts.h"
@@ -29,6 +30,11 @@ class CubeScene final : public ui::Scene {
 
  public:
   CubeScene(GLFWwindow& window) : Scene("3D Cube"), model_(aspect_ratio(window)) {
+    // Uncomment to switch to revolute joint:
+    // std::unique_ptr<graphics::RevoluteJoint<ScalarType>> joint{
+    //     std::make_unique<graphics::RevoluteJoint<ScalarType>>()};
+    // joint->add_element(std::make_unique<graphics::Box<ScalarType>>());
+    // model_.add_element(std::move(joint));
     model_.add_element(std::make_unique<graphics::Box<ScalarType>>());
   }
 
