@@ -18,7 +18,10 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <string>
 
 #include "math/multivector.h"
 
@@ -27,6 +30,9 @@ namespace ndyn::math {
 template <typename ScalarT>
 class Transform;
 
+/**
+ * Primitives represent points, lines, and planes as well as the transforms of these.
+ */
 template <typename ScalarT>
 class Primitive final {
  public:
@@ -74,8 +80,8 @@ class Primitive final {
   friend class Transform<ScalarType>;
 
   constexpr Primitive() = default;
-  constexpr Primitive(const VectorType& v) : vec_(v) {}
-  constexpr Primitive(VectorType&& v) : vec_(std::move(v)) {}
+  explicit constexpr Primitive(const VectorType& v) : vec_(v) {}
+  explicit constexpr Primitive(VectorType&& v) : vec_(std::move(v)) {}
 
  public:
   constexpr Primitive(const Primitive&) = default;
@@ -84,8 +90,48 @@ class Primitive final {
   constexpr Primitive& operator=(const Primitive&) = default;
   constexpr Primitive& operator=(Primitive&&) = default;
 
-  constexpr bool operator==(const Primitive& rhs) { return vec_ == rhs.vec_; }
-  constexpr bool operator!=(const Primitive& rhs) { return vec_ != rhs.vec_; }
+  constexpr bool operator==(const Primitive& rhs) const { return vec_ == rhs.vec_; }
+  constexpr bool operator!=(const Primitive& rhs) const { return vec_ != rhs.vec_; }
+
+  constexpr bool is_point() const {
+    constexpr std::array<size_t, 4> allowed_bases{7 /*e021*/, 11 /*e013*/, 13 /*e032*/,
+                                                  14 /*e123*/};
+    for (size_t i = 0; i < vec_.bases_count(); ++i) {
+      const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
+                         allowed_bases.end()};
+      if (!allowed && vec_.basis(i) != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  constexpr bool is_line() const {
+    constexpr std::array<size_t, 6> allowed_bases{3 /*e01*/, 5 /*e02*/,  6 /*e12*/,
+                                                  9 /*e03*/, 10 /*e13*/, 12 /*e23*/};
+    for (size_t i = 0; i < vec_.bases_count(); ++i) {
+      const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
+                         allowed_bases.end()};
+      if (!allowed && vec_.basis(i) != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  constexpr bool is_plane() const {
+    constexpr std::array<size_t, 4> allowed_bases{1 /*e0*/, 2 /*e1*/, 4 /*e2*/, 8 /*e3*/};
+    for (size_t i = 0; i < vec_.bases_count(); ++i) {
+      const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
+                         allowed_bases.end()};
+      if (!allowed && vec_.basis(i) != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  constexpr const VectorType& raw_vector() const { return vec_; }
 
   /**
    * Create a Primitive representing a point specified in Cartesian coordinates.
@@ -102,20 +148,20 @@ class Primitive final {
   /**
    * Create Primitives for each of the 3 Cartesian axes.
    */
-  static constexpr Primitive x_axis() { return intersect(point(1, 0, 0), origin()); }
-  static constexpr Primitive y_axis() { return intersect(point(0, 1, 0), origin()); }
-  static constexpr Primitive z_axis() { return intersect(point(0, 0, 1), origin()); }
+  static constexpr Primitive x_axis() { return join(point(1, 0, 0), origin()); }
+  static constexpr Primitive y_axis() { return join(point(0, 1, 0), origin()); }
+  static constexpr Primitive z_axis() { return join(point(0, 0, 1), origin()); }
 
-  static constexpr Primitive xy_plane() { return intersect(x_axis, y_axis); }
-  static constexpr Primitive yz_plane() { return intersect(y_axis, z_axis); }
-  static constexpr Primitive zx_plane() { return intersect(z_axis, x_axis); }
+  static constexpr Primitive xy_plane() { return join(x_axis, y_axis); }
+  static constexpr Primitive yz_plane() { return join(y_axis, z_axis); }
+  static constexpr Primitive zx_plane() { return join(z_axis, x_axis); }
 
   /**
    * Create a Primitive representing the intersection of two primitives. For two points, this
    * creates the line that joins them.
    */
-  static constexpr Primitive intersect(const Primitive& p1, const Primitive& p2) {
-    return p1.vec_.regress(p2.vec_);
+  static constexpr Primitive join(const Primitive& p1, const Primitive& p2) {
+    return Primitive{p1.vec_.regress(p2.vec_)};
   }
 
   /**
@@ -124,11 +170,31 @@ class Primitive final {
    *
    * This is the grade-raising form of multiplication.
    */
-  static constexpr Primitive span(const Primitive& p1, const Primitive& p2) {
+  static constexpr Primitive meet(const Primitive& p1, const Primitive& p2) {
     return Primitive{p1.vec_.outer(p2.vec_)};
   }
 };
 
+template <typename ScalarType>
+std::string to_string(const Primitive<ScalarType>& p) {
+  using std::to_string;
+  return to_string(p.raw_vector());
+}
+
+template <typename ScalarType>
+std::ostream& operator<<(std::ostream& os, const Primitive<ScalarType>& p) {
+  using std::to_string;
+  os << to_string(p);
+  return os;
+}
+
+/**
+ * Transforms represent versors (also called motors) that can reflect, rotate, and translate
+ * primitives. Applying a transform involves sandwiching the primitive in between the versor and its
+ * reverse.
+ *
+ * For more information, see https://en.wikipedia.org/wiki/Geometric_algebra#Versor
+ */
 template <typename ScalarT>
 class Transform final {
  public:
@@ -158,7 +224,8 @@ class Transform final {
   /**
    * Compose a combination of this transform with another transform. The other transform is applied
    * first. This ordering is consistent with standard mathematical semantics for matrices,
-   * transforms, operators, etc., where multiplication is used to combine the transformations:
+   * transforms, operators, etc., where multiplication on the left is used to combine the
+   * transformations:
    * (*this) * first.
    */
   constexpr Transform compose(const Transform& first) const { return Transform{vec_ * first.vec_}; }
@@ -166,7 +233,7 @@ class Transform final {
   constexpr Transform operator*(const Transform& first) const { return compose(first); }
 
   constexpr PrimitiveType apply(const PrimitiveType& primitive) const {
-    return PrimitiveType{vec_ * primitive.vec_};
+    return PrimitiveType{vec_ * primitive.vec_ * ~vec_};
   }
 
   constexpr PrimitiveType operator*(const PrimitiveType& primitive) const {
