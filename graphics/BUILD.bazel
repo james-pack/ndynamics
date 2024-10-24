@@ -7,6 +7,7 @@ cc_library(
         "box.h",
         "gpu_element.h",
         "model.h",
+        "revolute_joint.h",
         "shader_program.h",
     ],
     data = [
