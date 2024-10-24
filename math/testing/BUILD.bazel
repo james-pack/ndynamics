@@ -1,0 +1,9 @@
+cc_library(
+    name = "testing",
+    testonly = True,
+    hdrs = glob(["*.h"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/gtest",
+    ],
+)

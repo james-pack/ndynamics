@@ -18,6 +18,7 @@ cc_library(
         "state.h",
         "state_view.h",
         "unit_set.h",
+        "unitary_op_signs.h",
         "vector.h",
         "vector_utils.h",
     ],
@@ -120,6 +121,7 @@ cc_test(
     deps = [
         ":math",
         ":testing",
+        "//math/testing",
         "//third_party/gtest",
     ],
 )
@@ -156,6 +158,16 @@ cc_test(
 cc_test(
     name = "unit_set_test",
     srcs = ["unit_set_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "geometry_test",
+    srcs = ["geometry_test.cc"],
     deps = [
         ":math",
         ":testing",
