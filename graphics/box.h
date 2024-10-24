@@ -108,7 +108,7 @@ class Box final : public GpuElement<ScalarType> {
     glBufferData(GL_ARRAY_BUFFER, sizeof(box_vertex_colors_), box_vertex_colors_, GL_STATIC_DRAW);
   }
 
-  void draw(ScalarType) override {
+  void draw(ScalarType /*time*/) override {
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
     glVertexAttribPointer(

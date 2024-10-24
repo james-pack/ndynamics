@@ -19,21 +19,23 @@ class GpuElement {
  public:
   virtual ~GpuElement() = default;
 
-  void update(ScalarType t, const ShaderProgram& program,
+  void update(ScalarType time, const ShaderProgram& program,
               const math::Transform<ScalarType>& transform) {
     // The transform argument in the local coordinates of this element.
-    const math::Transform<ScalarType> local_transform{compose_transform(t, transform)};
+    const math::Transform<ScalarType> local_transform{compose_transform(time, transform)};
 
     glUseProgram(program.id());
     const GLuint element_matrix_id{glGetUniformLocation(program.id(), "element_matrix")};
     const glm::mat4 element_matrix{transform_to_glm_mat4(local_transform)};
     glUniformMatrix4fv(element_matrix_id, 1, GL_FALSE, &element_matrix[0][0]);
 
-    draw(t);
+    draw(time);
   }
 
   virtual math::Transform<ScalarType> compose_transform(
       ScalarType /*time*/, const math::Transform<ScalarType>& transform) {
+    // By default, we just use the transform passed down from our parent. Subclasses, especially
+    // the joints, will override this to show motion.
     return transform;
   }
 
