@@ -3,21 +3,28 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iostream>
+#include <string>
 
 #include "math/testing/types.h"
 
 class PGA2D {
  public:
   static constexpr const char *basis[] = {"1", "e0", "e1", "e2", "e01", "e20", "e12", "e012"};
-  static constexpr std::array<size_t, 8> bit_basis_indices{0, 1, 2, 4, 3, 5, 6, 7};
+  static constexpr size_t NUM_BASES{8};
+  static constexpr std::array<size_t, NUM_BASES> bit_basis_indices{0, 1, 2, 4, 3, 5, 6, 7};
 
-  static constexpr std::array<bool, 8> reversed_bases{0, 0, 0, 0, 0, 1, 0, 0};
+  static constexpr std::array<bool, NUM_BASES> reversed_bases{0, 0, 0, 0, 0, 1, 0, 0};
 
-  PGA2D() { std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f); }
+  PGA2D() { std::fill(mvec, mvec + NUM_BASES, 0.0f); }
   PGA2D(float f, int idx = 0) {
-    std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
+    std::fill(mvec, mvec + NUM_BASES, 0.0f);
     mvec[idx] = f;
   }
+
+  PGA2D(const PGA2D &rhs) = default;
+  PGA2D(PGA2D &&rhs) = default;
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 
@@ -28,7 +35,7 @@ class PGA2D {
   PGA2D normalized();
 
  private:
-  float mvec[8];
+  float mvec[NUM_BASES];
 };
 
 template <>
@@ -36,6 +43,31 @@ class BivectorNetTypes<2, 0, 1> final {
  public:
   using type = PGA2D;
 };
+
+std::string to_string(const PGA2D &v) {
+  using std::abs;
+  using std::to_string;
+
+  std::string result{};
+  bool need_plus{false};
+  for (size_t i = 0; i < PGA2D::NUM_BASES; ++i) {
+    const float &coefficient{v[i]};
+    if (abs(coefficient) > 0.00001) {
+      if (need_plus) {
+        result.append(" + ");
+      }
+      need_plus = true;
+      result.append(to_string(coefficient)).append("*").append(PGA2D::basis[i]);
+    }
+  }
+  return result;
+}
+
+std::ostream &operator<<(std::ostream &os, const PGA2D &v) {
+  using std::to_string;
+  os << to_string(v);
+  return os;
+}
 
 //***********************
 // PGA2D.Reverse : res = ~a

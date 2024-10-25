@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <iostream>
+#include <string>
 
 #include "math/testing/types.h"
 
@@ -11,17 +13,22 @@ class PGA3D {
   static constexpr const char *basis[] = {"1",    "e0",   "e1",   "e2",   "e3",  "e01",
                                           "e02",  "e03",  "e12",  "e31",  "e23", "e021",
                                           "e013", "e032", "e123", "e0123"};
-  static constexpr std::array<size_t, 16> bit_basis_indices{0, 1,  2,  4, 8,  3,  5,  9,
-                                                            6, 10, 12, 7, 11, 13, 14, 15};
+  static constexpr size_t NUM_BASES{16};
+  static constexpr std::array<size_t, NUM_BASES> bit_basis_indices{0, 1,  2,  4, 8,  3,  5,  9,
+                                                                   6, 10, 12, 7, 11, 13, 14, 15};
 
-  static constexpr std::array<bool, 16> reversed_bases{0, 0, 0, 0, 0, 0, 0, 0,
-                                                       0, 1, 0, 1, 1, 0, 0, 0};
+  static constexpr std::array<bool, NUM_BASES> reversed_bases{0, 0, 0, 0, 0, 0, 0, 0,
+                                                              0, 1, 0, 1, 1, 0, 0, 0};
 
-  PGA3D() { std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f); }
+  PGA3D() { std::fill(mvec, mvec + NUM_BASES, 0.0f); }
   PGA3D(float f, int idx = 0) {
-    std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
+    std::fill(mvec, mvec + NUM_BASES, 0.0f);
     mvec[idx] = f;
   }
+
+  PGA3D(const PGA3D &rhs) = default;
+  PGA3D(PGA3D &&rhs) = default;
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 
@@ -32,7 +39,7 @@ class PGA3D {
   PGA3D normalized();
 
  private:
-  float mvec[16];
+  float mvec[NUM_BASES];
 };
 
 template <>
@@ -40,6 +47,31 @@ class BivectorNetTypes<3, 0, 1> final {
  public:
   using type = PGA3D;
 };
+
+std::string to_string(const PGA3D &v) {
+  using std::abs;
+  using std::to_string;
+
+  std::string result{};
+  bool need_plus{false};
+  for (size_t i = 0; i < PGA3D::NUM_BASES; ++i) {
+    const float &coefficient{v[i]};
+    if (abs(coefficient) > 0.00001) {
+      if (need_plus) {
+        result.append(" + ");
+      }
+      need_plus = true;
+      result.append(to_string(coefficient)).append("*").append(PGA3D::basis[i]);
+    }
+  }
+  return result;
+}
+
+std::ostream &operator<<(std::ostream &os, const PGA3D &v) {
+  using std::to_string;
+  os << to_string(v);
+  return os;
+}
 
 //***********************
 // PGA3D.Reverse : res = ~a
