@@ -22,19 +22,20 @@ size_t index_from_bit_basis(size_t index) {
 template <typename MultivectorType>
 float basis_sign_from_bit_basis(size_t bit_basis_index) {
   if (MultivectorType::reversed_bases[index_from_bit_basis<MultivectorType>(bit_basis_index)]) {
+    LOG(INFO) << "bit_basis_index: " << bit_basis_index;
     return -1.f;
   } else {
     return 1.f;
   }
 }
 
-template <typename MultivectorType>
-float basis_sign(size_t index) {
-  if (MultivectorType::reversed_bases[index]) {
-    return -1.f;
-  } else {
-    return 1.f;
-  }
-}
+// template <typename MultivectorType>
+// float basis_sign(size_t index) {
+//   if (MultivectorType::reversed_bases[index]) {
+//     return -1.f;
+//   } else {
+//     return 1.f;
+//   }
+// }
 
 }  // namespace ndyn::math

@@ -143,15 +143,26 @@ class UnitaryOpSigns<2, 1, 0> final {
 template <>
 class UnitaryOpSigns<2, 0, 1> final {
  public:
-  static constexpr auto dual{from_bivector_net_order<int8_t, 3>({1, 1, 1, 1, 1, 1, 1, 1})};
+  static constexpr auto dual{from_bivector_net_order<int8_t, 3>({1, 1, -1, 1, 1, -1, 1, 1})};
 };
 
 template <>
 class UnitaryOpSigns<3, 0, 1> final {
  public:
   static constexpr auto dual{from_bivector_net_order<int8_t, 4>({
-      1, 1, -1, 1, 1, -1, 1, -1,  //
-      -1, 1, -1, 1, 1, -1, 1, 1,  //
+      1, 1, 1, -1, -1, 1, -1, 1,  //
+      1, -1, 1, -1, -1, 1, 1, 1,  //
+  })};
+};
+
+template <>
+class UnitaryOpSigns<4, 0, 1> final {
+ public:
+  static constexpr auto dual{from_bivector_net_order<int8_t, 5>({
+      1, 1, 1, 1, 1, 1, 1, 1,  //
+      1, 1, 1, 1, 1, 1, 1, 1,  //
+      1, 1, 1, 1, 1, 1, 1, 1,  //
+      1, 1, 1, 1, 1, 1, 1, 1,  //
   })};
 };
 

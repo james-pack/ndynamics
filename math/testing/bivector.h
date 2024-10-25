@@ -16,5 +16,6 @@
 #include "math/testing/r210.h"
 #include "math/testing/r300.h"
 #include "math/testing/r310.h"
+#include "math/testing/r401.h"
 #include "math/testing/r410.h"
 #include "math/testing/types.h"
