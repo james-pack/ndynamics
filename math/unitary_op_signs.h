@@ -150,8 +150,8 @@ template <>
 class UnitaryOpSigns<3, 0, 1> final {
  public:
   static constexpr auto dual{from_bivector_net_order<int8_t, 4>({
-      1, 1, 1, -1, -1, 1, -1, 1,  //
-      1, -1, 1, -1, -1, 1, 1, 1,  //
+      1, 1, -1, 1, -1, 1, -1, 1,  //
+      1, -1, 1, -1, 1, -1, 1, 1,  //
   })};
 };
 
