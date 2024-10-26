@@ -10,15 +10,20 @@
 
 class PGA3D {
  public:
-  static constexpr const char *basis[] = {"1",    "e0",   "e1",   "e2",   "e3",  "e01",
-                                          "e02",  "e03",  "e12",  "e31",  "e23", "e021",
-                                          "e013", "e032", "e123", "e0123"};
+  static constexpr const char *basis[] = {
+      "1",   "e0",  "e1",  "e2",   "e3",   "e01",  "e02",  "e03",   //
+      "e12", "e31", "e23", "e021", "e013", "e032", "e123", "e0123"  //
+  };
   static constexpr size_t NUM_BASES{16};
-  static constexpr std::array<size_t, NUM_BASES> bit_basis_indices{0, 1,  2,  4, 8,  3,  5,  9,
-                                                                   6, 10, 12, 7, 11, 13, 14, 15};
+  static constexpr std::array<size_t, NUM_BASES> bit_basis_indices{
+      0, 1,  2,  4, 8,  3,  5,  9,  //
+      6, 10, 12, 7, 11, 13, 14, 15  //
+  };
 
-  static constexpr std::array<bool, NUM_BASES> reversed_bases{0, 0, 0, 0, 0, 0, 0, 0,
-                                                              0, 1, 0, 1, 1, 0, 0, 0};
+  static constexpr std::array<bool, NUM_BASES> reversed_bases{
+      0, 0, 0, 0, 0, 0, 0, 0,  //
+      0, 1, 0, 1, 0, 1, 0, 0   //
+  };
 
   PGA3D() { std::fill(mvec, mvec + NUM_BASES, 0.0f); }
   PGA3D(float f, int idx = 0) {
@@ -28,6 +33,15 @@ class PGA3D {
 
   PGA3D(const PGA3D &rhs) = default;
   PGA3D(PGA3D &&rhs) = default;
+
+  bool operator==(const PGA3D &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
