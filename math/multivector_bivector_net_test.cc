@@ -39,6 +39,15 @@ BivectorNetType create(std::initializer_list<float> values) {
   return result;
 }
 
+template <typename BivectorNetType>
+BivectorNetType create_with_counting() {
+  BivectorNetType result{};
+  for (size_t i = 0; i < BivectorNetType::NUM_BASES; ++i) {
+    result[i] = i;
+  }
+  return result;
+}
+
 TEST(R000BivectorNetDirectTest, ConjugateMatches) {
   using ScalarType = float;
   static constexpr size_t P{0};
@@ -47,7 +56,7 @@ TEST(R000BivectorNetDirectTest, ConjugateMatches) {
   using VectorType = Multivector<ScalarType, P, N, Z>;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
-  BivectorNetType bvec{create<BivectorNetType>({1})};
+  BivectorNetType bvec{create_with_counting<BivectorNetType>()};
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.conj()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec.Conjugate())};
@@ -1014,6 +1023,14 @@ TEST(R301BivectorNetDirectTest, RegressiveProductMatches) {
   VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
   VectorType result{v1.regress(v2)};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 & bvec2)};
+  // VectorType expected{to_multivector<BivectorNetType, VectorType>(!((!bvec1) ^ (!bvec2)))};
+
+  LOG(INFO) << "bvec1: " << bvec1;
+  LOG(INFO) << "v1: " << v1;
+
+  LOG(INFO) << "bvec2: " << bvec2;
+  LOG(INFO) << "v2: " << v2;
+
   EXPECT_EQ(expected, result);
 }
 
@@ -1239,9 +1256,6 @@ TEST(R201BivectorNetDirectTest, OuterProductMatches) {
   VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
   VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
   VectorType result{v1.outer(v2)};
-  LOG(INFO) << "v1: " << v1;
-  LOG(INFO) << "v2: " << v2;
-  LOG(INFO) << "result: " << result;
   VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
   EXPECT_EQ(expected, result);
 }
@@ -1294,10 +1308,223 @@ TEST(R301BivectorNetDirectTest, OuterProductMatches) {
   VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
   VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
   VectorType result{v1.outer(v2)};
-  LOG(INFO) << "v1: " << v1;
-  LOG(INFO) << "v2: " << v2;
-  LOG(INFO) << "result: " << result;
   VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimes) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      2, 3, 5, 7, 11, 13, 17, 19,     //
+      23, 29, 31, 37, 41, 43, 47, 53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.outer(v2)};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegated) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      -2, -3, -5, -7, -11, -13, -17, -19,     //
+      -23, -29, -31, -37, -41, -43, -47, -53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.outer(v2)};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedAlternately) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      -2, 3, -5, 7, -11, 13, 17, -19,     //
+      -23, 29, -31, 37, -41, 43, -47, 53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.outer(v2)};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesDuals) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{
+      create<BivectorNetType>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual())};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesDuals) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      2, 3, 5, 7, 11, 13, 17, 19,     //
+      23, 29, 31, 37, 41, 43, 47, 53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual())};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedDuals) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      -2, -3, -5, -7, -11, -13, -17, -19,     //
+      -23, -29, -31, -37, -41, -43, -47, -53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual())};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedAlternatelyDuals) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      -2, 3, -5, 7, -11, 13, 17, -19,     //
+      -23, 29, -31, 37, -41, 43, -47, 53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual())};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesDualsDualed) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{
+      create<BivectorNetType>({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual()).dual()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(!((!bvec1) ^ (!bvec2)))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesDualsDualed) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      2, 3, 5, 7, 11, 13, 17, 19,     //
+      23, 29, 31, 37, 41, 43, 47, 53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual()).dual()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(!((!bvec1) ^ (!bvec2)))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedDualsDualed) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      -2, -3, -5, -7, -11, -13, -17, -19,     //
+      -23, -29, -31, -37, -41, -43, -47, -53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual()).dual()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(!((!bvec1) ^ (!bvec2)))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedAlternatelyDualsDualed) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create<BivectorNetType>({
+      -2, 3, -5, 7, -11, 13, 17, -19,     //
+      -23, 29, -31, 37, -41, 43, -47, 53  //
+  })};
+  BivectorNetType bvec2{32 * bvec1};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.dual().outer(v2.dual()).dual()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(!((!bvec1) ^ (!bvec2)))};
   EXPECT_EQ(expected, result);
 }
 
@@ -1316,9 +1543,6 @@ TEST(R401BivectorNetDirectTest, OuterProductMatches) {
   VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
   VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
   VectorType result{v1.outer(v2)};
-  LOG(INFO) << "v1: " << v1;
-  LOG(INFO) << "v2: " << v2;
-  LOG(INFO) << "result: " << result;
   VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
   EXPECT_EQ(expected, result);
 }
@@ -1394,31 +1618,6 @@ TEST(BivectorNetTest, OuterProductR201R301R401Consistency) {
   Vector401Type mv_401_2{to_multivector<BivectorNet401Type, Vector401Type>(bvec_401_2)};
   BivectorNet401Type result_401{bvec_401_1 ^ bvec_401_2};
   Vector401Type mv_result_401{to_multivector<BivectorNet401Type, Vector401Type>(result_401)};
-
-  LOG(INFO) << "bvec_201_1: " << bvec_201_1;
-  LOG(INFO) << "bvec_301_1: " << bvec_301_1;
-  LOG(INFO) << "bvec_401_1: " << bvec_401_1;
-
-  LOG(INFO) << "bvec_201_2: " << bvec_201_2;
-  LOG(INFO) << "bvec_301_2: " << bvec_301_2;
-  LOG(INFO) << "bvec_401_2: " << bvec_401_2;
-
-  LOG(INFO) << "result_201: " << result_201;
-  LOG(INFO) << "result_301: " << result_301;
-  LOG(INFO) << "result_401: " << result_401;
-
-  LOG(INFO) << "mv_201_1: " << mv_201_1;
-  LOG(INFO) << "mv_301_1: " << mv_301_1;
-  LOG(INFO) << "mv_401_1: " << mv_401_1;
-
-  LOG(INFO) << "mv_201_2: " << mv_201_2;
-  LOG(INFO) << "mv_301_2: " << mv_301_2;
-  LOG(INFO) << "mv_401_2: " << mv_401_2;
-
-  LOG(INFO) << "mv_result_201: " << mv_result_201;
-  LOG(INFO) << "mv_result_301: " << mv_result_301;
-  LOG(INFO) << "mv_result_401: " << mv_result_401;
-
   for (size_t i = 0; i < Vector201Type::bases_count(); ++i) {
     EXPECT_EQ(mv_result_201.basis(i), mv_result_401.basis(i))
         << "i: " << i << ", 201: " << mv_result_201 << ", 401: " << mv_result_401;
@@ -1447,6 +1646,213 @@ TEST(R410BivectorNetDirectTest, OuterProductMatches) {
   VectorType result{v1.outer(v2)};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
   EXPECT_EQ(expected, result);
+}
+
+TEST(BivectorNetDirectTest, R000RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R000;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R001RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R001;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R010RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R010;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R011RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R011;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R100RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R100;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R110RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R110;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R101RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R101;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R111RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R111;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R130RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R130;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R200RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R200;
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R201RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = PGA2D;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R210RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R210;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R300RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R300;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R301RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = PGA3D;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R401RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R401;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R410RegressiveProductConsistentWithOuter) {
+  using BivectorNetType = R410;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, PGA2DRegressiveProductConsistentWithOuter) {
+  using BivectorNetType = PGA2D;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+
+  LOG(INFO) << "bvec1: " << bvec1;
+  LOG(INFO) << "bvec2: " << bvec2;
+
+  LOG(INFO) << "regressive product expression: "
+            << "(" << bvec1 << ") & (" << bvec2 << ")";
+  LOG(INFO) << "outer product expression: "
+            << "!((!(" << bvec1 << ")) ^ (!(" << bvec2 << ")))";
+
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, PGA3DRegressiveProductConsistentWithDualOfOuterOfDuals) {
+  using BivectorNetType = PGA3D;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+
+  LOG(INFO) << "bvec1: " << bvec1;
+  LOG(INFO) << "bvec2: " << bvec2;
+
+  LOG(INFO) << "regressive product expression: "
+            << "(" << bvec1 << ") & (" << bvec2 << ")";
+  LOG(INFO) << "outer product expression: "
+            << "!((!(" << bvec1 << ")) ^ (!(" << bvec2 << ")))";
+
+  EXPECT_EQ(via_outer, regressive);
+}
+
+TEST(BivectorNetDirectTest, R401RegressiveProductConsistentWithDualOfOuterOfDuals) {
+  using BivectorNetType = R401;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  BivectorNetType bvec2{32 * bvec1};
+  BivectorNetType regressive{bvec1 & bvec2};
+  BivectorNetType via_outer{!((!bvec1) ^ (!bvec2))};
+
+  LOG(INFO) << "bvec1: " << bvec1;
+  LOG(INFO) << "bvec2: " << bvec2;
+
+  LOG(INFO) << "regressive product expression: "
+            << "(" << bvec1 << ") & (" << bvec2 << ")";
+  LOG(INFO) << "outer product expression: "
+            << "!((!(" << bvec1 << ")) ^ (!(" << bvec2 << ")))";
+
+  EXPECT_EQ(via_outer, regressive);
 }
 
 }  // namespace ndyn::math
