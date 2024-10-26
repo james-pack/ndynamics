@@ -259,7 +259,7 @@ class Multivector final {
     for (size_t i = 0; i < bases_count(); ++i) {
       // Note the exit condition of this for-loop. We only loop while i+j is less than the number of
       // bases.
-      for (size_t j = 0; /*i +*/ j < bases_count(); ++j) {
+      for (size_t j = 0; i + j < bases_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         if (bit_count(cayley_entry.grade()) == bit_count(i) + bit_count(j)) {
           result.coefficients_[i + j] +=
