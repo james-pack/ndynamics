@@ -39,7 +39,6 @@ size_t index_from_bit_basis_index(size_t bit_basis) {
 }
 
 TEST(BivectorNetTest, OuterProductR201R301R401Consistency) {
-  using ScalarType = float;
   static constexpr size_t P2{2};
   static constexpr size_t P3{3};
   static constexpr size_t P4{4};
