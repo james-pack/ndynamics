@@ -9,15 +9,29 @@
 class R011 {
  public:
   static constexpr const char *basis[] = {"1", "e0", "e1", "e01"};
-  static constexpr std::array<size_t, 4> bit_basis_indices{0, 1, 2, 3};
+  static constexpr size_t NUM_BASES{4};
+  static constexpr std::array<size_t, NUM_BASES> bit_basis_indices{0, 1, 2, 3};
 
-  static constexpr std::array<bool, 4> reversed_bases{0, 0, 0, 0};
+  static constexpr std::array<bool, NUM_BASES> reversed_bases{0, 0, 0, 0};
 
-  R011() { std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f); }
+  R011() { std::fill(mvec, mvec + NUM_BASES, 0.0f); }
   R011(float f, int idx = 0) {
-    std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
+    std::fill(mvec, mvec + NUM_BASES, 0.0f);
     mvec[idx] = f;
   }
+
+  R011(const R011 &rhs) = default;
+  R011(R011 &&rhs) = default;
+
+  bool operator==(const R011 &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 
@@ -28,7 +42,7 @@ class R011 {
   R011 normalized();
 
  private:
-  float mvec[4];
+  float mvec[NUM_BASES];
 };
 
 template <>

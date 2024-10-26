@@ -12,25 +12,39 @@ class R410 {
       "1",    "e1",   "e2",   "e3",   "e4",    "e5",    "e12",   "e13",   "e14",   "e15",   "e23",
       "e24",  "e25",  "e34",  "e35",  "e45",   "e123",  "e124",  "e125",  "e134",  "e135",  "e145",
       "e234", "e235", "e245", "e345", "e1234", "e1235", "e1245", "e1345", "e2345", "e12345"};
-  static constexpr std::array<size_t, 32> bit_basis_indices{0,  1,  2,  4,  8,  16,  //
-                                                            3,  5,  9,  17,          //
-                                                            6,  10, 18,              //
-                                                            12, 20, 24,              //
-                                                            7,  11, 19,              //
-                                                            13, 21, 25,              //
-                                                            14, 22, 26, 28, 15,      //
-                                                            23, 27, 29, 30, 31};
+  static constexpr size_t NUM_BASES{32};
+  static constexpr std::array<size_t, NUM_BASES> bit_basis_indices{0,  1,  2,  4,  8,  16,  //
+                                                                   3,  5,  9,  17,          //
+                                                                   6,  10, 18,              //
+                                                                   12, 20, 24,              //
+                                                                   7,  11, 19,              //
+                                                                   13, 21, 25,              //
+                                                                   14, 22, 26, 28, 15,      //
+                                                                   23, 27, 29, 30, 31};
 
-  static constexpr std::array<bool, 32> reversed_bases{0, 0, 0, 0, 0, 0, 0, 0,  //
-                                                       0, 0, 0, 0, 0, 0, 0, 0,  //
-                                                       0, 0, 0, 0, 0, 0, 0, 0,  //
-                                                       0, 0, 0, 0, 0, 0, 0, 0};
+  static constexpr std::array<bool, NUM_BASES> reversed_bases{0, 0, 0, 0, 0, 0, 0, 0,  //
+                                                              0, 0, 0, 0, 0, 0, 0, 0,  //
+                                                              0, 0, 0, 0, 0, 0, 0, 0,  //
+                                                              0, 0, 0, 0, 0, 0, 0, 0};
 
-  R410() { std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f); }
+  R410() { std::fill(mvec, mvec + NUM_BASES, 0.0f); }
   R410(float f, int idx = 0) {
-    std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
+    std::fill(mvec, mvec + NUM_BASES, 0.0f);
     mvec[idx] = f;
   }
+
+  R410(const R410 &rhs) = default;
+  R410(R410 &&rhs) = default;
+
+  bool operator==(const R410 &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 
@@ -41,7 +55,7 @@ class R410 {
   R410 normalized();
 
  private:
-  float mvec[32];
+  float mvec[NUM_BASES];
 };
 
 template <>

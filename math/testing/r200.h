@@ -9,6 +9,7 @@
 class R200 {
  public:
   static constexpr const char *basis[] = {"1", "e1", "e2", "e12"};
+  static constexpr size_t NUM_BASES{4};
   static constexpr std::array<size_t, 4> bit_basis_indices{0, 1, 2, 3};
 
   static constexpr std::array<bool, 4> reversed_bases{0, 0, 0, 0};
@@ -18,6 +19,19 @@ class R200 {
     std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
     mvec[idx] = f;
   }
+
+  R200(const R200 &rhs) = default;
+  R200(R200 &&rhs) = default;
+
+  bool operator==(const R200 &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 

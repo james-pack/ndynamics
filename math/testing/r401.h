@@ -38,6 +38,15 @@ class R401 {
   R401(const R401 &rhs) = default;
   R401(R401 &&rhs) = default;
 
+  bool operator==(const R401 &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 

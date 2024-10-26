@@ -8,8 +8,10 @@
 
 class R310 {
  public:
-  static constexpr const char *basis[] = {"1",   "e1",  "e2",  "e3",   "e4",   "e12",  "e13",  "e14",
-                                "e23", "e24", "e34", "e123", "e124", "e134", "e234", "e1234"};
+  static constexpr const char *basis[] = {"1",    "e1",   "e2",   "e3",   "e4",  "e12",
+                                          "e13",  "e14",  "e23",  "e24",  "e34", "e123",
+                                          "e124", "e134", "e234", "e1234"};
+  static constexpr size_t NUM_BASES{16};
   static constexpr std::array<size_t, 16> bit_basis_indices{0, 1,  2,  4, 8,  3,  5,  9,
                                                             6, 10, 12, 7, 11, 13, 14, 15};
 
@@ -21,6 +23,19 @@ class R310 {
     std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
     mvec[idx] = f;
   }
+
+  R310(const R310 &rhs) = default;
+  R310(R310 &&rhs) = default;
+
+  bool operator==(const R310 &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 

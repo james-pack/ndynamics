@@ -25,6 +25,15 @@ class PGA2D {
   PGA2D(const PGA2D &rhs) = default;
   PGA2D(PGA2D &&rhs) = default;
 
+  bool operator==(const PGA2D &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 

@@ -9,15 +9,29 @@
 class R000 {
  public:
   static constexpr const char *basis[] = {"1"};
-  static constexpr std::array<size_t, 1> bit_basis_indices{0};
+  static constexpr size_t NUM_BASES{1};
+  static constexpr std::array<size_t, NUM_BASES> bit_basis_indices{0};
 
-  static constexpr std::array<bool, 1> reversed_bases{0};
+  static constexpr std::array<bool, NUM_BASES> reversed_bases{0};
 
   R000() { std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f); }
   R000(float f, int idx = 0) {
     std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
     mvec[idx] = f;
   }
+
+  R000(const R000 &rhs) = default;
+  R000(R000 &&rhs) = default;
+
+  bool operator==(const R000 &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 
@@ -28,7 +42,7 @@ class R000 {
   R000 normalized();
 
  private:
-  float mvec[1];
+  float mvec[NUM_BASES];
 };
 
 template <>

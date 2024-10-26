@@ -9,6 +9,7 @@
 class R111 {
  public:
   static constexpr const char *basis[] = {"1", "e0", "e1", "e2", "e01", "e02", "e12", "e012"};
+  static constexpr size_t NUM_BASES{8};
   static constexpr std::array<size_t, 8> bit_basis_indices{0, 1, 2, 4, 3, 5, 6, 7};
 
   static constexpr std::array<bool, 8> reversed_bases{0, 0, 0, 0, 0, 0, 0, 0};
@@ -18,6 +19,19 @@ class R111 {
     std::fill(mvec, mvec + sizeof(mvec) / 4, 0.0f);
     mvec[idx] = f;
   }
+
+  R111(const R111 &rhs) = default;
+  R111(R111 &&rhs) = default;
+
+  bool operator==(const R111 &rhs) const {
+    for (size_t i = 0; i < NUM_BASES; ++i) {
+      if (mvec[i] != rhs.mvec[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   float &operator[](size_t idx) { return mvec[idx]; }
   const float &operator[](size_t idx) const { return mvec[idx]; }
 
