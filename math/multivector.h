@@ -272,10 +272,11 @@ class Multivector final {
 
   /**
    * The regressive product, also known as the 'V' product. The dual of the regressive product is
-   * the outer product of the duals of the operands. The regressive product then is the outer
-   * product of the duals.
+   * the outer product of the duals of the operands.
    */
-  constexpr Multivector regress(const Multivector& rhs) const { return dual().outer(rhs.dual()); }
+  constexpr Multivector regress(const Multivector& rhs) const {
+    return dual().outer(rhs.dual()).dual();
+  }
 
   /**
    * The reverse of this Multivector.
