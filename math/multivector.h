@@ -313,7 +313,7 @@ class Multivector final {
   constexpr Multivector inverse() const { return reverse() / square_magnitude(); }
 
   /**
-   * The dual of a Multivector. The product of a multivector and its dual should be the
+   * The dual of a Multivector. The product of a unit multivector and its dual should be the
    * unit pseudoscalar.
    */
   constexpr Multivector dual() const {
@@ -365,9 +365,18 @@ class Multivector final {
   // Reversion.
   constexpr Multivector operator~() const { return reverse(); }
 
+  // Dual.
+  constexpr Multivector operator!() const { return dual(); }
+
   // Geometric product.
   constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
   constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
+
+  // Wedge, or outer, product.
+  constexpr Multivector operator^(const Multivector& rhs) const { return outer(rhs); }
+
+  // Regressive, or 'V', product.
+  constexpr Multivector operator&(const Multivector& rhs) const { return regress(rhs); }
 
   // Division by a scalar.
   constexpr Multivector operator/(const T& rhs) const { return divide(rhs); }
