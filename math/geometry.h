@@ -161,7 +161,7 @@ class Primitive final {
    * creates the line that joins them.
    */
   static constexpr Primitive join(const Primitive& p1, const Primitive& p2) {
-    return Primitive{p1.vec_.regress(p2.vec_)};
+    return Primitive{p1.vec_ & p2.vec_};
   }
 
   /**
@@ -171,7 +171,7 @@ class Primitive final {
    * This is the grade-raising form of multiplication.
    */
   static constexpr Primitive meet(const Primitive& p1, const Primitive& p2) {
-    return Primitive{p1.vec_.outer(p2.vec_)};
+    return Primitive{p1.vec_ ^ p2.vec_};
   }
 };
 
@@ -232,6 +232,9 @@ class Transform final {
 
   constexpr Transform operator*(const Transform& first) const { return compose(first); }
 
+  /**
+   * Standard sandwich product to apply a transform to a primitive.
+   */
   constexpr PrimitiveType apply(const PrimitiveType& primitive) const {
     return PrimitiveType{vec_ * primitive.vec_ * ~vec_};
   }
