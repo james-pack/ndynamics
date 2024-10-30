@@ -29,6 +29,17 @@ constexpr VectorType to_multivector(const BivectorNetType& bvec) {
 }
 
 template <typename BivectorNetType>
+BivectorNetType create_from_multivector_coefficients(std::initializer_list<float> values) {
+  BivectorNetType result{};
+  size_t i{};
+  for (float value : values) {
+    result[index_from_bit_basis<BivectorNetType>(i)] = value;
+    ++i;
+  }
+  return result;
+}
+
+template <typename BivectorNetType>
 BivectorNetType create(std::initializer_list<float> values) {
   BivectorNetType result{};
   size_t i{};
@@ -1496,6 +1507,27 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedAlternatelyDuals
   VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
   VectorType result{v1.dual().outer(v2.dual()).dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!((!bvec1) ^ (!bvec2)))};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R301BivectorNetDirectTest, OuterProductOfTwoLines) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_from_multivector_coefficients<BivectorNetType>(
+      {1, 0, -0, 0, 0, -0, 0, -0, -0, 4, -2, 0, -2, -0, 0, 1})};
+  BivectorNetType bvec2{create_from_multivector_coefficients<BivectorNetType>(
+      {1, 0, -0, 0, 0, -0, 0, -0, -0, 0, -3, 0, 3, -0, 0, 1})};
+
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType v2{to_multivector<BivectorNetType, VectorType>(bvec2)};
+  VectorType result{v1.outer(v2)};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1 ^ bvec2)};
+  LOG(INFO) << "result: " << result << ", expected: " << expected;
   EXPECT_EQ(expected, result);
 }
 
