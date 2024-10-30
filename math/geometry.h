@@ -24,6 +24,7 @@
 #include <string>
 
 #include "math/multivector.h"
+#include "math/multivector_utils.h"
 
 namespace ndyn::math {
 
@@ -55,10 +56,7 @@ class Primitive final {
   static constexpr VectorType e13_{e1_ * e3_};
   static constexpr VectorType e23_{e2_ * e3_};
 
-  // Special basis combinations to represent lines.
-  // TODO(james): Explain why the canonical ordering of these basis vectors isn't sufficient;
-  // describe what complexity they would introduce.
-  // These bases are equivalent to Plucker coordinates.
+  // Special basis combination to help represent lines.
   static constexpr VectorType e31_{e3_ * e1_};
 
   static constexpr VectorType e012_{e0_ * e1_ * e2_};
@@ -66,11 +64,9 @@ class Primitive final {
   static constexpr VectorType e023_{e0_ * e2_ * e3_};
   static constexpr VectorType e123_{e1_ * e2_ * e3_};
 
-  // Special basis combinations to represent points.
-  // TODO(james): Explain why the canonical ordering of these basis vectors isn't sufficient;
-  // describe what complexity they would introduce.
-  // These bases are equivalent to homogenous coordinates for points.
+  // Special basis combinations to help represent points.
   static constexpr VectorType e021_{e0_ * e2_ * e1_};
+  static constexpr VectorType e031_{e0_ * e3_ * e1_};
   static constexpr VectorType e032_{e0_ * e3_ * e2_};
 
   static constexpr VectorType e0123_{e0_ * e1_ * e2_ * e3_};
@@ -133,11 +129,36 @@ class Primitive final {
 
   constexpr const VectorType& raw_vector() const { return vec_; }
 
+  constexpr Primitive normalized() const {
+    using std::abs;
+    return Primitive{vec_ / abs(vec_)};
+  }
+
   /**
    * Create a Primitive representing a point specified in Cartesian coordinates.
+   *
+   * The precise combination of basis vectors is explained in this article:
+   * https://geometry.mrao.cam.ac.uk/2020/06/euclidean-geometry-and-geometric-algebra/
+   * and in this video:
+   * https://youtu.be/v-WG02ILMXA?t=636
    */
   static constexpr Primitive point(const ScalarType& x, const ScalarType& y, const ScalarType& z) {
     return Primitive{x * e032_ + y * e013_ + z * e021_ + e123_};
+  }
+
+  /**
+   * Create a Primitive representing a line.
+   */
+  static constexpr Primitive line(const ScalarType& a, const ScalarType& b, const ScalarType& c) {
+    return Primitive{a * e12_ + b * e31_ + c * e23_};
+  }
+
+  /**
+   * Create a Primitive representing a plane according to the equation ax + by + cz + d = 0.
+   */
+  static constexpr Primitive plane(const ScalarType& a, const ScalarType& b, const ScalarType& c,
+                                   const ScalarType& d) {
+    return Primitive{a * e1_ + b * e2_ + c * e3_ + d * e0_};
   }
 
   /**
@@ -146,32 +167,21 @@ class Primitive final {
   static constexpr Primitive origin() { return Primitive{e123_}; }
 
   /**
-   * Create Primitives for each of the 3 Cartesian axes.
+   * Create a Primitive representing a zero k-vector.
    */
-  static constexpr Primitive x_axis() { return join(point(1, 0, 0), origin()); }
-  static constexpr Primitive y_axis() { return join(point(0, 1, 0), origin()); }
-  static constexpr Primitive z_axis() { return join(point(0, 0, 1), origin()); }
+  static constexpr Primitive zero() { return {}; }
 
-  static constexpr Primitive xy_plane() { return join(x_axis, y_axis); }
-  static constexpr Primitive yz_plane() { return join(y_axis, z_axis); }
-  static constexpr Primitive zx_plane() { return join(z_axis, x_axis); }
-
-  /**
-   * Create a Primitive representing the intersection of two primitives. For two points, this
-   * creates the line that joins them.
-   */
   static constexpr Primitive join(const Primitive& p1, const Primitive& p2) {
     return Primitive{p1.vec_ & p2.vec_};
   }
 
-  /**
-   * Create a Primitive representing the span (the outer product null-space) of two primitives. For
-   * two planes, this creates the line where the two planes meet.
-   *
-   * This is the grade-raising form of multiplication.
-   */
   static constexpr Primitive meet(const Primitive& p1, const Primitive& p2) {
     return Primitive{p1.vec_ ^ p2.vec_};
+  }
+
+  static constexpr bool is_parallel(const Primitive& p1, const Primitive& p2) {
+    const auto projected{p1.vec_.inner(p2.vec_)};
+    return square_magnitude(projected) == 1;
   }
 };
 
@@ -208,8 +218,8 @@ class Transform final {
   VectorType vec_{1.f};
 
   constexpr Transform() = default;
-  constexpr Transform(const VectorType& v) : vec_(v) {}
-  constexpr Transform(VectorType&& v) : vec_(std::move(v)) {}
+  explicit constexpr Transform(const VectorType& v) : vec_(v) {}
+  explicit constexpr Transform(VectorType&& v) : vec_(std::move(v)) {}
 
  public:
   constexpr Transform(const Transform& rhs) = default;
@@ -264,12 +274,18 @@ class Transform final {
    * Create a Transform that is a rotation about the axis by a certain angle. Note that the axis
    * does not need to be a line but may be any Primitive.
    */
-  static constexpr Transform rotate(const PrimitiveType& axis, const ScalarType& angle);
+  static constexpr Transform rotate(const PrimitiveType& axis, const ScalarType& angle) {
+    using std::cos;
+    using std::sin;
+    return Transform{cos(angle / 2) - sin(angle / 2) * axis.normalized()};
+  }
 
   /**
    * Create a Transform that is a translation in the direction by a certain distance.
    */
-  static constexpr Transform translate(const PrimitiveType& direction, const ScalarType& distance);
+  static constexpr Transform translate(const PrimitiveType& direction, const ScalarType& distance) {
+    return Transform{1 - distance / 2 * PrimitiveType::e0_ * direction.normalized()};
+  }
 };
 
 }  // namespace ndyn::math
