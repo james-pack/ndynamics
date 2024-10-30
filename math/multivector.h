@@ -739,6 +739,11 @@ std::string to_string(
       }
     }
   }
+
+  if (result.empty()) {
+    result.append("0");
+  }
+
   return result;
 }
 
