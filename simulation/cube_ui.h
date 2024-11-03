@@ -43,14 +43,14 @@ class CubeScene final : public ui::Scene {
 
     std::unique_ptr<graphics::Rod<ScalarType>> rod2{std::make_unique<graphics::Rod<ScalarType>>()};
     rod2_ = rod2.get();
-    rod2->set_distance(0);
-    rod2->set_direction(math::Primitive<ScalarType>::x_axis());
+    rod2->set_distance(-5);
+    rod2->set_direction(math::Primitive<ScalarType>::y_axis());
     rod2->add_element(std::move(box));
 
     std::unique_ptr<graphics::RevoluteJoint<ScalarType>> joint2{
         std::make_unique<graphics::RevoluteJoint<ScalarType>>()};
     joint2_ = joint2.get();
-    joint2->set_axis(math::Primitive<ScalarType>::y_axis());
+    joint2->set_axis(math::Primitive<ScalarType>::z_axis());
     joint2->add_element(std::move(rod2));
 
     std::unique_ptr<graphics::Rod<ScalarType>> rod1{std::make_unique<graphics::Rod<ScalarType>>()};
@@ -77,9 +77,10 @@ class CubeScene final : public ui::Scene {
 
   void update_models() override {
     using std::cos;
+    using std::sin;
     const TimeType t{static_cast<TimeType>(ImGui::GetTime())};
-    joint1_->set_angle(pi / 2 * sin(t / 2));
-    joint2_->set_angle(pi / 2 * sin(t / 3));
+    // joint1_->set_angle(pi / 2 * sin(t / 2));
+    joint2_->set_angle(pi / 2 * sin(3 * t));
   }
 
   void update_ui() override {}
