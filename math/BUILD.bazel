@@ -13,6 +13,7 @@ cc_library(
         "multivector_utils.h",
         "state.h",
         "state_view.h",
+        "unitary_ops.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -123,6 +124,15 @@ cc_test(
     deps = [
         ":math",
         ":testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "bit_basis_test",
+    srcs = ["bit_basis_test.cc"],
+    deps = [
+        ":math",
         "//third_party/gtest",
     ],
 )

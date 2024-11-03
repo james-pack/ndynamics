@@ -10,8 +10,8 @@
 
 #include "base/bits.h"
 #include "base/except.h"
-#include "math/bit_basis.h"
 #include "math/cayley.h"
+#include "math/unitary_ops.h"
 
 namespace ndyn::math {
 
@@ -46,7 +46,7 @@ class Multivector final {
 
  private:
   static constexpr CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> cayley_table_{};
-  using UnitaryOpSignsType = UnitaryOpSigns<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>;
+  using UnitaryOpsType = UnitaryOps<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>;
 
   std::array<ScalarType, bases_count()> coefficients_{};
 
@@ -312,7 +312,7 @@ class Multivector final {
   constexpr Multivector dual() const {
     Multivector result{};
     for (size_t i = 0; i < bases_count(); ++i) {
-      result.coefficients_[bases_count() - 1 - i] = UnitaryOpSignsType::dual[i] * coefficients_[i];
+      result.coefficients_[bases_count() - 1 - i] = UnitaryOpsType::dual[i] * coefficients_[i];
     }
     return result;
   }
