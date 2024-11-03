@@ -5,7 +5,6 @@
 
 #include "math/integrators.h"
 #include "math/state.h"
-#include "math/unit_set.h"
 
 namespace ndyn::simulation {
 
@@ -29,7 +28,6 @@ class Body final {
   using ComputePartialsType = math::ComputePartials<StateType>;
 
   static constexpr size_t state_depth() { return StateType::depth(); }
-  static constexpr math::Coordinates coordinates() { return StateType::coordinate(); }
 
   static constexpr ScalarType DEFAULT_STEP_SIZE{0.001};
 

@@ -9,8 +9,6 @@
 #include "math/multivector.h"
 #include "math/multivector_utils.h"
 #include "math/state.h"
-#include "math/unit_set.h"
-#include "units.h"
 
 namespace ndyn::simulation {
 
@@ -236,12 +234,11 @@ class Pendulum final {
   }
 };
 
-template <typename VectorT, typename Unit = units::length::meter_t>
+template <typename VectorT>
 class PendulumConfigurator final {
  public:
   using VectorType = VectorT;
   using ScalarType = typename VectorType::ScalarType;
-  using Units = math::UnitSet<Unit, units::angle::radian_t>;
   using StateType = math::State<VectorType, 3>;
 
   // Type of the resulting pendulum.

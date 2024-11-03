@@ -3,11 +3,11 @@
 #include <cmath>
 #include <type_traits>
 
+#include "base/pi.h"
 #include "math/coordinates.h"
 #include "math/multivector.h"
 #include "math/multivector_utils.h"
 #include "math/state.h"
-#include "math/unit_set.h"
 
 namespace ndyn::math {
 

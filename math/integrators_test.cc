@@ -5,8 +5,6 @@
 #include "gtest/gtest.h"
 #include "math/integrators_test_utils.h"
 #include "math/multivector.h"
-#include "math/unit_set.h"
-#include "units.h"
 
 namespace ndyn::math {
 

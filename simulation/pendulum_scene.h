@@ -16,7 +16,6 @@
 #include "ui/app.h"
 #include "ui/scene.h"
 #include "ui/ui_elements.h"
-#include "units.h"
 
 namespace ndyn::simulation {
 
@@ -31,9 +30,8 @@ class PendulumScene final : public ui::Scene {
   using VectorType = typename AccelerometerTypes::type;
   using AccelerometerType = VectorType;
   using FloatT = typename AccelerometerTypes::scalar_type;
-  using LinearUnit = units::length::meter_t;
 
-  using PendulumConfiguratorType = PendulumConfigurator<VectorType, LinearUnit>;
+  using PendulumConfiguratorType = PendulumConfigurator<VectorType>;
   using PendulumType = typename PendulumConfiguratorType::PendulumType;
   using PendulumStateType = typename PendulumConfiguratorType::StateType;
 

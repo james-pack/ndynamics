@@ -12,6 +12,7 @@ cc_library(
     deps = [
         "//base",
         "//math",
+        "//math:old_math",
         "//sensor",
     ],
 )
@@ -89,6 +90,7 @@ cc_binary(
         ":simulation_ui",
         "//base",
         "//math",
+        "//math:old_math",
         "//sensor",
         "//third_party/glad",
         "//third_party/glfw",

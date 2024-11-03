@@ -6,21 +6,30 @@ cc_library(
         "bit_set.h",
         "cayley.h",
         "cayley_entry_calculator.h",
-        "convert.h",
-        "coordinates.h",
         "geometry.h",
         "integrators.h",
         "multivector.h",
         "multivector_utils.h",
         "state.h",
         "state_view.h",
-        "unit_set.h",
         "unitary_op_signs.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//base",
-        "//third_party/units",
+    ],
+)
+
+cc_library(
+    name = "old_math",
+    hdrs = [
+        "convert.h",
+        "coordinates.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":math",
+        "//base",
     ],
 )
 
@@ -129,16 +138,6 @@ cc_test(
 )
 
 cc_test(
-    name = "unit_set_test",
-    srcs = ["unit_set_test.cc"],
-    deps = [
-        ":math",
-        ":testing",
-        "//third_party/gtest",
-    ],
-)
-
-cc_test(
     name = "geometry_test",
     srcs = ["geometry_test.cc"],
     deps = [
@@ -147,15 +146,3 @@ cc_test(
         "//third_party/gtest",
     ],
 )
-
-# cc_test(
-#     name = "convert_test",
-#     srcs = ["convert_test.cc"],
-#     deps = [
-#         ":math",
-#         ":testing",
-#         "//base",
-#         "//third_party/glog",
-#         "//third_party/gtest",
-#     ],
-# )

@@ -7,8 +7,6 @@
 #include <string>
 #include <type_traits>
 
-#include "math/unit_set.h"
-
 namespace ndyn::math {
 
 template <typename T>

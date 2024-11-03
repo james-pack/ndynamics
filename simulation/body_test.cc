@@ -9,7 +9,6 @@
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
 #include "math/state.h"
-#include "math/unit_set.h"
 #include "simulation/pendulum.h"
 #include "simulation/potential.h"
 
