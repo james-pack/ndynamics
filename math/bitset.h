@@ -15,11 +15,13 @@ class BitSetT final {
  private:
   constexpr uint64_t masked_bits() const {
     if constexpr (N < MAX_SIZE) {
-      return bits & ((1UL << N) - 1);
+      return bits_ & ((1UL << N) - 1);
     } else {
-      return bits;
+      return bits_;
     }
   }
+
+  uint64_t bits_{};
 
  public:
   static constexpr size_t MAX_SIZE{8 * sizeof(uint64_t)};
@@ -37,23 +39,23 @@ class BitSetT final {
 
   constexpr BitSetT() = default;
 
-  constexpr BitSetT(uint64_t b) : bits(b) {}
+  constexpr BitSetT(uint64_t b) : bits_(b) {}
 
   template <size_t M>
-  constexpr BitSetT(const BitSetT<M>& rhs) : bits(rhs.bits) {}
+  constexpr BitSetT(const BitSetT<M>& rhs) : bits_(rhs.bits_) {}
 
   template <size_t M>
-  constexpr BitSetT(BitSetT<M>&& rhs) : bits(rhs.bits) {}
+  constexpr BitSetT(BitSetT<M>&& rhs) : bits_(rhs.bits_) {}
 
   template <size_t M>
   constexpr BitSetT& operator=(const BitSetT<M>& rhs) {
-    bits = rhs.bits;
+    bits_ = rhs.bits_;
     return *this;
   }
 
   template <size_t M>
   constexpr BitSetT& operator=(BitSetT<M>&& rhs) {
-    bits = rhs.bits;
+    bits_ = rhs.bits_;
     return *this;
   }
 
@@ -63,14 +65,14 @@ class BitSetT final {
     if (bit >= MAX_SIZE) {
       except<std::out_of_range>("Attempt to test bit out of range");
     }
-    return (1UL << bit) & bits;
+    return (1UL << bit) & bits_;
   }
 
   constexpr void set(size_t bit) {
     if (bit >= MAX_SIZE) {
       except<std::out_of_range>("Attempt to set bit out of range");
     }
-    bits |= (1UL << bit);
+    bits_ |= (1UL << bit);
   }
 
   constexpr size_t count() const {
@@ -94,30 +96,28 @@ class BitSetT final {
 
   constexpr size_t size() const { return N; }
 
-  constexpr BitSetT operator~() const { return BitSetT{~bits}; }
-  constexpr BitSetT operator|(const BitSetT& rhs) const { return BitSetT{bits | rhs.bits}; }
-  constexpr BitSetT operator|(uint64_t rhs) const { return BitSetT{bits | rhs}; }
-  constexpr BitSetT operator&(const BitSetT& rhs) const { return BitSetT{bits & rhs.bits}; }
-  constexpr BitSetT operator&(uint64_t rhs) const { return BitSetT{bits & rhs}; }
+  constexpr BitSetT operator~() const { return BitSetT{~bits_}; }
+  constexpr BitSetT operator|(const BitSetT& rhs) const { return BitSetT{bits_ | rhs.bits_}; }
+  constexpr BitSetT operator|(uint64_t rhs) const { return BitSetT{bits_ | rhs}; }
+  constexpr BitSetT operator&(const BitSetT& rhs) const { return BitSetT{bits_ & rhs.bits_}; }
+  constexpr BitSetT operator&(uint64_t rhs) const { return BitSetT{bits_ & rhs}; }
 
-  constexpr BitSetT operator xor(const BitSetT& rhs) const { return bits xor rhs.bits; }
+  constexpr BitSetT operator xor(const BitSetT& rhs) const { return bits_ xor rhs.bits_; }
 
-  constexpr BitSetT operator<<(size_t b) const { return BitSetT{bits << b}; }
-  constexpr BitSetT operator>>(size_t b) const { return BitSetT(masked_bits() >> b); }
+  constexpr BitSetT operator<<(size_t b) const { return BitSetT{bits_ << b}; }
+  constexpr BitSetT operator>>(size_t b) const { return BitSetT{masked_bits() >> b}; }
 
   constexpr BitSetT& operator<<=(size_t b) {
-    bits <<= b;
+    bits_ <<= b;
     return *this;
   }
 
   constexpr BitSetT& operator>>=(size_t b) {
-    bits = masked_bits() >> b;
+    bits_ = masked_bits() >> b;
     return *this;
   }
 
   constexpr uint64_t to_ulong() const { return static_cast<uint64_t>(masked_bits()); }
-
-  uint64_t bits{};
 };
 
 template <size_t N>
