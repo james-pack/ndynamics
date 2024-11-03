@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "math/bitset.h"
+#include "math/bit_set.h"
 
 namespace ndyn::math {
 

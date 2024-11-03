@@ -6,7 +6,7 @@
 #include <ostream>
 #include <string>
 
-#include "math/bitset.h"
+#include "math/bit_set.h"
 #include "math/cayley_entry_calculator.h"
 
 namespace ndyn::math {

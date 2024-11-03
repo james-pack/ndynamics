@@ -1,4 +1,4 @@
-#include "math/bitset.h"
+#include "math/bit_set.h"
 
 #include <limits>
 
