@@ -10,8 +10,8 @@
 
 #include "base/bits.h"
 #include "base/except.h"
+#include "math/bit_basis.h"
 #include "math/cayley.h"
-#include "math/unitary_op_signs.h"
 
 namespace ndyn::math {
 

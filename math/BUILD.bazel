@@ -3,6 +3,7 @@ load("//platforms:hex.bzl", "hex")
 cc_library(
     name = "math",
     hdrs = [
+        "bit_basis.h",
         "bit_set.h",
         "cayley.h",
         "cayley_entry_calculator.h",
@@ -12,7 +13,6 @@ cc_library(
         "multivector_utils.h",
         "state.h",
         "state_view.h",
-        "unitary_op_signs.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
