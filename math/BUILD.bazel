@@ -10,7 +10,6 @@ cc_library(
         "coordinates.h",
         "geometry.h",
         "integrators.h",
-        "magnitude.h",
         "multivector.h",
         "multivector_utils.h",
         "state.h",

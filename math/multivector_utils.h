@@ -3,7 +3,6 @@
 #include <cmath>
 #include <utility>
 
-#include "math/magnitude.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {
