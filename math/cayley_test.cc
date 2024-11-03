@@ -4,11 +4,22 @@
 
 namespace ndyn::math {
 
+// These types aren't necessarily the most correct definition of the algebras indicated. For
+// example, the complex numbers are often cited as the even sub-algebra to Cl(2,0), rather than
+// Cl(0,1) as indicated here. But that's not relevant for these tests. We just need some small
+// algebras, along with some intuition of how they should behave, so that we can verify that the
+// CayleyTables work as desired.
+using ScalarCayleyTable = CayleyTable<0, 0, 0>;
+using ComplexCayleyTable = CayleyTable<0, 1, 0>;
+using DualCayleyTable = CayleyTable<0, 0, 1>;
+using SplitComplexCayleyTable = CayleyTable<1, 0, 0>;
+using SpacetimeCayleyTable = CayleyTable<1, 3, 0>;
+
 TEST(CayleyTableTest, CanGenerateScalarEntries) {
   static constexpr size_t SCALAR_GRADE{ScalarCayleyTable::SCALAR_GRADE};
   static constexpr ScalarCayleyTable table{};
   const auto entry{table.entry(0, 0)};
-  EXPECT_EQ(SCALAR_GRADE, entry.grade());
+  EXPECT_EQ(SCALAR_GRADE, entry.basis_index());
   EXPECT_EQ(1, entry.quadratic_multiplier());
 }
 

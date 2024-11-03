@@ -143,7 +143,7 @@ class Multivector final {
     for (size_t i = 0; i < bases_count(); ++i) {
       for (size_t j = 0; j < bases_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
-        result.coefficients_[cayley_entry.grade()] +=
+        result.coefficients_[cayley_entry.basis_index()] +=
             cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
       }
     }
@@ -266,7 +266,7 @@ class Multivector final {
       // bases.
       for (size_t j = 0; i + j < bases_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
-        if (bit_count(cayley_entry.grade()) == bit_count(i) + bit_count(j)) {
+        if (bit_count(cayley_entry.basis_index()) == bit_count(i) + bit_count(j)) {
           result.coefficients_[i + j] +=
               cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
         }

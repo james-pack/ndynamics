@@ -11,79 +11,97 @@
 
 namespace ndyn::math {
 
+/**
+ * The Cayley TableEntry class encodes the result of the product of two unit basis vectors. The
+ * CayleyTable below includes TableEntries for the product of every unit basis vector in the
+ * algebra. It includes the index of the result basis vector, and it includes the scalar value of
+ * the multiplication. The scalar value of the result will always be [-1, 0, 1], according to the
+ * quadratic form of the vector space and the commutativity of the two bases. For example, in
+ * Cl(2,0), e1*e1=1 and e2*e2=1, and e1*e2=e12=-e2*e1, and e12*e12=-1 due to the anti-commutation of
+ * e1 and e2. The quadratic multiplier for e12*e12 is therefore -1. Similarly, in Cl(1, 0, 1),
+ * e1*e1=1 (the positive basis), e0*e0=0 (the zero basis), and e0*e1=e01, but e01*e01=0. The
+ * quadratic multiplier for e01*e01 is therefore 0.
+ */
 template <size_t COMPONENT_COUNT, typename = void>
 class TableEntry final {
  private:
-  uint8_t grade_{};
+  // The basis index indicates which basis will be the result of the product of the unit basis
+  // vectors of this table entry.
+  uint8_t basis_index_{};
+
+  // The quadratic multiplier indicates if the result of the product of unit basis vectors
+  // represented by this table entry should be -1,0,1 according to the quadratic form of the vector
+  // space along with the commutativity relationships. It is the scalar portion of the product of
+  // the two unit basis vectors.
   int8_t quadratic_multiplier_{};
 
  public:
-  static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(grade_)>::max()};
+  static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(basis_index_)>::max()};
   static_assert(COMPONENT_COUNT <= MAX_COMPONENT_COUNT,
-                "This TableEntry class definition does not support enough components");
+                "This TableEntry class definition does not support enough components. Note that "
+                "this condition should not trigger; the design includes another template for table "
+                "entries where the component count is larger.");
 
   constexpr TableEntry() = default;
 
   constexpr TableEntry(const TableEntry& rhs)
-      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
+      : basis_index_(rhs.basis_index_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
   constexpr TableEntry(TableEntry&& rhs)
-      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
+      : basis_index_(rhs.basis_index_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
-  constexpr TableEntry(size_t g, int8_t q) : grade_(g), quadratic_multiplier_(q) {
-    // Note that the CayleyTable class has defenses to avoid grades that would overflow the grade
-    // data member below.
+  constexpr TableEntry(size_t b, int8_t q) : basis_index_(b), quadratic_multiplier_(q) {
+    // Note that the CayleyTable class has defenses to avoid basis indices that would overflow the
+    // basis_index_ data member, so we do not add extra checks to verify that this method is called
+    // with valid parameters.
   }
 
   constexpr TableEntry& operator=(TableEntry&& rhs) {
-    grade_ = rhs.grade_;
+    basis_index_ = rhs.basis_index_;
     quadratic_multiplier_ = rhs.quadratic_multiplier_;
     return *this;
   }
 
   constexpr bool operator==(const TableEntry& rhs) const {
-    return grade_ == rhs.grade_ && quadratic_multiplier_ == rhs.quadratic_multiplier_;
+    return basis_index_ == rhs.basis_index_ && quadratic_multiplier_ == rhs.quadratic_multiplier_;
   }
 
-  constexpr uint8_t grade() const { return grade_; }
+  constexpr uint8_t basis_index() const { return basis_index_; }
   constexpr int8_t quadratic_multiplier() const { return quadratic_multiplier_; }
 };
 
 template <size_t COMPONENT_COUNT>
 class TableEntry<COMPONENT_COUNT, std::enable_if_t<COMPONENT_COUNT >= 8> > final {
  private:
-  uint64_t grade_{};
+  uint64_t basis_index_{};
   int8_t quadratic_multiplier_{};
 
  public:
-  static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(grade_)>::max()};
+  static constexpr size_t MAX_COMPONENT_COUNT{std::numeric_limits<decltype(basis_index_)>::max()};
   static_assert(COMPONENT_COUNT <= MAX_COMPONENT_COUNT,
-                "This TableEntry class definition does not support enough components");
+                "This TableEntry class definition does not support enough components.");
 
   constexpr TableEntry() = default;
 
   constexpr TableEntry(const TableEntry& rhs)
-      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
+      : basis_index_(rhs.basis_index_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
   constexpr TableEntry(TableEntry&& rhs)
-      : grade_(rhs.grade_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
+      : basis_index_(rhs.basis_index_), quadratic_multiplier_(rhs.quadratic_multiplier_) {}
 
-  constexpr TableEntry(size_t g, int8_t q) : grade_(g), quadratic_multiplier_(q) {
-    // Note that the CayleyTable class has defenses to avoid grades that would overflow the grade
-    // data member below.
-  }
+  constexpr TableEntry(size_t b, int8_t q) : basis_index_(b), quadratic_multiplier_(q) {}
 
   constexpr TableEntry& operator=(TableEntry&& rhs) {
-    grade_ = rhs.grade_;
+    basis_index_ = rhs.basis_index_;
     quadratic_multiplier_ = rhs.quadratic_multiplier_;
     return *this;
   }
 
   constexpr bool operator==(const TableEntry& rhs) const {
-    return grade_ == rhs.grade_ && quadratic_multiplier_ == rhs.quadratic_multiplier_;
+    return basis_index_ == rhs.basis_index_ && quadratic_multiplier_ == rhs.quadratic_multiplier_;
   }
 
-  constexpr uint64_t grade() const { return grade_; }
+  constexpr uint64_t basis_index() const { return basis_index_; }
   constexpr int8_t quadratic_multiplier() const { return quadratic_multiplier_; }
 };
 
@@ -92,7 +110,7 @@ std::string to_string(const TableEntry<COMPONENT_COUNT>& t) {
   using std::to_string;
   return std::string{}
       .append("(")  //
-      .append(to_string(t.grade()))
+      .append(to_string(t.basis_index()))
       .append(", ")
       .append(to_string(t.quadratic_multiplier()))
       .append(")");
@@ -191,11 +209,5 @@ std::ostream& operator<<(std::ostream& os,
   os << to_string(t);
   return os;
 }
-
-using ScalarCayleyTable = CayleyTable<0, 0, 0>;
-using ComplexCayleyTable = CayleyTable<0, 1, 0>;
-using DualCayleyTable = CayleyTable<0, 0, 1>;
-using SplitComplexCayleyTable = CayleyTable<1, 0, 0>;
-using SpacetimeCayleyTable = CayleyTable<1, 3, 0>;
 
 }  // namespace ndyn::math
