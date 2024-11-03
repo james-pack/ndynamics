@@ -44,10 +44,13 @@ class Primitive final {
   using VectorType = Multivector<ScalarType, 3, 0, 1>;
 
   static constexpr VectorType one_{VectorType{1}};
-  static constexpr VectorType e0_{VectorType::template e<0>()};
-  static constexpr VectorType e1_{VectorType::template e<1>()};
-  static constexpr VectorType e2_{VectorType::template e<2>()};
-  static constexpr VectorType e3_{VectorType::template e<3>()};
+  // Note that these definitions are different from those in the Multivector. The Multivector puts
+  // the zero bases last, rather than first. In some algebras, like the dual numbers, that is more
+  // expected. But, in PGA, we usually have e0 as the basis with the zero quadratic form.
+  static constexpr VectorType e0_{VectorType::template e<3>()};
+  static constexpr VectorType e1_{VectorType::template e<0>()};
+  static constexpr VectorType e2_{VectorType::template e<1>()};
+  static constexpr VectorType e3_{VectorType::template e<2>()};
 
   static constexpr VectorType e01_{e0_ * e1_};
   static constexpr VectorType e02_{e0_ * e2_};
@@ -134,12 +137,29 @@ class Primitive final {
     return Primitive{vec_ / abs(vec_)};
   }
 
+  // Arithmetic with scalars.
+  constexpr Primitive operator+(const ScalarType& a) const { return Primitive{vec_ + a}; }
+  constexpr Primitive operator-(const ScalarType& a) const { return Primitive{vec_ - a}; }
+  constexpr Primitive operator*(const ScalarType& a) const { return Primitive{a * vec_}; }
+
+  // Arithmetic with other primitives.
+  constexpr Primitive operator+(const Primitive& rhs) const { return Primitive{vec_ + rhs.vec_}; }
+  constexpr Primitive operator-(const Primitive& rhs) const { return Primitive{vec_ - rhs.vec_}; }
+  constexpr Primitive operator*(const Primitive& rhs) const { return Primitive{vec_ * rhs.vec_}; }
+
+  // Unary minus.
+  constexpr Primitive operator-() const { return Primitive{-vec_}; }
+
   /**
    * Create a Primitive representing a point specified in Cartesian coordinates.
    *
-   * The precise combination of basis vectors is explained in this article:
+   * This combination of basis vectors can be derived by implementing this method as:
+   *    return Primitive{x * e1_ + y * e2_ + z * e3_ + e0_}.dual();
+   * The implementation below uses a slightly more optimized form of this expression.
+   *
+   * For more details, see
    * https://geometry.mrao.cam.ac.uk/2020/06/euclidean-geometry-and-geometric-algebra/
-   * and in this video:
+   * or
    * https://youtu.be/v-WG02ILMXA?t=636
    */
   static constexpr Primitive point(const ScalarType& x, const ScalarType& y, const ScalarType& z) {
@@ -149,8 +169,8 @@ class Primitive final {
   /**
    * Create a Primitive representing a line.
    */
-  static constexpr Primitive line(const ScalarType& a, const ScalarType& b, const ScalarType& c) {
-    return Primitive{a * e12_ + b * e31_ + c * e23_};
+  static constexpr Primitive line(const ScalarType& x, const ScalarType& y, const ScalarType& z) {
+    return Primitive{x * e23_ + y * e31_ + z * e12_};
   }
 
   /**
@@ -160,6 +180,10 @@ class Primitive final {
                                    const ScalarType& d) {
     return Primitive{a * e1_ + b * e2_ + c * e3_ + d * e0_};
   }
+
+  static constexpr Primitive x_axis() { return line(1, 0, 0); }
+  static constexpr Primitive y_axis() { return line(0, 1, 0); }
+  static constexpr Primitive z_axis() { return line(0, 0, 1); }
 
   /**
    * Create a Primitive representing the point at the origin.
@@ -198,6 +222,24 @@ std::ostream& operator<<(std::ostream& os, const Primitive<ScalarType>& p) {
   return os;
 }
 
+template <typename ScalarType>
+constexpr Primitive<ScalarType> operator+(const ScalarType& a,
+                                          const Primitive<ScalarType>& primitive) {
+  return primitive + a;
+}
+
+template <typename ScalarType>
+constexpr Primitive<ScalarType> operator-(const ScalarType& a,
+                                          const Primitive<ScalarType>& primitive) {
+  return -primitive + a;
+}
+
+template <typename ScalarType>
+constexpr Primitive<ScalarType> operator*(const ScalarType& a,
+                                          const Primitive<ScalarType>& primitive) {
+  return primitive * a;
+}
+
 /**
  * Transforms represent versors (also called motors) that can reflect, rotate, and translate
  * primitives. Applying a transform involves sandwiching the primitive in between the versor and its
@@ -218,8 +260,7 @@ class Transform final {
   VectorType vec_{1.f};
 
   constexpr Transform() = default;
-  explicit constexpr Transform(const VectorType& v) : vec_(v) {}
-  explicit constexpr Transform(VectorType&& v) : vec_(std::move(v)) {}
+  explicit constexpr Transform(const VectorType& v) : vec_(v / abs(v)) {}
 
  public:
   constexpr Transform(const Transform& rhs) = default;
@@ -230,6 +271,8 @@ class Transform final {
 
   constexpr bool operator==(const Transform& rhs) const { return vec_ == rhs.vec_; }
   constexpr bool operator!=(const Transform& rhs) const { return vec_ != rhs.vec_; }
+
+  constexpr const VectorType& raw_vector() const { return vec_; }
 
   /**
    * Compose a combination of this transform with another transform. The other transform is applied
@@ -277,15 +320,29 @@ class Transform final {
   static constexpr Transform rotate(const PrimitiveType& axis, const ScalarType& angle) {
     using std::cos;
     using std::sin;
-    return Transform{cos(angle / 2) - sin(angle / 2) * axis.normalized()};
+    return Transform{cos(angle / 2) - sin(angle / 2) * axis.normalized().vec_};
   }
 
   /**
    * Create a Transform that is a translation in the direction by a certain distance.
    */
   static constexpr Transform translate(const PrimitiveType& direction, const ScalarType& distance) {
-    return Transform{1 - distance / 2 * PrimitiveType::e0_ * direction.normalized()};
+    return Transform{static_cast<ScalarType>(1) -
+                     distance / 2 * PrimitiveType::e0_ * direction.normalized().vec_};
   }
 };
+
+template <typename ScalarType>
+std::string to_string(const Transform<ScalarType>& p) {
+  using std::to_string;
+  return to_string(p.raw_vector());
+}
+
+template <typename ScalarType>
+std::ostream& operator<<(std::ostream& os, const Transform<ScalarType>& p) {
+  using std::to_string;
+  os << to_string(p);
+  return os;
+}
 
 }  // namespace ndyn::math
