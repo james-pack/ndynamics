@@ -65,7 +65,10 @@ class Multivector final {
 
   // TODO(james): This is way too slow. Rewrite using a more explicit sum of a function of the
   // coefficients.
-  constexpr ScalarType square_magnitude() const { return multiply(reverse()).scalar(); }
+  constexpr ScalarType square_magnitude() const {
+    const Multivector reversed{reverse()};
+    return multiply(reversed).scalar();
+  }
 
   template <size_t n>
   constexpr const T& basis() const {
@@ -73,6 +76,8 @@ class Multivector final {
     return coefficients_[n];
   }
   constexpr const T& basis(size_t n) const { return coefficients_.at(n); }
+
+  constexpr const T& operator[](size_t n) const { return coefficients_.at(n); }
 
   template <size_t n>
   constexpr void set_basis(T v) {
