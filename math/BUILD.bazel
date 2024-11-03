@@ -4,7 +4,6 @@ cc_library(
     name = "math",
     hdrs = [
         "bitset.h",
-        "cartesian_vector.h",
         "cayley.h",
         "cayley_entry_calculator.h",
         "convert.h",
@@ -14,13 +13,10 @@ cc_library(
         "magnitude.h",
         "multivector.h",
         "multivector_utils.h",
-        "spherical_vector.h",
         "state.h",
         "state_view.h",
         "unit_set.h",
         "unitary_op_signs.h",
-        "vector.h",
-        "vector_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -36,7 +32,6 @@ cc_library(
         "integrators_test_utils.h",
         "multivector_test_utils.h",
         "state_test_utils.h",
-        "vector_test_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -67,40 +62,6 @@ cc_test(
     srcs = ["cayley_test.cc"],
     deps = [
         ":math",
-        "//third_party/gtest",
-    ],
-)
-
-cc_library(
-    name = "vector_tests",
-    testonly = True,
-    hdrs = [
-        "vector_tests.h",
-    ],
-    deps = [
-        ":math",
-        ":testing",
-        "//third_party/gtest",
-    ],
-)
-
-cc_test(
-    name = "cartesian_vector_test",
-    srcs = ["cartesian_vector_test.cc"],
-    deps = [
-        ":math",
-        ":vector_tests",
-        "//third_party/gtest",
-    ],
-)
-
-cc_test(
-    name = "spherical_vector_test",
-    srcs = ["spherical_vector_test.cc"],
-    deps = [
-        ":math",
-        ":vector_tests",
-        "//base",
         "//third_party/gtest",
     ],
 )
