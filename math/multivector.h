@@ -23,15 +23,19 @@ enum class InnerProduct : uint8_t {
   NO_IMPLICIT_DEFINITION,
 };
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+template <typename ScalarT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
           InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 class Multivector final {
  public:
-  using ScalarType = T;
+  using ScalarType = ScalarT;
 
+  // Number of grade-1 basis elements (vectors) in this multivector.
   static constexpr size_t vector_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
+  // Number of grades in this multivector, counting the scalar (grade-0) as its own grade.
   static constexpr size_t grade_count() { return vector_count() + 1; }
 
+  // Number of bases in this multivector, including the number of vectors, bivectors, trivectors,
+  // etc., and scalars.
   static constexpr size_t bases_count() { return 1UL << vector_count(); }
 
   static constexpr size_t NUM_POSITIVE_BASES{POSITIVE_BASES};
@@ -44,7 +48,7 @@ class Multivector final {
   static constexpr CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> cayley_table_{};
   using UnitaryOpSignsType = UnitaryOpSigns<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>;
 
-  std::array<T, bases_count()> coefficients_{};
+  std::array<ScalarType, bases_count()> coefficients_{};
 
  public:
   constexpr Multivector() = default;
@@ -52,9 +56,9 @@ class Multivector final {
   constexpr Multivector(const Multivector& rhs) = default;
   constexpr Multivector(Multivector&& rhs) = default;
 
-  constexpr Multivector(std::initializer_list<T> values) {
+  constexpr Multivector(std::initializer_list<ScalarType> values) {
     size_t i = 0;
-    for (T value : values) {
+    for (ScalarType value : values) {
       coefficients_.at(i) = value;
       ++i;
     }
@@ -70,24 +74,8 @@ class Multivector final {
     return multiply(reversed).scalar();
   }
 
-  template <size_t n>
-  constexpr const T& basis() const {
-    static_assert(n < bases_count(), "Basis index out of range.");
-    return coefficients_[n];
-  }
-  constexpr const T& basis(size_t n) const { return coefficients_.at(n); }
-
-  constexpr const T& operator[](size_t n) const { return coefficients_.at(n); }
-
-  template <size_t n>
-  constexpr void set_basis(T v) {
-    static_assert(n < bases_count(), "Basis index out of range.");
-    coefficients_[n] = v;
-  }
-  constexpr void set_basis(size_t n, T v) { coefficients_.at(n) = v; }
-
-  constexpr const T& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
-  constexpr void set_scalar(T v) { coefficients_[SCALAR_BASIS_INDEX] = v; }
+  constexpr const ScalarType& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
+  constexpr void set_scalar(const ScalarType& v) { coefficients_[SCALAR_BASIS_INDEX] = v; }
 
   constexpr Multivector grade_projection(size_t grade) const {
     if (grade >= grade_count()) {
@@ -102,7 +90,7 @@ class Multivector final {
     return result;
   }
 
-  constexpr Multivector add(const T& rhs) const {
+  constexpr Multivector add(const ScalarType& rhs) const {
     Multivector result{*this};
     result.coefficients_[SCALAR_BASIS_INDEX] += rhs;
     return result;
@@ -116,7 +104,7 @@ class Multivector final {
     return result;
   }
 
-  constexpr Multivector subtract(const T& rhs) const {
+  constexpr Multivector subtract(const ScalarType& rhs) const {
     Multivector result{*this};
     result.coefficients_[SCALAR_BASIS_INDEX] -= rhs;
     return result;
@@ -130,7 +118,7 @@ class Multivector final {
     return result;
   }
 
-  constexpr Multivector multiply(const T& rhs) const {
+  constexpr Multivector multiply(const ScalarType& rhs) const {
     Multivector result{*this};
     for (size_t i = 0; i < bases_count(); ++i) {
       result.coefficients_[i] *= rhs;
@@ -150,7 +138,7 @@ class Multivector final {
     return result;
   }
 
-  constexpr Multivector divide(const T& rhs) const {
+  constexpr Multivector divide(const ScalarType& rhs) const {
     Multivector result{*this};
     for (size_t i = 0; i < bases_count(); ++i) {
       result.coefficients_[i] /= rhs;
@@ -330,6 +318,8 @@ class Multivector final {
   }
 
   // Operator overloads.
+
+  // Equality.
   constexpr bool operator==(const Multivector& rhs) const {
     // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
     // we have to implement this ourselves for earlier versions.
@@ -352,16 +342,15 @@ class Multivector final {
     return false;
   }
 
-  // Equality.
-  constexpr bool operator==(const T& rhs) const { return *this == Multivector{rhs}; }
-  constexpr bool operator!=(const T& rhs) const { return *this != Multivector{rhs}; }
+  constexpr bool operator==(const ScalarType& rhs) const { return *this == Multivector{rhs}; }
+  constexpr bool operator!=(const ScalarType& rhs) const { return *this != Multivector{rhs}; }
 
   // Addition.
-  constexpr Multivector operator+(const T& rhs) const { return add(rhs); }
+  constexpr Multivector operator+(const ScalarType& rhs) const { return add(rhs); }
   constexpr Multivector operator+(const Multivector& rhs) const { return add(rhs); }
 
   // Subtraction.
-  constexpr Multivector operator-(const T& rhs) const { return subtract(rhs); }
+  constexpr Multivector operator-(const ScalarType& rhs) const { return subtract(rhs); }
   constexpr Multivector operator-(const Multivector& rhs) const { return subtract(rhs); }
 
   // Unary minus.
@@ -374,7 +363,7 @@ class Multivector final {
   constexpr Multivector operator!() const { return dual(); }
 
   // Geometric product.
-  constexpr Multivector operator*(const T& rhs) const { return multiply(rhs); }
+  constexpr Multivector operator*(const ScalarType& rhs) const { return multiply(rhs); }
   constexpr Multivector operator*(const Multivector& rhs) const { return multiply(rhs); }
 
   // Wedge, or outer, product.
@@ -384,7 +373,7 @@ class Multivector final {
   constexpr Multivector operator&(const Multivector& rhs) const { return regress(rhs); }
 
   // Division by a scalar.
-  constexpr Multivector operator/(const T& rhs) const { return divide(rhs); }
+  constexpr Multivector operator/(const ScalarType& rhs) const { return divide(rhs); }
 
   // Self-modifying operators.
   constexpr Multivector& operator+=(const Multivector& rhs) {
@@ -401,8 +390,21 @@ class Multivector final {
     return *this;
   }
 
+  /*************************************************************************************************
+   * These accessors rely on the notion of a "bit index". A bit index is a particular ordering of
+   * the bases in a multivector so that the basis vectors are indexed by powers of 2. In particular,
+   * the basis vector e0 is at index 1; the basis vector e1 is at index 2; the basis vector e2 is at
+   * index 4; etc. This particular indexing strategy allows for easy calculation of the Cayley
+   * tables for each algebra. It can also make for consistent indexing across algebras, except where
+   * particular conventions in a specific algebra force deviations from the pattern.
+   *
+   * In general, using these accessors requires a solid understanding of this indexing strategy and
+   * can be error-prone.
+   *
+   * TODO(james): Move these to the private section of the class or remove them altogether.
+   *************************************************************************************************/
   template <size_t N>
-  constexpr const T& element() {
+  constexpr const ScalarType& element() {
     static_assert(
         N < vector_count(),
         "Template parameter to vector element function is out of range of the number of "
@@ -432,13 +434,29 @@ class Multivector final {
     }
   }
 
+  template <size_t n>
+  constexpr const ScalarType& basis() const {
+    static_assert(n < bases_count(), "Basis index out of range.");
+    return coefficients_[n];
+  }
+  constexpr const ScalarType& basis(size_t n) const { return coefficients_.at(n); }
+
+  constexpr const ScalarType& operator[](size_t n) const { return coefficients_.at(n); }
+
+  template <size_t n>
+  constexpr void set_basis(const ScalarType& v) {
+    static_assert(n < bases_count(), "Basis index out of range.");
+    coefficients_[n] = v;
+  }
+  constexpr void set_basis(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
+
   /*************************************************************************************************
    * This set of accessors is incorrect for most implementations.
    *
    * TODO(james): Remove them and port usages to the geometric abstractions, rather than using
    * Multivectors directly in most applications.
    *************************************************************************************************/
-  constexpr const T& t() const {
+  constexpr const ScalarType& t() const {
     // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
     // algebra with negative space-like bases. In this case, t() is traditionally the first
     // positive basis. Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
@@ -450,7 +468,7 @@ class Multivector final {
         "work in Cl(1, 3), the spacetime algebra with negative space-like bases.");
     return basis<1>();
   }
-  constexpr void set_t(T v) {
+  constexpr void set_t(const ScalarType& v) {
     // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
     // algebra with negative space-like bases. In this case, t() is traditionally the first
     // positive basis. Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
@@ -463,7 +481,7 @@ class Multivector final {
     set_basis<1>(v);
   }
 
-  constexpr const T& x() const {
+  constexpr const ScalarType& x() const {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
@@ -477,7 +495,7 @@ class Multivector final {
     }
   }
 
-  constexpr void set_x(T v) {
+  constexpr void set_x(const ScalarType& v) {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
@@ -491,7 +509,7 @@ class Multivector final {
     }
   }
 
-  constexpr const T& y() const {
+  constexpr const ScalarType& y() const {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
@@ -505,7 +523,7 @@ class Multivector final {
     }
   }
 
-  constexpr void set_y(T v) {
+  constexpr void set_y(const ScalarType& v) {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
@@ -519,7 +537,7 @@ class Multivector final {
     }
   }
 
-  constexpr const T& z() const {
+  constexpr const ScalarType& z() const {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
@@ -533,7 +551,7 @@ class Multivector final {
     }
   }
 
-  constexpr void set_z(T v) {
+  constexpr void set_z(const ScalarType& v) {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a variant of the spacetime
       // algebra with negative space-like bases. In this case, x() is traditionally the first
@@ -547,7 +565,7 @@ class Multivector final {
     }
   }
 
-  constexpr const T& r() const {
+  constexpr const ScalarType& r() const {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
@@ -561,7 +579,7 @@ class Multivector final {
     }
   }
 
-  constexpr void set_r(T v) {
+  constexpr void set_r(const ScalarType& v) {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
@@ -575,7 +593,7 @@ class Multivector final {
     }
   }
 
-  constexpr const T& theta() const {
+  constexpr const ScalarType& theta() const {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
@@ -589,7 +607,7 @@ class Multivector final {
     }
   }
 
-  constexpr void set_theta(T v) {
+  constexpr void set_theta(const ScalarType& v) {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
@@ -603,7 +621,7 @@ class Multivector final {
     }
   }
 
-  constexpr const T& phi() const {
+  constexpr const ScalarType& phi() const {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
@@ -617,7 +635,7 @@ class Multivector final {
     }
   }
 
-  constexpr void set_phi(T v) {
+  constexpr void set_phi(const ScalarType& v) {
     if constexpr (NEGATIVE_BASES >= 1) {
       // If there are NEGATIVE_BASES, we assume that we are working in a cylindrical or spherical
       // variant of the spacetime algebra with negative space-like bases. In this case, r() is
@@ -634,14 +652,14 @@ class Multivector final {
   /**
    * Selector for the real component of a complex number.
    */
-  constexpr const T& real() const {
+  constexpr const ScalarType& real() const {
     // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
     static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
                   "The real() selector is only defined for the complex numbers.");
     return basis<0>();
   }
 
-  constexpr void set_real(T v) {
+  constexpr void set_real(const ScalarType& v) {
     // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
     static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
                   "The real() selector is only defined for the complex numbers.");
@@ -651,14 +669,14 @@ class Multivector final {
   /**
    * Selector for the imaginary component of a complex number.
    */
-  constexpr const T& imag() const {
+  constexpr const ScalarType& imag() const {
     // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
     static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
                   "The imag() selector is only defined for the complex numbers.");
     return basis<1>();
   }
 
-  constexpr void set_imag(T v) {
+  constexpr void set_imag(const ScalarType& v) {
     // Verify that we are in the complex numbers. This selector makes no sense in any other algebra.
     static_assert(NEGATIVE_BASES == 1 && POSITIVE_BASES == 0 && ZERO_BASES == 0,
                   "The imag() selector is only defined for the complex numbers.");
