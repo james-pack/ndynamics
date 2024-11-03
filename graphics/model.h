@@ -29,6 +29,11 @@ class Model final {
 
   GLfloat aspect_ratio_;
 
+  glm::mat4 axis_alignment_{1, 0, 0, 0,  //
+                            0, 1, 0, 0,  //
+                            0, 0, 1, 0,  //
+                            0, 0, 0, 1};
+
   glm::mat4 perspective_projection_{
       glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f)};
 
@@ -42,16 +47,17 @@ class Model final {
   glm::mat4 camera_{glm::lookAt(
       glm::vec3{0, 2, 10},  // Camera location in World Space
       glm::vec3{0, 0, 0},   // and looks at this location in World Space
-      glm::vec3{0, 1, 0}    // Head is up (set to 0,-1,0 to look upside-down)
+      glm::vec3{0, 1, 1}    // Head is up (set to 0,-1,0 to look upside-down)
       )};
 
+  bool axis_alignment_matrix_dirty_{true};
   bool projection_matrix_dirty_{true};
   bool camera_matrix_dirty_{true};
 
  public:
   explicit Model(GLfloat aspect_ratio = 1.f)
       : default_program_(ShaderProgramBuilder{}
-                             .add_vertex_shader("graphics/default_vertex_shader.glsl")
+                             .add_vertex_shader("graphics/pga_transform_vertex_shader.glsl")
                              .add_fragment_shader("graphics/default_fragment_shader.glsl")
                              .build()),
         active_program_(&default_program_),
@@ -74,6 +80,13 @@ class Model final {
 
   void update(ScalarType t) {
     glUseProgram(active_program_->id());
+
+    if (axis_alignment_matrix_dirty_) {
+      const GLuint axis_alignment_id{
+          glGetUniformLocation(active_program_->id(), "axis_alignment_matrix")};
+      glUniformMatrix4fv(axis_alignment_id, 1, GL_FALSE, &axis_alignment_[0][0]);
+      axis_alignment_matrix_dirty_ = false;
+    }
 
     if (projection_matrix_dirty_) {
       const GLuint projection_matrix_id{

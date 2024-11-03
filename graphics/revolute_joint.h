@@ -1,10 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
-#include "GLFW/glfw3.h"
-#include "base/pi.h"
 #include "graphics/gpu_element.h"
 #include "math/geometry.h"
 
@@ -14,21 +9,19 @@ template <typename ScalarType>
 class RevoluteJoint final : public GpuElement<ScalarType> {
  private:
   ScalarType angle_{0};
-  math::Primitive<ScalarType> joint_axis_{math::Primitive<ScalarType>::y_axis()};
-  std::vector<std::unique_ptr<GpuElement<ScalarType>>> children_{};
+  math::Primitive<ScalarType> axis_{math::Primitive<ScalarType>::z_axis()};
 
  public:
   math::Transform<ScalarType> compose_transform(
       ScalarType t, const math::Transform<ScalarType>& transform) override {
-    angle_ = t * pi / 2 / 5;
-    return transform;  // math::Transform<ScalarType>::rotate(joint_axis_, angle_);
+    return transform.compose(math::Transform<ScalarType>::rotate(axis_, angle_));
   }
 
-  void add_element(std::unique_ptr<GpuElement<ScalarType>>&& element) {
-    children_.emplace_back(std::move(element));
-  }
+  void set_angle(const ScalarType& angle) { angle_ = angle; }
+  const ScalarType& angle() const { return angle_; }
 
-  void clear_all_elements() { children_.clear(); }
+  const math::Primitive<ScalarType>& axis() const { return axis_; }
+  void set_axis(const math::Primitive<ScalarType>& axis) { axis_ = axis; }
 };
 
 }  // namespace ndyn::graphics

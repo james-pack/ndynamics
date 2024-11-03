@@ -8,11 +8,13 @@ cc_library(
         "gpu_element.h",
         "model.h",
         "revolute_joint.h",
+        "rod.h",
         "shader_program.h",
     ],
     data = [
         "default_fragment_shader.glsl",
         "default_vertex_shader.glsl",
+        "pga_transform_vertex_shader.glsl",
     ],
     visibility = ["//visibility:public"],
     deps = [
