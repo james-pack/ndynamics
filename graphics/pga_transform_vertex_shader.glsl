@@ -14,7 +14,6 @@ layout(location = 1) in vec3 vertex_color;
 out vec3 fragment_color;
 
 // Gibbs vector-style matrices.
-uniform mat4 axis_alignment_matrix;
 uniform mat4 projection_matrix;
 uniform mat4 camera_matrix;
 
@@ -31,7 +30,6 @@ point apply_transform(motor transform, point p) {
 void main() {
   vec3 world_coord_position = apply_transform(element_transform, vertex);
   // Transform vertex in world coordinates according to camera view followed by a projection.
-  gl_Position =
-      axis_alignment_matrix * projection_matrix * camera_matrix * vec4(world_coord_position, 1);
+  gl_Position = projection_matrix * camera_matrix * vec4(world_coord_position, 1);
   fragment_color = vertex_color;
 }

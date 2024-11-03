@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "GLFW/glfw3.h"
@@ -11,6 +12,48 @@
 #include "math/geometry.h"
 
 namespace ndyn::graphics {
+
+std::string to_string(const glm::mat4& mat) {
+  using std::to_string;
+  std::string result{};
+  result.append("[")
+      .append(to_string(mat[0][0]))
+      .append(", ")
+      .append(to_string(mat[0][1]))
+      .append(", ")
+      .append(to_string(mat[0][2]))
+      .append(", ")
+      .append(to_string(mat[0][3]))
+      .append("\n");
+  result.append(" ")
+      .append(to_string(mat[1][0]))
+      .append(", ")
+      .append(to_string(mat[1][1]))
+      .append(", ")
+      .append(to_string(mat[1][2]))
+      .append(", ")
+      .append(to_string(mat[1][3]))
+      .append("\n");
+  result.append(" ")
+      .append(to_string(mat[2][0]))
+      .append(", ")
+      .append(to_string(mat[2][1]))
+      .append(", ")
+      .append(to_string(mat[2][2]))
+      .append(", ")
+      .append(to_string(mat[2][3]))
+      .append("\n");
+  result.append(" ")
+      .append(to_string(mat[3][0]))
+      .append(", ")
+      .append(to_string(mat[3][1]))
+      .append(", ")
+      .append(to_string(mat[3][2]))
+      .append(", ")
+      .append(to_string(mat[3][3]))
+      .append("]\n");
+  return result;
+}
 
 template <typename ScalarType>
 class Model final {
@@ -29,11 +72,6 @@ class Model final {
 
   GLfloat aspect_ratio_;
 
-  glm::mat4 axis_alignment_{1, 0, 0, 0,  //
-                            0, 1, 0, 0,  //
-                            0, 0, 1, 0,  //
-                            0, 0, 0, 1};
-
   glm::mat4 perspective_projection_{
       glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f)};
 
@@ -50,7 +88,6 @@ class Model final {
       glm::vec3{0, 1, 1}    // Head is up (set to 0,-1,0 to look upside-down)
       )};
 
-  bool axis_alignment_matrix_dirty_{true};
   bool projection_matrix_dirty_{true};
   bool camera_matrix_dirty_{true};
 
@@ -80,13 +117,6 @@ class Model final {
 
   void update(ScalarType t) {
     glUseProgram(active_program_->id());
-
-    if (axis_alignment_matrix_dirty_) {
-      const GLuint axis_alignment_id{
-          glGetUniformLocation(active_program_->id(), "axis_alignment_matrix")};
-      glUniformMatrix4fv(axis_alignment_id, 1, GL_FALSE, &axis_alignment_[0][0]);
-      axis_alignment_matrix_dirty_ = false;
-    }
 
     if (projection_matrix_dirty_) {
       const GLuint projection_matrix_id{
