@@ -69,13 +69,19 @@ class CayleyEntryCalculator final {
  public:
   static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
 
-  constexpr int8_t compute_commutative_order(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
-    const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_component_bits & rhs_component_bits};
+  constexpr int8_t compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_bases,
+                                             const BitSet<QUADRATIC_FORM_COUNT>& rhs_bases) const {
+    // Track which basis vectors occur in both the lhs and rhs. These basis vectors will multiply
+    // themselves (hence the name of self_multiplication), and the result will of that
+    // multiplication will need to consider the quadratic form of the vector space of the algebra.
+    // Other multiplications where the lhs and rhs do not share any basis vectors in common only
+    // need to consider commutativity.
+    const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_bases & rhs_bases};
 
     if ((self_multiplication & zero_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
             .count() != 0) {
+      // We are self-multiplying at least one zero basis vector. The result of this multiplication
+      // will be zero.
       return 0;
     } else {
       if ((self_multiplication &
@@ -83,21 +89,26 @@ class CayleyEntryCalculator final {
                   .count() %
               2 ==
           1) {
+        // We are self-multiplying an odd number of negative basis vectors. -1 to an odd power is
+        // -1, so we start with that as our result and adjust according to the anti-commutivity of
+        // the bases in the operands.
         constexpr int8_t INITIAL_COMMUTATIVE_ORDER{-1};
         return accumulate_commutative_order<QUADRATIC_FORM_COUNT, QUADRATIC_FORM_COUNT - 1>(
-            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
+            lhs_bases, rhs_bases, INITIAL_COMMUTATIVE_ORDER);
       } else {
+        // We are self-multiplying an even number of negative basis vectors, possibly zero. That is,
+        // all of the minus signs from the quadratic form cancel, and the entire result of
+        // multiplying these basis vectors is determined by the anti-commutation of bases.
         constexpr int8_t INITIAL_COMMUTATIVE_ORDER{1};
         return accumulate_commutative_order<QUADRATIC_FORM_COUNT, QUADRATIC_FORM_COUNT - 1>(
-            lhs_component_bits, rhs_component_bits, INITIAL_COMMUTATIVE_ORDER);
+            lhs_bases, rhs_bases, INITIAL_COMMUTATIVE_ORDER);
       }
     }
   }
 
-  constexpr uint8_t compute_result_component(
-      const BitSet<QUADRATIC_FORM_COUNT>& lhs_component_bits,
-      const BitSet<QUADRATIC_FORM_COUNT>& rhs_component_bits) const {
-    return (lhs_component_bits xor rhs_component_bits).to_ulong();
+  constexpr uint8_t compute_result_component(const BitSet<QUADRATIC_FORM_COUNT>& lhs_bases,
+                                             const BitSet<QUADRATIC_FORM_COUNT>& rhs_bases) const {
+    return (lhs_bases xor rhs_bases).to_ulong();
   }
 };
 
