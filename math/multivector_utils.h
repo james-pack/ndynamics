@@ -3,6 +3,7 @@
 #include <cmath>
 #include <utility>
 
+#include "math/algebra.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {
@@ -10,17 +11,13 @@ namespace ndyn::math {
 // Utility functions for Multivectors, especially overloads of functions that might be applicable to
 // scalars and built-in types as well.
 
-template <typename ScalarType, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr ScalarType square_magnitude(const Multivector<ScalarType, POSITIVE_BASES, NEGATIVE_BASES,
-                                                        ZERO_BASES, INNER_PRODUCT_STYLE>& value) {
+template <typename AlgebraType>
+constexpr typename AlgebraType::ScalarType square_magnitude(const Multivector<AlgebraType>& value) {
   return value.square_magnitude();
 }
 
-template <typename ScalarType, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr ScalarType abs(const Multivector<ScalarType, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES,
-                                           INNER_PRODUCT_STYLE>& value) {
+template <typename AlgebraType>
+constexpr typename AlgebraType::ScalarType abs(const Multivector<AlgebraType>& value) {
   using std::sqrt;
   return sqrt(square_magnitude(value));
 }
@@ -28,16 +25,10 @@ constexpr ScalarType abs(const Multivector<ScalarType, POSITIVE_BASES, NEGATIVE_
 /**
  * Decompose a Multivector into a Multivector that is perpendicular to the given axis.
  */
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>
-orthogonal(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& axis) {
-  using MultivectorT =
-      Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
-
-  MultivectorT result{};
+template <typename AlgebraType>
+constexpr Multivector<AlgebraType> orthogonal(const Multivector<AlgebraType>& value,
+                                              const Multivector<AlgebraType>& axis) {
+  Multivector<AlgebraType> result{};
   result = axis * axis.outer(value) / square_magnitude(axis);
   return result;
 }
@@ -45,15 +36,10 @@ orthogonal(
 /**
  * Decompose a Multivector into a Multivector that is parallel to the given axis.
  */
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> parallel(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& axis) {
-  using MultivectorT =
-      Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
-
-  MultivectorT result{};
+template <typename AlgebraType>
+constexpr Multivector<AlgebraType> parallel(const Multivector<AlgebraType>& value,
+                                            const Multivector<AlgebraType>& axis) {
+  Multivector<AlgebraType> result{};
   result = value.left_contraction(axis).scalar() / square_magnitude(axis) * axis;
   return result;
 }
@@ -64,17 +50,10 @@ constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODU
  * parallel Multivector, the second is the perpendicular Multivector. The sum of the two will
  * equal the original value.
  */
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr std::pair<Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>,
-                    Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>>
-decompose(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& axis) {
-  using MultivectorT =
-      Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>;
-
-  std::pair<MultivectorT, MultivectorT> result{};
+template <typename AlgebraType>
+constexpr std::pair<Multivector<AlgebraType>, Multivector<AlgebraType>> decompose(
+    const Multivector<AlgebraType>& value, const Multivector<AlgebraType>& axis) {
+  std::pair<Multivector<AlgebraType>, Multivector<AlgebraType>> result{};
   result.second = orthogonal(value, axis);
   result.first = value - result.second;
   return result;
@@ -83,11 +62,9 @@ decompose(
 /**
  * Reflect a Multivector across the given axis.
  */
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> reflect(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& value,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& axis) {
+template <typename AlgebraType>
+constexpr Multivector<AlgebraType> reflect(const Multivector<AlgebraType>& value,
+                                           const Multivector<AlgebraType>& axis) {
   return axis * value * axis / square_magnitude(axis);
 }
 

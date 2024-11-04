@@ -64,7 +64,8 @@ TEST(R000BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -79,7 +80,8 @@ TEST(R001BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -94,7 +96,8 @@ TEST(R010BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -109,7 +112,8 @@ TEST(R011BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -124,7 +128,8 @@ TEST(R100BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -139,7 +144,8 @@ TEST(R110BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -154,7 +160,8 @@ TEST(R101BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -169,7 +176,8 @@ TEST(R111BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -184,7 +192,8 @@ TEST(R130BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{3};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -199,7 +208,8 @@ TEST(R200BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -214,7 +224,8 @@ TEST(R201BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -229,7 +240,8 @@ TEST(R210BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -244,7 +256,8 @@ TEST(R300BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -259,7 +272,8 @@ TEST(R301BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -274,7 +288,8 @@ TEST(R401BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -289,7 +304,8 @@ TEST(R410BivectorNetDirectTest, ConjugateMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -304,7 +320,8 @@ TEST(R000BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -319,7 +336,8 @@ TEST(R001BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -334,7 +352,8 @@ TEST(R010BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -349,7 +368,8 @@ TEST(R011BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -364,7 +384,8 @@ TEST(R100BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -379,7 +400,8 @@ TEST(R110BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -394,7 +416,8 @@ TEST(R101BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -409,7 +432,8 @@ TEST(R111BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -424,7 +448,8 @@ TEST(R130BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{3};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -439,7 +464,8 @@ TEST(R200BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -454,7 +480,8 @@ TEST(R201BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -469,7 +496,8 @@ TEST(R210BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -484,7 +512,8 @@ TEST(R300BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -499,7 +528,8 @@ TEST(R301BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -514,7 +544,8 @@ TEST(R401BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -529,7 +560,8 @@ TEST(R410BivectorNetDirectTest, ReverseMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -544,7 +576,8 @@ TEST(R000BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -559,7 +592,8 @@ TEST(R001BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -574,7 +608,8 @@ TEST(R010BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -589,7 +624,8 @@ TEST(R011BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -604,7 +640,8 @@ TEST(R100BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -619,7 +656,8 @@ TEST(R110BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -634,7 +672,8 @@ TEST(R101BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -649,7 +688,8 @@ TEST(R111BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -664,7 +704,8 @@ TEST(R130BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{3};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -679,7 +720,8 @@ TEST(R200BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -694,7 +736,8 @@ TEST(R201BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -709,7 +752,8 @@ TEST(R210BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -724,7 +768,8 @@ TEST(R300BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -739,7 +784,8 @@ TEST(R301BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -754,7 +800,8 @@ TEST(R401BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -769,7 +816,8 @@ TEST(R410BivectorNetDirectTest, DualMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec{create_with_counting<BivectorNetType>()};
@@ -784,7 +832,8 @@ TEST(R000BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -801,7 +850,8 @@ TEST(R001BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -818,7 +868,8 @@ TEST(R010BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -835,7 +886,8 @@ TEST(R011BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -852,7 +904,8 @@ TEST(R100BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -869,7 +922,8 @@ TEST(R110BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -886,7 +940,8 @@ TEST(R101BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -903,7 +958,8 @@ TEST(R111BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -920,7 +976,8 @@ TEST(R130BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{3};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -937,7 +994,8 @@ TEST(R200BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -954,7 +1012,8 @@ TEST(R201BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -971,7 +1030,8 @@ TEST(R210BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -988,7 +1048,8 @@ TEST(R300BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1005,7 +1066,8 @@ TEST(R301BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1029,7 +1091,8 @@ TEST(R401BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1046,7 +1109,8 @@ TEST(R410BivectorNetDirectTest, RegressiveProductMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1063,7 +1127,8 @@ TEST(R000BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1080,7 +1145,8 @@ TEST(R001BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1097,7 +1163,8 @@ TEST(R010BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1114,7 +1181,8 @@ TEST(R011BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{0};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1131,7 +1199,8 @@ TEST(R100BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1148,7 +1217,8 @@ TEST(R110BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1165,7 +1235,8 @@ TEST(R101BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1182,7 +1253,8 @@ TEST(R111BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{1};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1199,7 +1271,8 @@ TEST(R130BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{1};
   static constexpr size_t N{3};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1216,7 +1289,8 @@ TEST(R200BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1233,7 +1307,8 @@ TEST(R201BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1250,7 +1325,8 @@ TEST(R210BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{2};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1267,7 +1343,8 @@ TEST(R300BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1284,7 +1361,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1301,7 +1379,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimes) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1321,7 +1400,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegated) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1341,7 +1421,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedAlternately) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1361,7 +1442,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesDuals) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1378,7 +1460,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesDuals) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1398,7 +1481,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedDuals) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1418,7 +1502,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedAlternatelyDuals
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1438,7 +1523,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesDualsDualed) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1455,7 +1541,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesDualsDualed) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1475,7 +1562,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedDualsDualed) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1495,7 +1583,8 @@ TEST(R301BivectorNetDirectTest, OuterProductMatchesPrimesNegatedAlternatelyDuals
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({
@@ -1515,7 +1604,8 @@ TEST(R301BivectorNetDirectTest, OuterProductOfTwoLines) {
   static constexpr size_t P{3};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_from_multivector_coefficients<BivectorNetType>(
@@ -1536,7 +1626,8 @@ TEST(R401BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
@@ -1553,7 +1644,8 @@ TEST(R201BivectorNetDirectTest, OuterProductMatchesUsingR401) {
   static constexpr size_t P{4};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{
@@ -1571,7 +1663,8 @@ TEST(R201BivectorNetDirectTest, OuterProductMatchesBugSearch) {
   static constexpr size_t P{2};
   static constexpr size_t N{0};
   static constexpr size_t Z{1};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create<BivectorNetType>({0, 0, 3, 0, 0, 6, 0, 0})};
@@ -1588,7 +1681,8 @@ TEST(R410BivectorNetDirectTest, OuterProductMatches) {
   static constexpr size_t P{4};
   static constexpr size_t N{1};
   static constexpr size_t Z{0};
-  using VectorType = Multivector<ScalarType, P, N, Z>;
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
   using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
 
   BivectorNetType bvec1{create_with_counting<BivectorNetType>()};

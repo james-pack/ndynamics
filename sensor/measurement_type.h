@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include "math/algebra.h"
 #include "math/multivector.h"
 
 namespace ndyn::sensor {
@@ -31,21 +32,21 @@ template <>
 class MeasurementValueType<MeasurementType::ACCELEROMETER> final {
  public:
   using scalar_type = float;
-  using type = math::Multivector<scalar_type, 3, 0, 0>;
+  using type = typename math::Algebra<scalar_type, 3, 0, 0>::VectorType;
 };
 
 template <>
 class MeasurementValueType<MeasurementType::GYROSCOPE> final {
  public:
   using scalar_type = float;
-  using type = math::Multivector<scalar_type, 3, 0, 0>;
+  using type = typename math::Algebra<scalar_type, 3, 0, 0>::VectorType;
 };
 
 template <>
 class MeasurementValueType<MeasurementType::MAGNETOMETER> final {
  public:
   using scalar_type = float;
-  using type = math::Multivector<scalar_type, 3, 0, 0>;
+  using type = typename math::Algebra<scalar_type, 3, 0, 0>::VectorType;
 };
 
 }  // namespace ndyn::sensor

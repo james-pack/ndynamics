@@ -1,23 +1,24 @@
 #include "gtest/gtest.h"
+#include "math/algebra.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {
 
 TEST(MultivectorScalabilityTest, CanInstantiateSeveralBases) {
   static constexpr size_t NUMBER_BASES{7};
-
-  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
+  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr auto x{Multivector<AlgebraType>::e<0>()};
   static constexpr auto u{1.f + x};
   EXPECT_EQ(x + 1.f, u);
 }
 
 TEST(MultivectorScalabilityTest, CanInstantiateManyBases) {
   static constexpr size_t NUMBER_BASES{20};
-
-  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
-  static constexpr auto y{Multivector<float, NUMBER_BASES, 0, 0>::e<1>()};
-  static constexpr auto z{Multivector<float, NUMBER_BASES, 0, 0>::e<2>()};
-  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
+  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr auto x{Multivector<AlgebraType>::e<0>()};
+  static constexpr auto y{Multivector<AlgebraType>::e<1>()};
+  static constexpr auto z{Multivector<AlgebraType>::e<2>()};
+  static constexpr auto a{Multivector<AlgebraType>{1.f}};
 
   static constexpr auto u{1.f + x};
   EXPECT_EQ(x + 1.f, u);
@@ -28,9 +29,9 @@ TEST(MultivectorScalabilityTest, CanMultiplyMultivectorsOfSeveralBases) {
   // products, the number of bases we can use decreases without setting the
   // -fconstexpr-ops-limit compile flag.
   static constexpr size_t NUMBER_BASES{6};
-
-  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
-  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
+  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr auto x{Multivector<AlgebraType>::e<0>()};
+  static constexpr auto a{Multivector<AlgebraType>{1.f}};
 
   EXPECT_EQ(x, a * x);
 }
@@ -42,11 +43,11 @@ TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
   // limit can be raised by setting the -fconstexpr-ops-limit compile flag. To keep the testing
   // configuration simpler, we set verify the lower limit below.
   static constexpr size_t NUMBER_BASES{6};
-
-  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
-  static constexpr auto y{Multivector<float, NUMBER_BASES, 0, 0>::e<1>()};
-  static constexpr auto z{Multivector<float, NUMBER_BASES, 0, 0>::e<2>()};
-  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
+  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr auto x{Multivector<AlgebraType>::e<0>()};
+  static constexpr auto y{Multivector<AlgebraType>::e<1>()};
+  static constexpr auto z{Multivector<AlgebraType>::e<2>()};
+  static constexpr auto a{Multivector<AlgebraType>{1.f}};
 
   static constexpr auto u{1.f + x};
   static constexpr auto v{1.f + 2.f * y};
@@ -92,11 +93,11 @@ TEST(MultivectorScalabilityTest, DISABLED_CanHandleManyBases) {
 
   /*
   static constexpr size_t NUMBER_BASES{10};
-
-  static constexpr auto x{Multivector<float, NUMBER_BASES, 0, 0>::e<0>()};
-  static constexpr auto y{Multivector<float, NUMBER_BASES, 0, 0>::e<1>()};
-  static constexpr auto z{Multivector<float, NUMBER_BASES, 0, 0>::e<2>()};
-  static constexpr auto a{Multivector<float, NUMBER_BASES, 0, 0>{1.f}};
+  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr auto x{Multivector<AlgebraType>::e<0>()};
+  static constexpr auto y{Multivector<AlgebraType>::e<1>()};
+  static constexpr auto z{Multivector<AlgebraType>::e<2>()};
+  static constexpr auto a{Multivector<AlgebraType>{1.f}};
 
   static constexpr auto u{1.f + x};
   static constexpr auto v{1.f + 2.f * y};

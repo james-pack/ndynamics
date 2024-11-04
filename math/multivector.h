@@ -10,37 +10,39 @@
 
 #include "base/bits.h"
 #include "base/except.h"
+#include "math/algebra.h"
 #include "math/cayley.h"
 #include "math/unitary_ops.h"
 
 namespace ndyn::math {
 
-enum class InnerProduct : uint8_t {
-  LEFT_CONTRACTION,
-  RIGHT_CONTRACTION,
-  BIDIRECTIONAL,  // Left contraction when the grade of the lhs is lower, right contraction
-                  // otherwise. Used in texts by Hestenes and others.
-  NO_IMPLICIT_DEFINITION,
-};
-
-template <typename ScalarT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+// template <typename ScalarT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+//           InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
+template <typename AlgebraT>
 class Multivector final {
  public:
-  using ScalarType = ScalarT;
+  using AlgebraType = AlgebraT;
+
+  using ScalarType = typename AlgebraType::ScalarType;
 
   // Number of grade-1 basis elements (vectors) in this multivector.
-  static constexpr size_t vector_count() { return POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES; }
+  static constexpr size_t vector_count() { return AlgebraType::vector_count(); }
   // Number of grades in this multivector, counting the scalar (grade-0) as its own grade.
-  static constexpr size_t grade_count() { return vector_count() + 1; }
+  static constexpr size_t grade_count() { return AlgebraType::grade_count(); }
 
   // Number of bases in this multivector, including the number of vectors, bivectors, trivectors,
   // etc., and scalars.
-  static constexpr size_t bases_count() { return 1UL << vector_count(); }
+  static constexpr size_t bases_count() { return AlgebraType::bases_count(); }
 
-  static constexpr size_t NUM_POSITIVE_BASES{POSITIVE_BASES};
-  static constexpr size_t NUM_NEGATIVE_BASES{NEGATIVE_BASES};
-  static constexpr size_t NUM_ZERO_BASES{ZERO_BASES};
+  static constexpr size_t POSITIVE_BASES{AlgebraType::POSITIVE_BASES};
+  static constexpr size_t NEGATIVE_BASES{AlgebraType::NEGATIVE_BASES};
+  static constexpr size_t ZERO_BASES{AlgebraType::ZERO_BASES};
+
+  static constexpr size_t NUM_POSITIVE_BASES{AlgebraType::POSITIVE_BASES};
+  static constexpr size_t NUM_NEGATIVE_BASES{AlgebraType::NEGATIVE_BASES};
+  static constexpr size_t NUM_ZERO_BASES{AlgebraType::ZERO_BASES};
+
+  static constexpr InnerProduct INNER_PRODUCT{AlgebraType::INNER_PRODUCT};
 
   static constexpr size_t SCALAR_BASIS_INDEX{0};
 
@@ -231,15 +233,15 @@ class Multivector final {
    */
   constexpr Multivector inner(const Multivector& rhs) const {
     static_assert(
-        INNER_PRODUCT_STYLE != InnerProduct::NO_IMPLICIT_DEFINITION,
+        INNER_PRODUCT != InnerProduct::NO_IMPLICIT_DEFINITION,
         "inner() method not defined since Multivector type has no implicit definition of "
         "the inner product. Must explicitly use either the left contraction, right "
         "contraction, or bidirectional inner product operations on this Multivector type.");
-    if constexpr (INNER_PRODUCT_STYLE == InnerProduct::LEFT_CONTRACTION) {
+    if constexpr (INNER_PRODUCT == InnerProduct::LEFT_CONTRACTION) {
       return left_contraction(rhs);
-    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::RIGHT_CONTRACTION) {
+    } else if constexpr (INNER_PRODUCT == InnerProduct::RIGHT_CONTRACTION) {
       return right_contraction(rhs);
-    } else if constexpr (INNER_PRODUCT_STYLE == InnerProduct::BIDIRECTIONAL) {
+    } else if constexpr (INNER_PRODUCT == InnerProduct::BIDIRECTIONAL) {
       return bidirectional_inner(rhs);
     }
   }
@@ -686,50 +688,40 @@ class Multivector final {
 
 // Operator overloads where the multivector is not on the left side.
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr bool operator==(
-    const T& scalar,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
+template <typename AlgebraType>
+constexpr bool operator==(const typename AlgebraType::ScalarType& scalar,
+                          const Multivector<AlgebraType>& v) {
   return v == scalar;
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> operator+(
-    const T& scalar,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
+template <typename AlgebraType>
+constexpr Multivector<AlgebraType> operator+(const typename AlgebraType::ScalarType& scalar,
+                                             const Multivector<AlgebraType>& v) {
   return v.add(scalar);
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> operator-(
-    const T& scalar,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
+template <typename AlgebraType>
+constexpr Multivector<AlgebraType> operator-(const typename AlgebraType::ScalarType& scalar,
+                                             const Multivector<AlgebraType>& v) {
   return v.multiply(-1).add(scalar);
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-constexpr Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE> operator*(
-    const T& scalar,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
+template <typename AlgebraType>
+constexpr Multivector<AlgebraType> operator*(const typename AlgebraType::ScalarType& scalar,
+                                             const Multivector<AlgebraType>& v) {
   return v.multiply(scalar);
 }
 
 // String and printing operations.
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-std::string to_string(
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
+template <typename AlgebraType>
+std::string to_string(const Multivector<AlgebraType>& v) {
   using std::abs;
   using std::to_string;
 
   std::string result{};
   bool need_comma{false};
-  for (size_t i = 0; i < v.bases_count(); ++i) {
+  for (size_t i = 0; i < AlgebraType::bases_count(); ++i) {
     // Don't show bases with zero coefficients.
     if (abs(v.basis(i)) > 0.000001) {
       if (need_comma) {
@@ -740,7 +732,7 @@ std::string to_string(
       result.append(to_string(v.basis(i)));
       if (i > 0) {
         result.append("*");
-        if constexpr (ZERO_BASES > 0) {
+        if constexpr (AlgebraType::ZERO_BASES > 0) {
           static constexpr std::array<const char*, 32> zero_basis_names{
               "",    "e0",   "e1",   "e01",   "e2",   "e02",   "e12",   "e012",    //
               "e3",  "e03",  "e13",  "e013",  "e23",  "e023",  "e123",  "e0123",   //
@@ -770,53 +762,50 @@ std::string to_string(
   return result;
 }
 
-template <typename T, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
-          InnerProduct INNER_PRODUCT_STYLE>
-std::ostream& operator<<(
-    std::ostream& os,
-    const Multivector<T, POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES, INNER_PRODUCT_STYLE>& v) {
+template <typename AlgebraType>
+std::ostream& operator<<(std::ostream& os, const Multivector<AlgebraType>& v) {
   os << to_string(v);
   return os;
 }
 
 // Common algebras.
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using ScalarMultivector = Multivector<T, 0, 0, 0, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using ScalarMultivector = typename Algebra<T, 0, 0, 0, INNER_PRODUCT>::VectorType;
 
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using ComplexMultivector = Multivector<T, 0, 1, 0, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using ComplexMultivector = typename Algebra<T, 0, 1, 0, INNER_PRODUCT>::VectorType;
 
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using DualMultivector = Multivector<T, 0, 0, 1, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using DualMultivector = typename Algebra<T, 0, 0, 1, INNER_PRODUCT>::VectorType;
 
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using SplitComplexMultivector = Multivector<T, 1, 0, 0, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using SplitComplexMultivector = typename Algebra<T, 1, 0, 0, INNER_PRODUCT>::VectorType;
 
 // VGA 2D is a standard ("vanilla") 2D vectorspace geometric algebra. It is used in non-relativistic
 // physics and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using Vga2dMultivector = Multivector<T, 2, 0, 0, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Vga2dMultivector = typename Algebra<T, 2, 0, 0, INNER_PRODUCT>::VectorType;
 
 // VGA is a standard ("vanilla") 3D vectorspace geometric algebra. It is used in non-relativistic
 // physics and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using VgaMultivector = Multivector<T, 3, 0, 0, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using VgaMultivector = typename Algebra<T, 3, 0, 0, INNER_PRODUCT>::VectorType;
 
 // PGA 2D is a 2D vectorspace geometric algebra with an additional zero dimension. It is used in
 // computer graphics, non-relativistic physics, and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using Pga2dMultivector = Multivector<T, 2, 0, 1, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Pga2dMultivector = typename Algebra<T, 2, 0, 1, INNER_PRODUCT>::VectorType;
 
 // PGA is a 3D vectorspace geometric algebra with an additional zero dimension. It is used in
 // computer graphics, non-relativistic physics, and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using PgaMultivector = Multivector<T, 3, 0, 1, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using PgaMultivector = typename Algebra<T, 3, 0, 1, INNER_PRODUCT>::VectorType;
 
 // The spacetime algebra is primarily used in relativistic physics applications and research.
 // Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
 // Cl(3, 1). This decision is arbitrary and is based on the variant that seems to fit our
 // problem space best.
-template <typename T, InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
-using SpacetimeMultivector = Multivector<T, 1, 3, 0, INNER_PRODUCT_STYLE>;
+template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using SpacetimeMultivector = typename Algebra<T, 1, 3, 0, INNER_PRODUCT>::VectorType;
 
 }  // namespace ndyn::math

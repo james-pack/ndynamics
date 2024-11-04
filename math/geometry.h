@@ -38,10 +38,11 @@ template <typename ScalarT>
 class Primitive final {
  public:
   using ScalarType = ScalarT;
+  // We are using the 3D PGA.
+  using AlgebraType = Algebra<ScalarType, 3, 0, 1>;
 
  private:
-  // Our vector type is the 3D PGA.
-  using VectorType = Multivector<ScalarType, 3, 0, 1>;
+  using VectorType = typename AlgebraType::VectorType;
 
   static constexpr VectorType one_{VectorType{1}};
   // Note that these definitions are different from those in the Multivector. The Multivector puts
@@ -253,8 +254,10 @@ class Transform final {
   using ScalarType = ScalarT;
   using PrimitiveType = Primitive<ScalarType>;
 
+  using AlgebraType = typename PrimitiveType::AlgebraType;
+
  private:
-  using VectorType = typename PrimitiveType::VectorType;
+  using VectorType = typename AlgebraType::VectorType;
 
   // This creates the identity transformation by default.
   VectorType vec_{1.f};

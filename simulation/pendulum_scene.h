@@ -4,6 +4,8 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "math/algebra.h"
+#include "math/multivector.h"
 #include "math/state.h"
 #include "sensor/measurement_type.h"
 #include "simulation/accelerometer_sensor_model.h"
@@ -27,11 +29,11 @@ class PendulumScene final : public ui::Scene {
   // visualize accelerometer readings, especially as compared to actual motion.
   using AccelerometerTypes = sensor::MeasurementValueType<sensor::MeasurementType::ACCELEROMETER>;
 
-  using VectorType = typename AccelerometerTypes::type;
-  using AccelerometerType = VectorType;
   using FloatT = typename AccelerometerTypes::scalar_type;
+  using AlgebraType = math::Algebra<FloatT, 3, 0, 0>;
+  using VectorType = typename AlgebraType::VectorType;
 
-  using PendulumConfiguratorType = PendulumConfigurator<VectorType>;
+  using PendulumConfiguratorType = PendulumConfigurator<AlgebraType>;
   using PendulumType = typename PendulumConfiguratorType::PendulumType;
   using PendulumStateType = typename PendulumConfiguratorType::StateType;
 
@@ -61,25 +63,25 @@ class PendulumScene final : public ui::Scene {
    * Sensor simulations and their accompanying characterizations.
    */
   static constexpr TemperatureType TEMPERATURE{25};
-  Characterization<AccelerometerType, FloatT> accelerometer_1_characterization{
+  Characterization<VectorType, FloatT> accelerometer_1_characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.025}, .offset_std{.05}}};
 
   AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_1{
       pendulum, accelerometer_1_characterization};
 
-  Characterization<AccelerometerType, FloatT> accelerometer_2_characterization{
+  Characterization<VectorType, FloatT> accelerometer_2_characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.05}, .offset_std{.25}}};
 
   AccelerometerSensorModel<PendulumType, NUM_POINTS> accelerometer_2{
       pendulum, accelerometer_2_characterization};
 
-  Characterization<AccelerometerType, FloatT> gyroscope_1_characterization{
+  Characterization<VectorType, FloatT> gyroscope_1_characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.01}, .offset_std{.1}}};
 
   AccelerometerSensorModel<PendulumType, NUM_POINTS> gyroscope_1{pendulum,
                                                                  gyroscope_1_characterization};
 
-  Characterization<AccelerometerType, FloatT> gyroscope_2_characterization{
+  Characterization<VectorType, FloatT> gyroscope_2_characterization{
       Characteristic<FloatT>{.temperature{TEMPERATURE}, .offset_average{1.15}, .offset_std{.5}}};
 
   AccelerometerSensorModel<PendulumType, NUM_POINTS> gyroscope_2{pendulum,

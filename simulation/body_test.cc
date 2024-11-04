@@ -5,6 +5,7 @@
 
 #include "base/pi.h"
 #include "gtest/gtest.h"
+#include "math/algebra.h"
 #include "math/integrators.h"
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
@@ -15,7 +16,8 @@
 namespace ndyn::simulation {
 
 using FloatT = float;
-using VectorType = math::Multivector<FloatT, 2, 0, 0>;
+using AlgebraType = math::Algebra<FloatT, 2, 0, 0>;
+using VectorType = typename AlgebraType::VectorType;
 
 static constexpr size_t STATE_DEPTH{2};
 using StateType = math::State<VectorType, STATE_DEPTH>;

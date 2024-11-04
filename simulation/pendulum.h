@@ -4,6 +4,7 @@
 
 #include "base/pi.h"
 #include "glog/logging.h"
+#include "math/algebra.h"
 #include "math/convert.h"
 #include "math/integrators.h"
 #include "math/multivector.h"
@@ -234,11 +235,12 @@ class Pendulum final {
   }
 };
 
-template <typename VectorT>
+template <typename AlgebraT>
 class PendulumConfigurator final {
  public:
-  using VectorType = VectorT;
-  using ScalarType = typename VectorType::ScalarType;
+  using AlgebraType = AlgebraT;
+  using VectorType = typename AlgebraType::VectorType;
+  using ScalarType = typename AlgebraType::ScalarType;
   using StateType = math::State<VectorType, 3>;
 
   // Type of the resulting pendulum.

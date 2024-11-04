@@ -3,13 +3,15 @@
 #include "base/pi.h"
 #include "glog/logging.h"
 #include "gtest/gtest.h"
+#include "math/algebra.h"
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
 
 namespace ndyn::simulation {
 
 using FloatT = float;
-using MultivectorType = math::Multivector<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+using AlgebraType = math::Algebra<FloatT, 3, 0, 0, math::InnerProduct::LEFT_CONTRACTION>;
+using VectorType = typename AlgebraType::VectorType;
 
 static constexpr size_t HORIZONTAL_ELEMENT_INDEX{0};
 static constexpr size_t VERTICAL_ELEMENT_INDEX{2};
@@ -193,8 +195,7 @@ template <typename PendulumT, typename ScalarType>
 }
 
 TEST(PendulumTest, LengthSameAfterCreation) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   for (const auto length : {1., 2., 0.5}) {
     config.set_length(length);
     auto p{config.create()};
@@ -203,48 +204,47 @@ TEST(PendulumTest, LengthSameAfterCreation) {
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaZero) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(0);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(-T::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
+  EXPECT_TRUE(
+      math::AreNear(-VectorType::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaPiOverTwo) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(pi / 2);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(T::template e<HORIZONTAL_ELEMENT_INDEX>(), p.position(), 0.0001));
+  EXPECT_TRUE(
+      math::AreNear(VectorType::template e<HORIZONTAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePiOverTwo) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(-pi / 2);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(-T::template e<HORIZONTAL_ELEMENT_INDEX>(), p.position(), 0.0001));
+  EXPECT_TRUE(
+      math::AreNear(-VectorType::template e<HORIZONTAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaPi) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(pi);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(T::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
+  EXPECT_TRUE(
+      math::AreNear(VectorType::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, CorrectPositionAfterCreationThetaNegativePi) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(-pi);
   auto p{config.create()};
-  EXPECT_TRUE(math::AreNear(T::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
+  EXPECT_TRUE(
+      math::AreNear(VectorType::template e<VERTICAL_ELEMENT_INDEX>(), p.position(), 0.0001));
 }
 
 TEST(PendulumTest, ThetaSameAfterCreation) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   for (const auto angle : {0., pi / 2, pi - 0.01, -pi / 2, -(pi - 0.01), 3 * pi / 4, -3 * pi / 4}) {
     config.set_theta(angle);
     auto p{config.create()};
@@ -253,49 +253,42 @@ TEST(PendulumTest, ThetaSameAfterCreation) {
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaZero) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(0);
   auto p{config.create()};
   EXPECT_NEAR(0, p.height(), 0.01);
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaPiOverTwo) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(pi / 2);
   auto p{config.create()};
   EXPECT_NEAR(p.length(), p.height(), 0.01);
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePiOverTwo) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(-pi / 2);
   auto p{config.create()};
   EXPECT_NEAR(p.length(), p.height(), 0.01);
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaPi) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(pi);
   auto p{config.create()};
   EXPECT_NEAR(2 * p.length(), p.height(), 0.01);
 }
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePi) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(-pi);
   auto p{config.create()};
   EXPECT_NEAR(2 * p.length(), p.height(), 0.01);
 }
 
 TEST(PendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
-  using T = MultivectorType;
-
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(0);
 
   auto p{config.create()};
@@ -313,8 +306,7 @@ TEST(PendulumTest, StateAlwaysZeroIfNoInitialEnergy) {
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaPiFourths) {
   using std::sqrt;
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(pi / 4);
   auto p{config.create()};
   EXPECT_NEAR(p.length() - p.length() / sqrt(2), p.height(), 0.01);
@@ -322,16 +314,14 @@ TEST(PendulumTest, CorrectHeightAfterCreationThetaPiFourths) {
 
 TEST(PendulumTest, CorrectHeightAfterCreationThetaNegativePiFourths) {
   using std::sqrt;
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(-pi / 4);
   auto p{config.create()};
   EXPECT_NEAR(p.length() - p.length() / sqrt(2), p.height(), 0.01);
 }
 
 TEST(PendulumTest, ApproximatesCanonicalSmallAngleSolution) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -339,8 +329,7 @@ TEST(PendulumTest, ApproximatesCanonicalSmallAngleSolution) {
 }
 
 TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -348,8 +337,7 @@ TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentSmal
 }
 
 TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -357,8 +345,7 @@ TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentSmallAng
 }
 
 TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmallAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(SMALL_ANGLE);
   auto p{config.create()};
 
@@ -366,8 +353,7 @@ TEST(PendulumTest, AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentSmal
 }
 
 TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerateAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
@@ -375,8 +361,7 @@ TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentModerat
 }
 
 TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentModerateAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
@@ -384,8 +369,7 @@ TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentMode
 }
 
 TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerateAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
@@ -394,8 +378,7 @@ TEST(PendulumTest, AccurateThroughManyPeriodsWithCircularErrorAdjustmentModerate
 
 TEST(PendulumTest,
      DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentModerateAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(MODERATE_ANGLE);
   auto p{config.create()};
 
@@ -403,8 +386,7 @@ TEST(PendulumTest,
 }
 
 TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
@@ -412,8 +394,7 @@ TEST(PendulumTest, AccurateThroughSinglePeriodWithCircularErrorAdjustmentLargeAn
 }
 
 TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLargeAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
@@ -421,8 +402,7 @@ TEST(PendulumTest, AccurateThroughMultiplePeriodsWithCircularErrorAdjustmentLarg
 }
 
 TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmentLargeAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
@@ -430,8 +410,7 @@ TEST(PendulumTest, DISABLED_AccurateThroughManyPeriodsWithCircularErrorAdjustmen
 }
 
 TEST(PendulumTest, DISABLED_AccurateThroughManyMorePeriodsWithCircularErrorAdjustmentLargeAngle) {
-  using T = MultivectorType;
-  PendulumConfigurator<T> config{};
+  PendulumConfigurator<AlgebraType> config{};
   config.set_theta(LARGE_ANGLE);
   auto p{config.create()};
 
