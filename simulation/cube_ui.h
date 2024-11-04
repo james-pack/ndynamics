@@ -11,7 +11,9 @@
 #include "graphics/rod.h"
 #include "graphics/shader_program.h"
 #include "imgui.h"
+#include "math/algebra.h"
 #include "math/geometry.h"
+#include "math/multivector.h"
 #include "ui/keyboard_shortcuts.h"
 #include "ui/scene.h"
 
@@ -28,41 +30,48 @@ static inline float aspect_ratio(GLFWwindow& window) {
 
 class CubeScene final : public ui::Scene {
  private:
-  using TimeType = float;
   using ScalarType = float;
-  graphics::Model<ScalarType> model_;
+  using TimeType = ScalarType;
+  using AlgebraType = math::Algebra<ScalarType, 3, 0, 1>;
+  using GeometryType = math::Geometry3D<AlgebraType>;
+  using VectorType = typename AlgebraType::VectorType;
 
-  graphics::Rod<ScalarType>* rod1_;
-  graphics::Rod<ScalarType>* rod2_;
-  graphics::RevoluteJoint<ScalarType>* joint1_;
-  graphics::RevoluteJoint<ScalarType>* joint2_;
+  graphics::Model<GeometryType> model_;
+
+  graphics::Rod<GeometryType>* rod1_;
+  graphics::Rod<GeometryType>* rod2_;
+  graphics::RevoluteJoint<GeometryType>* joint1_;
+  graphics::RevoluteJoint<GeometryType>* joint2_;
 
  public:
   CubeScene(GLFWwindow& window) : Scene("3D Cube"), model_(aspect_ratio(window)) {
-    std::unique_ptr<graphics::Box<ScalarType>> box{std::make_unique<graphics::Box<ScalarType>>()};
+    std::unique_ptr<graphics::Box<GeometryType>> box{
+        std::make_unique<graphics::Box<GeometryType>>()};
 
-    std::unique_ptr<graphics::Rod<ScalarType>> rod2{std::make_unique<graphics::Rod<ScalarType>>()};
+    std::unique_ptr<graphics::Rod<GeometryType>> rod2{
+        std::make_unique<graphics::Rod<GeometryType>>()};
     rod2_ = rod2.get();
     rod2->set_distance(-5);
-    rod2->set_direction(math::Primitive<ScalarType>::y_axis());
+    rod2->set_direction(GeometryType::y_axis);
     rod2->add_element(std::move(box));
 
-    std::unique_ptr<graphics::RevoluteJoint<ScalarType>> joint2{
-        std::make_unique<graphics::RevoluteJoint<ScalarType>>()};
+    std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint2{
+        std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
     joint2_ = joint2.get();
-    joint2->set_axis(math::Primitive<ScalarType>::z_axis());
+    joint2->set_axis(GeometryType::z_axis);
     joint2->add_element(std::move(rod2));
 
-    std::unique_ptr<graphics::Rod<ScalarType>> rod1{std::make_unique<graphics::Rod<ScalarType>>()};
+    std::unique_ptr<graphics::Rod<GeometryType>> rod1{
+        std::make_unique<graphics::Rod<GeometryType>>()};
     rod1_ = rod1.get();
     rod1->set_distance(0);
-    rod1->set_direction(math::Primitive<ScalarType>::y_axis());
+    rod1->set_direction(GeometryType::y_axis);
     rod1->add_element(std::move(joint2));
 
-    std::unique_ptr<graphics::RevoluteJoint<ScalarType>> joint1{
-        std::make_unique<graphics::RevoluteJoint<ScalarType>>()};
+    std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint1{
+        std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
     joint1_ = joint1.get();
-    joint1->set_axis(math::Primitive<ScalarType>::z_axis());
+    joint1->set_axis(GeometryType::z_axis);
     joint1->add_element(std::move(rod1));
 
     model_.add_element(std::move(joint1));

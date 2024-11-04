@@ -76,6 +76,11 @@ class Multivector final {
     return multiply(reversed).scalar();
   }
 
+  constexpr Multivector normalized() const {
+    using std::sqrt;
+    return divide(sqrt(square_magnitude()));
+  }
+
   constexpr const ScalarType& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
   constexpr void set_scalar(const ScalarType& v) { coefficients_[SCALAR_BASIS_INDEX] = v; }
 

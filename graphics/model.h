@@ -55,13 +55,16 @@ std::string to_string(const glm::mat4& mat) {
   return result;
 }
 
-template <typename ScalarType>
+template <typename GeometryT>
 class Model final {
- private:
-  static constexpr math::Transform<ScalarType> identity_transform_{
-      math::Transform<ScalarType>::identity()};
+ public:
+  using GeometryType = GeometryT;
+  using AlgebraType = typename GeometryType::AlgebraType;
+  using ScalarType = typename AlgebraType::ScalarType;
+  using VectorType = typename AlgebraType::VectorType;
 
-  std::vector<std::unique_ptr<GpuElement<ScalarType>>> top_level_elements_{};
+ private:
+  std::vector<std::unique_ptr<GpuElement<GeometryType>>> top_level_elements_{};
 
   // We expect to have different ShaderPrograms for different distinct renderings. Possibilities
   // include orthographic vs perspective projections, wireframe vs solid vs debugging colorations,
@@ -100,7 +103,7 @@ class Model final {
         active_program_(&default_program_),
         aspect_ratio_(aspect_ratio) {}
 
-  void add_element(std::unique_ptr<GpuElement<ScalarType>>&& element) {
+  void add_element(std::unique_ptr<GpuElement<GeometryType>>&& element) {
     top_level_elements_.emplace_back(std::move(element));
   }
 
@@ -132,7 +135,7 @@ class Model final {
     }
 
     for (auto& element : top_level_elements_) {
-      element->update(t, *active_program_, identity_transform_);
+      element->update(t, *active_program_, GeometryType::identity_transform);
     }
   }
 };

@@ -34,28 +34,32 @@ std::string to_string(const glm::mat2x4& mat) {
   return result;
 }
 
-template <typename ScalarType>
-glm::mat2x4 transform_to_glsl_motor(const math::Transform<ScalarType>& transform) {
-  const auto& vector{transform.raw_vector()};
+template <typename VectorType>
+glm::mat2x4 transform_to_glsl_motor(const VectorType& transform) {
   // #define motor     mat2x4  // [ [s, e23, e31, e12], [e01, e02, e03, e0123] ]
   // [ [s, e12, e20, e01], [e123, e203, e013, e0123] ]
-  glm::mat2x4 result{vector[0],  vector[6],   -vector[5], vector[3],
-                     vector[14], -vector[13], vector[11], vector[15]};
+  glm::mat2x4 result{transform[0],  transform[6],   -transform[5], transform[3],
+                     transform[14], -transform[13], transform[11], transform[15]};
   return result;
 }
 
-template <typename ScalarType>
+template <typename GeometryT>
 class GpuElement {
+ public:
+  using GeometryType = GeometryT;
+  using AlgebraType = typename GeometryType::AlgebraType;
+  using ScalarType = typename AlgebraType::ScalarType;
+  using VectorType = typename AlgebraType::VectorType;
+
  private:
-  std::vector<std::unique_ptr<GpuElement<ScalarType>>> children_{};
+  std::vector<std::unique_ptr<GpuElement<GeometryType>>> children_{};
 
  public:
   virtual ~GpuElement() = default;
 
-  void update(ScalarType time, const ShaderProgram& program,
-              const math::Transform<ScalarType>& parent_transform) {
+  void update(ScalarType time, const ShaderProgram& program, const VectorType& parent_transform) {
     // The transform argument in the local coordinates of this element.
-    const math::Transform<ScalarType> local_transform{compose_transform(time, parent_transform)};
+    const VectorType local_transform{compose_transform(time, parent_transform)};
 
     glUseProgram(program.id());
     const GLuint element_transform_id{glGetUniformLocation(program.id(), "element_transform")};
@@ -69,8 +73,7 @@ class GpuElement {
     }
   }
 
-  virtual math::Transform<ScalarType> compose_transform(
-      ScalarType /*time*/, const math::Transform<ScalarType>& transform) {
+  virtual VectorType compose_transform(ScalarType /*time*/, const VectorType& transform) {
     // By default, we just use the transform passed down from our parent. Subclasses, especially
     // the joints, will compose their own transforms with this transform to show motion.
     return transform;
@@ -83,7 +86,7 @@ class GpuElement {
     // matrices already bound.
   }
 
-  void add_element(std::unique_ptr<GpuElement<ScalarType>>&& element) {
+  void add_element(std::unique_ptr<GpuElement<GeometryType>>&& element) {
     children_.emplace_back(std::move(element));
   }
 

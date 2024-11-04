@@ -5,8 +5,14 @@
 
 namespace ndyn::graphics {
 
-template <typename ScalarType>
-class Box final : public GpuElement<ScalarType> {
+template <typename GeometryT>
+class Box final : public GpuElement<GeometryT> {
+ public:
+  using GeometryType = GeometryT;
+  using AlgebraType = typename GeometryType::AlgebraType;
+  using ScalarType = typename AlgebraType::ScalarType;
+  using VectorType = typename AlgebraType::VectorType;
+
  private:
   static constexpr GLfloat box_vertices_[] = {
       -1.0f, -1.0f, -1.0f,  // triangle 1 : begin

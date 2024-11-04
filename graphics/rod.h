@@ -5,23 +5,28 @@
 
 namespace ndyn::graphics {
 
-template <typename ScalarType>
-class Rod final : public GpuElement<ScalarType> {
+template <typename GeometryT>
+class Rod final : public GpuElement<GeometryT> {
+ public:
+  using GeometryType = GeometryT;
+  using AlgebraType = typename GeometryType::AlgebraType;
+  using ScalarType = typename AlgebraType::ScalarType;
+  using VectorType = typename AlgebraType::VectorType;
+
  private:
   ScalarType distance_{0};
-  math::Primitive<ScalarType> direction_{math::Primitive<ScalarType>::y_axis()};
+  VectorType direction_{GeometryType::y_axis};
 
  public:
-  math::Transform<ScalarType> compose_transform(
-      ScalarType t, const math::Transform<ScalarType>& transform) override {
-    return transform.compose(math::Transform<ScalarType>::translate(direction_, distance_));
+  VectorType compose_transform(ScalarType t, const VectorType& transform) override {
+    return transform * GeometryType::translate(direction_, distance_);
   }
 
   void set_distance(const ScalarType& distance) { distance_ = distance; }
   const ScalarType& distance() const { return distance_; }
 
-  const math::Primitive<ScalarType>& direction() const { return direction_; }
-  void set_direction(const math::Primitive<ScalarType>& direction) { direction_ = direction; }
+  const VectorType& direction() const { return direction_; }
+  void set_direction(const VectorType& direction) { direction_ = direction; }
 };
 
 }  // namespace ndyn::graphics
