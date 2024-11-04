@@ -51,7 +51,7 @@ class CubeScene final : public ui::Scene {
     std::unique_ptr<graphics::Rod<GeometryType>> rod2{
         std::make_unique<graphics::Rod<GeometryType>>()};
     rod2_ = rod2.get();
-    rod2->set_distance(-5);
+    rod2->set_distance(-1);
     rod2->set_direction(GeometryType::y_axis);
     rod2->add_element(std::move(box));
 
@@ -64,7 +64,7 @@ class CubeScene final : public ui::Scene {
     std::unique_ptr<graphics::Rod<GeometryType>> rod1{
         std::make_unique<graphics::Rod<GeometryType>>()};
     rod1_ = rod1.get();
-    rod1->set_distance(0);
+    rod1->set_distance(-3);
     rod1->set_direction(GeometryType::y_axis);
     rod1->add_element(std::move(joint2));
 
@@ -88,7 +88,7 @@ class CubeScene final : public ui::Scene {
     using std::cos;
     using std::sin;
     const TimeType t{static_cast<TimeType>(ImGui::GetTime())};
-    // joint1_->set_angle(pi / 2 * sin(t / 2));
+    joint1_->set_angle(pi / 2 * sin(t / 2));
     joint2_->set_angle(pi / 2 * sin(3 * t));
   }
 
