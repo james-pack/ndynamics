@@ -51,27 +51,30 @@ class CubeScene final : public ui::Scene {
     std::unique_ptr<graphics::Rod<GeometryType>> rod2{
         std::make_unique<graphics::Rod<GeometryType>>()};
     rod2_ = rod2.get();
-    rod2->set_distance(-1);
+    rod2->set_distance(0);
     rod2->set_direction(GeometryType::y_axis);
     rod2->add_element(std::move(box));
 
     std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint2{
         std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
     joint2_ = joint2.get();
-    joint2->set_axis(GeometryType::z_axis);
+    joint2->set_rotation_axis(GeometryType::z_axis);
+    joint2->set_offset_direction(GeometryType::y_axis);
+    joint2->set_offset(3);
     joint2->add_element(std::move(rod2));
 
     std::unique_ptr<graphics::Rod<GeometryType>> rod1{
         std::make_unique<graphics::Rod<GeometryType>>()};
     rod1_ = rod1.get();
-    rod1->set_distance(-3);
-    rod1->set_direction(GeometryType::y_axis);
+    rod1->set_distance(3);
+    rod1->set_direction(GeometryType::x_axis + GeometryType::y_axis);
     rod1->add_element(std::move(joint2));
 
     std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint1{
         std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
     joint1_ = joint1.get();
-    joint1->set_axis(GeometryType::z_axis);
+    joint1->set_rotation_axis(GeometryType::z_axis);
+    joint1_->set_rotation_angle(pi);
     joint1->add_element(std::move(rod1));
 
     model_.add_element(std::move(joint1));
@@ -88,8 +91,7 @@ class CubeScene final : public ui::Scene {
     using std::cos;
     using std::sin;
     const TimeType t{static_cast<TimeType>(ImGui::GetTime())};
-    joint1_->set_angle(pi / 2 * sin(t / 2));
-    joint2_->set_angle(pi / 2 * sin(3 * t));
+    joint2_->set_rotation_angle(pi / 2 * sin(3 * t));
   }
 
   void update_ui() override {}

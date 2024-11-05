@@ -14,19 +14,30 @@ class RevoluteJoint final : public GpuElement<GeometryT> {
   using VectorType = typename AlgebraType::VectorType;
 
  private:
-  ScalarType angle_{0};
-  VectorType axis_{GeometryType::z_axis};
+  ScalarType offset_{0};
+  VectorType offset_direction_{GeometryType::x_axis};
+  ScalarType rotation_angle_{0};
+  VectorType rotation_axis_{GeometryType::z_axis};
 
  public:
   VectorType compose_transform(ScalarType t, const VectorType& transform) override {
-    return transform * GeometryType::rotate(axis_, angle_);
+    return transform * GeometryType::rotate(rotation_axis_, rotation_angle_) *
+           GeometryType::translate(offset_direction_, offset_);
   }
 
-  void set_angle(const ScalarType& angle) { angle_ = angle; }
-  const ScalarType& angle() const { return angle_; }
+  void set_rotation_angle(const ScalarType& rotation_angle) { rotation_angle_ = rotation_angle; }
+  const ScalarType& rotation_angle() const { return rotation_angle_; }
 
-  const VectorType& axis() const { return axis_; }
-  void set_axis(const VectorType& axis) { axis_ = axis; }
+  const VectorType& rotation_axis() const { return rotation_axis_; }
+  void set_rotation_axis(const VectorType& rotation_axis) { rotation_axis_ = rotation_axis; }
+
+  void set_offset(const ScalarType& offset) { offset_ = offset; }
+  const ScalarType& offset() const { return offset_; }
+
+  const VectorType& offset_direction() const { return offset_direction_; }
+  void set_offset_direction(const VectorType& offset_direction) {
+    offset_direction_ = offset_direction;
+  }
 };
 
 }  // namespace ndyn::graphics
