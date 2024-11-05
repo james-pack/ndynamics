@@ -5,6 +5,9 @@
 
 namespace ndyn::graphics {
 
+/**
+ * Joint that provides an API to manage subelements at a distance and angle from this element.
+ */
 template <typename GeometryT>
 class RevoluteJoint final : public GpuElement<GeometryT> {
  public:

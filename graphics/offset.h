@@ -5,8 +5,11 @@
 
 namespace ndyn::graphics {
 
+/**
+ * Element that provides a positional offset for its subelements.
+ */
 template <typename GeometryT>
-class Rod final : public GpuElement<GeometryT> {
+class Offset final : public GpuElement<GeometryT> {
  public:
   using GeometryType = GeometryT;
   using AlgebraType = typename GeometryType::AlgebraType;
