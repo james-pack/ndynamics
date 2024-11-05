@@ -75,6 +75,8 @@ class Model final {
 
   GLfloat aspect_ratio_;
 
+  static constexpr glm::mat3 identity_3x3_{glm::mat3{1.f}};
+
   glm::mat4 perspective_projection_{
       glm::perspective(glm::radians(50.f), aspect_ratio_, 0.1f, 100.f)};
 
@@ -120,6 +122,9 @@ class Model final {
 
   void update(ScalarType t) {
     glUseProgram(active_program_->id());
+
+    const GLuint scale_matrix_id{glGetUniformLocation(active_program_->id(), "scale_matrix")};
+    glUniformMatrix3fv(scale_matrix_id, 1, GL_FALSE, &identity_3x3_[0][0]);
 
     if (projection_matrix_dirty_) {
       const GLuint projection_matrix_id{

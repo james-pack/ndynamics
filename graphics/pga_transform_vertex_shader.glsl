@@ -17,6 +17,10 @@ out vec3 fragment_color;
 uniform mat4 projection_matrix;
 uniform mat4 camera_matrix;
 
+// Matrix to scale an object. This scaling happens on the vec3 position before the transform into
+// world coordinates.
+uniform mat3 scale_matrix;
+
 // PGA motor to transform vertex from model coordinates to world coordinates.
 uniform motor element_transform;
 
@@ -28,8 +32,10 @@ point apply_transform(motor transform, point p) {
 }
 
 void main() {
-  vec3 world_coord_position = apply_transform(element_transform, vertex);
-  // Transform vertex in world coordinates according to camera view followed by a projection.
+  // Scale the vertex and then transform it from model coordinates to world coordinates then view
+  // through a camera followed by a projection.
+  vec3 scaled_position = scale_matrix * vertex;
+  vec3 world_coord_position = apply_transform(element_transform, scaled_position);
   gl_Position = projection_matrix * camera_matrix * vec4(world_coord_position, 1);
   fragment_color = vertex_color;
 }

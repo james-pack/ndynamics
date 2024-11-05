@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GLFW/glfw3.h"
+#include "glm/glm.hpp"
 #include "graphics/gpu_element.h"
 
 namespace ndyn::graphics {
@@ -93,11 +94,13 @@ class Box final : public GpuElement<GeometryT> {
       0.982f, 0.099f, 0.879f   //
   };
 
+  const glm::mat3 scale_matrix_;
   GLuint vertex_buffer_{};
   GLuint color_buffer_{};
 
  public:
-  Box() {
+  Box(const ScalarType& width, const ScalarType& length, const ScalarType& height)
+      : scale_matrix_(glm::mat3(width, 0, 0, 0, length, 0, 0, 0, height)) {
     GLuint vertex_array_id;
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
@@ -114,7 +117,13 @@ class Box final : public GpuElement<GeometryT> {
     glBufferData(GL_ARRAY_BUFFER, sizeof(box_vertex_colors_), box_vertex_colors_, GL_STATIC_DRAW);
   }
 
-  void draw(ScalarType /*time*/) override {
+  Box(const ScalarType& scale) : Box(scale, scale, scale) {}
+  Box() : Box(1, 1, 1) {}
+
+  void draw(ScalarType /*time*/, const ShaderProgram& program) override {
+    const GLuint scale_matrix_id{glGetUniformLocation(program.id(), "scale_matrix")};
+    glUniformMatrix3fv(scale_matrix_id, 1, GL_FALSE, &scale_matrix_[0][0]);
+
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_);
     glVertexAttribPointer(
@@ -142,6 +151,12 @@ class Box final : public GpuElement<GeometryT> {
                  12 * 3);  // 12*3 indices starting at 0 -> 12 triangles -> 6 squares
     glDisableVertexAttribArray(0);
   }
+
+  constexpr const ScalarType& width() const { return scale_matrix_[0][0]; }
+
+  constexpr const ScalarType& length() const { return scale_matrix_[1][1]; }
+
+  constexpr const ScalarType& height() const { return scale_matrix_[2][2]; }
 };
 
 }  // namespace ndyn::graphics

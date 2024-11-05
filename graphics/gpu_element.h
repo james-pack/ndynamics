@@ -66,7 +66,7 @@ class GpuElement {
     const glm::mat2x4 element_transform{transform_to_glsl_motor(local_transform)};
     glUniformMatrix2x4fv(element_transform_id, 1, GL_FALSE, &element_transform[0][0]);
 
-    draw(time);
+    draw(time, program);
 
     for (auto& child : children_) {
       child->update(time, program, local_transform);
@@ -79,7 +79,7 @@ class GpuElement {
     return transform;
   }
 
-  virtual void draw(ScalarType /*time*/) {
+  virtual void draw(ScalarType /*time*/, const ShaderProgram& /*program*/) {
     // GPU elements don't draw anything by default.
     // Elements that wish to draw will be making their glDraw calls in the context of the shader
     // program specified to the update method with the model view and projection transforms /

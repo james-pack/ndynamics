@@ -13,9 +13,14 @@ uniform mat4 camera_matrix;
 // Matrix to transform from model coordinates to world coordinates.
 uniform mat4 element_matrix;
 
+// Matrix to scale an object. This scaling happens on the vec3 position before the transform into
+// world coordinates.
+uniform mat3 scale_matrix;
+
 void main() {
-  // Transform vertex from model coordinates to world coordinates then view through a camera
-  // followed by a projection.
-  gl_Position = projection_matrix * camera_matrix * element_matrix * vec4(vertex_position, 1);
+  // Scale the vertex and then transform it from model coordinates to world coordinates then view
+  // through a camera followed by a projection.
+  vec3 scaled_position = scale_matrix * vertex_position;
+  gl_Position = projection_matrix * camera_matrix * element_matrix * vec4(scaled_position, 1);
   fragment_color = vertex_color;
 }
