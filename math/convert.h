@@ -337,7 +337,8 @@ ResultStateType convert_coordinates(const IncomingStateType& incoming) {
 }
 
 template <typename IncomingVectorType, typename ResultVectorType>
-ResultVectorType convert_vector_spherical_to_cartesian(const IncomingVectorType& incoming) {
+constexpr ResultVectorType convert_vector_spherical_to_cartesian(
+    const IncomingVectorType& incoming) {
   using std::cos;
   using std::sin;
 
@@ -351,7 +352,8 @@ ResultVectorType convert_vector_spherical_to_cartesian(const IncomingVectorType&
 }
 
 template <typename IncomingVectorType, typename ResultVectorType>
-ResultVectorType convert_vector_cartesian_to_spherical(const IncomingVectorType& incoming) {
+constexpr ResultVectorType convert_vector_cartesian_to_spherical(
+    const IncomingVectorType& incoming) {
   using std::acos;
   using std::atan2;
   using std::hypot;
@@ -366,7 +368,7 @@ ResultVectorType convert_vector_cartesian_to_spherical(const IncomingVectorType&
 }
 
 template <typename IncomingVectorType, typename ResultVectorType>
-ResultVectorType convert_vector_cartesian_to_polar(const IncomingVectorType& incoming) {
+constexpr ResultVectorType convert_vector_cartesian_to_polar(const IncomingVectorType& incoming) {
   using std::atan2;
   using std::hypot;
 
@@ -379,7 +381,7 @@ ResultVectorType convert_vector_cartesian_to_polar(const IncomingVectorType& inc
 }
 
 template <typename IncomingVectorType, typename ResultVectorType>
-ResultVectorType convert_vector_polar_to_cartesian(const IncomingVectorType& incoming) {
+constexpr ResultVectorType convert_vector_polar_to_cartesian(const IncomingVectorType& incoming) {
   using std::cos;
   using std::sin;
 
@@ -392,12 +394,12 @@ ResultVectorType convert_vector_polar_to_cartesian(const IncomingVectorType& inc
 }
 
 template <typename IncomingVectorType, typename ResultVectorType>
-ResultVectorType convert_vector_polar_to_spherical(const IncomingVectorType& incoming) {
+constexpr ResultVectorType convert_vector_polar_to_spherical(const IncomingVectorType& incoming) {
   return ResultVectorType{incoming.r(), pi / 2, incoming.theta()};
 }
 
 template <typename IncomingVectorType, typename ResultVectorType>
-ResultVectorType convert_vector_spherical_to_polar(const IncomingVectorType& incoming) {
+constexpr ResultVectorType convert_vector_spherical_to_polar(const IncomingVectorType& incoming) {
   return ResultVectorType{incoming.r(), incoming.phi()};
 }
 
@@ -406,7 +408,7 @@ ResultVectorType convert_vector_spherical_to_polar(const IncomingVectorType& inc
  */
 template <Coordinates INCOMING_COORDINATES, Coordinates RESULT_COORDINATES,
           typename IncomingVectorType, typename ResultVectorType>
-ResultVectorType convert_vector_coordinates(const IncomingVectorType& incoming) {
+constexpr ResultVectorType convert_vector_coordinates(const IncomingVectorType& incoming) {
   // Assert that we have an implementation for the requested incoming and result coordinates.
   static_assert(INCOMING_COORDINATES == Coordinates::CARTESIAN ||
                     INCOMING_COORDINATES == Coordinates::POLAR ||
