@@ -5,6 +5,7 @@ cc_library(
     ],
     hdrs = [
         "box.h",
+        "colors.h",
         "gpu_element.h",
         "model.h",
         "offset.h",
