@@ -39,50 +39,35 @@ class CubeScene final : public ui::Scene {
 
   graphics::Model<GeometryType> model_;
 
+  graphics::RevoluteJoint<GeometryType>* joint0_;
   graphics::RevoluteJoint<GeometryType>* joint1_;
-  graphics::RevoluteJoint<GeometryType>* joint2_;
 
  public:
   CubeScene(GLFWwindow& window) : Scene("3D Cube"), model_(aspect_ratio(window)) {
-    std::unique_ptr<graphics::Box<GeometryType>> box2{
+    std::unique_ptr<graphics::Box<GeometryType>> object2{
         std::make_unique<graphics::Box<GeometryType>>(.3, .3, .3)};
-
-    std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint2{
-        std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
-    joint2_ = joint2.get();
-    joint2->set_rotation_axis(GeometryType::z_axis);
-    joint2->set_offset_direction(GeometryType::y_axis);
-    joint2->set_offset(2);
-    joint2->add_element(std::move(box2));
-
-    std::unique_ptr<graphics::Box<GeometryType>> box1{
-        std::make_unique<graphics::Box<GeometryType>>(.75, .2, .35)};
-
-    std::unique_ptr<graphics::Offset<GeometryType>> offset2{
-        std::make_unique<graphics::Offset<GeometryType>>()};
-    offset2->set_distance(box1->height() / 2);
-    offset2->set_direction(GeometryType::y_axis);
-    offset2->add_element(std::move(joint2));
-
-    std::unique_ptr<graphics::Offset<GeometryType>> offset1{
-        std::make_unique<graphics::Offset<GeometryType>>()};
-    offset1->set_distance(2);
-    offset1->set_direction(GeometryType::y_axis);
-    offset1->add_element(std::move(offset2));
-    offset1->add_element(std::move(box1));
-
-    std::unique_ptr<graphics::Sphere<GeometryType, 5>> pivot{
-        std::make_unique<graphics::Sphere<GeometryType, 5>>(.2, .2, .2)};
 
     std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint1{
         std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
     joint1_ = joint1.get();
     joint1->set_rotation_axis(GeometryType::z_axis);
     joint1->set_rotation_angle(pi);
-    joint1->add_element(std::move(offset1));
-    joint1->add_element(std::move(pivot));
+    joint1->set_offset(4);
+    joint1->set_offset_direction(GeometryType::y_axis);
+    joint1->add_element(std::move(object2));
 
-    model_.add_element(std::move(joint1));
+    std::unique_ptr<graphics::Sphere<GeometryType, 4>> object1{
+        std::make_unique<graphics::Sphere<GeometryType, 4>>()};
+
+    std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint0{
+        std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
+    joint0_ = joint0.get();
+    joint0->set_rotation_axis(GeometryType::y_axis);
+    joint0->set_rotation_angle(pi);
+    joint0->add_element(std::move(object1));
+    joint0->add_element(std::move(joint1));
+
+    model_.add_element(std::move(joint0));
   }
 
   void handle_loading() override {
@@ -96,8 +81,8 @@ class CubeScene final : public ui::Scene {
     using std::cos;
     using std::sin;
     const TimeType t{static_cast<TimeType>(ImGui::GetTime())};
-    joint1_->set_rotation_angle(pi + pi / 2 * sin(3 * t));
-    joint2_->set_rotation_angle(pi / 2 * sin(2 * t));
+    joint0_->set_rotation_angle(pi * t / 8);
+    joint1_->set_rotation_angle(pi + pi / 3 * cos(pi / 2 * t));
   }
 
   void update_ui() override {}
