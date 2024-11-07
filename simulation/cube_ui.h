@@ -10,6 +10,7 @@
 #include "graphics/offset.h"
 #include "graphics/revolute_joint.h"
 #include "graphics/shader_program.h"
+#include "graphics/sphere.h"
 #include "imgui.h"
 #include "math/algebra.h"
 #include "math/geometry.h"
@@ -44,7 +45,7 @@ class CubeScene final : public ui::Scene {
  public:
   CubeScene(GLFWwindow& window) : Scene("3D Cube"), model_(aspect_ratio(window)) {
     std::unique_ptr<graphics::Box<GeometryType>> box2{
-        std::make_unique<graphics::Box<GeometryType>>(.75, 1, .5)};
+        std::make_unique<graphics::Box<GeometryType>>(.3, .3, .3)};
 
     std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint2{
         std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
@@ -70,12 +71,16 @@ class CubeScene final : public ui::Scene {
     offset1->add_element(std::move(offset2));
     offset1->add_element(std::move(box1));
 
+    std::unique_ptr<graphics::Sphere<GeometryType, 5>> pivot{
+        std::make_unique<graphics::Sphere<GeometryType, 5>>(.2, .2, .2)};
+
     std::unique_ptr<graphics::RevoluteJoint<GeometryType>> joint1{
         std::make_unique<graphics::RevoluteJoint<GeometryType>>()};
     joint1_ = joint1.get();
     joint1->set_rotation_axis(GeometryType::z_axis);
     joint1->set_rotation_angle(pi);
     joint1->add_element(std::move(offset1));
+    joint1->add_element(std::move(pivot));
 
     model_.add_element(std::move(joint1));
   }

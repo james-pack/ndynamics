@@ -10,6 +10,7 @@ cc_library(
         "offset.h",
         "revolute_joint.h",
         "shader_program.h",
+        "sphere.h",
     ],
     data = [
         "default_fragment_shader.glsl",
