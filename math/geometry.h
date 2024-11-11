@@ -132,9 +132,8 @@ class Geometry3D final {
   /**
    * Create a vector representing a point specified in Cartesian coordinates.
    *
-   * This combination of basis vectors can be derived by implementing this method as:
-   *    return Primitive{x * e1 + y * e2 + z * e3 + e0}.dual();
-   * The implementation below uses a slightly more optimized form of this expression.
+   * The implementation below can be slightly optimized by inlining the dual operator (!), but this
+   * form extends more readily to other dimensions, especially to 2D PGA.
    *
    * For more details, see
    * https://geometry.mrao.cam.ac.uk/2020/06/euclidean-geometry-and-geometric-algebra/
@@ -142,7 +141,7 @@ class Geometry3D final {
    * https://youtu.be/v-WG02ILMXA?t=636
    */
   static constexpr VectorType point(const ScalarType& x, const ScalarType& y, const ScalarType& z) {
-    return x * e032 + y * e013 + z * e021 + e123;
+    return !(x * e1 + y * e2 + z * e3 + e0);
   }
 
   /**
