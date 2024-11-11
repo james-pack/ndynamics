@@ -88,9 +88,25 @@ class Geometry3D final {
     return true;
   }
 
-  static constexpr bool is_line(const VectorType& v) {
-    constexpr std::array<size_t, 6> allowed_bases{3 /*e01*/, 5 /*e02*/,  6 /*e12*/,
-                                                  9 /*e03*/, 10 /*e13*/, 12 /*e23*/};
+  static constexpr bool is_join_line(const VectorType& v) {
+    // TODO(james): Better understand join and meet lines and update this method and the
+    // is_meet_line() method.
+    constexpr std::array<size_t, 6> allowed_bases{3, 5, 6, 9, 10, 12};
+    for (size_t i = 0; i < AlgebraType::bases_count(); ++i) {
+      if (v.basis(i) != 0) {
+        const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
+                           allowed_bases.end()};
+        if (!allowed) {
+          LOG(INFO) << "Non-join line coefficient is on basis i: " << i;
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  static constexpr bool is_meet_line(const VectorType& v) {
+    constexpr std::array<size_t, 6> allowed_bases{3, 5, 6, 9, 10, 12};
     for (size_t i = 0; i < AlgebraType::bases_count(); ++i) {
       const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
                          allowed_bases.end()};
@@ -130,9 +146,10 @@ class Geometry3D final {
   }
 
   /**
-   * Create a vector representing a line.
+   * Create a vector representing a line where two planes meet.
    */
-  static constexpr VectorType line(const ScalarType& x, const ScalarType& y, const ScalarType& z) {
+  static constexpr VectorType meet_line(const ScalarType& x, const ScalarType& y,
+                                        const ScalarType& z) {
     return x * e23 + y * e31 + z * e12;
   }
 
@@ -145,9 +162,9 @@ class Geometry3D final {
   }
 
   static constexpr VectorType origin{e123};
-  static constexpr VectorType x_axis{line(1, 0, 0)};
-  static constexpr VectorType y_axis{line(0, 1, 0)};
-  static constexpr VectorType z_axis{line(0, 0, 1)};
+  static constexpr VectorType x_axis{meet_line(1, 0, 0)};
+  static constexpr VectorType y_axis{meet_line(0, 1, 0)};
+  static constexpr VectorType z_axis{meet_line(0, 0, 1)};
 
   static constexpr VectorType join(const VectorType& v1, const VectorType& v2) { return v1 & v2; }
 
