@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "GLFW/glfw3.h"
+#include "base/pi.h"
 #include "glm/glm.hpp"
 #include "graphics/colors.h"
 #include "graphics/gpu_element.h"
