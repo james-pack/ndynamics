@@ -10,6 +10,7 @@ cc_library(
         "gpu_element.h",
         "model.h",
         "offset.h",
+        "part_builder.h",
         "revolute_joint.h",
         "shader_program.h",
         "sphere.h",
@@ -21,10 +22,36 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//base",
         "//io",
         "//math",
         "//third_party/glad",
         "//third_party/glfw",
+        "//third_party/glm",
         "//third_party/glog",
+    ],
+)
+
+cc_library(
+    name = "testing",
+    testonly = True,
+    hdrs = [
+        "graphics_test_utils.h",
+    ],
+)
+
+cc_test(
+    name = "part_builder_test",
+    srcs = ["part_builder_test.cc"],
+    env = {
+        "DISPLAY": ":1",
+    },
+    deps = [
+        ":graphics",
+        ":testing",
+        "//math",
+        "//third_party/glad",
+        "//third_party/glfw",
+        "//third_party/gtest",
     ],
 )
