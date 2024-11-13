@@ -23,6 +23,11 @@ class RevoluteJoint final : public GpuElement<GeometryT> {
   VectorType rotation_axis_{GeometryType::z_axis};
 
  public:
+  RevoluteJoint(const VectorType& rotation_axis, const ScalarType& rotation_angle)
+      : rotation_axis_(rotation_axis), rotation_angle_(rotation_angle) {}
+  RevoluteJoint(const VectorType& rotation_axis) : RevoluteJoint(rotation_axis, 0) {}
+  RevoluteJoint() = default;
+
   VectorType compose_transform(ScalarType t, const VectorType& transform) override {
     return transform * GeometryType::rotate(rotation_axis_, rotation_angle_) *
            GeometryType::translate(offset_direction_, offset_);
