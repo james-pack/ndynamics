@@ -21,6 +21,10 @@ class Offset final : public GpuElement<GeometryT> {
   VectorType direction_{GeometryType::y_axis};
 
  public:
+  Offset(const ScalarType& distance, const VectorType& direction)
+      : distance_(distance), direction_(direction) {}
+  Offset() = default;
+
   VectorType compose_transform(ScalarType t, const VectorType& transform) override {
     return transform * GeometryType::translate(direction_, distance_);
   }
