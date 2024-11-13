@@ -61,8 +61,9 @@ class PartBuilder final {
     return *this;
   }
 
-  PartBuilder& bind(ElementType** reference) {
-    *reference = current_;
+  template <typename SubelementType>
+  PartBuilder& bind(SubelementType** reference) {
+    *reference = reinterpret_cast<SubelementType*>(current_);
     return *this;
   }
 
@@ -73,8 +74,8 @@ class PartBuilder final {
   }
 
   // Joints.
-  PartBuilder& add_revolute_joint(const VectorType& rotation_axis) {
-    add_element(std::make_unique<RevoluteJoint<GeometryType>>());
+  PartBuilder& add_revolute_joint(const VectorType& rotation_axis, const ScalarType& angle = 0) {
+    add_element(std::make_unique<RevoluteJoint<GeometryType>>(rotation_axis, angle));
     return *this;
   }
 
