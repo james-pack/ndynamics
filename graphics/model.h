@@ -106,7 +106,11 @@ class Model final {
         aspect_ratio_(aspect_ratio) {}
 
   void add_element(std::unique_ptr<GpuElement<GeometryType>>&& element) {
-    top_level_elements_.emplace_back(std::move(element));
+    if (element) {
+      top_level_elements_.emplace_back(std::move(element));
+    } else {
+      LOG(FATAL) << "Added null GpuElement as child";
+    }
   }
 
   void clear_all_elements() { top_level_elements_.clear(); }
