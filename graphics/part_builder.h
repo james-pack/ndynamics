@@ -63,7 +63,7 @@ class PartBuilder final {
 
   template <typename SubelementType>
   PartBuilder& bind(SubelementType** reference) {
-    *reference = reinterpret_cast<SubelementType*>(current_);
+    *reference = dynamic_cast<SubelementType*>(current_);
     return *this;
   }
 

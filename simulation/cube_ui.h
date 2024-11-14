@@ -62,6 +62,7 @@ class CubeScene final : public ui::Scene {
         .down()
         .add_cube(.25);
     model_.add_element(builder.build());
+    LOG(INFO) << "joint0_: " << joint0_;
   }
 
   void handle_loading() override {
@@ -76,7 +77,8 @@ class CubeScene final : public ui::Scene {
     using std::sin;
     const TimeType t{static_cast<TimeType>(ImGui::GetTime())};
     // joint0_->set_rotation_angle(pi * t / 2);
-    // joint1_->set_rotation_angle(pi + pi / 3 * cos(pi / 2 * t));
+    joint0_->set_distance(pi * t / 2);
+    joint1_->set_rotation_angle(pi + pi / 3 * cos(pi / 2 * t));
   }
 
   void update_ui() override {}
