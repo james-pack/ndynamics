@@ -1,0 +1,18 @@
+cc_library(
+    name = "peglib",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@peglib",
+    ],
+)
+
+cc_test(
+    name = "integration_test",
+    srcs = [
+        "integration_test.cc",
+    ],
+    deps = [
+        ":peglib",
+        "//third_party/gtest",
+    ],
+)

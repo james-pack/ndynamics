@@ -136,3 +136,14 @@ def load_source_dependencies():
             build_file = "//third_party/units:units.BUILD",
             patches = ["//third_party/units:main.cpp.patch"],
         )
+
+    if not native.existing_rule(""):
+        http_archive(
+            name = "peglib",
+            sha256 = "f57aa0f14372cbb772af29e3a4549a8033ea07eb25c39949cba6178e0e2ba9cc",
+            strip_prefix = "cpp-peglib-1.9.1",
+            urls = [
+                "https://github.com/yhirose/cpp-peglib/archive/refs/tags/v1.9.1.tar.gz",
+            ],
+            build_file = "//third_party/peglib:peglib.BUILD",
+        )
