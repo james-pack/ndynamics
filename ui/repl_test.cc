@@ -10,16 +10,62 @@ TEST(ReplTest, CanGenerateParserForGeometricAlgebra) {
 }
 
 TEST(ReplTest, CanParseExpectedInputs) {
+  const auto parser{create_parser()};
+
+  const char* inputs[] = {
+
+      // Whitespace and empty string checks.
+      R"()",
+      R"( )",
+      "\t",
+      " \t ",
+
+      // Algebra declarations
+      R"(algebra = i)",
+      R"(algebra = i, j, k)",
+      R"(algebra = e1, e2, e3)",
+
+      // Algebra declarations using simple metric form.
+      R"(algebra = e1:1, e2:1, e3:1)",
+      R"(algebra = e1:1, e2:-1, e3:1)",
+      R"(algebra = e1, e2:-1, e3:1)",
+      R"(algebra = e1, e2:-1, e3:0)",
+
+      // Algebra declarations using matrix metric form.
+      R"(algebra = e1, e2, e3; metric = [ [1, 0.5, 0], [0.5, 1, 0], [0, 0, -1] ])",
+
+      // Expressions involving various forms of numbers.
+      R"(a = 1)",
+      R"(a = 1.1)",
+      R"(a = 1.1e10)",
+      R"(a = 1.1e+10)",
+      R"(a = 1.1e-10)",
+      R"(a = -1)",
+      R"(a = -1.1)",
+      R"(a = -1.1e10)",
+      R"(a = -1.1e+10)",
+      R"(a = -1.1e-10)",
+  };
+
+  for (const auto& input : inputs) {
+    EXPECT_TRUE(parser.parse(input)) << "Could not parse:\n\t" << input << "\n";
+  }
+}
+
+TEST(ReplTest, RefusesInvalidInputs) {
   auto parser{create_parser()};
 
   ASSERT_TRUE(static_cast<bool>(parser));
 
   const char* inputs[] = {
-      R"()",                      // Empty string
+      // Shouldn't allow a ':' after the basis name without a metric value.
+      R"(algebra = e1:, e2:-1, e3:1)",
+      // Shouldn't allow decimal values in metrics when expressed in simple form.
+      R"(algebra = e1:0.5, e2:-1, e3:1)",
   };
 
   for (const auto& input : inputs) {
-    EXPECT_TRUE(parser.parse(input)) << "Could not parse:\n\t" << input << "\n";
+    EXPECT_FALSE(parser.parse(input)) << "Allowed invalid input:\n\t" << input << "\n";
   }
 }
 

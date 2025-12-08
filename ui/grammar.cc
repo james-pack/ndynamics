@@ -58,7 +58,7 @@ Primary <- Number
          / "(" _ Expression _ ")"
 
 #  NUMBER (supports scientific notation) 
-Number <- [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?
+Number <- [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?
 
 #  MULTIVECTOR LITERAL 
 MultivectorLiteral <- "<" _ BladeList _ ">"
