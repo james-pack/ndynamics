@@ -1,0 +1,24 @@
+cc_library(
+    name = "ui",
+    srcs = [
+        "grammar.cc",
+    ],
+    hdrs = [
+        "grammar.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/peglib",
+    ],
+)
+
+cc_test(
+    name = "repl_test",
+    srcs = [
+        "repl_test.cc",
+    ],
+    deps = [
+        ":ui",
+        "//third_party/gtest",
+    ],
+)
