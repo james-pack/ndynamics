@@ -7,7 +7,7 @@ namespace ndyn::ui {
 peg::parser create_parser() {
   peg::parser parser{R"GRAMMAR(
 # REPL INPUT
-REPLLine <- _ Statement _
+REPLLine <- _ (Statement _)?
 
 # STATEMENTS
 Statement <- AlgebraDeclaration
