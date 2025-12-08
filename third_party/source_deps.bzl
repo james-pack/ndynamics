@@ -1,53 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def load_source_dependencies():
-    if not native.existing_rule("bazel_skylib"):
-        http_archive(
-            name = "bazel_skylib",
-            urls = [
-                "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
-                "https://github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
-            ],
-            sha256 = "f7be3474d42aae265405a592bb7da8e171919d74c16f082a5457840f06054728",
-        )
-
-    if not native.existing_rule("rules_cc"):
-        http_archive(
-            name = "rules_cc",
-            strip_prefix = "rules_cc-2f8c04c04462ab83c545ab14c0da68c3b4c96191",
-            sha256 = "4aeb102efbcfad509857d7cb9c5456731e8ce566bfbf2960286a2ec236796cc3",
-            urls = [
-                "https://github.com/bazelbuild/rules_cc/archive/2f8c04c04462ab83c545ab14c0da68c3b4c96191.tar.gz",
-            ],
-        )
-
-    if not native.existing_rule("rules_proto"):
-        http_archive(
-            name = "rules_proto",
-            sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
-            strip_prefix = "rules_proto-5.3.0-21.7",
-            urls = [
-                "https://github.com/bazelbuild/rules_proto/archive/refs/tags/5.3.0-21.7.tar.gz",
-            ],
-        )
-
-    if not native.existing_rule("rules_pkg"):
-        http_archive(
-            name = "rules_pkg",
-            urls = [
-                "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
-                "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
-            ],
-            sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
-        )
-
-    if not native.existing_rule("io_bazel_rules_docker"):
-        http_archive(
-            name = "io_bazel_rules_docker",
-            sha256 = "b1e80761a8a8243d03ebca8845e9cc1ba6c82ce7c5179ce2b295cd36f7e394bf",
-            urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.25.0/rules_docker-v0.25.0.tar.gz"],
-        )
-
     if not native.existing_rule("com_google_googletest"):
         http_archive(
             name = "com_google_googletest",
@@ -89,52 +42,6 @@ def load_source_dependencies():
                 "https://github.com/madler/zlib/archive/refs/tags/v1.2.13.tar.gz",
             ],
             build_file = "//third_party/zlib:zlib.BUILD",
-        )
-
-    if not native.existing_rule("com_github_glfw"):
-        http_archive(
-            name = "com_github_glfw",
-            sha256 = "4ff18a3377da465386374d8127e7b7349b685288cb8e17122f7e1179f73769d5",
-            strip_prefix = "glfw-3.3.10",
-            urls = ["https://github.com/glfw/glfw/archive/3.3.10.tar.gz"],
-            build_file = "//third_party/glfw:glfw.BUILD",
-        )
-
-    if not native.existing_rule("com_github_gtruc_glm"):
-        http_archive(
-            name = "com_github_gtruc_glm",
-            sha256 = "9f3174561fd26904b23f0db5e560971cbf9b3cbda0b280f04d5c379d03bf234c",
-            strip_prefix = "glm-1.0.1",
-            urls = ["https://github.com/g-truc/glm/archive/refs/tags/1.0.1.tar.gz"],
-            build_file = "//third_party/glm:glm.BUILD",
-        )
-
-    if not native.existing_rule("com_github_ocornut_imgui"):
-        http_archive(
-            name = "com_github_ocornut_imgui",
-            sha256 = "2c13a8909f75222c836abc9b3f60cef31c445f3f41f95d8242118ea789d145ca",
-            strip_prefix = "imgui-1.91.1",
-            urls = ["https://github.com/ocornut/imgui/archive/v1.91.1.tar.gz"],
-            build_file = "//third_party/imgui:imgui.BUILD",
-        )
-
-    if not native.existing_rule("com_github_epezent_implot"):
-        http_archive(
-            name = "com_github_epezent_implot",
-            sha256 = "961df327d8a756304d1b0a67316eebdb1111d13d559f0d3415114ec0eb30abd1",
-            strip_prefix = "implot-0.16",
-            urls = ["https://github.com/epezent/implot/archive/v0.16.tar.gz"],
-            build_file = "//third_party/implot:implot.BUILD",
-        )
-
-    if not native.existing_rule("com_github_nholthaus_units"):
-        http_archive(
-            name = "com_github_nholthaus_units",
-            sha256 = "b1f3c1dd11afa2710a179563845ce79f13ebf0c8c090d6aa68465b18bd8bd5fc",
-            strip_prefix = "units-2.3.3",
-            urls = ["https://github.com/nholthaus/units/archive/v2.3.3.tar.gz"],
-            build_file = "//third_party/units:units.BUILD",
-            patches = ["//third_party/units:main.cpp.patch"],
         )
 
     if not native.existing_rule(""):
