@@ -1,7 +1,0 @@
-cc_library(
-    name = "glm",
-    visibility = ["//visibility:public"],
-    deps = [
-        "@com_github_gtruc_glm//:glm",
-    ],
-)
