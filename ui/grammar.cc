@@ -55,19 +55,11 @@ Multiplicative <- Unary ( _ ( "*" / "^" / "|" ) _ Multiplicative )?
 Unary <- [+-]? Primary
 
 Primary <- Number
-         / MultivectorLiteral
          / Identifier
          / "(" _ Expression _ ")"
 
 #  NUMBER (supports scientific notation) 
 Number <- [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?
-
-#  MULTIVECTOR LITERAL 
-MultivectorLiteral <- "<" _ BladeList _ ">"
-
-BladeList <- Blade ( _ "," _ Blade )*
-
-Blade <- Number? _ BasisName+
 
 #  COMMANDS 
 Command <- "exit" / "help"
