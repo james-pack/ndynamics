@@ -50,7 +50,9 @@ Expression <- Additive
 
 Additive <- Multiplicative ( _ ("+" / "-") _ Additive )?
 
-Multiplicative <- Primary ( _ ( "*" / "^" / "|" ) _ Multiplicative )?
+Multiplicative <- Unary ( _ ( "*" / "^" / "|" ) _ Multiplicative )?
+
+Unary <- [+-]? Primary
 
 Primary <- Number
          / MultivectorLiteral

@@ -35,16 +35,41 @@ TEST(ReplTest, CanParseExpectedInputs) {
       R"(algebra = e1, e2, e3; metric = [ [1, 0.5, 0], [0.5, 1, 0], [0, 0, -1] ])",
 
       // Expressions involving various forms of numbers.
-      R"(a = 1)",
-      R"(a = 1.1)",
-      R"(a = 1.1e10)",
-      R"(a = 1.1e+10)",
-      R"(a = 1.1e-10)",
-      R"(a = -1)",
-      R"(a = -1.1)",
-      R"(a = -1.1e10)",
-      R"(a = -1.1e+10)",
-      R"(a = -1.1e-10)",
+      R"(1)",
+      R"(1.1)",
+      R"(1.1e10)",
+      R"(1.1e+10)",
+      R"(1.1e-10)",
+      R"(-1)",
+      R"(-1.1)",
+      R"(-1.1e10)",
+      R"(-1.1e+10)",
+      R"(-1.1e-10)",
+
+      // Variables
+      R"(b)",
+      R"(apple)",
+      R"(app13)",
+      R"(boy)",
+      R"(b0y)",
+
+      // Binary operators
+      R"(b + c)",
+      R"(b - c)",
+      R"(b * c)",
+      R"(b ^ c)",
+      R"(b | c)",
+      R"(b * e1)",
+
+      // Unary operators
+      R"(-b)",
+      R"((-b))",
+      R"(+(-b))",
+      R"(-(-b))",
+      R"(+b)",
+      R"((+b))",
+      R"(+(+b))",
+      R"(-(+b))",
   };
 
   for (const auto& input : inputs) {
@@ -62,6 +87,11 @@ TEST(ReplTest, RefusesInvalidInputs) {
       R"(algebra = e1:, e2:-1, e3:1)",
       // Shouldn't allow decimal values in metrics when expressed in simple form.
       R"(algebra = e1:0.5, e2:-1, e3:1)",
+      // Multiple unary operators without parentheses should be disallowed.
+      R"(a = + -b)",
+      // Disallow multiplication without an explicit operator. The alternative gets difficult to
+      // parse when creating a multivector from bases.
+      R"(a = b e1)",
   };
 
   for (const auto& input : inputs) {
