@@ -1,15 +1,17 @@
-#include "gtest/gtest.h"
 #include "ui/grammar.h"
+
+#include "gtest/gtest.h"
+#include "peglib.h"
 
 namespace ndyn::ui {
 
-TEST(ReplTest, CanGenerateParserForGeometricAlgebra) {
+TEST(GrammarTest, CanGenerateParserForGeometricAlgebra) {
   auto parser{create_parser()};
 
   EXPECT_TRUE(static_cast<bool>(parser));
 }
 
-TEST(ReplTest, CanParseExpectedInputs) {
+TEST(GrammarTest, CanParseExpectedInputs) {
   const auto parser{create_parser()};
 
   const char* inputs[] = {
@@ -19,20 +21,6 @@ TEST(ReplTest, CanParseExpectedInputs) {
       R"( )",
       "\t",
       " \t ",
-
-      // Algebra declarations
-      R"(algebra = i)",
-      R"(algebra = i, j, k)",
-      R"(algebra = e1, e2, e3)",
-
-      // Algebra declarations using simple metric form.
-      R"(algebra = e1:1, e2:1, e3:1)",
-      R"(algebra = e1:1, e2:-1, e3:1)",
-      R"(algebra = e1, e2:-1, e3:1)",
-      R"(algebra = e1, e2:-1, e3:0)",
-
-      // Algebra declarations using matrix metric form.
-      R"(algebra = e1, e2, e3; metric = [ [1, 0.5, 0], [0.5, 1, 0], [0, 0, -1] ])",
 
       // Expressions involving various forms of numbers.
       R"(1)",
@@ -70,6 +58,14 @@ TEST(ReplTest, CanParseExpectedInputs) {
       R"((+b))",
       R"(+(+b))",
       R"(-(+b))",
+
+      // Multiple operators
+      R"(-b + b)",
+      R"((-b) + b)",
+      R"(+(-b) * b)",
+      R"(a + -b + b)",
+      R"(a - (-b) + b)",
+      R"(a - +(-b) * b)",
   };
 
   for (const auto& input : inputs) {
@@ -77,16 +73,10 @@ TEST(ReplTest, CanParseExpectedInputs) {
   }
 }
 
-TEST(ReplTest, RefusesInvalidInputs) {
-  auto parser{create_parser()};
-
-  ASSERT_TRUE(static_cast<bool>(parser));
+TEST(GrammarTest, RefusesInvalidInputs) {
+  const auto parser{create_parser()};
 
   const char* inputs[] = {
-      // Shouldn't allow a ':' after the basis name without a metric value.
-      R"(algebra = e1:, e2:-1, e3:1)",
-      // Shouldn't allow decimal values in metrics when expressed in simple form.
-      R"(algebra = e1:0.5, e2:-1, e3:1)",
       // Multiple unary operators without parentheses should be disallowed.
       R"(a = + -b)",
       // Disallow multiplication without an explicit operator. The alternative gets difficult to
@@ -97,6 +87,20 @@ TEST(ReplTest, RefusesInvalidInputs) {
   for (const auto& input : inputs) {
     EXPECT_FALSE(parser.parse(input)) << "Allowed invalid input:\n\t" << input << "\n";
   }
+}
+
+TEST(GrammarTest, CanAttachActions) {
+  auto parser{create_parser()};
+  ASSERT_TRUE(static_cast<bool>(parser));
+
+  float value{};
+  parser["Number"] = [&value](const peg::SemanticValues& vs) {
+    value = vs.token_to_number<float>();
+    return value;
+  };
+
+  parser.parse("123.456");
+  EXPECT_FLOAT_EQ(123.456, value);
 }
 
 }  // namespace ndyn::ui

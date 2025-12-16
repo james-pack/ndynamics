@@ -10,33 +10,9 @@ peg::parser create_parser() {
 REPLLine <- _ (Statement _)?
 
 # STATEMENTS
-Statement <- AlgebraDeclaration
-           / Assignment
+Statement <- Assignment
            / Expression
            / Command
-
-#  ALGEBRA CONFIGURATION 
-AlgebraDeclaration <- "algebra" _ "=" _ AlgebraSpec
-
-AlgebraSpec <- BasisList (_ ";" _ MetricSpec)?  # optional metric
-
-#  BASIS LIST 
-BasisList <- BasisMetric ( _ "," _ BasisMetric )*
-
-BasisMetric <- BasisName (_ ":" _ SimpleMetric)?   # optional simple metric
-
-BasisName <- [a-zA-Z]+[a-zA-Z0-9]*
-
-SimpleMetric <- ("1" / "-1" / "0")
-
-#  METRIC SPECIFICATION 
-MetricSpec <- "metric" _ "=" _ MetricMatrix
-
-MetricMatrix <- "[" _ MatrixRows _ "]"
-
-MatrixRows <- "[" _ NumberList _ "]" ( _ "," _ "[" _ NumberList _ "]" )*
-
-NumberList <- Number ( _ "," _ Number )*
 
 #  VARIABLE ASSIGNMENTS 
 Assignment <- Identifier _ "=" _ Expression
@@ -65,7 +41,7 @@ Number <- [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?
 Command <- "exit" / "help"
 
 #  WHITESPACE 
-_ <- [ \t\n\r]*
+_ <- [ \t]*
 )GRAMMAR"};
 
   return parser;
