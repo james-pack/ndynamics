@@ -13,9 +13,9 @@ cc_library(
 )
 
 cc_test(
-    name = "repl_test",
+    name = "grammar_test",
     srcs = [
-        "repl_test.cc",
+        "grammar_test.cc",
     ],
     deps = [
         ":ui",
