@@ -2,6 +2,6 @@
 
 namespace ndyn::ui {
 
-  peg::parser create_parser();
-  
+peg::parser create_parser();
+
 }
