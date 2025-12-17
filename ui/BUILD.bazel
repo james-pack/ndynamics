@@ -1,13 +1,17 @@
 cc_library(
     name = "ui",
     srcs = [
+        "algebra_options.cc",
         "grammar.cc",
     ],
     hdrs = [
+        "algebra_options.h",
         "grammar.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "//third_party/gflags",
+        "//third_party/glog",
         "//third_party/peglib",
     ],
 )
@@ -20,5 +24,17 @@ cc_test(
     deps = [
         ":ui",
         "//third_party/gtest",
+    ],
+)
+
+cc_binary(
+    name = "repl",
+    srcs = [
+        "main.cc",
+    ],
+    deps = [
+        ":ui",
+        "//base",
+        "//third_party/glog",
     ],
 )
