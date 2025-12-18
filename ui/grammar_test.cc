@@ -94,8 +94,8 @@ TEST(GrammarTest, CanAttachActions) {
   ASSERT_TRUE(static_cast<bool>(parser));
 
   float value{};
-  parser["Number"] = [&value](const peg::SemanticValues& vs) {
-    value = vs.token_to_number<float>();
+  parser["Scalar"] = [&value](const peg::SemanticValues& sv) {
+    value = sv.token_to_number<float>();
     return value;
   };
 
