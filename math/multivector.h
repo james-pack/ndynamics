@@ -775,44 +775,41 @@ std::ostream& operator<<(std::ostream& os, const Multivector<AlgebraType>& v) {
   return os;
 }
 
-// Common algebras.
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using ScalarMultivector = typename Algebra<T, 0, 0, 0, INNER_PRODUCT>::VectorType;
+// Multivector types of common algebras.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using ScalarMultivector = typename Scalar<T, INNER_PRODUCT>::VectorType;
 
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using ComplexMultivector = typename Algebra<T, 0, 1, 0, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using ComplexMultivector = typename Complex<T, INNER_PRODUCT>::VectorType;
 
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using DualMultivector = typename Algebra<T, 0, 0, 1, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using DualMultivector = typename Dual<T, INNER_PRODUCT>::VectorType;
 
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using SplitComplexMultivector = typename Algebra<T, 1, 0, 0, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using SplitComplexMultivector = typename SplitComplex<T, INNER_PRODUCT>::VectorType;
 
-// VGA 2D is a standard ("vanilla") 2D vectorspace geometric algebra. It is used in non-relativistic
-// physics and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using Vga2dMultivector = typename Algebra<T, 2, 0, 0, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Vga2dMultivector = typename Vga2d<T, INNER_PRODUCT>::VectorType;
 
-// VGA is a standard ("vanilla") 3D vectorspace geometric algebra. It is used in non-relativistic
-// physics and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using VgaMultivector = typename Algebra<T, 3, 0, 0, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using VgaMultivector = typename Vga<T, INNER_PRODUCT>::VectorType;
 
-// PGA 2D is a 2D vectorspace geometric algebra with an additional zero dimension. It is used in
-// computer graphics, non-relativistic physics, and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using Pga2dMultivector = typename Algebra<T, 2, 0, 1, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Pga2dMultivector = typename Pga2d<T, INNER_PRODUCT>::VectorType;
 
-// PGA is a 3D vectorspace geometric algebra with an additional zero dimension. It is used in
-// computer graphics, non-relativistic physics, and engineering applications.
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using PgaMultivector = typename Algebra<T, 3, 0, 1, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using PgaMultivector = typename Pga<T, INNER_PRODUCT>::VectorType;
 
-// The spacetime algebra is primarily used in relativistic physics applications and research.
-// Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
-// Cl(3, 1). This decision is arbitrary and is based on the variant that seems to fit our
-// problem space best.
-template <typename T, InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using SpacetimeMultivector = typename Algebra<T, 1, 3, 0, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using SpacetimeMultivector = typename Spacetime<T, INNER_PRODUCT>::VectorType;
 
 }  // namespace ndyn::math

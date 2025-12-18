@@ -44,4 +44,54 @@ class Algebra final {
   static constexpr size_t bases_count() { return 1UL << vector_count(); }
 };
 
+using DefaultScalarType = float;
+
+// Common algebras.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Scalar = Algebra<T, 0, 0, 0, INNER_PRODUCT>;
+
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Complex = Algebra<T, 0, 1, 0, INNER_PRODUCT>;
+
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Dual = Algebra<T, 0, 0, 1, INNER_PRODUCT>;
+
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using SplitComplex = Algebra<T, 1, 0, 0, INNER_PRODUCT>;
+
+// VGA 2D is a standard ("vanilla") 2D vectorspace geometric algebra. It is used in non-relativistic
+// physics and engineering applications.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Vga2d = Algebra<T, 2, 0, 0, INNER_PRODUCT>;
+
+// VGA is a standard ("vanilla") 3D vectorspace geometric algebra. It is used in non-relativistic
+// physics and engineering applications.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Vga = Algebra<T, 3, 0, 0, INNER_PRODUCT>;
+
+// PGA 2D is a 2D vectorspace geometric algebra with an additional zero dimension. It is used in
+// computer graphics, non-relativistic physics, and engineering applications.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Pga2d = Algebra<T, 2, 0, 1, INNER_PRODUCT>;
+
+// PGA is a 3D vectorspace geometric algebra with an additional zero dimension. It is used in
+// computer graphics, non-relativistic physics, and engineering applications.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Pga = Algebra<T, 3, 0, 1, INNER_PRODUCT>;
+
+// The spacetime algebra is primarily used in relativistic physics applications and research.
+// Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
+// Cl(3, 1).
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Spacetime = Algebra<T, 1, 3, 0, INNER_PRODUCT>;
+
 }  // namespace ndyn::math
