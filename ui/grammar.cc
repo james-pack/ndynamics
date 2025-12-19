@@ -16,7 +16,7 @@ Assignment <- LValue _ "=" _ Expression
 
 Identifier <- !Keyword [a-zA-Z_][a-zA-Z0-9_]*
 
-Keyword <- "algebra" / "metric" / "exit" / "help"
+Keyword <- Command / "algebra" / "metric"
 
 Expression <- Additive
 
@@ -35,7 +35,10 @@ RValue <- Identifier
 
 Scalar <- [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?
 
-Command <- "exit" / "help"
+Command <- DictCommand / ExitCommand / HelpCommand
+DictCommand <- "dict"
+ExitCommand <- "exit"
+HelpCommand <- "help"
 
 _ <- [ \t]*
 )GRAMMAR"};
