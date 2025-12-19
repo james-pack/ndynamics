@@ -95,6 +95,26 @@ std::ostream& operator<<(std::ostream& os, const EvalResult<AlgebraT>& result) {
 }
 
 template <typename AlgebraT>
+typename AlgebraT::VectorType coerce_to_vector(typename AlgebraT::ScalarType s) {
+  typename AlgebraT::VectorType v{s};
+  return v;
+}
+
+template <typename AlgebraT>
+typename AlgebraT::VectorType coerce_to_vector(typename AlgebraT::VectorType v) {
+  return v;
+}
+
+template <typename AlgebraT>
+typename AlgebraT::VectorType coerce_to_vector(const EvalResult<AlgebraT>& r) {
+  if (r.is_vector()) {
+    return r.as_vector();
+  } else if (r.is_scalar()) {
+    return coerce_to_vector<AlgebraT>(r.as_scalar());
+  }
+}
+
+template <typename AlgebraT>
 class Interpreter final {
  public:
   using EvalResultT = EvalResult<AlgebraT>;
@@ -158,15 +178,29 @@ class Interpreter final {
         DLOG(INFO) << "[Additive] -- right: " << right;
         if (op.is_op()) {
           if (op.as_op() == Op::ADD) {
-            EvalResultT value{left.as_scalar() + right.as_scalar()};
-            DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
-                       << ", right: " << right;
-            return value;
+            if (left.is_scalar() and right.is_scalar()) {
+              EvalResultT value{left.as_scalar() + right.as_scalar()};
+              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            } else {
+              EvalResultT value{coerce_to_vector(left) + coerce_to_vector(right)};
+              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            }
           } else if (op.as_op() == Op::SUB) {
-            EvalResultT value{left.as_scalar() - right.as_scalar()};
-            DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
-                       << ", right: " << right;
-            return value;
+            if (left.is_scalar() and right.is_scalar()) {
+              EvalResultT value{left.as_scalar() - right.as_scalar()};
+              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            } else {
+              EvalResultT value{coerce_to_vector(left) - coerce_to_vector(right)};
+              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            }
           }
         }
       }
@@ -197,15 +231,29 @@ class Interpreter final {
         DLOG(INFO) << "[Multiplicative] -- right: " << right;
         if (op.is_op()) {
           if (op.as_op() == Op::MULT) {
-            EvalResultT value{left.as_scalar() * right.as_scalar()};
-            DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
-                       << ", right: " << right;
-            return value;
+            if (left.is_scalar() and right.is_scalar()) {
+              EvalResultT value{left.as_scalar() * right.as_scalar()};
+              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            } else {
+              EvalResultT value{coerce_to_vector(left) * coerce_to_vector(right)};
+              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            }
           } else if (op.as_op() == Op::DIV) {
-            EvalResultT value{left.as_scalar() / right.as_scalar()};
-            DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
-                       << ", right: " << right;
-            return value;
+            if (left.is_scalar() and right.is_scalar()) {
+              EvalResultT value{left.as_scalar() / right.as_scalar()};
+              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            } else if (left.is_vector() and right.is_scalar()) {
+              EvalResultT value{left.as_vector() / right.as_scalar()};
+              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
+                         << ", right: " << right;
+              return value;
+            }
           }
         }
       }
