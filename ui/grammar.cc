@@ -12,7 +12,7 @@ Statement <- Assignment
            / Expression
            / Command
 
-Assignment <- LValue _ "=" _ Expression
+Assignment <- Identifier _ "=" _ Expression
 
 Identifier <- !Keyword [a-zA-Z_][a-zA-Z0-9_]*
 
@@ -30,7 +30,6 @@ Primary <- Scalar
          / RValue
          / "(" _ Expression _ ")"
 
-LValue <- Identifier
 RValue <- Identifier
 
 Scalar <- [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?

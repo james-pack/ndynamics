@@ -26,6 +26,7 @@ class EvalResult final {
   using ScalarT = typename AlgebraT::ScalarType;
 
   EvalResult() = default;
+  EvalResult(std::string&& v) : value(std::move(v)) {}
   EvalResult(ScalarT&& v) : value(std::move(v)) {}
   EvalResult(MultivectorT&& v) : value(std::move(v)) {}
   EvalResult(Command v) : value(v) {}
@@ -40,10 +41,12 @@ class EvalResult final {
   std::string message{};
   bool success{true};
 
+  bool is_identifier() const { return value.type() == typeid(std::string); }
   bool is_scalar() const { return value.type() == typeid(ScalarT); }
   bool is_vector() const { return value.type() == typeid(MultivectorT); }
   bool is_command() const { return value.type() == typeid(Command); }
 
+  std::string as_identifier() const { return std::any_cast<std::string>(value); }
   ScalarT as_scalar() const { return std::any_cast<ScalarT>(value); }
   MultivectorT as_vector() const { return std::any_cast<MultivectorT>(value); }
   Command as_command() const { return std::any_cast<Command>(value); }
@@ -51,8 +54,6 @@ class EvalResult final {
 
 template <typename AlgebraT>
 std::string to_string(const EvalResult<AlgebraT>& result) {
-  using MultivectorT = typename AlgebraT::VectorType;
-  using ScalarT = typename AlgebraT::ScalarType;
   using std::to_string;
   std::string s{};
   s.append(result.value.type().name());
@@ -63,6 +64,9 @@ std::string to_string(const EvalResult<AlgebraT>& result) {
     s.append(", ");
   } else if (result.is_vector()) {
     s.append(to_string(result.as_vector()));
+    s.append(", ");
+  } else if (result.is_identifier()) {
+    s.append(result.as_identifier());
     s.append(", ");
   }
 
@@ -104,10 +108,18 @@ class Interpreter final {
     };
 
     parser_["Assignment"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const std::string symbol{sv.token_to_string(0)};
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
-      dictionary_.insert({symbol, value});
+      LOG(INFO) << "[Assignment] -- sv.size(): " << sv.size();
+      const EvalResultT& identifier{std::any_cast<EvalResultT>(sv[0])};
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[3])};
+      LOG(INFO) << "[Assignment] -- identifier: " << identifier << ", value: " << value;
+      dictionary_.insert({identifier.as_identifier(), value});
       return value;
+    };
+
+    parser_["Identifier"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      EvalResultT identifier{sv.token_to_string()};
+      LOG(INFO) << "[Identifier] -- identifier: " << identifier;
+      return identifier;
     };
 
     parser_["Expression"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
@@ -141,7 +153,6 @@ class Interpreter final {
     };
 
     parser_["Scalar"] = [this](const peg::SemanticValues& sv) {
-      LOG(INFO) << "[Scalar] -- sv.size(): " << sv.size();
       ScalarT scalar{sv.token_to_number<ScalarT>()};
       EvalResultT value{std::move(scalar)};
       LOG(INFO) << "[Scalar] -- value: " << value;
@@ -151,33 +162,30 @@ class Interpreter final {
     parser_["RValue"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const std::string symbol{sv.token_to_string()};
       // TODO(james): Add error logic for missing symbol.
-      const auto& value{dictionary_.at(symbol)};
+      const EvalResultT& value{dictionary_.at(symbol)};
+      LOG(INFO) << "[RValue] -- value: " << value;
       return value;
     };
 
     parser_["Command"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      LOG(INFO) << "[Command] -- sv.size(): " << sv.size();
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
       LOG(INFO) << "[Command] -- value: " << value;
       return value;
     };
 
     parser_["DictCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      LOG(INFO) << "[DictCommand] -- sv.size(): " << sv.size();
       EvalResultT value{Command::DICT};
       LOG(INFO) << "[DictCommand] -- value: " << value;
       return value;
     };
 
     parser_["ExitCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      LOG(INFO) << "[ExitCommand] -- sv.size(): " << sv.size();
       EvalResultT value{Command::EXIT};
       LOG(INFO) << "[ExitCommand] -- value: " << value;
       return value;
     };
 
     parser_["HelpCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      LOG(INFO) << "[HelpCommand] -- sv.size(): " << sv.size();
       EvalResultT value{Command::HELP};
       LOG(INFO) << "[HelpCommand] -- value: " << value;
       return value;

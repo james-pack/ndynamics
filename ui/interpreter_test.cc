@@ -38,4 +38,21 @@ TEST(InterpreterTest, CanInterpretDictCommand) {
   EXPECT_EQ(Command::DICT, result.as_command());
 }
 
+TEST(InterpreterTest, CanAssignToIdentifier) {
+  static constexpr auto a{1.f};
+  Interpreter<Vga<>> interpreter{};
+  EvalResult<Vga<>> result{interpreter.eval(R"(a = 1)")};
+  LOG(INFO) << "result: " << result;
+  EXPECT_EQ(a, result.as_scalar());
+}
+
+TEST(InterpreterTest, CanEvalIdentifiers) {
+  static constexpr auto a{1.f};
+  Interpreter<Vga<>> interpreter{};
+  EvalResult<Vga<>> result1{interpreter.eval(R"(a = 1)")};
+  ASSERT_EQ(a, result1.as_scalar());
+  EvalResult<Vga<>> result2{interpreter.eval(R"(a)")};
+  EXPECT_EQ(a, result2.as_scalar());
+}
+
 }  // namespace ndyn::ui
