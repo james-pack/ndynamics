@@ -19,6 +19,15 @@ enum class Command {
   DICT,
 };
 
+enum class Op {
+  ADD,
+  SUB,
+  MULT,
+  DIV,
+  OUTER,
+  INNER,
+};
+
 template <typename AlgebraT>
 class EvalResult final {
  public:
@@ -29,6 +38,7 @@ class EvalResult final {
   EvalResult(std::string&& v) : value(std::move(v)) {}
   EvalResult(ScalarT&& v) : value(std::move(v)) {}
   EvalResult(MultivectorT&& v) : value(std::move(v)) {}
+  EvalResult(Op v) : value(v) {}
   EvalResult(Command v) : value(v) {}
 
   EvalResult(const EvalResult&) = default;
@@ -44,11 +54,13 @@ class EvalResult final {
   bool is_identifier() const { return value.type() == typeid(std::string); }
   bool is_scalar() const { return value.type() == typeid(ScalarT); }
   bool is_vector() const { return value.type() == typeid(MultivectorT); }
+  bool is_op() const { return value.type() == typeid(Op); }
   bool is_command() const { return value.type() == typeid(Command); }
 
   std::string as_identifier() const { return std::any_cast<std::string>(value); }
   ScalarT as_scalar() const { return std::any_cast<ScalarT>(value); }
   MultivectorT as_vector() const { return std::any_cast<MultivectorT>(value); }
+  Op as_op() const { return std::any_cast<Op>(value); }
   Command as_command() const { return std::any_cast<Command>(value); }
 };
 
@@ -94,9 +106,9 @@ class Interpreter final {
 
   void attach_parser_actions() {
     parser_["Line"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      LOG(INFO) << "[Line] -- sv.size(): " << sv.size();
+      DLOG(INFO) << "[Line] -- sv.size(): " << sv.size();
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
-      LOG(INFO) << "[Line] -- value: " << value;
+      DLOG(INFO) << "[Line] -- value: " << value;
       if (value.is_scalar() or value.is_vector()) {
         dictionary_.insert({"_", value});
       }
@@ -104,61 +116,137 @@ class Interpreter final {
     };
 
     parser_["Statement"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      LOG(INFO) << "[Statement] -- sv.size(): " << sv.size();
+      DLOG(INFO) << "[Statement] -- sv.size(): " << sv.size();
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      LOG(INFO) << "[Statement] -- value: " << value;
+      DLOG(INFO) << "[Statement] -- value: " << value;
       return value;
     };
 
     parser_["Assignment"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      LOG(INFO) << "[Assignment] -- sv.size(): " << sv.size();
+      DLOG(INFO) << "[Assignment] -- sv.size(): " << sv.size();
       const EvalResultT& identifier{std::any_cast<EvalResultT>(sv[0])};
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[3])};
-      LOG(INFO) << "[Assignment] -- identifier: " << identifier << ", value: " << value;
+      DLOG(INFO) << "[Assignment] -- identifier: " << identifier << ", value: " << value;
       dictionary_.insert({identifier.as_identifier(), value});
       return value;
     };
 
     parser_["Identifier"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       EvalResultT identifier{sv.token_to_string()};
-      LOG(INFO) << "[Identifier] -- identifier: " << identifier;
+      DLOG(INFO) << "[Identifier] -- identifier: " << identifier;
       return identifier;
     };
 
     parser_["Expression"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      LOG(INFO) << "[Expression] -- value: " << value;
+      DLOG(INFO) << "[Expression] -- value: " << value;
       return value;
     };
 
     parser_["Additive"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      LOG(INFO) << "[Additive] -- value: " << value;
+      DLOG(INFO) << "[Additive] -- sv.size(): " << sv.size();
+      if (sv.size() == 1) {
+        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
+        DLOG(INFO) << "[Additive] -- value: " << value;
+        return value;
+      } else if (sv.size() == 5) {
+        const EvalResultT& op = std::any_cast<EvalResultT>(sv[2]);
+        DLOG(INFO) << "[Additive] -- op: " << op;
+        const EvalResultT& left{std::any_cast<EvalResultT>(sv[0])};
+        DLOG(INFO) << "[Additive] -- left: " << left;
+        const EvalResultT& right{std::any_cast<EvalResultT>(sv[4])};
+        DLOG(INFO) << "[Additive] -- right: " << right;
+        if (op.is_op()) {
+          if (op.as_op() == Op::ADD) {
+            EvalResultT value{left.as_scalar() + right.as_scalar()};
+            DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
+                       << ", right: " << right;
+            return value;
+          } else if (op.as_op() == Op::SUB) {
+            EvalResultT value{left.as_scalar() - right.as_scalar()};
+            DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
+                       << ", right: " << right;
+            return value;
+          }
+        }
+      }
+    };
+
+    parser_["AddOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      EvalResultT value{Op::ADD};
+      return value;
+    };
+
+    parser_["SubOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      EvalResultT value{Op::SUB};
       return value;
     };
 
     parser_["Multiplicative"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      LOG(INFO) << "[Multiplicative] -- value: " << value;
+      DLOG(INFO) << "[Multiplicative] -- sv.size(): " << sv.size();
+      if (sv.size() == 1) {
+        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
+        DLOG(INFO) << "[Multiplicative] -- value: " << value;
+        return value;
+      } else if (sv.size() == 5) {
+        const EvalResultT& op = std::any_cast<EvalResultT>(sv[2]);
+        DLOG(INFO) << "[Multiplicative] -- op: " << op;
+        const EvalResultT& left{std::any_cast<EvalResultT>(sv[0])};
+        DLOG(INFO) << "[Multiplicative] -- left: " << left;
+        const EvalResultT& right{std::any_cast<EvalResultT>(sv[4])};
+        DLOG(INFO) << "[Multiplicative] -- right: " << right;
+        if (op.is_op()) {
+          if (op.as_op() == Op::MULT) {
+            EvalResultT value{left.as_scalar() * right.as_scalar()};
+            DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
+                       << ", right: " << right;
+            return value;
+          } else if (op.as_op() == Op::DIV) {
+            EvalResultT value{left.as_scalar() / right.as_scalar()};
+            DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
+                       << ", right: " << right;
+            return value;
+          }
+        }
+      }
+    };
+
+    parser_["MultOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      EvalResultT value{Op::MULT};
+      return value;
+    };
+
+    parser_["DivOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      EvalResultT value{Op::DIV};
+      return value;
+    };
+
+    parser_["OuterOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      EvalResultT value{Op::OUTER};
+      return value;
+    };
+
+    parser_["InnerOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      EvalResultT value{Op::INNER};
       return value;
     };
 
     parser_["Unary"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      LOG(INFO) << "[Unary] -- value: " << value;
+      DLOG(INFO) << "[Unary] -- value: " << value;
       return value;
     };
 
     parser_["Primary"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      LOG(INFO) << "[Primary] -- value: " << value;
+      DLOG(INFO) << "[Primary] -- value: " << value;
       return value;
     };
 
     parser_["Scalar"] = [this](const peg::SemanticValues& sv) {
       ScalarT scalar{sv.token_to_number<ScalarT>()};
       EvalResultT value{std::move(scalar)};
-      LOG(INFO) << "[Scalar] -- value: " << value;
+      DLOG(INFO) << "[Scalar] -- value: " << value;
       return value;
     };
 
@@ -166,31 +254,31 @@ class Interpreter final {
       const std::string symbol{sv.token_to_string()};
       // TODO(james): Add error logic for missing symbol.
       const EvalResultT& value{dictionary_.at(symbol)};
-      LOG(INFO) << "[RValue] -- value: " << value;
+      DLOG(INFO) << "[RValue] -- value: " << value;
       return value;
     };
 
     parser_["Command"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      LOG(INFO) << "[Command] -- value: " << value;
+      DLOG(INFO) << "[Command] -- value: " << value;
       return value;
     };
 
     parser_["DictCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       EvalResultT value{Command::DICT};
-      LOG(INFO) << "[DictCommand] -- value: " << value;
+      DLOG(INFO) << "[DictCommand] -- value: " << value;
       return value;
     };
 
     parser_["ExitCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       EvalResultT value{Command::EXIT};
-      LOG(INFO) << "[ExitCommand] -- value: " << value;
+      DLOG(INFO) << "[ExitCommand] -- value: " << value;
       return value;
     };
 
     parser_["HelpCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       EvalResultT value{Command::HELP};
-      LOG(INFO) << "[HelpCommand] -- value: " << value;
+      DLOG(INFO) << "[HelpCommand] -- value: " << value;
       return value;
     };
   }

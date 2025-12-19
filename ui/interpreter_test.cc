@@ -58,10 +58,120 @@ TEST(InterpreterTest, CanEvalIdentifiers) {
 TEST(InterpreterTest, StoresResultOfLastEvaluation) {
   static constexpr auto a{1.f};
   Interpreter<Vga<>> interpreter{};
-  EvalResult<Vga<>> result1{interpreter.eval(R"(a = 1)")};
-  ASSERT_EQ(a, result1.as_scalar());
-  EvalResult<Vga<>> result2{interpreter.eval(R"(_)")};
-  EXPECT_EQ(a, result2.as_scalar());
+
+  const char* expressions[] = {
+      R"(1)",      //
+      R"(_)",      //
+      R"(a = 1)",  //
+      R"(_)",      //
+      R"(4-3)",    //
+      R"(_)",      //
+  };
+
+  for (const auto& expression : expressions) {
+    EvalResult<Vga<>> result{interpreter.eval(expression)};
+    EXPECT_EQ(a, result.as_scalar());
+  }
+}
+
+TEST(InterpreterTest, CanAddScalars) {
+  static constexpr auto a{1.f};
+  static constexpr auto b{2.f};
+  Interpreter<Vga<>> interpreter{};
+
+  const char* expressions[] = {
+      R"(1 + 2)",   //
+      R"(1+2)",     //
+      R"(1 +2)",    //
+      R"(1+ 2)",    //
+      R"( 1 + 2)",  //
+      R"( 1+2)",    //
+      R"( 1 +2)",   //
+      R"( 1+ 2)",   //
+      R"(1 + 2 )",  //
+      R"(1+2 )",    //
+      R"(1 +2 )",   //
+      R"(1+ 2 )",   //
+  };
+  for (const auto& expression : expressions) {
+    EvalResult<Vga<>> result{interpreter.eval(expression)};
+    EXPECT_EQ(a + b, result.as_scalar());
+  }
+}
+
+TEST(InterpreterTest, CanSubtractScalars) {
+  static constexpr auto a{4.f};
+  static constexpr auto b{3.f};
+  Interpreter<Vga<>> interpreter{};
+
+  const char* expressions[] = {
+      R"(4 - 3)",   //
+      R"(4-3)",     //
+      R"(4 -3)",    //
+      R"(4- 3)",    //
+      R"( 4 - 3)",  //
+      R"( 4-3)",    //
+      R"( 4 -3)",   //
+      R"( 4- 3)",   //
+      R"(4 - 3 )",  //
+      R"(4-3 )",    //
+      R"(4 -3 )",   //
+      R"(4- 3 )",   //
+  };
+  for (const auto& expression : expressions) {
+    EvalResult<Vga<>> result{interpreter.eval(expression)};
+    EXPECT_EQ(a - b, result.as_scalar());
+  }
+}
+
+TEST(InterpreterTest, CanMultiplyScalars) {
+  static constexpr auto a{4.f};
+  static constexpr auto b{3.f};
+  Interpreter<Vga<>> interpreter{};
+
+  const char* expressions[] = {
+      R"(4 * 3)",   //
+      R"(4*3)",     //
+      R"(4 *3)",    //
+      R"(4* 3)",    //
+      R"( 4 * 3)",  //
+      R"( 4*3)",    //
+      R"( 4 *3)",   //
+      R"( 4* 3)",   //
+      R"(4 * 3 )",  //
+      R"(4*3 )",    //
+      R"(4 *3 )",   //
+      R"(4* 3 )",   //
+  };
+  for (const auto& expression : expressions) {
+    EvalResult<Vga<>> result{interpreter.eval(expression)};
+    EXPECT_EQ(a * b, result.as_scalar());
+  }
+}
+
+TEST(InterpreterTest, CanDivideScalars) {
+  static constexpr auto a{4.f};
+  static constexpr auto b{3.f};
+  Interpreter<Vga<>> interpreter{};
+
+  const char* expressions[] = {
+      R"(4 / 3)",   //
+      R"(4/3)",     //
+      R"(4 /3)",    //
+      R"(4/ 3)",    //
+      R"( 4 / 3)",  //
+      R"( 4/3)",    //
+      R"( 4 /3)",   //
+      R"( 4/ 3)",   //
+      R"(4 / 3 )",  //
+      R"(4/3 )",    //
+      R"(4 /3 )",   //
+      R"(4/ 3 )",   //
+  };
+  for (const auto& expression : expressions) {
+    EvalResult<Vga<>> result{interpreter.eval(expression)};
+    EXPECT_EQ(a / b, result.as_scalar());
+  }
 }
 
 }  // namespace ndyn::ui

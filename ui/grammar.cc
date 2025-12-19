@@ -20,9 +20,15 @@ Keyword <- Command / "algebra" / "metric"
 
 Expression <- Additive
 
-Additive <- Multiplicative ( _ ("+" / "-") _ Additive )?
+Additive <- Multiplicative ( _ ( AddOp / SubOp ) _ Additive )?
+AddOp <- "+"
+SubOp <- "-"
 
-Multiplicative <- Unary ( _ ( "*" / "^" / "|" ) _ Multiplicative )?
+Multiplicative <- Unary ( _ ( MultOp / DivOp / OuterOp / InnerOp ) _ Multiplicative )?
+MultOp <- "*"
+DivOp <- "/"
+OuterOp <- "^"
+InnerOp <- "|"
 
 Unary <- [+-]? Primary
 
@@ -35,7 +41,7 @@ RValue <- Identifier
 Scalar <- [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?
 
 Command <- DictCommand / ExitCommand / HelpCommand
-DictCommand <- "dict"
+DictCommand <- "dict" ( _ ("-l" / "--long") )?
 ExitCommand <- "exit"
 HelpCommand <- "help"
 
