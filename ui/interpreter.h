@@ -1,7 +1,10 @@
 #pragma once
 
+#include <any>
+#include <ostream>
 #include <string>
 #include <string_view>
+#include <typeinfo>
 #include <unordered_map>
 
 #include "math/multivector.h"
@@ -10,9 +13,75 @@
 
 namespace ndyn::ui {
 
+enum class Command {
+  HELP,
+  EXIT,
+  DICT,
+};
+
+template <typename AlgebraT>
+class EvalResult final {
+ public:
+  using MultivectorT = typename AlgebraT::VectorType;
+  using ScalarT = typename AlgebraT::ScalarType;
+
+  EvalResult() = default;
+  EvalResult(ScalarT&& v) : value(std::move(v)) {}
+  EvalResult(MultivectorT&& v) : value(std::move(v)) {}
+  EvalResult(Command v) : value(v) {}
+
+  EvalResult(const EvalResult&) = default;
+  EvalResult(EvalResult&&) = default;
+
+  EvalResult& operator=(const EvalResult&) = default;
+  EvalResult& operator=(EvalResult&&) = default;
+
+  std::any value{};
+  std::string message{};
+  bool success{true};
+
+  bool is_scalar() const { return value.type() == typeid(ScalarT); }
+  bool is_vector() const { return value.type() == typeid(MultivectorT); }
+  bool is_command() const { return value.type() == typeid(Command); }
+
+  ScalarT as_scalar() const { return std::any_cast<ScalarT>(value); }
+  MultivectorT as_vector() const { return std::any_cast<MultivectorT>(value); }
+  Command as_command() const { return std::any_cast<Command>(value); }
+};
+
+template <typename AlgebraT>
+std::string to_string(const EvalResult<AlgebraT>& result) {
+  using MultivectorT = typename AlgebraT::VectorType;
+  using ScalarT = typename AlgebraT::ScalarType;
+  using std::to_string;
+  std::string s{};
+  s.append(result.value.type().name());
+  s.append(", ");
+
+  if (result.is_scalar()) {
+    s.append(to_string(result.as_scalar()));
+    s.append(", ");
+  } else if (result.is_vector()) {
+    s.append(to_string(result.as_vector()));
+    s.append(", ");
+  }
+
+  s.append(result.message);
+  s.append(", ");
+  s.append(result.success ? "success" : "fail");
+  return s;
+}
+
+template <typename AlgebraT>
+std::ostream& operator<<(std::ostream& os, const EvalResult<AlgebraT>& result) {
+  os << to_string(result);
+  return os;
+}
+
 template <typename AlgebraT>
 class Interpreter final {
  public:
+  using EvalResultT = EvalResult<AlgebraT>;
   using MultivectorT = typename AlgebraT::VectorType;
   using ScalarT = typename AlgebraT::ScalarType;
 
@@ -20,83 +89,108 @@ class Interpreter final {
   peg::parser parser_{create_parser()};
 
   void attach_parser_actions() {
-    parser_["Line"] = [this](const peg::SemanticValues& sv) {
+    parser_["Line"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       LOG(INFO) << "[Line] -- sv.size(): " << sv.size();
-      for (size_t i = 0; i < sv.size(); ++i) {
-        LOG(INFO) << "[Line] -- sv[" << i << "]: " << sv.token_to_string(i);
-      }
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[1])};
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
       LOG(INFO) << "[Line] -- value: " << value;
       return value;
     };
 
-    parser_["Statement"] = [this](const peg::SemanticValues& sv) {
+    parser_["Statement"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       LOG(INFO) << "[Statement] -- sv.size(): " << sv.size();
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[0])};
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
       LOG(INFO) << "[Statement] -- value: " << value;
       return value;
     };
 
-    parser_["Assignment"] = [this](const peg::SemanticValues& sv) {
+    parser_["Assignment"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const std::string symbol{sv.token_to_string(0)};
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[1])};
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
       dictionary_.insert({symbol, value});
       return value;
     };
 
-    parser_["Expression"] = [this](const peg::SemanticValues& sv) {
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[0])};
+    parser_["Expression"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
       LOG(INFO) << "[Expression] -- value: " << value;
       return value;
     };
 
-    parser_["Additive"] = [this](const peg::SemanticValues& sv) {
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[0])};
+    parser_["Additive"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
       LOG(INFO) << "[Additive] -- value: " << value;
       return value;
     };
 
-    parser_["Multiplicative"] = [this](const peg::SemanticValues& sv) {
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[0])};
+    parser_["Multiplicative"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
       LOG(INFO) << "[Multiplicative] -- value: " << value;
       return value;
     };
 
-    parser_["Unary"] = [this](const peg::SemanticValues& sv) {
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[0])};
+    parser_["Unary"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
       LOG(INFO) << "[Unary] -- value: " << value;
       return value;
     };
 
-    parser_["Primary"] = [this](const peg::SemanticValues& sv) {
-      const MultivectorT& value{std::any_cast<MultivectorT>(sv[0])};
+    parser_["Primary"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
       LOG(INFO) << "[Primary] -- value: " << value;
       return value;
     };
 
     parser_["Scalar"] = [this](const peg::SemanticValues& sv) {
-      const ScalarT scalar{sv.token_to_number<ScalarT>()};
-      MultivectorT value{scalar};
+      LOG(INFO) << "[Scalar] -- sv.size(): " << sv.size();
+      ScalarT scalar{sv.token_to_number<ScalarT>()};
+      EvalResultT value{std::move(scalar)};
       LOG(INFO) << "[Scalar] -- value: " << value;
       return value;
     };
 
-    parser_["RValue"] = [this](const peg::SemanticValues& sv) {
+    parser_["RValue"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const std::string symbol{sv.token_to_string()};
       // TODO(james): Add error logic for missing symbol.
       const auto& value{dictionary_.at(symbol)};
       return value;
     };
+
+    parser_["Command"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      LOG(INFO) << "[Command] -- sv.size(): " << sv.size();
+      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
+      LOG(INFO) << "[Command] -- value: " << value;
+      return value;
+    };
+
+    parser_["DictCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      LOG(INFO) << "[DictCommand] -- sv.size(): " << sv.size();
+      EvalResultT value{Command::DICT};
+      LOG(INFO) << "[DictCommand] -- value: " << value;
+      return value;
+    };
+
+    parser_["ExitCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      LOG(INFO) << "[ExitCommand] -- sv.size(): " << sv.size();
+      EvalResultT value{Command::EXIT};
+      LOG(INFO) << "[ExitCommand] -- value: " << value;
+      return value;
+    };
+
+    parser_["HelpCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
+      LOG(INFO) << "[HelpCommand] -- sv.size(): " << sv.size();
+      EvalResultT value{Command::HELP};
+      LOG(INFO) << "[HelpCommand] -- value: " << value;
+      return value;
+    };
   }
 
-  std::unordered_map<std::string, MultivectorT> dictionary_{};
+  std::unordered_map<std::string, EvalResultT> dictionary_{};
 
  public:
   Interpreter() { attach_parser_actions(); }
 
-  MultivectorT eval(std::string_view phrase) {
-    // TODO(james): Find a way to create an error result.
-    MultivectorT result{};
+  EvalResultT eval(std::string_view phrase) {
+    EvalResultT result{};
     parser_.parse(phrase, result);
     return result;
   }
