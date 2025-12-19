@@ -97,6 +97,9 @@ class Interpreter final {
       LOG(INFO) << "[Line] -- sv.size(): " << sv.size();
       const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
       LOG(INFO) << "[Line] -- value: " << value;
+      if (value.is_scalar() or value.is_vector()) {
+        dictionary_.insert({"_", value});
+      }
       return value;
     };
 

@@ -55,4 +55,13 @@ TEST(InterpreterTest, CanEvalIdentifiers) {
   EXPECT_EQ(a, result2.as_scalar());
 }
 
+TEST(InterpreterTest, StoresResultOfLastEvaluation) {
+  static constexpr auto a{1.f};
+  Interpreter<Vga<>> interpreter{};
+  EvalResult<Vga<>> result1{interpreter.eval(R"(a = 1)")};
+  ASSERT_EQ(a, result1.as_scalar());
+  EvalResult<Vga<>> result2{interpreter.eval(R"(_)")};
+  EXPECT_EQ(a, result2.as_scalar());
+}
+
 }  // namespace ndyn::ui
