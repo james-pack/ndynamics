@@ -10,6 +10,7 @@
 #include "math/multivector.h"
 #include "peglib.h"
 #include "ui/grammar.h"
+#include "ui/representations.h"
 
 namespace ndyn::ui {
 
@@ -28,6 +29,19 @@ enum class Op {
   INNER,
 };
 
+enum class Error {
+  MISSING_SYMBOL,
+};
+std::string to_string(Error error) {
+  std::string result{};
+  switch (error) {
+    case Error::MISSING_SYMBOL:
+      result.append("MISSING_SYMBOL");
+      break;
+  }
+  return result;
+}
+
 template <typename AlgebraT>
 class EvalResult final {
  public:
@@ -38,8 +52,12 @@ class EvalResult final {
   EvalResult(std::string&& v) : value(std::move(v)) {}
   EvalResult(ScalarT&& v) : value(std::move(v)) {}
   EvalResult(MultivectorT&& v) : value(std::move(v)) {}
+  EvalResult(const MultivectorT& v) : value(v) {}
   EvalResult(Op v) : value(v) {}
   EvalResult(Command v) : value(v) {}
+  EvalResult(Error v) : value(v), success(false) {}
+  EvalResult(Error v, std::string&& msg)
+      : value(std::move(v)), message(std::move(msg)), success(false) {}
 
   EvalResult(const EvalResult&) = default;
   EvalResult(EvalResult&&) = default;
@@ -56,12 +74,14 @@ class EvalResult final {
   bool is_vector() const { return value.type() == typeid(MultivectorT); }
   bool is_op() const { return value.type() == typeid(Op); }
   bool is_command() const { return value.type() == typeid(Command); }
+  bool is_error() const { return value.type() == typeid(Error); }
 
   std::string as_identifier() const { return std::any_cast<std::string>(value); }
   ScalarT as_scalar() const { return std::any_cast<ScalarT>(value); }
   MultivectorT as_vector() const { return std::any_cast<MultivectorT>(value); }
   Op as_op() const { return std::any_cast<Op>(value); }
   Command as_command() const { return std::any_cast<Command>(value); }
+  Error as_error() const { return std::any_cast<Error>(value); }
 };
 
 template <typename AlgebraT>
@@ -75,10 +95,13 @@ std::string to_string(const EvalResult<AlgebraT>& result) {
     s.append(to_string(result.as_scalar()));
     s.append(", ");
   } else if (result.is_vector()) {
-    s.append(to_string(result.as_vector()));
+    s.append(Bases<AlgebraT>::to_string(result.as_vector()));
     s.append(", ");
   } else if (result.is_identifier()) {
     s.append(result.as_identifier());
+    s.append(", ");
+  } else if (result.is_error()) {
+    s.append(to_string(result.as_error()));
     s.append(", ");
   }
 
@@ -229,6 +252,15 @@ class Interpreter final {
         DLOG(INFO) << "[Multiplicative] -- left: " << left;
         const EvalResultT& right{std::any_cast<EvalResultT>(sv[4])};
         DLOG(INFO) << "[Multiplicative] -- right: " << right;
+        if (left.is_error()) {
+          return left;
+        }
+        if (right.is_error()) {
+          return right;
+        }
+        if (op.is_error()) {
+          return op;
+        }
         if (op.is_op()) {
           if (op.as_op() == Op::MULT) {
             if (left.is_scalar() and right.is_scalar()) {
@@ -300,10 +332,17 @@ class Interpreter final {
 
     parser_["RValue"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
       const std::string symbol{sv.token_to_string()};
-      // TODO(james): Add error logic for missing symbol.
-      const EvalResultT& value{dictionary_.at(symbol)};
-      DLOG(INFO) << "[RValue] -- value: " << value;
-      return value;
+      if (dictionary_.find(symbol) != dictionary_.end()) {
+        const EvalResultT& value{dictionary_.at(symbol)};
+        DLOG(INFO) << "[RValue] -- value: " << value;
+        return value;
+      } else {
+        std::string msg{};
+        msg.append(" No such symbol '").append(symbol).append("'");
+        const EvalResultT value{Error::MISSING_SYMBOL, std::move(msg)};
+        DLOG(INFO) << "[RValue] -- value: " << value;
+        return value;
+      }
     };
 
     parser_["Command"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
@@ -331,10 +370,20 @@ class Interpreter final {
     };
   }
 
+  void seed_dictionary() {
+    Bases<AlgebraT> bases{};
+    for (const auto& entry : bases.bases()) {
+      dictionary_.insert({std::string(entry.name), EvalResultT{entry.basis}});
+    }
+  }
+
   std::unordered_map<std::string, EvalResultT> dictionary_{};
 
  public:
-  Interpreter() { attach_parser_actions(); }
+  Interpreter() {
+    attach_parser_actions();
+    seed_dictionary();
+  }
 
   EvalResultT eval(std::string_view phrase) {
     EvalResultT result{};
