@@ -8,6 +8,7 @@ cc_library(
         "algebra_options.h",
         "grammar.h",
         "interpreter.h",
+        "repl.h",
         "representations.h",
     ],
     visibility = ["//visibility:public"],
