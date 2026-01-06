@@ -11,6 +11,20 @@ struct BasisName final {
   math::Multivector<AlgebraT> basis;
 };
 
+template <typename ScalarType>
+std::string vector_element_to_string(ScalarType s, std::string_view base_name) {
+  using std::to_string;
+  std::string result{};
+  if (abs(s) > 0.000001) {
+    result.append(to_string(s));
+    if (!base_name.empty()) {
+      result.append("*");
+      result.append(base_name);
+    }
+  }
+  return result;
+}
+
 /**
  * Class to hold the name of each basis multivector for each algebra.
  */
@@ -32,6 +46,37 @@ class Bases final {
 };
 
 template <>
+class Bases<math::Complex<>> final {
+ public:
+  using AlgebraType = math::Complex<>;
+  static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+
+ private:
+  static constexpr std::array<BasisName<AlgebraType>, BASES_COUNT> bases_{
+      BasisName<AlgebraType>{"i", math::Multivector<AlgebraType>::e<0>()},
+  };
+
+ public:
+  constexpr Bases() = default;
+
+  static constexpr const std::array<BasisName<AlgebraType>, BASES_COUNT>& bases() { return bases_; }
+
+  static std::string to_string(const math::Multivector<AlgebraType>& vec) {
+    std::string result{vector_element_to_string(vec.scalar(), "")};
+    for (size_t i = 1; i < BASES_COUNT; ++i) {
+      std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
+      if (!basis_result.empty()) {
+        if (!result.empty()) {
+          result.append(" + ");
+        }
+        result.append(basis_result);
+      }
+    }
+    return result;
+  }
+};
+
+template <>
 class Bases<math::Vga<>> final {
  public:
   using AlgebraType = math::Vga<>;
@@ -41,8 +86,8 @@ class Bases<math::Vga<>> final {
   static constexpr std::array<BasisName<AlgebraType>, BASES_COUNT> bases_{
       BasisName<AlgebraType>{"e1", math::Multivector<AlgebraType>::e<0>()},
       {"e2", math::Multivector<AlgebraType>::e<1>()},
-      {"e3", math::Multivector<AlgebraType>::e<2>()},
       {"e12", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<1>()},
+      {"e3", math::Multivector<AlgebraType>::e<2>()},
       {"e13", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<2>()},
       {"e23", math::Multivector<AlgebraType>::e<1>() * math::Multivector<AlgebraType>::e<2>()},
       {"e123", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<1>() *
@@ -55,7 +100,17 @@ class Bases<math::Vga<>> final {
   static constexpr const std::array<BasisName<AlgebraType>, BASES_COUNT>& bases() { return bases_; }
 
   static std::string to_string(const math::Multivector<AlgebraType>& vec) {
-    return math::to_string(vec);
+    std::string result{vector_element_to_string(vec.scalar(), "")};
+    for (size_t i = 1; i < BASES_COUNT; ++i) {
+      std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
+      if (!basis_result.empty()) {
+        if (!result.empty()) {
+          result.append(" + ");
+        }
+        result.append(basis_result);
+      }
+    }
+    return result;
   }
 };
 
@@ -78,7 +133,17 @@ class Bases<math::Vga2d<>> final {
   static constexpr const std::array<BasisName<AlgebraType>, BASES_COUNT>& bases() { return bases_; }
 
   static std::string to_string(const math::Multivector<AlgebraType>& vec) {
-    return math::to_string(vec);
+    std::string result{vector_element_to_string(vec.scalar(), "")};
+    for (size_t i = 1; i < BASES_COUNT; ++i) {
+      std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
+      if (!basis_result.empty()) {
+        if (!result.empty()) {
+          result.append(" + ");
+        }
+        result.append(basis_result);
+      }
+    }
+    return result;
   }
 };
 
