@@ -20,6 +20,8 @@ struct AlgebraName {
  * Mapping of the name of the Algebra to its enum value.
  */
 static constexpr std::array ALGEBRA_NAMES{
+    AlgebraName{"scalar", Algebras::Scalar},
+    AlgebraName{"complex", Algebras::Complex},
     AlgebraName{"euclid2d", Algebras::Euclid2d},
     AlgebraName{"euclid3d", Algebras::Euclid3d},
 };

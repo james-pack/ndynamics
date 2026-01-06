@@ -12,6 +12,8 @@ namespace ndyn::ui {
 enum class Algebras {
   Euclid2d,
   Euclid3d,
+  Complex,
+  Scalar,
 };
 
 std::string_view algebra_to_string(Algebras algebra);
