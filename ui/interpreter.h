@@ -181,9 +181,12 @@ class Interpreter final {
     };
 
     parser_["Expression"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      DLOG(INFO) << "[Expression] -- value: " << value;
-      return value;
+      DLOG(INFO) << "[Expression] -- sv.size(): " << sv.size();
+      if (sv.size() == 1) {
+        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
+        DLOG(INFO) << "[Expression] -- value: " << value;
+        return value;
+      }
     };
 
     parser_["Additive"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
@@ -318,9 +321,16 @@ class Interpreter final {
     };
 
     parser_["Primary"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      DLOG(INFO) << "[Primary] -- value: " << value;
-      return value;
+      DLOG(INFO) << "[Primary] -- sv.size(): " << sv.size();
+      if (sv.size() == 1) {
+        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
+        DLOG(INFO) << "[Primary] -- value: " << value;
+        return value;
+      } else if (sv.size() == 3) {
+        const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
+        DLOG(INFO) << "[Primary] -- value: " << value;
+        return value;
+      }
     };
 
     parser_["Scalar"] = [this](const peg::SemanticValues& sv) {
