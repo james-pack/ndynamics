@@ -32,6 +32,7 @@ enum class Op {
 enum class Error {
   MISSING_SYMBOL,
 };
+
 std::string to_string(Error error) {
   std::string result{};
   switch (error) {
@@ -88,26 +89,22 @@ template <typename AlgebraT>
 std::string to_string(const EvalResult<AlgebraT>& result) {
   using std::to_string;
   std::string s{};
-  s.append(result.value.type().name());
-  s.append(", ");
-
   if (result.is_scalar()) {
     s.append(to_string(result.as_scalar()));
-    s.append(", ");
   } else if (result.is_vector()) {
     s.append(Bases<AlgebraT>::to_string(result.as_vector()));
-    s.append(", ");
   } else if (result.is_identifier()) {
     s.append(result.as_identifier());
-    s.append(", ");
   } else if (result.is_error()) {
+    s.append("FAIL: ");
     s.append(to_string(result.as_error()));
-    s.append(", ");
   }
 
-  s.append(result.message);
-  s.append(", ");
-  s.append(result.success ? "success" : "fail");
+  if (!result.message.empty()) {
+
+    s.append(" (").append(result.message).append(")");
+
+  }
   return s;
 }
 
