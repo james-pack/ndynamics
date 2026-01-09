@@ -38,11 +38,11 @@ Primary <- Scalar
 
 RValue <- Identifier
 
-Scalar <- [+-]? [0-9]+ ("." [0-9]+)? ([eE] [+-]? [0-9]+)?
+Scalar <- [+-]? [0-9]+ ("." [0-9]+)?
 
 Command <- DictCommand / ExitCommand / HelpCommand
 DictCommand <- "dict" ( _ ("-l" / "--long") )?
-ExitCommand <- "exit"
+ExitCommand <- "exit" / "quit"
 HelpCommand <- "help"
 
 _ <- [ \t]*
