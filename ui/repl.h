@@ -3,7 +3,12 @@
 #include <iostream>
 #include <string>
 
+#include "gflags/gflags.h"
+#include "ui/ast_printer.h"
+#include "ui/grammar.h"
 #include "ui/interpreter.h"
+
+DECLARE_bool(show_ast);
 
 namespace ndyn::ui {
 
@@ -13,34 +18,49 @@ class Repl final {
   using AlgebraType = AlgebraT;
 
  private:
+  std::string line_{};
+  std::shared_ptr<LineAst> ast_{};
+  Grammar parser_{};
   Interpreter<AlgebraType> interpreter_{};
 
  public:
   void prompt() const { std::cout << "% " << std::flush; }
 
-  std::string read() const {
-    std::string line;
-    std::getline(std::cin, line);
-    return line;
+  void read() { std::getline(std::cin, line_); }
+
+  void eval() {
+    bool success = parser_.parse(line_, ast_);
+    if (success) {
+      if (FLAGS_show_ast) {
+        print_ast(*ast_);
+      }
+      interpreter_.interpret(*ast_);
+    }
   }
 
-  EvalResult<AlgebraType> eval(const std::string& line) { return interpreter_.eval(line); }
-
-  void print(const EvalResult<AlgebraType>& result) const {
-    std::string output{to_string(result)};
-    std::cout << output << "\n";
+  void print() const {
+    if (!interpreter_.success) {
+      std::cout << "[FAIL] ";
+    }
+    if (interpreter_.was_value) {
+      std::cout << to_string(interpreter_.current_value);
+    }
+    if (!interpreter_.message.empty()) {
+      std::cout << interpreter_.message;
+    }
+    std::cout << "\n";
   }
 
-  void run_once() {
+  bool run_once() {
     prompt();
-    std::string line{read()};
-    EvalResult<AlgebraType> result{eval(line)};
-    print(result);
+    read();
+    eval();
+    print();
+    return true;
   }
 
-  [[noreturn]] void loop() {
-    while (true) {
-      run_once();
+  void loop() {
+    while (run_once()) {
     }
   }
 };

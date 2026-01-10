@@ -1,401 +1,146 @@
 #pragma once
 
-#include <any>
-#include <ostream>
+#include <stdexcept>
 #include <string>
-#include <string_view>
-#include <typeinfo>
 #include <unordered_map>
 
-#include "math/multivector.h"
-#include "peglib.h"
+#include "base/except.h"
 #include "ui/grammar.h"
 #include "ui/representations.h"
 
 namespace ndyn::ui {
 
-enum class Command {
-  HELP,
-  EXIT,
-  DICT,
-};
+template <typename AlgebraType>
+struct Interpreter : Visitor {
+  using VectorType = typename AlgebraType::VectorType;
+  using ScalarType = typename AlgebraType::ScalarType;
 
-enum class Op {
-  ADD,
-  SUB,
-  MULT,
-  DIV,
-  OUTER,
-  INNER,
-};
+  // Global symbol table
+  std::unordered_map<std::string, VectorType> symbols{};
 
-enum class Error {
-  MISSING_SYMBOL,
-};
-
-std::string to_string(Error error) {
-  std::string result{};
-  switch (error) {
-    case Error::MISSING_SYMBOL:
-      result.append("MISSING_SYMBOL");
-      break;
-  }
-  return result;
-}
-
-template <typename AlgebraT>
-class EvalResult final {
- public:
-  using MultivectorT = typename AlgebraT::VectorType;
-  using ScalarT = typename AlgebraT::ScalarType;
-
-  EvalResult() = default;
-  EvalResult(std::string&& v) : value(std::move(v)) {}
-  EvalResult(ScalarT&& v) : value(std::move(v)) {}
-  EvalResult(MultivectorT&& v) : value(std::move(v)) {}
-  EvalResult(const MultivectorT& v) : value(v) {}
-  EvalResult(Op v) : value(v) {}
-  EvalResult(Command v) : value(v) {}
-  EvalResult(Error v) : value(v), success(false) {}
-  EvalResult(Error v, std::string&& msg)
-      : value(std::move(v)), message(std::move(msg)), success(false) {}
-
-  EvalResult(const EvalResult&) = default;
-  EvalResult(EvalResult&&) = default;
-
-  EvalResult& operator=(const EvalResult&) = default;
-  EvalResult& operator=(EvalResult&&) = default;
-
-  std::any value{};
+  // Result of the last evaluated expression.
+  VectorType current_value{};
   std::string message{};
   bool success{true};
+  bool was_value{true};
 
-  bool is_identifier() const { return value.type() == typeid(std::string); }
-  bool is_scalar() const { return value.type() == typeid(ScalarT); }
-  bool is_vector() const { return value.type() == typeid(MultivectorT); }
-  bool is_op() const { return value.type() == typeid(Op); }
-  bool is_command() const { return value.type() == typeid(Command); }
-  bool is_error() const { return value.type() == typeid(Error); }
+  // Hooks for value semantics.
+  VectorType add(const VectorType& a, const VectorType& b) { return a + b; }
 
-  std::string as_identifier() const { return std::any_cast<std::string>(value); }
-  ScalarT as_scalar() const { return std::any_cast<ScalarT>(value); }
-  MultivectorT as_vector() const { return std::any_cast<MultivectorT>(value); }
-  Op as_op() const { return std::any_cast<Op>(value); }
-  Command as_command() const { return std::any_cast<Command>(value); }
-  Error as_error() const { return std::any_cast<Error>(value); }
-};
+  VectorType sub(const VectorType& a, const VectorType& b) { return a - b; }
 
-template <typename AlgebraT>
-std::string to_string(const EvalResult<AlgebraT>& result) {
-  using std::to_string;
-  std::string s{};
-  if (result.is_scalar()) {
-    s.append(to_string(result.as_scalar()));
-  } else if (result.is_vector()) {
-    s.append(Bases<AlgebraT>::to_string(result.as_vector()));
-  } else if (result.is_identifier()) {
-    s.append(result.as_identifier());
-  } else if (result.is_error()) {
-    s.append("FAIL: ");
-    s.append(to_string(result.as_error()));
-  }
+  VectorType mul(const VectorType& a, const VectorType& b) { return a * b; }
 
-  if (!result.message.empty()) {
+  // VectorType div(const VectorType& a, const VectorType& b) { return a / b; }
 
-    s.append(" (").append(result.message).append(")");
+  VectorType outer(const VectorType& a, const VectorType& b) { return a.outer(b); }
 
-  }
-  return s;
-}
+  VectorType inner(const VectorType& a, const VectorType& b) { return a.inner(b); }
 
-template <typename AlgebraT>
-std::ostream& operator<<(std::ostream& os, const EvalResult<AlgebraT>& result) {
-  os << to_string(result);
-  return os;
-}
+  VectorType neg(const VectorType& v) { return -v; }
 
-template <typename AlgebraT>
-typename AlgebraT::VectorType coerce_to_vector(typename AlgebraT::ScalarType s) {
-  typename AlgebraT::VectorType v{s};
-  return v;
-}
-
-template <typename AlgebraT>
-typename AlgebraT::VectorType coerce_to_vector(typename AlgebraT::VectorType v) {
-  return v;
-}
-
-template <typename AlgebraT>
-typename AlgebraT::VectorType coerce_to_vector(const EvalResult<AlgebraT>& r) {
-  if (r.is_vector()) {
-    return r.as_vector();
-  } else if (r.is_scalar()) {
-    return coerce_to_vector<AlgebraT>(r.as_scalar());
-  }
-}
-
-template <typename AlgebraT>
-class Interpreter final {
- public:
-  using EvalResultT = EvalResult<AlgebraT>;
-  using MultivectorT = typename AlgebraT::VectorType;
-  using ScalarT = typename AlgebraT::ScalarType;
-
- private:
-  peg::parser parser_{create_parser()};
-
-  void attach_parser_actions() {
-    parser_["Line"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      DLOG(INFO) << "[Line] -- sv.size(): " << sv.size();
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
-      DLOG(INFO) << "[Line] -- value: " << value;
-      if (value.is_scalar() or value.is_vector()) {
-        dictionary_.insert({"_", value});
-      }
-      return value;
-    };
-
-    parser_["Statement"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      DLOG(INFO) << "[Statement] -- sv.size(): " << sv.size();
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      DLOG(INFO) << "[Statement] -- value: " << value;
-      return value;
-    };
-
-    parser_["Assignment"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      DLOG(INFO) << "[Assignment] -- sv.size(): " << sv.size();
-      const EvalResultT& identifier{std::any_cast<EvalResultT>(sv[0])};
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[3])};
-      DLOG(INFO) << "[Assignment] -- identifier: " << identifier << ", value: " << value;
-      dictionary_.insert({identifier.as_identifier(), value});
-      return value;
-    };
-
-    parser_["Identifier"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT identifier{sv.token_to_string()};
-      DLOG(INFO) << "[Identifier] -- identifier: " << identifier;
-      return identifier;
-    };
-
-    parser_["Expression"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      DLOG(INFO) << "[Expression] -- sv.size(): " << sv.size();
-      if (sv.size() == 1) {
-        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-        DLOG(INFO) << "[Expression] -- value: " << value;
-        return value;
-      }
-    };
-
-    parser_["Additive"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      DLOG(INFO) << "[Additive] -- sv.size(): " << sv.size();
-      if (sv.size() == 1) {
-        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-        DLOG(INFO) << "[Additive] -- value: " << value;
-        return value;
-      } else if (sv.size() == 5) {
-        const EvalResultT& op = std::any_cast<EvalResultT>(sv[2]);
-        DLOG(INFO) << "[Additive] -- op: " << op;
-        const EvalResultT& left{std::any_cast<EvalResultT>(sv[0])};
-        DLOG(INFO) << "[Additive] -- left: " << left;
-        const EvalResultT& right{std::any_cast<EvalResultT>(sv[4])};
-        DLOG(INFO) << "[Additive] -- right: " << right;
-        if (op.is_op()) {
-          if (op.as_op() == Op::ADD) {
-            if (left.is_scalar() and right.is_scalar()) {
-              EvalResultT value{left.as_scalar() + right.as_scalar()};
-              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            } else {
-              EvalResultT value{coerce_to_vector(left) + coerce_to_vector(right)};
-              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            }
-          } else if (op.as_op() == Op::SUB) {
-            if (left.is_scalar() and right.is_scalar()) {
-              EvalResultT value{left.as_scalar() - right.as_scalar()};
-              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            } else {
-              EvalResultT value{coerce_to_vector(left) - coerce_to_vector(right)};
-              DLOG(INFO) << "[Additive] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            }
-          }
-        }
-      }
-    };
-
-    parser_["AddOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Op::ADD};
-      return value;
-    };
-
-    parser_["SubOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Op::SUB};
-      return value;
-    };
-
-    parser_["Multiplicative"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      DLOG(INFO) << "[Multiplicative] -- sv.size(): " << sv.size();
-      if (sv.size() == 1) {
-        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-        DLOG(INFO) << "[Multiplicative] -- value: " << value;
-        return value;
-      } else if (sv.size() == 5) {
-        const EvalResultT& op = std::any_cast<EvalResultT>(sv[2]);
-        DLOG(INFO) << "[Multiplicative] -- op: " << op;
-        const EvalResultT& left{std::any_cast<EvalResultT>(sv[0])};
-        DLOG(INFO) << "[Multiplicative] -- left: " << left;
-        const EvalResultT& right{std::any_cast<EvalResultT>(sv[4])};
-        DLOG(INFO) << "[Multiplicative] -- right: " << right;
-        if (left.is_error()) {
-          return left;
-        }
-        if (right.is_error()) {
-          return right;
-        }
-        if (op.is_error()) {
-          return op;
-        }
-        if (op.is_op()) {
-          if (op.as_op() == Op::MULT) {
-            if (left.is_scalar() and right.is_scalar()) {
-              EvalResultT value{left.as_scalar() * right.as_scalar()};
-              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            } else {
-              EvalResultT value{coerce_to_vector(left) * coerce_to_vector(right)};
-              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            }
-          } else if (op.as_op() == Op::DIV) {
-            if (left.is_scalar() and right.is_scalar()) {
-              EvalResultT value{left.as_scalar() / right.as_scalar()};
-              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            } else if (left.is_vector() and right.is_scalar()) {
-              EvalResultT value{left.as_vector() / right.as_scalar()};
-              DLOG(INFO) << "[Multiplicative] -- value: " << value << ", left: " << left
-                         << ", right: " << right;
-              return value;
-            }
-          }
-        }
-      }
-    };
-
-    parser_["MultOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Op::MULT};
-      return value;
-    };
-
-    parser_["DivOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Op::DIV};
-      return value;
-    };
-
-    parser_["OuterOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Op::OUTER};
-      return value;
-    };
-
-    parser_["InnerOp"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Op::INNER};
-      return value;
-    };
-
-    parser_["Unary"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      DLOG(INFO) << "[Unary] -- value: " << value;
-      return value;
-    };
-
-    parser_["Primary"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      DLOG(INFO) << "[Primary] -- sv.size(): " << sv.size();
-      if (sv.size() == 1) {
-        const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-        DLOG(INFO) << "[Primary] -- value: " << value;
-        return value;
-      } else if (sv.size() == 3) {
-        const EvalResultT& value{std::any_cast<EvalResultT>(sv[1])};
-        DLOG(INFO) << "[Primary] -- value: " << value;
-        return value;
-      }
-    };
-
-    parser_["Scalar"] = [this](const peg::SemanticValues& sv) {
-      ScalarT scalar{sv.token_to_number<ScalarT>()};
-      EvalResultT value{std::move(scalar)};
-      DLOG(INFO) << "[Scalar] -- value: " << value;
-      return value;
-    };
-
-    parser_["RValue"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const std::string symbol{sv.token_to_string()};
-      if (dictionary_.find(symbol) != dictionary_.end()) {
-        const EvalResultT& value{dictionary_.at(symbol)};
-        DLOG(INFO) << "[RValue] -- value: " << value;
-        return value;
-      } else {
-        std::string msg{};
-        msg.append(" No such symbol '").append(symbol).append("'");
-        const EvalResultT value{Error::MISSING_SYMBOL, std::move(msg)};
-        DLOG(INFO) << "[RValue] -- value: " << value;
-        return value;
-      }
-    };
-
-    parser_["Command"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      const EvalResultT& value{std::any_cast<EvalResultT>(sv[0])};
-      DLOG(INFO) << "[Command] -- value: " << value;
-      return value;
-    };
-
-    parser_["DictCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Command::DICT};
-      DLOG(INFO) << "[DictCommand] -- value: " << value;
-      return value;
-    };
-
-    parser_["ExitCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Command::EXIT};
-      DLOG(INFO) << "[ExitCommand] -- value: " << value;
-      return value;
-    };
-
-    parser_["HelpCommand"] = [this](const peg::SemanticValues& sv) -> EvalResultT {
-      EvalResultT value{Command::HELP};
-      DLOG(INFO) << "[HelpCommand] -- value: " << value;
-      return value;
-    };
-  }
-
-  void seed_dictionary() {
-    Bases<AlgebraT> bases{};
-    for (const auto& entry : bases.bases()) {
-      dictionary_.insert({std::string(entry.name), EvalResultT{entry.basis}});
+  void visit(LineAst& node) override {
+    if (node.statement) {
+      node.statement->visit(*this);
     }
   }
 
-  std::unordered_map<std::string, EvalResultT> dictionary_{};
-
- public:
-  Interpreter() {
-    attach_parser_actions();
-    seed_dictionary();
+  void visit(StatementExpressionAst& node) override {
+    node.expression->visit(*this);
+    symbols["_"] = current_value;
   }
 
-  EvalResultT eval(std::string_view phrase) {
-    EvalResultT result{};
-    parser_.parse(phrase, result);
-    return result;
+  void visit(AssignmentAst& node) override {
+    node.value->visit(*this);
+    symbols[node.name] = current_value;
+  }
+
+  void visit(ScalarAst& node) override { current_value = VectorType{node.value}; }
+
+  void visit(IdentifierAst& node) override {
+    auto it = symbols.find(node.name);
+    if (it != symbols.end()) {
+      current_value = it->second;
+    } else {
+      success = false;
+      was_value = false;
+      message = "Unknown identifier: " + node.name;
+    }
+  }
+
+  void visit(UnaryAst& node) override {
+    node.operand->visit(*this);
+
+    switch (node.op) {
+      case UnaryOp::Plus:
+        // No-op. Nothing gets changed.
+        break;
+      case UnaryOp::Minus:
+        current_value = neg(current_value);
+        break;
+    }
+  }
+
+  void visit(BinaryAst& node) override {
+    node.lhs->visit(*this);
+    VectorType lhs = current_value;
+    node.rhs->visit(*this);
+    VectorType rhs = current_value;
+
+    switch (node.op->op) {
+      case BinaryOp::Add:
+        current_value = add(lhs, rhs);
+        break;
+      case BinaryOp::Sub:
+        current_value = sub(lhs, rhs);
+        break;
+      case BinaryOp::Mult:
+        current_value = mul(lhs, rhs);
+        break;
+      // case BinaryOp::Div:
+      //   current_value = div(lhs, rhs);
+      //   break;
+      case BinaryOp::Outer:
+        current_value = outer(lhs, rhs);
+        break;
+      case BinaryOp::Inner:
+        current_value = inner(lhs, rhs);
+        break;
+      default:
+        except<std::logic_error>("Unsupported binary operation: " + to_string(node.op->op));
+    }
+  }
+
+  void visit(DictCommandAst& node) override {
+    for (const auto& [name, value] : symbols) {
+      message.append("  ");
+      message.append(name);
+      if (node.long_form) {
+        message.append("\t=\t").append(to_string(value));
+      }
+      message.append("\n");
+    }
+    was_value = false;
+  }
+
+  void visit(ExitCommandAst&) override { std::exit(0); }
+
+  void visit(HelpCommandAst&) override {
+    message.append("Commands:\n")
+        .append("  help        Show this help\n")
+        .append("  exit        Exit the REPL\n")
+        .append("  dict [-l]   Show defined symbols\n");
+    was_value = false;
+  }
+
+  void interpret(Ast& node) {
+    // Mark as failure where failure occurs.
+    success = true;
+    // Assume result will be a value.
+    was_value = true;
+    // Clear out the message so that previous error messages don't get reported in this run.
+    message.clear();
+    node.visit(*this);
   }
 };
 

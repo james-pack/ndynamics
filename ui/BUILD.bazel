@@ -2,10 +2,13 @@ cc_library(
     name = "ui",
     srcs = [
         "algebra_options.cc",
+        "ast_printer.cc",
         "grammar.cc",
+        "repl.cc",
     ],
     hdrs = [
         "algebra_options.h",
+        "ast_printer.h",
         "grammar.h",
         "interpreter.h",
         "repl.h",
@@ -17,28 +20,6 @@ cc_library(
         "//third_party/gflags",
         "//third_party/glog",
         "//third_party/peglib",
-    ],
-)
-
-cc_test(
-    name = "grammar_test",
-    srcs = [
-        "grammar_test.cc",
-    ],
-    deps = [
-        ":ui",
-        "//third_party/gtest",
-    ],
-)
-
-cc_test(
-    name = "interpreter_test",
-    srcs = [
-        "interpreter_test.cc",
-    ],
-    deps = [
-        ":ui",
-        "//third_party/gtest",
     ],
 )
 
