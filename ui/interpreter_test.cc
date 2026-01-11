@@ -95,14 +95,18 @@ TEST(InterpreterTest, CanInterpretExpressionsInComplexAlgebra) {
   EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", i * i));
   EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", -1));
 
+  // Testing the evaluation of select expressions. Includes the fully evaluated form to help with
+  // debugging if there is a problem.
   EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 + i)", (i + 1) * (1 + i)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 - i)", (i + 1) * (1 - i)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 + i)", (i - 1) * (1 + i)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 - i)", (i - 1) * (1 - i)));
-
   EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 + i)", 2 * i));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 - i)", (i + 1) * (1 - i)));
   EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 - i)", 2));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 + i)", (i - 1) * (1 + i)));
   EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 + i)", -2));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 - i)", (i - 1) * (1 - i)));
   EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 - i)", 2 * i));
 }
 
@@ -113,6 +117,20 @@ TEST(InterpreterTest, CanInterpretVga2dBasisVectors) {
   EXPECT_TRUE(MatchesValue<AlgebraType>("e1", e1));
   EXPECT_TRUE(MatchesValue<AlgebraType>("e2", e2));
   EXPECT_TRUE(MatchesValue<AlgebraType>("e12", e1 * e2));
+
+  // Testing the evaluation of select expressions. Includes the fully evaluated form to help with
+  // debugging if there is a problem.
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e1 + 1) * (e1 + 1)", (e1 + 1) * (e1 + 1)));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e1 + 1) * (e1 + 1)", 2 * e1 + 2));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e2 + 1)", (e2 - 1) * (e2 + 1)));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e2 + 1)", 0));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e1 + 1)", (e2 - 1) * (e1 + 1)));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e1 + 1)", -e1 * e2 - e1 + e2 - 1));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e12 - 1) * (e12 + 1)", (e1 * e2 - 1) * (e1 * e2 + 1)));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(e12 - 1) * (e12 + 1)", -2));
 }
 
 TEST(InterpreterTest, CanInterpretVgaBasisVectors) {
