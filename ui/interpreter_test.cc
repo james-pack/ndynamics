@@ -62,4 +62,9 @@ TEST(InterpreterTest, CanInterpretSimpleScalarExpressionWithoutSeparators) {
   EXPECT_TRUE(MatchesValue<AlgebraType>("4-2", AlgebraType::VectorType{2}));
 }
 
+TEST(InterpreterTest, CanInterpretComplexBasisVector) {
+  using AlgebraType = Complex<>;
+  EXPECT_TRUE(MatchesValue<AlgebraType>("i", AlgebraType::VectorType::e<0>()));
+}
+
 }  // namespace ndyn::ui
