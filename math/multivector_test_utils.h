@@ -10,7 +10,7 @@ namespace ndyn::math {
 
 template <typename MultivectorT>
 ::testing::AssertionResult AreNear(const MultivectorT& lhs, const MultivectorT& rhs,
-                                   typename MultivectorT::ScalarType epsilon) {
+                                   typename MultivectorT::ScalarType epsilon = 0.0001) {
   using std::abs;
   using std::to_string;
   const auto difference{lhs - rhs};
