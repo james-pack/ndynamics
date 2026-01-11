@@ -55,7 +55,7 @@ class Bases<math::Complex<>> final {
 
  private:
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
-      BasisName<AlgebraType>{"i", math::Multivector<AlgebraType>::e<0>()},
+      BasisName<AlgebraType>{"i", AlgebraType::VectorType::e<0>()},
   };
 
  public:
