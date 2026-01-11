@@ -19,21 +19,6 @@ class Interpreter final : public Visitor {
   // Global symbol table
   std::unordered_map<std::string, VectorType> symbols{};
 
-  // Hooks for value semantics.
-  VectorType add(const VectorType& a, const VectorType& b) { return a + b; }
-
-  VectorType sub(const VectorType& a, const VectorType& b) { return a - b; }
-
-  VectorType mul(const VectorType& a, const VectorType& b) { return a * b; }
-
-  // VectorType div(const VectorType& a, const VectorType& b) { return a / b; }
-
-  VectorType outer(const VectorType& a, const VectorType& b) { return a.outer(b); }
-
-  VectorType inner(const VectorType& a, const VectorType& b) { return a.inner(b); }
-
-  VectorType neg(const VectorType& v) { return -v; }
-
  public:
   Interpreter() {
     for (const auto& base : BasesType::bases()) {
@@ -51,10 +36,12 @@ class Interpreter final : public Visitor {
     if (node.statement) {
       node.statement->visit(*this);
     }
+    DLOG(INFO) << "Line";
   }
 
   void visit(StatementExpressionAst& node) override {
     node.expression->visit(*this);
+    DLOG(INFO) << "StatementExpression";
     symbols["_"] = current_value;
   }
 
@@ -66,9 +53,14 @@ class Interpreter final : public Visitor {
 
   void visit(ScalarAst& node) override { current_value = VectorType{node.value}; }
 
-  void visit(IdentifierAst& node) override {}
+  void visit(IdentifierAst& node) override {
+    DLOG(INFO) << "Identifier -- node->name: " << node.name;
+  }
 
   void visit(RvalueAst& node) override {
+    node.identifier->visit(*this);
+
+    DLOG(INFO) << "Rvalue -- node.identifier->name: " << node.identifier->name;
     auto it = symbols.find(node.identifier->name);
     if (it != symbols.end()) {
       current_value = it->second;
@@ -82,12 +74,13 @@ class Interpreter final : public Visitor {
   void visit(UnaryAst& node) override {
     node.operand->visit(*this);
 
+    DLOG(INFO) << "Unary";
     switch (node.op) {
       case UnaryOp::Plus:
         // No-op. Nothing gets changed.
         break;
       case UnaryOp::Minus:
-        current_value = neg(current_value);
+        current_value = -1 * current_value;
         break;
     }
   }
@@ -98,24 +91,26 @@ class Interpreter final : public Visitor {
     node.rhs->visit(*this);
     VectorType rhs = current_value;
 
+    DLOG(INFO) << "Binary";
+
     switch (node.op->op) {
       case BinaryOp::Add:
-        current_value = add(lhs, rhs);
+        current_value = lhs + rhs;
         break;
       case BinaryOp::Sub:
-        current_value = sub(lhs, rhs);
+        current_value = lhs - rhs;
         break;
       case BinaryOp::Mult:
-        current_value = mul(lhs, rhs);
+        current_value = lhs * rhs;
         break;
       // case BinaryOp::Div:
-      //   current_value = div(lhs, rhs);
+      //   current_value = lhs / rhs;
       //   break;
       case BinaryOp::Outer:
-        current_value = outer(lhs, rhs);
+        current_value = lhs.outer(rhs);
         break;
       case BinaryOp::Inner:
-        current_value = inner(lhs, rhs);
+        current_value = lhs.inner(rhs);
         break;
       default:
         except<std::logic_error>("Unsupported binary operation: " + to_string(node.op->op));
