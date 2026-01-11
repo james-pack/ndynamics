@@ -87,10 +87,15 @@ void attach_actions(peg::parser& p, std::shared_ptr<LineAst>& result) {
     return std::make_shared<ScalarAst>(sv.token_to_number<float>());
   };
 
-  p["Identifier"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<ExpressionAst> {
+  p["Identifier"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<IdentifierAst> {
     DLOG(INFO) << "[Identifier] -- sv.size(): " << sv.size();
     DLOG(INFO) << "[Identifier] -- sv.token(): " << sv.token();
     return std::make_shared<IdentifierAst>(sv.token());
+  };
+
+  p["RValue"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<ExpressionAst> {
+    DLOG(INFO) << "[RValue] -- sv.size(): " << sv.size();
+    return std::any_cast<std::shared_ptr<IdentifierAst>>(sv[0]);
   };
 
   p["Unary"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<ExpressionAst> {
@@ -167,10 +172,10 @@ void attach_actions(peg::parser& p, std::shared_ptr<LineAst>& result) {
     return std::any_cast<std::shared_ptr<ExpressionAst>>(sv[0]);
   };
 
-  p["Assignment"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<StatementAst> {
+  p["Assignment"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<AssignmentAst> {
     DLOG(INFO) << "[Assignment] -- sv.size(): " << sv.size();
-    std::string name = std::any_cast<std::string>(sv[0]);
-    auto value = std::any_cast<std::shared_ptr<ExpressionAst>>(sv[4]);
+    auto name = std::any_cast<std::shared_ptr<IdentifierAst>>(sv[0]);
+    auto value = std::any_cast<std::shared_ptr<ExpressionAst>>(sv[3]);
     return std::make_shared<AssignmentAst>(name, value);
   };
 
@@ -239,6 +244,7 @@ void Visitor::visit(BinaryOpAst&) { /* Do nothing by default but can be overridd
 
 void ScalarAst::visit(Visitor& v) { v.visit(*this); }
 void IdentifierAst::visit(Visitor& v) { v.visit(*this); }
+void RvalueAst::visit(Visitor& v) { v.visit(*this); }
 void UnaryAst::visit(Visitor& v) { v.visit(*this); }
 void BinaryAst::visit(Visitor& v) { v.visit(*this); }
 

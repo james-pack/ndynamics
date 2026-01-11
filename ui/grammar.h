@@ -39,6 +39,14 @@ struct IdentifierAst final : ExpressionAst {
   void visit(Visitor& v) override;
 };
 
+struct RvalueAst final : ExpressionAst {
+  std::shared_ptr<IdentifierAst> identifier;
+
+  RvalueAst(std::shared_ptr<IdentifierAst> identifier) : identifier(std::move(identifier)) {}
+
+  void visit(Visitor& v) override;
+};
+
 struct UnaryAst final : ExpressionAst {
   UnaryOp op;
   std::shared_ptr<ExpressionAst> operand;
@@ -90,10 +98,10 @@ struct HelpCommandAst final : CommandAst {
 };
 
 struct AssignmentAst final : StatementAst {
-  std::string name;
+  std::shared_ptr<IdentifierAst> name;
   std::shared_ptr<ExpressionAst> value;
 
-  AssignmentAst(std::string name, std::shared_ptr<ExpressionAst> value)
+  AssignmentAst(std::shared_ptr<IdentifierAst> name, std::shared_ptr<ExpressionAst> value)
       : name(std::move(name)), value(std::move(value)) {}
 
   void visit(Visitor& v) override;
@@ -126,6 +134,7 @@ struct Visitor {
 
   virtual void visit(ScalarAst&) = 0;
   virtual void visit(IdentifierAst&) = 0;
+  virtual void visit(RvalueAst&) = 0;
   virtual void visit(UnaryAst&) = 0;
   virtual void visit(BinaryAst&) = 0;
 
@@ -136,6 +145,7 @@ struct Visitor {
   virtual void visit(ExpressionAst&);
   virtual void visit(CommandAst&);
   virtual void visit(StatementAst&);
+
   virtual void visit(BinaryOpAst&);
 };
 

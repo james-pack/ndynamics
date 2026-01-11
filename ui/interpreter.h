@@ -11,18 +11,13 @@
 namespace ndyn::ui {
 
 template <typename AlgebraType>
-struct Interpreter : Visitor {
+class Interpreter final : public Visitor {
   using VectorType = typename AlgebraType::VectorType;
   using ScalarType = typename AlgebraType::ScalarType;
+  using BasesType = Bases<AlgebraType>;
 
   // Global symbol table
   std::unordered_map<std::string, VectorType> symbols{};
-
-  // Result of the last evaluated expression.
-  VectorType current_value{};
-  std::string message{};
-  bool success{true};
-  bool was_value{true};
 
   // Hooks for value semantics.
   VectorType add(const VectorType& a, const VectorType& b) { return a + b; }
@@ -39,6 +34,19 @@ struct Interpreter : Visitor {
 
   VectorType neg(const VectorType& v) { return -v; }
 
+ public:
+  Interpreter() {
+    for (const auto& base : BasesType::bases()) {
+      symbols.insert({base.name, base.basis});
+    }
+  }
+
+  // Result of the last evaluated expression.
+  VectorType current_value{};
+  std::string message{};
+  bool success{true};
+  bool was_value{true};
+
   void visit(LineAst& node) override {
     if (node.statement) {
       node.statement->visit(*this);
@@ -51,20 +59,23 @@ struct Interpreter : Visitor {
   }
 
   void visit(AssignmentAst& node) override {
+    node.name->visit(*this);
     node.value->visit(*this);
-    symbols[node.name] = current_value;
+    symbols[node.name->name] = current_value;
   }
 
   void visit(ScalarAst& node) override { current_value = VectorType{node.value}; }
 
-  void visit(IdentifierAst& node) override {
-    auto it = symbols.find(node.name);
+  void visit(IdentifierAst& node) override {}
+
+  void visit(RvalueAst& node) override {
+    auto it = symbols.find(node.identifier->name);
     if (it != symbols.end()) {
       current_value = it->second;
     } else {
       success = false;
       was_value = false;
-      message = "Unknown identifier: " + node.name;
+      message = "Unknown identifier: " + node.identifier->name;
     }
   }
 

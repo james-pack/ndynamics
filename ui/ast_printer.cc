@@ -22,6 +22,7 @@ class AstPrinter final : public Visitor {
 
   void visit(ScalarAst&) override;
   void visit(IdentifierAst&) override;
+  void visit(RvalueAst&) override;
   void visit(UnaryAst&) override;
   void visit(BinaryAst&) override;
 
@@ -73,7 +74,11 @@ void AstPrinter::visit(AssignmentAst& node) {
   LOG(INFO) << std::string(indent_ * 2, ' ') << "Assignment";
   ++indent_;
   // Visit children.
-  LOG(INFO) << std::string(indent_ * 2, ' ') << "[ID] '" << node.name << "'";
+  if (node.name) {
+    node.name->visit(*this);
+  } else {
+    LOG(INFO) << std::string(indent_ * 2, ' ') << "<empty id>";
+  }
   if (node.value) {
     node.value->visit(*this);
   } else {
@@ -96,6 +101,18 @@ void AstPrinter::visit(IdentifierAst& node) {
   ++indent_;
   // Visit children.
   LOG(INFO) << std::string(indent_ * 2, ' ') << "[ID] '" << node.name << "'";
+  --indent_;
+}
+
+void AstPrinter::visit(RvalueAst& node) {
+  LOG(INFO) << std::string(indent_ * 2, ' ') << "Rvalue";
+  ++indent_;
+  // Visit children.
+  if (node.identifier) {
+    node.identifier->visit(*this);
+  } else {
+    LOG(INFO) << std::string(indent_ * 2, ' ') << "<empty id>";
+  }
   --indent_;
 }
 
