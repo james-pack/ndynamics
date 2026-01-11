@@ -53,6 +53,8 @@ TEST(InterpreterTest, CanInterpretSimpleScalarExpressions) {
   EXPECT_TRUE(MatchesValue<AlgebraType>("2 + 2", 4));
   EXPECT_TRUE(MatchesValue<AlgebraType>("2 - 2", 0));
   EXPECT_TRUE(MatchesValue<AlgebraType>("4 - 2", 2));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(4 + 1) * (2 + 2)", 20));
 }
 
 // Note: this test catches a particular bug in the parsing where a '+' or a '-' without spaces gets
@@ -92,6 +94,8 @@ TEST(InterpreterTest, CanInterpretExpressionsInComplexAlgebra) {
   EXPECT_TRUE(MatchesValue<AlgebraType>("i * 2", 2 * i));
   EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", i * i));
   EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", -1));
+
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 + i)", 2 * i));
 }
 
 TEST(InterpreterTest, CanInterpretVga2dBasisVectors) {

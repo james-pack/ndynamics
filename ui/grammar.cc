@@ -38,7 +38,9 @@ Unary <- [+-]? Primary
 
 Primary <- Scalar
          / RValue
-         / "(" _ Expression _ ")"
+         / Parenthetical
+
+Parenthetical <- "(" _ Expression _ ")"
 
 RValue <- Identifier
 
@@ -97,6 +99,11 @@ void attach_actions(peg::parser& p, std::shared_ptr<LineAst>& result) {
     DLOG(INFO) << "[RValue] -- sv.size(): " << sv.size();
     auto identifier = std::any_cast<std::shared_ptr<IdentifierAst>>(sv[0]);
     return std::make_shared<RvalueAst>(identifier);
+  };
+
+  p["Parenthetical"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<ExpressionAst> {
+    DLOG(INFO) << "[Parenthetical] -- sv.size(): " << sv.size();
+    return std::any_cast<std::shared_ptr<ExpressionAst>>(sv[1]);
   };
 
   p["Unary"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<ExpressionAst> {
