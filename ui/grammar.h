@@ -30,7 +30,7 @@ struct ScalarAst final : ExpressionAst {
   void visit(Visitor& v) override;
 };
 
-struct IdentifierAst final : ExpressionAst {
+struct IdentifierAst final : Ast {
   std::string name;
 
   explicit IdentifierAst(std::string_view name) : name(name) {}
