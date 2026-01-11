@@ -34,3 +34,16 @@ cc_binary(
         "//third_party/glog",
     ],
 )
+
+cc_test(
+    name = "interpreter_test",
+    srcs = [
+        "interpreter_test.cc",
+    ],
+    deps = [
+        ":ui",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
+    ],
+)

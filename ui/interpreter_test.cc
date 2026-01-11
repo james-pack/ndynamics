@@ -1,177 +1,65 @@
 #include "ui/interpreter.h"
 
+#include <memory>
+
 #include "gtest/gtest.h"
 #include "math/algebra.h"
-#include "math/multivector.h"
-#include "peglib.h"
+#include "math/multivector_test_utils.h"
+#include "ui/grammar.h"
 
 namespace ndyn::ui {
 
 using namespace ndyn::math;
 
-TEST(InterpreterTest, CanEvalSimpleScalar) {
-  static constexpr auto a{1.f};
-  Interpreter<Vga<>> interpreter{};
-  EvalResult<Vga<>> result{interpreter.eval(R"(1)")};
-  LOG(INFO) << "result: " << result;
-  EXPECT_EQ(a, result.as_scalar());
-}
-
-TEST(InterpreterTest, CanInterpretHelpCommand) {
-  Interpreter<Vga<>> interpreter{};
-  EvalResult<Vga<>> result{interpreter.eval(R"(help)")};
-  LOG(INFO) << "result: " << result;
-  EXPECT_EQ(Command::HELP, result.as_command());
-}
-
-TEST(InterpreterTest, CanInterpretExitCommand) {
-  Interpreter<Vga<>> interpreter{};
-  EvalResult<Vga<>> result{interpreter.eval(R"(exit)")};
-  LOG(INFO) << "result: " << result;
-  EXPECT_EQ(Command::EXIT, result.as_command());
-}
-
-TEST(InterpreterTest, CanInterpretDictCommand) {
-  Interpreter<Vga<>> interpreter{};
-  EvalResult<Vga<>> result{interpreter.eval(R"(dict)")};
-  LOG(INFO) << "result: " << result;
-  EXPECT_EQ(Command::DICT, result.as_command());
-}
-
-TEST(InterpreterTest, CanAssignToIdentifier) {
-  static constexpr auto a{1.f};
-  Interpreter<Vga<>> interpreter{};
-  EvalResult<Vga<>> result{interpreter.eval(R"(a = 1)")};
-  LOG(INFO) << "result: " << result;
-  EXPECT_EQ(a, result.as_scalar());
-}
-
-TEST(InterpreterTest, CanEvalIdentifiers) {
-  static constexpr auto a{1.f};
-  Interpreter<Vga<>> interpreter{};
-  EvalResult<Vga<>> result1{interpreter.eval(R"(a = 1)")};
-  ASSERT_EQ(a, result1.as_scalar());
-  EvalResult<Vga<>> result2{interpreter.eval(R"(a)")};
-  EXPECT_EQ(a, result2.as_scalar());
-}
-
-TEST(InterpreterTest, StoresResultOfLastEvaluation) {
-  static constexpr auto a{1.f};
-  Interpreter<Vga<>> interpreter{};
-
-  const char* expressions[] = {
-      R"(1)",      //
-      R"(_)",      //
-      R"(a = 1)",  //
-      R"(_)",      //
-      R"(4-3)",    //
-      R"(_)",      //
-  };
-
-  for (const auto& expression : expressions) {
-    EvalResult<Vga<>> result{interpreter.eval(expression)};
-    EXPECT_EQ(a, result.as_scalar());
+template <typename AlgebraT>
+::testing::AssertionResult MatchesValue(const std::string_view line,
+                                        const typename AlgebraT::VectorType& expected) {
+  Grammar parser{};
+  std::shared_ptr<LineAst> ast{};
+  if (!parser.parse(line, ast)) {
+    return ::testing::AssertionFailure() << "Could not parse line";
   }
+
+  Interpreter<AlgebraT> interpreter{};
+  interpreter.interpret(*ast);
+
+  if (!interpreter.success) {
+    return ::testing::AssertionFailure() << "Error during interpretation -- success was false.";
+  }
+  if (!interpreter.was_value) {
+    return ::testing::AssertionFailure() << "Error during interpretation -- was_value was false.";
+  }
+  if (!interpreter.message.empty()) {
+    return ::testing::AssertionFailure()
+           << "Error during interpretation -- message not empty. message: '" << interpreter.message
+           << "'";
+  }
+
+  return AreNear(expected, interpreter.current_value);
 }
 
-TEST(InterpreterTest, CanAddScalars) {
-  static constexpr auto a{1.f};
-  static constexpr auto b{2.f};
-  Interpreter<Vga<>> interpreter{};
-
-  const char* expressions[] = {
-      R"(1 + 2)",   //
-      R"(1+2)",     //
-      R"(1 +2)",    //
-      R"(1+ 2)",    //
-      R"( 1 + 2)",  //
-      R"( 1+2)",    //
-      R"( 1 +2)",   //
-      R"( 1+ 2)",   //
-      R"(1 + 2 )",  //
-      R"(1+2 )",    //
-      R"(1 +2 )",   //
-      R"(1+ 2 )",   //
-  };
-  for (const auto& expression : expressions) {
-    EvalResult<Vga<>> result{interpreter.eval(expression)};
-    EXPECT_EQ(a + b, result.as_scalar());
-  }
+TEST(InterpreterTest, CanInterpretSimpleScalarExpression) {
+  using AlgebraType = Scalar<>;
+  EXPECT_TRUE(MatchesValue<AlgebraType>("1", AlgebraType::VectorType{1}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("1 * 2", AlgebraType::VectorType{2}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("2 * 2", AlgebraType::VectorType{4}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("1 + 2", AlgebraType::VectorType{3}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("2 + 2", AlgebraType::VectorType{4}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("2 - 2", AlgebraType::VectorType{0}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("4 - 2", AlgebraType::VectorType{2}));
 }
 
-TEST(InterpreterTest, CanSubtractScalars) {
-  static constexpr auto a{4.f};
-  static constexpr auto b{3.f};
-  Interpreter<Vga<>> interpreter{};
-
-  const char* expressions[] = {
-      R"(4 - 3)",   //
-      R"(4-3)",     //
-      R"(4 -3)",    //
-      R"(4- 3)",    //
-      R"( 4 - 3)",  //
-      R"( 4-3)",    //
-      R"( 4 -3)",   //
-      R"( 4- 3)",   //
-      R"(4 - 3 )",  //
-      R"(4-3 )",    //
-      R"(4 -3 )",   //
-      R"(4- 3 )",   //
-  };
-  for (const auto& expression : expressions) {
-    EvalResult<Vga<>> result{interpreter.eval(expression)};
-    EXPECT_EQ(a - b, result.as_scalar());
-  }
-}
-
-TEST(InterpreterTest, CanMultiplyScalars) {
-  static constexpr auto a{4.f};
-  static constexpr auto b{3.f};
-  Interpreter<Vga<>> interpreter{};
-
-  const char* expressions[] = {
-      R"(4 * 3)",   //
-      R"(4*3)",     //
-      R"(4 *3)",    //
-      R"(4* 3)",    //
-      R"( 4 * 3)",  //
-      R"( 4*3)",    //
-      R"( 4 *3)",   //
-      R"( 4* 3)",   //
-      R"(4 * 3 )",  //
-      R"(4*3 )",    //
-      R"(4 *3 )",   //
-      R"(4* 3 )",   //
-  };
-  for (const auto& expression : expressions) {
-    EvalResult<Vga<>> result{interpreter.eval(expression)};
-    EXPECT_EQ(a * b, result.as_scalar());
-  }
-}
-
-TEST(InterpreterTest, CanDivideScalars) {
-  static constexpr auto a{4.f};
-  static constexpr auto b{3.f};
-  Interpreter<Vga<>> interpreter{};
-
-  const char* expressions[] = {
-      R"(4 / 3)",   //
-      R"(4/3)",     //
-      R"(4 /3)",    //
-      R"(4/ 3)",    //
-      R"( 4 / 3)",  //
-      R"( 4/3)",    //
-      R"( 4 /3)",   //
-      R"( 4/ 3)",   //
-      R"(4 / 3 )",  //
-      R"(4/3 )",    //
-      R"(4 /3 )",   //
-      R"(4/ 3 )",   //
-  };
-  for (const auto& expression : expressions) {
-    EvalResult<Vga<>> result{interpreter.eval(expression)};
-    EXPECT_EQ(a / b, result.as_scalar());
-  }
+// Note: this test catches a particular bug in the parsing where a '+' or a '-' without spaces gets
+// bound as a unary operator when it was intended to be the binary operator. Multiplication is then
+// assumed by the parser to be the binary operator between these operands.
+TEST(InterpreterTest, CanInterpretSimpleScalarExpressionWithoutSeparators) {
+  using AlgebraType = Scalar<>;
+  EXPECT_TRUE(MatchesValue<AlgebraType>("1*2", AlgebraType::VectorType{2}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("2*2", AlgebraType::VectorType{4}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("1+2", AlgebraType::VectorType{3}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("2+2", AlgebraType::VectorType{4}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("2-2", AlgebraType::VectorType{0}));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("4-2", AlgebraType::VectorType{2}));
 }
 
 }  // namespace ndyn::ui
