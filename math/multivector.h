@@ -504,27 +504,7 @@ std::string to_string(const Multivector<AlgebraType>& v) {
       result.append(to_string(v.basis(i)));
       if (i > 0) {
         result.append("*");
-        result.append("e<").append(to_string(i)).append(">");
-
-        // if constexpr (AlgebraType::ZERO_BASES > 0) {
-        //   static constexpr std::array<const char*, 32> zero_basis_names{
-        //       "",    "e0",   "e1",   "e01",   "e2",   "e02",   "e12",   "e012",    //
-        //       "e3",  "e03",  "e13",  "e013",  "e23",  "e023",  "e123",  "e0123",   //
-        //       "e4",  "e04",  "e14",  "e014",  "e24",  "e024",  "e124",  "e0124",   //
-        //       "e34", "e034", "e134", "e0134", "e234", "e0234", "e1234", "e01234",  //
-        //   };
-
-        //   result.append(zero_basis_names[i]);
-        // } else {
-        //   static constexpr std::array<const char*, 32> basis_names{
-        //       "",    "e1",   "e2",   "e12",   "e3",   "e13",   "e23",   "e123",    //
-        //       "e4",  "e14",  "e24",  "e124",  "e34",  "e134",  "e234",  "e1234",   //
-        //       "e5",  "e15",  "e25",  "e125",  "e35",  "e135",  "e235",  "e1235",   //
-        //       "e45", "e145", "e245", "e1245", "e345", "e1345", "e2345", "e12345",  //
-        //   };
-
-        //   result.append(basis_names[i]);
-        // }
+        result.append("e<").append(to_string(i - 1)).append(">");
       }
     }
   }
