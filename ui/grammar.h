@@ -159,7 +159,7 @@ class Grammar final {
  public:
   Grammar() : parser_(create_parser(result_)) {}
 
-  bool parse(const std::string& line, std::shared_ptr<LineAst>& result) {
+  bool parse(const std::string_view line, std::shared_ptr<LineAst>& result) {
     bool success = parser_.parse(line);
     result = result_;
     result_.reset();
