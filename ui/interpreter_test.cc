@@ -95,7 +95,15 @@ TEST(InterpreterTest, CanInterpretExpressionsInComplexAlgebra) {
   EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", i * i));
   EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", -1));
 
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 + i)", (i + 1) * (1 + i)));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 - i)", (i + 1) * (1 - i)));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 + i)", (i - 1) * (1 + i)));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 - i)", (i - 1) * (1 - i)));
+
   EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 + i)", 2 * i));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 - i)", 2));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 + i)", -2));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 - i)", 2 * i));
 }
 
 TEST(InterpreterTest, CanInterpretVga2dBasisVectors) {
