@@ -95,7 +95,8 @@ void attach_actions(peg::parser& p, std::shared_ptr<LineAst>& result) {
 
   p["RValue"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<ExpressionAst> {
     DLOG(INFO) << "[RValue] -- sv.size(): " << sv.size();
-    return std::any_cast<std::shared_ptr<IdentifierAst>>(sv[0]);
+    auto identifier = std::any_cast<std::shared_ptr<IdentifierAst>>(sv[0]);
+    return std::make_shared<RvalueAst>(identifier);
   };
 
   p["Unary"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<ExpressionAst> {
