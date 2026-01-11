@@ -67,4 +67,34 @@ TEST(InterpreterTest, CanInterpretComplexBasisVector) {
   EXPECT_TRUE(MatchesValue<AlgebraType>("i", AlgebraType::VectorType::e<0>()));
 }
 
+TEST(InterpreterTest, CanInterpretVga2dBasisVectors) {
+  using AlgebraType = Vga2d<>;
+  EXPECT_TRUE(MatchesValue<AlgebraType>("e1", AlgebraType::VectorType::e<0>()));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("e2", AlgebraType::VectorType::e<1>()));
+  EXPECT_TRUE(
+      MatchesValue<AlgebraType>("e12",  //
+                                AlgebraType::VectorType::e<0>() * AlgebraType::VectorType::e<1>()));
+}
+
+TEST(InterpreterTest, CanInterpretVgaBasisVectors) {
+  using AlgebraType = Vga<>;
+  EXPECT_TRUE(MatchesValue<AlgebraType>("e1", AlgebraType::VectorType::e<0>()));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("e2", AlgebraType::VectorType::e<1>()));
+  EXPECT_TRUE(MatchesValue<AlgebraType>("e3", AlgebraType::VectorType::e<2>()));
+  EXPECT_TRUE(
+      MatchesValue<AlgebraType>("e12",  //
+                                AlgebraType::VectorType::e<0>() * AlgebraType::VectorType::e<1>()));
+  EXPECT_TRUE(
+      MatchesValue<AlgebraType>("e13",  //
+                                AlgebraType::VectorType::e<0>() * AlgebraType::VectorType::e<2>()));
+  EXPECT_TRUE(
+      MatchesValue<AlgebraType>("e23",  //
+                                AlgebraType::VectorType::e<1>() * AlgebraType::VectorType::e<2>()));
+
+  EXPECT_TRUE(
+      MatchesValue<AlgebraType>("e123",  //
+                                AlgebraType::VectorType::e<0>() * AlgebraType::VectorType::e<1>() *
+                                    AlgebraType::VectorType::e<2>()));
+}
+
 }  // namespace ndyn::ui
