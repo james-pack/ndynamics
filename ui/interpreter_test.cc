@@ -35,7 +35,7 @@ template <typename AlgebraT>
            << "'";
   }
 
-  return AreNear(expected, interpreter.current_value);
+  return AreNear(interpreter.current_value, expected);
 }
 
 TEST(InterpreterTest, CanInterpretSimpleScalarExpression) {
