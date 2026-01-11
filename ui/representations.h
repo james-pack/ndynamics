@@ -33,12 +33,13 @@ class Bases final {
  public:
   using AlgebraType = AlgebraT;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  // By default, an Algebra does not have any bases that have explicit names.
+  // TODO(james): Autogenerate names of basis vectors in this default, unspecialized class.
+  static constexpr size_t NAMED_BASES_COUNT{0};
 
   constexpr Bases() = default;
 
-  static constexpr const std::array<BasisName<AlgebraType>, 0>& bases() {
-    return std::array<BasisName<AlgebraType>, 0>();
-  }
+  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases() { return {}; }
 
   static std::string to_string(const math::Multivector<AlgebraType>& vec) {
     return math::to_string(vec);
@@ -50,16 +51,17 @@ class Bases<math::Complex<>> final {
  public:
   using AlgebraType = math::Complex<>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
-  static constexpr std::array<BasisName<AlgebraType>, BASES_COUNT> bases_{
+  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
       BasisName<AlgebraType>{"i", math::Multivector<AlgebraType>::e<0>()},
   };
 
  public:
   constexpr Bases() = default;
 
-  static constexpr const std::array<BasisName<AlgebraType>, BASES_COUNT>& bases() { return bases_; }
+  static constexpr const auto& bases() { return bases_; }
 
   static std::string to_string(const math::Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
@@ -81,9 +83,10 @@ class Bases<math::Vga<>> final {
  public:
   using AlgebraType = math::Vga<>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
-  static constexpr std::array<BasisName<AlgebraType>, BASES_COUNT> bases_{
+  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
       BasisName<AlgebraType>{"e1", math::Multivector<AlgebraType>::e<0>()},
       {"e2", math::Multivector<AlgebraType>::e<1>()},
       {"e12", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<1>()},
@@ -97,7 +100,7 @@ class Bases<math::Vga<>> final {
  public:
   constexpr Bases() = default;
 
-  static constexpr const std::array<BasisName<AlgebraType>, BASES_COUNT>& bases() { return bases_; }
+  static constexpr const auto& bases() { return bases_; }
 
   static std::string to_string(const math::Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
@@ -119,9 +122,10 @@ class Bases<math::Vga2d<>> final {
  public:
   using AlgebraType = math::Vga2d<>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
-  static constexpr std::array<BasisName<AlgebraType>, BASES_COUNT> bases_{
+  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
       BasisName<AlgebraType>{"e1", math::Multivector<AlgebraType>::e<0>()},
       {"e2", math::Multivector<AlgebraType>::e<1>()},
       {"e12", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<1>()},
@@ -130,7 +134,7 @@ class Bases<math::Vga2d<>> final {
  public:
   constexpr Bases() = default;
 
-  static constexpr const std::array<BasisName<AlgebraType>, BASES_COUNT>& bases() { return bases_; }
+  static constexpr const auto& bases() { return bases_; }
 
   static std::string to_string(const math::Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
