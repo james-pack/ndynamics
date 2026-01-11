@@ -29,7 +29,7 @@ AddOp <- "+"
 SubOp <- "-"
 
 Multiplicative <- Unary ( _ ( MultOp / DivOp / OuterOp / InnerOp ) _ Multiplicative )?
-MultOp <- "*"?
+MultOp <- "*"
 DivOp <- "/"
 OuterOp <- "^"
 InnerOp <- "|"
