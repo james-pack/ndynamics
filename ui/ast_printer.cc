@@ -3,7 +3,7 @@
 #include <string>
 
 #include "glog/logging.h"
-#include "ui/grammar.h"
+#include "ui/parser.h"
 
 namespace ndyn::ui {
 

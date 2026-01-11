@@ -5,8 +5,8 @@
 
 #include "gflags/gflags.h"
 #include "ui/ast_printer.h"
-#include "ui/grammar.h"
 #include "ui/interpreter.h"
+#include "ui/parser.h"
 
 DECLARE_bool(show_ast);
 
@@ -20,7 +20,7 @@ class Repl final {
  private:
   std::string line_{};
   std::shared_ptr<LineAst> ast_{};
-  Grammar parser_{};
+  Parser parser_{};
   Interpreter<AlgebraType> interpreter_{};
 
  public:

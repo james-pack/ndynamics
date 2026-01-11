@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui/grammar.h"
+#include "ui/parser.h"
 
 namespace ndyn::ui {
 

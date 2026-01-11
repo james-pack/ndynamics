@@ -3,14 +3,14 @@ cc_library(
     srcs = [
         "algebra_options.cc",
         "ast_printer.cc",
-        "grammar.cc",
+        "parser.cc",
         "repl.cc",
     ],
     hdrs = [
         "algebra_options.h",
         "ast_printer.h",
-        "grammar.h",
         "interpreter.h",
+        "parser.h",
         "repl.h",
         "representations.h",
     ],

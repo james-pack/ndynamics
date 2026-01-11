@@ -149,15 +149,15 @@ struct Visitor {
   virtual void visit(BinaryOpAst&);
 };
 
-peg::parser create_parser(std::shared_ptr<LineAst>& result);
+peg::parser create_raw_parser(std::shared_ptr<LineAst>& result);
 
-class Grammar final {
+class Parser final {
  private:
   std::shared_ptr<LineAst> result_{};
   peg::parser parser_;
 
  public:
-  Grammar() : parser_(create_parser(result_)) {}
+  Parser() : parser_(create_raw_parser(result_)) {}
 
   bool parse(const std::string_view line, std::shared_ptr<LineAst>& result) {
     bool success = parser_.parse(line);

@@ -1,4 +1,4 @@
-#include "ui/grammar.h"
+#include "ui/parser.h"
 
 #include <memory>
 #include <string>
@@ -237,7 +237,7 @@ void attach_actions(peg::parser& p, std::shared_ptr<LineAst>& result) {
   };
 }
 
-peg::parser create_parser(std::shared_ptr<LineAst>& result) {
+peg::parser create_raw_parser(std::shared_ptr<LineAst>& result) {
   peg::parser parser{grammar_definition};
 
   attach_actions(parser, result);

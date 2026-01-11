@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 #include "math/algebra.h"
 #include "math/multivector_test_utils.h"
-#include "ui/grammar.h"
+#include "ui/parser.h"
 
 namespace ndyn::ui {
 
@@ -14,7 +14,7 @@ using namespace ndyn::math;
 template <typename AlgebraT>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::VectorType& expected) {
-  Grammar parser{};
+  Parser parser{};
   std::shared_ptr<LineAst> ast{};
   if (!parser.parse(line, ast)) {
     return ::testing::AssertionFailure() << "Could not parse line";
