@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <initializer_list>
 #include <stdexcept>
-#include <string>
 
 #include "base/bits.h"
 #include "base/except.h"
@@ -482,8 +481,6 @@ constexpr Multivector<AlgebraType> operator*(const typename AlgebraType::ScalarT
                                              const Multivector<AlgebraType>& v) {
   return v.multiply(scalar);
 }
-
-// String and printing operations.
 
 // Multivector types of common algebras.
 template <typename T = DefaultScalarType,
