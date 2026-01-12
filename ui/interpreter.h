@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "base/except.h"
-#include "math/basis_representations.h"
+#include "math/basis_representation.h"
 #include "ui/parser.h"
 
 namespace ndyn::ui {

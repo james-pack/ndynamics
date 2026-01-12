@@ -4,6 +4,7 @@ cc_library(
     name = "math",
     hdrs = [
         "algebra.h",
+        "basis_representation.h",
         "bit_basis.h",
         "bit_set.h",
         "cayley.h",
@@ -12,7 +13,6 @@ cc_library(
         "integrators.h",
         "multivector.h",
         "multivector_utils.h",
-        "basis_representations.h",
         "state.h",
         "state_view.h",
         "unitary_ops.h",
