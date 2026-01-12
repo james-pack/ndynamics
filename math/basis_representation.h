@@ -123,10 +123,10 @@ class BasisRepresentation<math::Vga<ScalarType>> final {
   }
 };
 
-template <>
-class BasisRepresentation<math::Vga2d<>> final {
+template <typename ScalarType>
+class BasisRepresentation<math::Vga2d<ScalarType>> final {
  public:
-  using AlgebraType = math::Vga2d<>;
+  using AlgebraType = math::Vga2d<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
