@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <cmath>
+#include <ostream>
 #include <string>
 
 #include "math/algebra.h"
@@ -11,14 +13,14 @@ namespace ndyn::math {
 template <typename AlgebraT, size_t NAME_SIZE = 5>
 struct BasisName final {
   char name[NAME_SIZE];
-  math::Multivector<AlgebraT> basis;
+  Multivector<AlgebraT> basis;
 };
 
 template <typename ScalarType>
 std::string vector_element_to_string(ScalarType s, std::string_view basis_name) {
   using std::to_string;
   std::string result{};
-  if (abs(s) > 0.000001) {
+  if (std::abs(s) > 0.000001) {
     result.append(to_string(s));
     if (!basis_name.empty()) {
       result.append("*");
@@ -44,15 +46,26 @@ class BasisRepresentation final {
 
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases() { return {}; }
 
-  static std::string to_string(const math::Multivector<AlgebraType>& vec) {
-    return math::to_string(vec);
+  static std::string to_string(const Multivector<AlgebraType>& vec) {
+    return "<no representation specified for this algebra>";
   }
 };
 
+template <typename AlgebraType>
+std::string to_string(const Multivector<AlgebraType>& v) {
+  return BasisRepresentation<AlgebraType>::to_string(v);
+}
+
+template <typename AlgebraType>
+std::ostream& operator<<(std::ostream& os, const Multivector<AlgebraType>& v) {
+  os << to_string(v);
+  return os;
+}
+
 template <typename ScalarType>
-class BasisRepresentation<math::Complex<ScalarType>> final {
+class BasisRepresentation<Complex<ScalarType>> final {
  public:
-  using AlgebraType = math::Complex<ScalarType>;
+  using AlgebraType = Complex<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
@@ -66,7 +79,7 @@ class BasisRepresentation<math::Complex<ScalarType>> final {
 
   static constexpr const auto& bases() { return bases_; }
 
-  static std::string to_string(const math::Multivector<AlgebraType>& vec) {
+  static std::string to_string(const Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
     for (size_t i = 1; i < BASES_COUNT; ++i) {
       std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
@@ -82,16 +95,16 @@ class BasisRepresentation<math::Complex<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<math::Vga<ScalarType>> final {
+class BasisRepresentation<Vga<ScalarType>> final {
  public:
-  using AlgebraType = math::Vga<ScalarType>;
+  using AlgebraType = Vga<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
-  static constexpr auto e1{math::Multivector<AlgebraType>::template e<0>()};
-  static constexpr auto e2{math::Multivector<AlgebraType>::template e<1>()};
-  static constexpr auto e3{math::Multivector<AlgebraType>::template e<2>()};
+  static constexpr auto e1{Multivector<AlgebraType>::template e<0>()};
+  static constexpr auto e2{Multivector<AlgebraType>::template e<1>()};
+  static constexpr auto e3{Multivector<AlgebraType>::template e<2>()};
 
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
       BasisName<AlgebraType>{"e1", e1},
@@ -108,7 +121,7 @@ class BasisRepresentation<math::Vga<ScalarType>> final {
 
   static constexpr const auto& bases() { return bases_; }
 
-  static std::string to_string(const math::Multivector<AlgebraType>& vec) {
+  static std::string to_string(const Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
     for (size_t i = 1; i < BASES_COUNT; ++i) {
       std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
@@ -124,15 +137,15 @@ class BasisRepresentation<math::Vga<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<math::Vga2d<ScalarType>> final {
+class BasisRepresentation<Vga2d<ScalarType>> final {
  public:
-  using AlgebraType = math::Vga2d<ScalarType>;
+  using AlgebraType = Vga2d<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
-  static constexpr auto e1{math::Multivector<AlgebraType>::template e<0>()};
-  static constexpr auto e2{math::Multivector<AlgebraType>::template e<1>()};
+  static constexpr auto e1{Multivector<AlgebraType>::template e<0>()};
+  static constexpr auto e2{Multivector<AlgebraType>::template e<1>()};
 
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
       BasisName<AlgebraType>{"e1", e1},
@@ -145,7 +158,7 @@ class BasisRepresentation<math::Vga2d<ScalarType>> final {
 
   static constexpr const auto& bases() { return bases_; }
 
-  static std::string to_string(const math::Multivector<AlgebraType>& vec) {
+  static std::string to_string(const Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
     for (size_t i = 1; i < BASES_COUNT; ++i) {
       std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};

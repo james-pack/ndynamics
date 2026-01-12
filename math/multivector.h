@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
-#include <ostream>
 #include <stdexcept>
 #include <string>
 
@@ -485,42 +484,6 @@ constexpr Multivector<AlgebraType> operator*(const typename AlgebraType::ScalarT
 }
 
 // String and printing operations.
-
-template <typename AlgebraType>
-std::string to_string(const Multivector<AlgebraType>& v) {
-  using std::abs;
-  using std::to_string;
-
-  std::string result{};
-  bool need_comma{false};
-  for (size_t i = 0; i < AlgebraType::bases_count(); ++i) {
-    // Don't show bases with zero coefficients.
-    if (abs(v.basis(i)) > 0.000001) {
-      if (need_comma) {
-        result.append(" + ");
-      }
-
-      need_comma = true;
-      result.append(to_string(v.basis(i)));
-      if (i > 0) {
-        result.append("*");
-        result.append("e<").append(to_string(i - 1)).append(">");
-      }
-    }
-  }
-
-  if (result.empty()) {
-    result.append("0");
-  }
-
-  return result;
-}
-
-template <typename AlgebraType>
-std::ostream& operator<<(std::ostream& os, const Multivector<AlgebraType>& v) {
-  os << to_string(v);
-  return os;
-}
 
 // Multivector types of common algebras.
 template <typename T = DefaultScalarType,

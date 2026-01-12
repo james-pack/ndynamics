@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "gtest/gtest.h"
+#include "math/basis_representation.h"
 #include "math/integrators_test_utils.h"
 #include "math/multivector.h"
 

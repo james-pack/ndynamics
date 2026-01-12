@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "glog/logging.h"
+#include "math/basis_representation.h"
 #include "sensor/measurement_type.h"
 #include "time/time.h"
 
