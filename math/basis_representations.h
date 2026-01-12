@@ -32,7 +32,7 @@ std::string vector_element_to_string(ScalarType s, std::string_view basis_name) 
  * Class to hold the name of each basis multivector for each algebra.
  */
 template <typename AlgebraT>
-class Bases final {
+class BasisRepresentation final {
  public:
   using AlgebraType = AlgebraT;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
@@ -40,7 +40,7 @@ class Bases final {
   // TODO(james): Autogenerate names of basis vectors in this default, unspecialized class.
   static constexpr size_t NAMED_BASES_COUNT{0};
 
-  constexpr Bases() = default;
+  constexpr BasisRepresentation() = default;
 
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases() { return {}; }
 
@@ -50,7 +50,7 @@ class Bases final {
 };
 
 template <typename ScalarType>
-class Bases<math::Complex<ScalarType>> final {
+class BasisRepresentation<math::Complex<ScalarType>> final {
  public:
   using AlgebraType = math::Complex<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
@@ -62,7 +62,7 @@ class Bases<math::Complex<ScalarType>> final {
   };
 
  public:
-  constexpr Bases() = default;
+  constexpr BasisRepresentation() = default;
 
   static constexpr const auto& bases() { return bases_; }
 
@@ -82,7 +82,7 @@ class Bases<math::Complex<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class Bases<math::Vga<ScalarType>> final {
+class BasisRepresentation<math::Vga<ScalarType>> final {
  public:
   using AlgebraType = math::Vga<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
@@ -104,7 +104,7 @@ class Bases<math::Vga<ScalarType>> final {
   };
 
  public:
-  constexpr Bases() = default;
+  constexpr BasisRepresentation() = default;
 
   static constexpr const auto& bases() { return bases_; }
 
@@ -124,7 +124,7 @@ class Bases<math::Vga<ScalarType>> final {
 };
 
 template <>
-class Bases<math::Vga2d<>> final {
+class BasisRepresentation<math::Vga2d<>> final {
  public:
   using AlgebraType = math::Vga2d<>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
@@ -141,7 +141,7 @@ class Bases<math::Vga2d<>> final {
   };
 
  public:
-  constexpr Bases() = default;
+  constexpr BasisRepresentation() = default;
 
   static constexpr const auto& bases() { return bases_; }
 

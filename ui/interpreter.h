@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "base/except.h"
-#include "math/representations.h"
+#include "math/basis_representations.h"
 #include "ui/parser.h"
 
 namespace ndyn::ui {
@@ -14,14 +14,14 @@ template <typename AlgebraType>
 class Interpreter final : public Visitor {
   using VectorType = typename AlgebraType::VectorType;
   using ScalarType = typename AlgebraType::ScalarType;
-  using BasesType = math::Bases<AlgebraType>;
+  using BasisRepresentation = math::BasisRepresentation<AlgebraType>;
 
   // Global symbol table
   std::unordered_map<std::string, VectorType> symbols{};
 
  public:
   Interpreter() {
-    for (const auto& base : BasesType::bases()) {
+    for (const auto& base : BasisRepresentation::bases()) {
       symbols.insert({base.name, base.basis});
     }
   }
