@@ -15,14 +15,14 @@ struct BasisName final {
 };
 
 template <typename ScalarType>
-std::string vector_element_to_string(ScalarType s, std::string_view base_name) {
+std::string vector_element_to_string(ScalarType s, std::string_view basis_name) {
   using std::to_string;
   std::string result{};
   if (abs(s) > 0.000001) {
     result.append(to_string(s));
-    if (!base_name.empty()) {
+    if (!basis_name.empty()) {
       result.append("*");
-      result.append(base_name);
+      result.append(basis_name);
     }
   }
   return result;
@@ -49,16 +49,16 @@ class Bases final {
   }
 };
 
-template <>
-class Bases<math::Complex<>> final {
+template <typename ScalarType>
+class Bases<math::Complex<ScalarType>> final {
  public:
-  using AlgebraType = math::Complex<>;
+  using AlgebraType = math::Complex<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
-      BasisName<AlgebraType>{"i", AlgebraType::VectorType::e<0>()},
+      BasisName<AlgebraType>{"i", AlgebraType::VectorType::template e<0>()},
   };
 
  public:
@@ -81,23 +81,26 @@ class Bases<math::Complex<>> final {
   }
 };
 
-template <>
-class Bases<math::Vga<>> final {
+template <typename ScalarType>
+class Bases<math::Vga<ScalarType>> final {
  public:
-  using AlgebraType = math::Vga<>;
+  using AlgebraType = math::Vga<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
+  static constexpr auto e1{math::Multivector<AlgebraType>::template e<0>()};
+  static constexpr auto e2{math::Multivector<AlgebraType>::template e<1>()};
+  static constexpr auto e3{math::Multivector<AlgebraType>::template e<2>()};
+
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
-      BasisName<AlgebraType>{"e1", math::Multivector<AlgebraType>::e<0>()},
-      {"e2", math::Multivector<AlgebraType>::e<1>()},
-      {"e12", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<1>()},
-      {"e3", math::Multivector<AlgebraType>::e<2>()},
-      {"e13", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<2>()},
-      {"e23", math::Multivector<AlgebraType>::e<1>() * math::Multivector<AlgebraType>::e<2>()},
-      {"e123", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<1>() *
-                   math::Multivector<AlgebraType>::e<2>()},
+      BasisName<AlgebraType>{"e1", e1},
+      {"e2", e2},
+      {"e12", e1* e2},
+      {"e3", e3},
+      {"e13", e1* e3},
+      {"e23", e2* e3},
+      {"e123", e1* e2* e3},
   };
 
  public:
@@ -128,10 +131,13 @@ class Bases<math::Vga2d<>> final {
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
+  static constexpr auto e1{math::Multivector<AlgebraType>::template e<0>()};
+  static constexpr auto e2{math::Multivector<AlgebraType>::template e<1>()};
+
   static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
-      BasisName<AlgebraType>{"e1", math::Multivector<AlgebraType>::e<0>()},
-      {"e2", math::Multivector<AlgebraType>::e<1>()},
-      {"e12", math::Multivector<AlgebraType>::e<0>() * math::Multivector<AlgebraType>::e<1>()},
+      BasisName<AlgebraType>{"e1", e1},
+      {"e2", e2},
+      {"e12", e1* e2},
   };
 
  public:
