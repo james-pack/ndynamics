@@ -12,7 +12,6 @@ cc_library(
         "interpreter.h",
         "parser.h",
         "repl.h",
-        "representations.h",
     ],
     visibility = ["//visibility:public"],
     deps = [

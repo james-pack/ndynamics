@@ -1,9 +1,12 @@
 #pragma once
 
+#include <array>
+#include <string>
+
 #include "math/algebra.h"
 #include "math/multivector.h"
 
-namespace ndyn::ui {
+namespace ndyn::math {
 
 template <typename AlgebraT, size_t NAME_SIZE = 5>
 struct BasisName final {
@@ -151,4 +154,4 @@ class Bases<math::Vga2d<>> final {
   }
 };
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::math
