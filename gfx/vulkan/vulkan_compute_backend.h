@@ -27,9 +27,9 @@ class VulkanComputeBackend : public ComputeBackend {
   VkPhysicalDevice physical_device_{VK_NULL_HANDLE};
   VkDevice device_{VK_NULL_HANDLE};
   VkQueue compute_queue_{VK_NULL_HANDLE};
-  uint32_t compute_queue_family_index_ = 0;
+  uint32_t compute_queue_family_index_{0};
 
-  std::vector<VkCommandBuffer> command_buffers_;
+  std::vector<VkCommandBuffer> command_buffers_{};
   VkCommandPool command_pool_{VK_NULL_HANDLE};
 
  public:
