@@ -15,11 +15,11 @@ namespace ndyn::gfx::vulkan {
  */
 class VulkanBuffer final : public Buffer {
  private:
-  VkDevice device_ = VK_NULL_HANDLE;
-  VkBuffer buffer_ = VK_NULL_HANDLE;
-  VkDeviceMemory memory_ = VK_NULL_HANDLE;
-  std::size_t size_ = 0;
+  VkBuffer buffer_{VK_NULL_HANDLE};
+  std::size_t size_;
   BufferUsage usage_;
+  VkDevice device_;
+  VkDeviceMemory memory_{VK_NULL_HANDLE};
 
  public:
   VulkanBuffer(VkDevice device, std::size_t size_bytes, BufferUsage usage);
@@ -28,7 +28,7 @@ class VulkanBuffer final : public Buffer {
   /**
    * Returns the underlying Vulkan buffer handle.
    */
-  VkBuffer vk_handle() const { return buffer_; }
+  VkBuffer get_buffer() const { return buffer_; }
 
   /**
    * Returns the size of the buffer in bytes.

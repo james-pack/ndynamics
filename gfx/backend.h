@@ -6,12 +6,15 @@
 #include "gfx/command_buffer.h"
 #include "gfx/compute_pipeline.h"
 #include "gfx/fence.h"
+#include "gfx/pipeline_layout.h"
+#include "gfx/render_pass.h"
+#include "gfx/render_pipeline.h"
 #include "gfx/shader_module.h"
 
 namespace ndyn::gfx {
 
 /**
- * ComputeBackend provides an abstract interface for performing GPU-based computation.
+ * Backend provides an abstract interface for performing GPU-based computation and rendering.
  * It manages GPU resources such as buffers, shaders, pipelines, and command buffers,
  * allowing the user to schedule and execute compute workloads in a backend-agnostic manner.
  *
@@ -37,17 +40,22 @@ namespace ndyn::gfx {
  * simulation and visualization pipelines, and enables backend implementations using
  * Vulkan, WebGPU, or other GPU APIs without changing the application code.
  */
-class ComputeBackend {
+class Backend {
  public:
-  virtual ~ComputeBackend() = default;
+  virtual ~Backend() = default;
 
   virtual std::unique_ptr<Buffer> create_buffer(std::size_t size, BufferUsage usage) = 0;
 
-  virtual std::unique_ptr<ShaderModule> create_compute_shader(const void* bytecode,
-                                                              std::size_t size) = 0;
+  virtual std::unique_ptr<ShaderModule> create_shader(ShaderUsage usage, const void* bytecode,
+                                                      std::size_t size) = 0;
 
   virtual std::unique_ptr<ComputePipeline> create_compute_pipeline(ShaderModule& shader,
                                                                    PipelineLayout& layout) = 0;
+
+  virtual std::unique_ptr<RenderPipeline> create_render_pipeline(ShaderModule& vertex,
+                                                                 ShaderModule& fragment,
+                                                                 PipelineLayout& layout,
+                                                                 RenderPass& pass) = 0;
 
   virtual std::unique_ptr<CommandBuffer> create_command_buffer() = 0;
 
@@ -59,6 +67,9 @@ class ComputeBackend {
    */
   virtual void dispatch(CommandBuffer& cmd, ComputePipeline& pipeline, std::uint32_t x,
                         std::uint32_t y, std::uint32_t z) = 0;
+
+  virtual void draw(CommandBuffer& cmd, RenderPipeline& pipeline, Buffer& vertex_buffer,
+                    Buffer* index_buffer, std::uint32_t vertexOrIndexCount) = 0;
 
   /**
    * Submits a previously recorded command buffer for execution on the GPU and

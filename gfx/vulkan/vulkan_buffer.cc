@@ -8,23 +8,23 @@
 namespace ndyn::gfx::vulkan {
 
 VulkanBuffer::VulkanBuffer(VkDevice device, std::size_t size_bytes, BufferUsage usage)
-    : device_(device), size_(size_bytes), usage_(usage) {
+    : size_(size_bytes), usage_(usage), device_(device) {
   VkBufferUsageFlags vk_usage = 0;
 
   switch (usage_) {
-    case BufferUsage::storage:
+    case BufferUsage::STORAGE:
       vk_usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
       break;
-    case BufferUsage::vertex:
+    case BufferUsage::VERTEX:
       vk_usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
       break;
-    case BufferUsage::index:
+    case BufferUsage::INDEX:
       vk_usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
       break;
-    case BufferUsage::uniform:
+    case BufferUsage::UNIFORM:
       vk_usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
       break;
-    case BufferUsage::indirect:
+    case BufferUsage::INDIRECT:
       vk_usage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
       break;
   }

@@ -3,13 +3,12 @@ load(":build_defs.bzl", "compute_shader_library", "fragment_shader_library", "ve
 cc_library(
     name = "gfx",
     hdrs = [
+        "backend.h",
         "buffer.h",
         "command_buffer.h",
-        "compute_backend.h",
         "compute_pipeline.h",
         "fence.h",
         "pipeline_layout.h",
-        "render_backend.h",
         "render_pass.h",
         "render_pipeline.h",
         "shader_module.h",

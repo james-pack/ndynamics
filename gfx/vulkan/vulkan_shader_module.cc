@@ -4,8 +4,9 @@
 
 namespace ndyn::gfx::vulkan {
 
-VulkanShaderModule::VulkanShaderModule(VkDevice device, const void* code, std::size_t size)
-    : device_(device) {
+VulkanShaderModule::VulkanShaderModule(VkDevice device, ShaderUsage usage, const void* code,
+                                       std::size_t size)
+    : device_(device), usage_(usage) {
   VkShaderModuleCreateInfo create_info{};
   create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   create_info.codeSize = size;
@@ -21,5 +22,7 @@ VulkanShaderModule::~VulkanShaderModule() {
     vkDestroyShaderModule(device_, module_, nullptr);
   }
 }
+
+ShaderUsage VulkanShaderModule::usage() const { return usage_; }
 
 }  // namespace ndyn::gfx::vulkan

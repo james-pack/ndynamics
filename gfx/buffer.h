@@ -10,7 +10,7 @@ namespace ndyn::gfx {
  * uniform, or indirect purposes. The interface provides size and usage queries
  * and allows uploading data to the GPU.
  */
-enum class BufferUsage { storage, vertex, index, uniform, indirect };
+enum class BufferUsage { STORAGE, VERTEX, INDEX, UNIFORM, INDIRECT };
 
 class Buffer {
  public:

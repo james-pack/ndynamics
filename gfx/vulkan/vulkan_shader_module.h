@@ -14,11 +14,14 @@ namespace ndyn::gfx::vulkan {
 class VulkanShaderModule : public ShaderModule {
  private:
   VkDevice device_;
+  ShaderUsage usage_;
   VkShaderModule module_{VK_NULL_HANDLE};
 
  public:
-  VulkanShaderModule(VkDevice device, const void* code, std::size_t size);
+  VulkanShaderModule(VkDevice device, ShaderUsage usage, const void* code, std::size_t size);
   ~VulkanShaderModule() override;
+
+  ShaderUsage usage() const override;
 
   VkShaderModule get_module() const { return module_; }
 };
