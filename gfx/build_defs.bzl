@@ -25,6 +25,8 @@ def _glsl_library_impl(ctx, stage):
                 "-S",
                 stage,  # Shader stage (compute, vertex, fragment, etc.)
                 src.path,
+                "--target-env",
+                "vulkan1.2",
                 "-o",
                 out_file.path,
             ],
@@ -34,35 +36,29 @@ def _glsl_library_impl(ctx, stage):
     return DefaultInfo(files = depset(outputs))
 
 # Stage-specific wrapper rules
-def compute_shader_library(name, srcs, deps = []):
-    return rule(
-        implementation = lambda ctx: _glsl_library_impl(ctx, "compute"),
-        attrs = {
-            "srcs": attr.label_list(allow_files = [".glsl"]),
-            "deps": attr.label_list(),
-        },
-        name = name,
-        executable = False,
-    )(srcs = srcs, deps = deps)
+compute_shader_library = rule(
+    implementation = lambda ctx: _glsl_library_impl(ctx, "comp"),
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".glsl"]),
+        "deps": attr.label_list(),
+    },
+    executable = False,
+)
 
-def vertex_shader_library(name, srcs, deps = []):
-    return rule(
-        implementation = lambda ctx: _glsl_library_impl(ctx, "vertex"),
-        attrs = {
-            "srcs": attr.label_list(allow_files = [".glsl"]),
-            "deps": attr.label_list(),
-        },
-        name = name,
-        executable = False,
-    )(srcs = srcs, deps = deps)
+vertex_shader_library = rule(
+    implementation = lambda ctx: _glsl_library_impl(ctx, "vert"),
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".glsl"]),
+        "deps": attr.label_list(),
+    },
+    executable = False,
+)
 
-def fragment_shader_library(name, srcs, deps = []):
-    return rule(
-        implementation = lambda ctx: _glsl_library_impl(ctx, "fragment"),
-        attrs = {
-            "srcs": attr.label_list(allow_files = [".glsl"]),
-            "deps": attr.label_list(),
-        },
-        name = name,
-        executable = False,
-    )(srcs = srcs, deps = deps)
+fragment_shader_library = rule(
+    implementation = lambda ctx: _glsl_library_impl(ctx, "frag"),
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".glsl"]),
+        "deps": attr.label_list(),
+    },
+    executable = False,
+)
