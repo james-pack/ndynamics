@@ -1,29 +1,26 @@
 """
-This file defines custom Bazel build rules for the gfx package.
-It includes stage-specific glsl_library rules that compile GLSL
+This file defines custom rules to compile GLSL
 shader files into SPIR-V bytecode using glslangValidator.
 """
 
 def _glsl_library_impl(ctx, stage):
-    """Implementation function for glsl_library rule.
-    `stage` should be one of: 'compute', 'vertex', 'fragment', 'geometry', 'tesscontrol', 'tesseval'
+    """Implementation function for shader library rules.
+    `stage` should be one of: 'comp', 'vert', 'frag', 'geom', 'tesc', 'tese'
     """
     outputs = []
     for src in ctx.files.srcs:
-        # Compute output filename: replace .glsl with .spv
         out_name = src.basename.replace(".glsl", ".spv")
         out_file = ctx.actions.declare_file(out_name)
         outputs.append(out_file)
 
-        # Generate SPIR-V using glslangValidator with explicit stage
         ctx.actions.run(
             inputs = [src],
             outputs = [out_file],
             executable = "glslangValidator",
             arguments = [
-                "-V",  # Vulkan target
+                "-V",
                 "-S",
-                stage,  # Shader stage (compute, vertex, fragment, etc.)
+                stage,
                 src.path,
                 "--target-env",
                 "vulkan1.2",
@@ -39,7 +36,7 @@ def _glsl_library_impl(ctx, stage):
 compute_shader_library = rule(
     implementation = lambda ctx: _glsl_library_impl(ctx, "comp"),
     attrs = {
-        "srcs": attr.label_list(allow_files = [".glsl"]),
+        "srcs": attr.label_list(allow_files = [".glsl", ".comp"]),
         "deps": attr.label_list(),
     },
     executable = False,
@@ -48,7 +45,7 @@ compute_shader_library = rule(
 vertex_shader_library = rule(
     implementation = lambda ctx: _glsl_library_impl(ctx, "vert"),
     attrs = {
-        "srcs": attr.label_list(allow_files = [".glsl"]),
+        "srcs": attr.label_list(allow_files = [".glsl", ".vert"]),
         "deps": attr.label_list(),
     },
     executable = False,
@@ -57,7 +54,7 @@ vertex_shader_library = rule(
 fragment_shader_library = rule(
     implementation = lambda ctx: _glsl_library_impl(ctx, "frag"),
     attrs = {
-        "srcs": attr.label_list(allow_files = [".glsl"]),
+        "srcs": attr.label_list(allow_files = [".glsl", ".frag"]),
         "deps": attr.label_list(),
     },
     executable = False,
