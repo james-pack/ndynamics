@@ -1,0 +1,6 @@
+cc_library(
+    name = "glfw",
+    defines = ["GLFW_INCLUDE_VULKAN"],
+    linkopts = ["-lglfw"],
+    visibility = ["//visibility:public"],
+)
