@@ -2,25 +2,33 @@
 
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 #include <string>
+
+#include "glog/logging.h"
 
 namespace ndyn::io {
 
 std::string read_file(std::filesystem::path path) {
-  using std::to_string;
-  std::string contents{};
+  std::ifstream file{path, std::ios::binary | std::ios::in | std::ios_base::ate};
+  if (!file) {
+    LOG(WARNING) << "Could not open file for reading. File: '" << path << "'";
+    throw std::runtime_error("Could not open file for reading.");
+  }
 
-  static constexpr size_t BUFFER_SIZE{1024};
-  char buffer[BUFFER_SIZE];
-  std::ifstream file{path, std::ios::binary | std::ios_base::in};
+  const std::streamsize file_size{file.tellg()};
+  if (file_size < 0) {
+    LOG(WARNING) << "Could not determine file size. File: '" << path << "'";
+    throw std::runtime_error("Could not determine file size.");
+  }
 
-  size_t bytes_read{BUFFER_SIZE - 1};
-  while (bytes_read == BUFFER_SIZE - 1) {
-    file.read(buffer, BUFFER_SIZE - 1);
-    bytes_read = file.gcount();
-    // The file.read() call doesn't null-terminate its output in binary mode.
-    buffer[bytes_read] = '\0';
-    contents.append(buffer);
+  std::string contents(file_size, 0);
+
+  file.seekg(0);
+
+  if (!file.read(contents.data(), file_size)) {
+    LOG(WARNING) << "Could not read file. File: '" << path << "'";
+    throw std::runtime_error("Could not read file.");
   }
 
   return contents;
