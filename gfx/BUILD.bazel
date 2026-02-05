@@ -2,16 +2,49 @@ load(":build_defs.bzl", "compute_shader_library", "fragment_shader_library", "ve
 
 cc_library(
     name = "gfx",
+    srcs = [
+        "math.cc",
+        "mesh.cc",
+        "vulkan_renderer.cc",
+    ],
     hdrs = [
-        "backend.h",
-        "buffer.h",
-        "command_buffer.h",
-        "compute_pipeline.h",
-        "fence.h",
-        "pipeline_layout.h",
-        "render_pass.h",
-        "render_pipeline.h",
-        "shader_module.h",
+        "math.h",
+        "mesh.h",
+        "vulkan_renderer.h",
+    ],
+    data = [
+        ":pass_through_fragment",
+        ":pass_through_vertex",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//base",
+        "//third_party/glfw",
+        "//third_party/vulkan",
+    ],
+)
+
+vertex_shader_library(
+    name = "pass_through_vertex",
+    srcs = [
+        "pass_through.vert.glsl",
+    ],
+)
+
+fragment_shader_library(
+    name = "pass_through_fragment",
+    srcs = [
+        "pass_through.frag.glsl",
+    ],
+)
+
+cc_binary(
+    name = "render_cube",
+    srcs = [
+        "render_cube.cc",
+    ],
+    deps = [
+        ":gfx",
+        "//base",
+    ],
 )
