@@ -15,6 +15,8 @@ cc_library(
     data = [
         ":pass_through_fragment",
         ":pass_through_vertex",
+        ":render_red",
+        ":triangle_shader",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -28,6 +30,20 @@ vertex_shader_library(
     name = "pass_through_vertex",
     srcs = [
         "pass_through.vert.glsl",
+    ],
+)
+
+vertex_shader_library(
+    name = "triangle_shader",
+    srcs = [
+        "triangle.vert.glsl",
+    ],
+)
+
+fragment_shader_library(
+    name = "render_red",
+    srcs = [
+        "render_red.frag.glsl",
     ],
 )
 

@@ -159,22 +159,18 @@ VulkanRenderer::VulkanRenderer() {
   if (vkAllocateCommandBuffers(device_, &alloc_info, &command_buffer_) != VK_SUCCESS)
     throw std::runtime_error("vkAllocateCommandBuffers failed");
 
-  VkFormat swapchain_image_format;
-  VkExtent2D swapchain_extent;
-
   // Query surface capabilities
   VkSurfaceCapabilitiesKHR capabilities;
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device_, surface_, &capabilities);
 
-  // Choose extent
-  swapchain_extent = capabilities.currentExtent;
+  swapchain_extent_ = capabilities.currentExtent;
 
   // Choose format
   uint32_t format_count = 0;
   vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_, surface_, &format_count, nullptr);
   std::vector<VkSurfaceFormatKHR> formats(format_count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device_, surface_, &format_count, formats.data());
-  swapchain_image_format = formats[0].format;
+  VkFormat swapchain_image_format{formats[0].format};
 
   // Swapchain creation
   VkSwapchainCreateInfoKHR sc_info{};
@@ -183,7 +179,7 @@ VulkanRenderer::VulkanRenderer() {
   sc_info.minImageCount = capabilities.minImageCount + 1;
   sc_info.imageFormat = swapchain_image_format;
   sc_info.imageColorSpace = formats[0].colorSpace;
-  sc_info.imageExtent = swapchain_extent;
+  sc_info.imageExtent = swapchain_extent_;
   sc_info.imageArrayLayers = 1;
   sc_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   sc_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -263,8 +259,8 @@ VulkanRenderer::VulkanRenderer() {
     fb_info.renderPass = render_pass_;
     fb_info.attachmentCount = 1;
     fb_info.pAttachments = &swapchain_image_views_[i];
-    fb_info.width = swapchain_extent.width;
-    fb_info.height = swapchain_extent.height;
+    fb_info.width = swapchain_extent_.width;
+    fb_info.height = swapchain_extent_.height;
     fb_info.layers = 1;
 
     if (vkCreateFramebuffer(device_, &fb_info, nullptr, &framebuffers_[i]) != VK_SUCCESS) {
@@ -282,8 +278,8 @@ VulkanRenderer::VulkanRenderer() {
     throw std::runtime_error("failed to create render_finished semaphore");
   }
 
-  const auto vertex_shader_spv{load_spirv("gfx/pass_through.vert.spv")};
-  const auto fragment_shader_spv{load_spirv("gfx/pass_through.frag.spv")};
+  const auto vertex_shader_spv{load_spirv("gfx/triangle.vert.spv")};
+  const auto fragment_shader_spv{load_spirv("gfx/render_red.frag.spv")};
   VkShaderModule vert_shader = create_shader_module(device_, vertex_shader_spv);
   VkShaderModule frag_shader = create_shader_module(device_, fragment_shader_spv);
 
@@ -314,14 +310,14 @@ VulkanRenderer::VulkanRenderer() {
   VkViewport viewport{};
   viewport.x = 0.f;
   viewport.y = 0.f;
-  viewport.width = static_cast<float>(swapchain_extent.width);
-  viewport.height = static_cast<float>(swapchain_extent.height);
+  viewport.width = static_cast<float>(swapchain_extent_.width);
+  viewport.height = static_cast<float>(swapchain_extent_.height);
   viewport.minDepth = 0.f;
   viewport.maxDepth = 1.f;
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = swapchain_extent;
+  scissor.extent = swapchain_extent_;
 
   VkPipelineViewportStateCreateInfo viewport_state{};
   viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -400,8 +396,10 @@ VulkanRenderer::~VulkanRenderer() {
 
 void VulkanRenderer::render_frame() {
   uint32_t image_index;
-  vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_, VK_NULL_HANDLE,
-                        &image_index);
+  if (vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_, VK_NULL_HANDLE,
+                            &image_index) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to acquire swapchain image.");
+  }
 
   vkResetCommandBuffer(command_buffer_, 0);
   VkCommandBufferBeginInfo begin_info{};
@@ -416,13 +414,16 @@ void VulkanRenderer::render_frame() {
   rp_begin.renderPass = render_pass_;
   rp_begin.framebuffer = framebuffers_[image_index];
   rp_begin.renderArea.offset = {0, 0};
-  rp_begin.renderArea.extent = {800, 600};
+  rp_begin.renderArea.extent = swapchain_extent_;
   rp_begin.clearValueCount = 1;
   rp_begin.pClearValues = &clear;
 
   vkCmdBeginRenderPass(command_buffer_, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
   vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_);
+
+  // Draw a single triangle.
   vkCmdDraw(command_buffer_, 3, 1, 0, 0);
+
   vkCmdEndRenderPass(command_buffer_);
   vkEndCommandBuffer(command_buffer_);
 
@@ -436,7 +437,10 @@ void VulkanRenderer::render_frame() {
   submit_info.pCommandBuffers = &command_buffer_;
   submit_info.signalSemaphoreCount = 1;  // signal when rendering is done
   submit_info.pSignalSemaphores = &render_finished_;
-  vkQueueSubmit(graphics_queue_, 1, &submit_info, VK_NULL_HANDLE);
+
+  if (vkQueueSubmit(graphics_queue_, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to submit draw command buffer.");
+  }
 
   VkPresentInfoKHR present_info{};
   present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -445,7 +449,10 @@ void VulkanRenderer::render_frame() {
   present_info.swapchainCount = 1;
   present_info.pSwapchains = &swapchain_;
   present_info.pImageIndices = &image_index;
-  vkQueuePresentKHR(present_queue_, &present_info);
+
+  if (vkQueuePresentKHR(present_queue_, &present_info) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to present swapchain image.");
+  }
 }
 
 }  // namespace ndyn::gfx

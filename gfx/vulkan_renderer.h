@@ -20,6 +20,7 @@ struct GpuMesh final {
 class VulkanRenderer final {
  private:
   GLFWwindow* window_{nullptr};
+  VkExtent2D swapchain_extent_{};
   VkInstance instance_{VK_NULL_HANDLE};
   VkSurfaceKHR surface_{VK_NULL_HANDLE};
   VkPhysicalDevice physical_device_{VK_NULL_HANDLE};
