@@ -5,6 +5,7 @@ cc_library(
         ],
         "//conditions:default": [
             "initializer.cc",
+            "resource_loader.cc",
         ],
     }),
     hdrs =
@@ -20,6 +21,7 @@ cc_library(
             "bits.h",
             "except.h",
             "pi.h",
+            "resource_loader.h",
             "units.h",
         ],
     defines = select({
@@ -35,8 +37,10 @@ cc_library(
             "//hal/output",
         ],
         "//conditions:default": [
-            "//third_party/glog",
+            "//io",
             "//third_party/gflags",
+            "//third_party/glog",
+            "@bazel_tools//tools/cpp/runfiles",
         ],
     }),
 )

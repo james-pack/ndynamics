@@ -1,7 +1,9 @@
 #include "base/initializer.h"
 
 #include <filesystem>
+#include <memory>
 
+#include "base/resource_loader.h"
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
@@ -24,6 +26,9 @@ void initialize(int* argc, char*** argv, const std::string& log_dir) {
 
   FLAGS_log_dir = log_path.string();
   google::InitGoogleLogging((*argv)[0]);
+
+  ResourceLoader::initialize((*argv)[0]);
+
   gflags::ParseCommandLineFlags(argc, argv, true);
 }
 
