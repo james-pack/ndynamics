@@ -10,8 +10,12 @@
 #include <vector>
 
 #include "base/resource_loader.h"
+#include "glog/logging.h"
 
 namespace ndyn::gfx {
+
+static constexpr const char VERTEX_SHADER[] = "gfx/pass_through.vert.spv";
+static constexpr const char FRAGMENT_SHADER[] = "gfx/render_red.frag.spv";
 
 std::vector<uint32_t> load_spirv(std::string_view path) {
   const auto bytes{ResourceLoader::instance().load(path)};
@@ -37,11 +41,18 @@ VkShaderModule create_shader_module(VkDevice device, const std::vector<uint32_t>
   return shader_module;
 }
 
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type,
+    const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void*) {
+  LOG(ERROR) << "Vulkan validation: " << callback_data->pMessage;
+  return VK_FALSE;
+}
+
 VulkanRenderer::VulkanRenderer() {
   // Initialize GLFW and create a window
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // No OpenGL context
-  window_ = glfwCreateWindow(800, 600, "Vulkan Window", nullptr, nullptr);
+  window_ = glfwCreateWindow(1200, 1000, "Vulkan Window", nullptr, nullptr);
 
   VkApplicationInfo app_info{};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -52,13 +63,28 @@ VulkanRenderer::VulkanRenderer() {
   app_info.apiVersion = VK_API_VERSION_1_2;
 
   uint32_t ext_count = 0;
-  const char** required_exts = glfwGetRequiredInstanceExtensions(&ext_count);
+  const char** glfw_exts = glfwGetRequiredInstanceExtensions(&ext_count);
+  std::vector<const char*> required_exts(glfw_exts, glfw_exts + ext_count);
+  required_exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
+  VkDebugUtilsMessengerCreateInfoEXT debug_info{};
+  debug_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  debug_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+  debug_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+  debug_info.pfnUserCallback = debug_callback;
+
+  static constexpr const char* layers[] = {"VK_LAYER_KHRONOS_validation"};
   VkInstanceCreateInfo instance_info{};
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_info.pApplicationInfo = &app_info;
-  instance_info.enabledExtensionCount = ext_count;
-  instance_info.ppEnabledExtensionNames = required_exts;
+  instance_info.enabledExtensionCount = static_cast<uint32_t>(required_exts.size());
+  instance_info.ppEnabledExtensionNames = required_exts.data();
+  instance_info.enabledLayerCount = 1;
+  instance_info.ppEnabledLayerNames = layers;
+  instance_info.pNext = static_cast<const void*>(&debug_info);
 
   if (vkCreateInstance(&instance_info, nullptr, &instance_) != VK_SUCCESS)
     throw std::runtime_error("vkCreateInstance failed");
@@ -96,7 +122,7 @@ VulkanRenderer::VulkanRenderer() {
   }
 
   const std::vector<const char*> device_extensions = {
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME  // "VK_KHR_swapchain"
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME,  // "VK_KHR_swapchain"
   };
   float priority = 1.f;
   if (graphics_family == present_family) {
@@ -113,7 +139,9 @@ VulkanRenderer::VulkanRenderer() {
     device_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
     device_info.ppEnabledExtensionNames = device_extensions.data();
 
-    vkCreateDevice(physical_device_, &device_info, nullptr, &device_);
+    if (vkCreateDevice(physical_device_, &device_info, nullptr, &device_) != VK_SUCCESS) {
+      throw std::runtime_error("vkCreateDevice (graphics_family == present_family) failed");
+    }
 
     vkGetDeviceQueue(device_, graphics_family, 0, &graphics_queue_);
     present_queue_ = graphics_queue_;
@@ -136,8 +164,9 @@ VulkanRenderer::VulkanRenderer() {
     device_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
     device_info.ppEnabledExtensionNames = device_extensions.data();
 
-    if (vkCreateDevice(physical_device_, &device_info, nullptr, &device_) != VK_SUCCESS)
-      throw std::runtime_error("vkCreateDevice failed");
+    if (vkCreateDevice(physical_device_, &device_info, nullptr, &device_) != VK_SUCCESS) {
+      throw std::runtime_error("vkCreateDevice (graphics_family != present_family) failed");
+    }
 
     vkGetDeviceQueue(device_, graphics_family, 0, &graphics_queue_);
     vkGetDeviceQueue(device_, present_family, 0, &present_queue_);
@@ -278,8 +307,8 @@ VulkanRenderer::VulkanRenderer() {
     throw std::runtime_error("failed to create render_finished semaphore");
   }
 
-  const auto vertex_shader_spv{load_spirv("gfx/triangle.vert.spv")};
-  const auto fragment_shader_spv{load_spirv("gfx/render_red.frag.spv")};
+  const auto vertex_shader_spv{load_spirv(VERTEX_SHADER)};
+  const auto fragment_shader_spv{load_spirv(FRAGMENT_SHADER)};
   VkShaderModule vert_shader = create_shader_module(device_, vertex_shader_spv);
   VkShaderModule frag_shader = create_shader_module(device_, fragment_shader_spv);
 
@@ -297,10 +326,29 @@ VulkanRenderer::VulkanRenderer() {
 
   VkPipelineShaderStageCreateInfo shader_stages[] = {vert_stage, frag_stage};
 
+  VkVertexInputBindingDescription binding{};
+  binding.binding = 0;
+  binding.stride = sizeof(float) * 6;
+  binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  std::array<VkVertexInputAttributeDescription, 2> attributes{};
+
+  attributes[0].location = 0;  // in_pos
+  attributes[0].binding = 0;
+  attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attributes[0].offset = 0;
+
+  attributes[1].location = 1;  // in_normal
+  attributes[1].binding = 0;
+  attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+  attributes[1].offset = sizeof(float) * 3;
+
   VkPipelineVertexInputStateCreateInfo vertex_input{};
   vertex_input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertex_input.vertexBindingDescriptionCount = 0;
-  vertex_input.vertexAttributeDescriptionCount = 0;
+  vertex_input.vertexBindingDescriptionCount = 1;
+  vertex_input.pVertexBindingDescriptions = &binding;
+  vertex_input.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
+  vertex_input.pVertexAttributeDescriptions = attributes.data();
 
   VkPipelineInputAssemblyStateCreateInfo input_assembly{};
   input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -334,6 +382,7 @@ VulkanRenderer::VulkanRenderer() {
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.f;
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+  // rasterizer.cullMode = VK_CULL_MODE_NONE; // Turn off culling for debugging.
   rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -372,12 +421,21 @@ VulkanRenderer::VulkanRenderer() {
     throw std::runtime_error("failed to create graphics pipeline");
   }
 
+  VkFenceCreateInfo fence_info{};
+  fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  if (vkCreateFence(device_, &fence_info, nullptr, &in_flight_fence_) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create in-flight fence");
+  }
+
   vkDestroyShaderModule(device_, vert_shader, nullptr);
   vkDestroyShaderModule(device_, frag_shader, nullptr);
 }
 
 VulkanRenderer::~VulkanRenderer() {
   vkDeviceWaitIdle(device_);
+  if (in_flight_fence_) vkDestroyFence(device_, in_flight_fence_, nullptr);
   if (image_available_) vkDestroySemaphore(device_, image_available_, nullptr);
   if (render_finished_) vkDestroySemaphore(device_, render_finished_, nullptr);
   if (graphics_pipeline_) vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
@@ -395,6 +453,9 @@ VulkanRenderer::~VulkanRenderer() {
 }
 
 void VulkanRenderer::render_frame() {
+  vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
+  vkResetFences(device_, 1, &in_flight_fence_);
+
   uint32_t image_index;
   if (vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_, VK_NULL_HANDLE,
                             &image_index) != VK_SUCCESS) {
@@ -421,8 +482,19 @@ void VulkanRenderer::render_frame() {
   vkCmdBeginRenderPass(command_buffer_, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
   vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_);
 
-  // Draw a single triangle.
-  vkCmdDraw(command_buffer_, 3, 1, 0, 0);
+  LOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
+  for (InstanceId instance_id = 0; instance_id < instances_.size(); ++instance_id) {
+    const Instance& instance = instances_[instance_id];
+    // const Mat4 position{create_model_matrix(instance.position)};
+    // vkCmdPushConstants(command_buffer_, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
+    //                    sizeof(Mat4), &position);
+
+    const GpuMesh& mesh = meshes_[instance.mesh];
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(command_buffer_, 0, 1, &mesh.vertex_buffer, offsets);
+    vkCmdBindIndexBuffer(command_buffer_, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(command_buffer_, mesh.index_count, 1, 0, 0, 0);
+  }
 
   vkCmdEndRenderPass(command_buffer_);
   vkEndCommandBuffer(command_buffer_);
@@ -453,6 +525,162 @@ void VulkanRenderer::render_frame() {
   if (vkQueuePresentKHR(present_queue_, &present_info) != VK_SUCCESS) {
     throw std::runtime_error("Failed to present swapchain image.");
   }
+}
+
+uint32_t VulkanRenderer::find_memory_type(uint32_t type_filter,
+                                          VkMemoryPropertyFlags properties) const {
+  VkPhysicalDeviceMemoryProperties mem_props{};
+  vkGetPhysicalDeviceMemoryProperties(physical_device_, &mem_props);
+
+  for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
+    const bool type_supported = type_filter & (1u << i);
+    const bool has_properties = (mem_props.memoryTypes[i].propertyFlags & properties) == properties;
+
+    if (type_supported && has_properties) {
+      return i;
+    }
+  }
+
+  throw std::runtime_error("Failed to find suitable Vulkan memory type.");
+}
+
+MeshId VulkanRenderer::add_mesh(const Mesh& mesh) {
+  GpuMesh gpu_mesh{};
+  gpu_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
+
+  const VkDeviceSize vertex_size = mesh.vertices.size() * sizeof(mesh.vertices[0]);
+  const VkDeviceSize index_size = mesh.indices.size() * sizeof(mesh.indices[0]);
+
+  // ---------------------------------------------------------------------------
+  // 1. Create staging buffers
+  // ---------------------------------------------------------------------------
+
+  VkBuffer staging_vertex_buffer;
+  VkBuffer staging_index_buffer;
+  VkDeviceMemory staging_memory;
+
+  VkBufferCreateInfo staging_info{};
+  staging_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  staging_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  staging_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  staging_info.size = vertex_size;
+  vkCreateBuffer(device_, &staging_info, nullptr, &staging_vertex_buffer);
+
+  staging_info.size = index_size;
+  vkCreateBuffer(device_, &staging_info, nullptr, &staging_index_buffer);
+
+  VkMemoryRequirements vreq, ireq;
+  vkGetBufferMemoryRequirements(device_, staging_vertex_buffer, &vreq);
+  vkGetBufferMemoryRequirements(device_, staging_index_buffer, &ireq);
+
+  const VkDeviceSize index_offset = (vreq.size + ireq.alignment - 1) & ~(ireq.alignment - 1);
+  const VkDeviceSize staging_total_size = index_offset + ireq.size;
+
+  VkMemoryAllocateInfo staging_alloc{};
+  staging_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  staging_alloc.allocationSize = staging_total_size;
+  staging_alloc.memoryTypeIndex =
+      find_memory_type(vreq.memoryTypeBits & ireq.memoryTypeBits,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  vkAllocateMemory(device_, &staging_alloc, nullptr, &staging_memory);
+
+  vkBindBufferMemory(device_, staging_vertex_buffer, staging_memory, 0);
+  vkBindBufferMemory(device_, staging_index_buffer, staging_memory, index_offset);
+
+  // Upload CPU data
+  char* mapped;
+  vkMapMemory(device_, staging_memory, 0, staging_total_size, 0, reinterpret_cast<void**>(&mapped));
+  std::memcpy(mapped, mesh.vertices.data(), vertex_size);
+  std::memcpy(mapped + index_offset, mesh.indices.data(), index_size);
+  vkUnmapMemory(device_, staging_memory);
+
+  // ---------------------------------------------------------------------------
+  // 2. Create device-local buffers
+  // ---------------------------------------------------------------------------
+
+  VkBufferCreateInfo buffer_info{};
+  buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  buffer_info.size = vertex_size;
+  buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+  vkCreateBuffer(device_, &buffer_info, nullptr, &gpu_mesh.vertex_buffer);
+
+  buffer_info.size = index_size;
+  buffer_info.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+  vkCreateBuffer(device_, &buffer_info, nullptr, &gpu_mesh.index_buffer);
+
+  vkGetBufferMemoryRequirements(device_, gpu_mesh.vertex_buffer, &vreq);
+  vkGetBufferMemoryRequirements(device_, gpu_mesh.index_buffer, &ireq);
+
+  const VkDeviceSize device_index_offset = (vreq.size + ireq.alignment - 1) & ~(ireq.alignment - 1);
+  const VkDeviceSize device_total_size = device_index_offset + ireq.size;
+
+  VkMemoryAllocateInfo device_alloc{};
+  device_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  device_alloc.allocationSize = device_total_size;
+  device_alloc.memoryTypeIndex = find_memory_type(vreq.memoryTypeBits & ireq.memoryTypeBits,
+                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  vkAllocateMemory(device_, &device_alloc, nullptr, &gpu_mesh.memory);
+
+  vkBindBufferMemory(device_, gpu_mesh.vertex_buffer, gpu_mesh.memory, 0);
+  vkBindBufferMemory(device_, gpu_mesh.index_buffer, gpu_mesh.memory, device_index_offset);
+
+  // ---------------------------------------------------------------------------
+  // 3. Copy staging → device-local
+  // ---------------------------------------------------------------------------
+
+  VkCommandBufferAllocateInfo cmd_alloc{};
+  cmd_alloc.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  cmd_alloc.commandPool = command_pool_;
+  cmd_alloc.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  cmd_alloc.commandBufferCount = 1;
+
+  VkCommandBuffer cmd;
+  vkAllocateCommandBuffers(device_, &cmd_alloc, &cmd);
+
+  VkCommandBufferBeginInfo begin{};
+  begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  vkBeginCommandBuffer(cmd, &begin);
+
+  VkBufferCopy copy{};
+  copy.size = vertex_size;
+  vkCmdCopyBuffer(cmd, staging_vertex_buffer, gpu_mesh.vertex_buffer, 1, &copy);
+
+  copy.size = index_size;
+  vkCmdCopyBuffer(cmd, staging_index_buffer, gpu_mesh.index_buffer, 1, &copy);
+
+  vkEndCommandBuffer(cmd);
+
+  VkSubmitInfo submit{};
+  submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submit.commandBufferCount = 1;
+  submit.pCommandBuffers = &cmd;
+
+  vkQueueSubmit(graphics_queue_, 1, &submit, VK_NULL_HANDLE);
+  vkQueueWaitIdle(graphics_queue_);
+
+  vkFreeCommandBuffers(device_, command_pool_, 1, &cmd);
+
+  // ---------------------------------------------------------------------------
+  // 4. Cleanup staging
+  // ---------------------------------------------------------------------------
+
+  vkDestroyBuffer(device_, staging_vertex_buffer, nullptr);
+  vkDestroyBuffer(device_, staging_index_buffer, nullptr);
+  vkFreeMemory(device_, staging_memory, nullptr);
+
+  meshes_.emplace_back(gpu_mesh);
+  return static_cast<MeshId>(meshes_.size() - 1);
+}
+
+InstanceId VulkanRenderer::add_instance(const Instance& instance) {
+  instances_.emplace_back(instance);
+  return static_cast<InstanceId>(instances_.size() - 1);
 }
 
 }  // namespace ndyn::gfx

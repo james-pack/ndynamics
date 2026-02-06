@@ -22,7 +22,8 @@ int main(int argc, char* argv[]) {
   ndyn::initialize(&argc, &argv);
 
   VulkanRenderer renderer{};
-  // const std::size_t cube_id{renderer.add_mesh(create_cube(1.f))};
+  const MeshId mesh{renderer.add_mesh(create_triangle(1.f))};
+  const InstanceId id{renderer.add_instance(Instance{mesh})};
 
   // {
   //   Camera camera{};

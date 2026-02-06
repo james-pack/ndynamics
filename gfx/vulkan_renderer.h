@@ -13,9 +13,16 @@ namespace ndyn::gfx {
 struct GpuMesh final {
   VkBuffer vertex_buffer{VK_NULL_HANDLE};
   VkBuffer index_buffer{VK_NULL_HANDLE};
-  std::uint32_t index_count{0};
+  VkDeviceMemory memory{VK_NULL_HANDLE};
+  uint32_t index_count{};
+};
+using MeshId = uint32_t;
+
+struct Instance final {
+  MeshId mesh;
   Transform position;
 };
+using InstanceId = uint32_t;
 
 class VulkanRenderer final {
  private:
@@ -38,14 +45,23 @@ class VulkanRenderer final {
   std::vector<VkImageView> swapchain_image_views_{};
   std::vector<VkFramebuffer> framebuffers_{};
 
+  VkFence in_flight_fence_{VK_NULL_HANDLE};
   VkSemaphore image_available_{VK_NULL_HANDLE};
   VkSemaphore render_finished_{VK_NULL_HANDLE};
+
+  std::vector<GpuMesh> meshes_{};
+  std::vector<Instance> instances_{};
+
+  uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const;
 
  public:
   VulkanRenderer();
   ~VulkanRenderer();
 
   void render_frame();
+
+  MeshId add_mesh(const Mesh& mesh);
+  InstanceId add_instance(const Instance& instance);
 };
 
 }  // namespace ndyn::gfx

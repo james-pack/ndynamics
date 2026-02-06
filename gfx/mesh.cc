@@ -4,6 +4,18 @@
 
 namespace ndyn::gfx {
 
+Mesh create_triangle(float s) {
+  const float half{s / 2};
+  Mesh m;
+  m.vertices = {
+      {0, -half, 0, 0, 0, 1},
+      {half, half, 0, 0, 0, 1},
+      {-half, half, 0, 0, 0, 1},
+  };
+  m.indices = {0, 1, 2};
+  return m;
+}
+
 Mesh create_cube(float s) {
   const float half{s / 2};
   Mesh m;
