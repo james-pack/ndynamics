@@ -8,8 +8,10 @@ cc_library(
         "vulkan_renderer.cc",
     ],
     hdrs = [
+        "alignment.h",
         "math.h",
         "mesh.h",
+        "ssbo_buffer.h",
         "vulkan_renderer.h",
     ],
     data = [
