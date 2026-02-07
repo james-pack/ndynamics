@@ -51,6 +51,10 @@ class VulkanRenderer final {
   VkSemaphore image_available_{VK_NULL_HANDLE};
   VkSemaphore render_finished_{VK_NULL_HANDLE};
 
+  VkDescriptorSetLayout instance_set_layout_{VK_NULL_HANDLE};
+  VkDescriptorPool descriptor_pool_{VK_NULL_HANDLE};
+  VkDescriptorSet instance_descriptor_set_{VK_NULL_HANDLE};
+
   std::vector<GpuMesh> meshes_{};
   std::vector<Instance> instances_{};
   std::unique_ptr<SsboBuffer<Mat4>> instance_positions_{};
@@ -65,6 +69,9 @@ class VulkanRenderer final {
 
   MeshId add_mesh(const Mesh& mesh);
   InstanceId add_instance(const Instance& instance);
+  void update_position(InstanceId id, const Transform& position) {
+    instances_.at(id).position = position;
+  }
 };
 
 }  // namespace ndyn::gfx

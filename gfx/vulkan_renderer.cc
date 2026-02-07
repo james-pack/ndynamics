@@ -174,21 +174,24 @@ VulkanRenderer::VulkanRenderer() {
     vkGetDeviceQueue(device_, present_family, 0, &present_queue_);
   }
 
-  VkCommandPoolCreateInfo pool_info{};
-  pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  pool_info.queueFamilyIndex = graphics_family;
-  pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  VkCommandPoolCreateInfo command_pool_info{};
+  command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  command_pool_info.queueFamilyIndex = graphics_family;
+  command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-  if (vkCreateCommandPool(device_, &pool_info, nullptr, &command_pool_) != VK_SUCCESS)
+  if (vkCreateCommandPool(device_, &command_pool_info, nullptr, &command_pool_) != VK_SUCCESS) {
     throw std::runtime_error("vkCreateCommandPool failed");
+  }
 
-  VkCommandBufferAllocateInfo alloc_info{};
-  alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  alloc_info.commandPool = command_pool_;
-  alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  alloc_info.commandBufferCount = 1;
-  if (vkAllocateCommandBuffers(device_, &alloc_info, &command_buffer_) != VK_SUCCESS)
+  VkCommandBufferAllocateInfo command_buffer_alloc_info{};
+  command_buffer_alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  command_buffer_alloc_info.commandPool = command_pool_;
+  command_buffer_alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  command_buffer_alloc_info.commandBufferCount = 1;
+  if (vkAllocateCommandBuffers(device_, &command_buffer_alloc_info, &command_buffer_) !=
+      VK_SUCCESS) {
     throw std::runtime_error("vkAllocateCommandBuffers failed");
+  }
 
   // Query surface capabilities
   VkSurfaceCapabilitiesKHR capabilities;
@@ -256,10 +259,30 @@ VulkanRenderer::VulkanRenderer() {
   swapchain_images_.resize(image_count);
   vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
 
-  VkPipelineLayoutCreateInfo layout_info{};
-  layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  if (vkCreatePipelineLayout(device_, &layout_info, nullptr, &pipeline_layout_) != VK_SUCCESS)
+  VkDescriptorSetLayoutBinding instance_binding{};
+  instance_binding.binding = 0;
+  instance_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  instance_binding.descriptorCount = 1;
+  instance_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  instance_binding.pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo layout_info{};
+  layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  layout_info.bindingCount = 1;
+  layout_info.pBindings = &instance_binding;
+
+  vkCreateDescriptorSetLayout(device_, &layout_info, nullptr, &instance_set_layout_);
+
+  VkPipelineLayoutCreateInfo pipeline_layout_info{};
+  pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipeline_layout_info.setLayoutCount = 1;
+  pipeline_layout_info.pSetLayouts = &instance_set_layout_;
+  pipeline_layout_info.pushConstantRangeCount = 0;
+
+  if (vkCreatePipelineLayout(device_, &pipeline_layout_info, nullptr, &pipeline_layout_) !=
+      VK_SUCCESS) {
     throw std::runtime_error("vkCreatePipelineLayout failed");
+  }
 
   swapchain_image_views_.resize(swapchain_images_.size());
   for (size_t i = 0; i < swapchain_images_.size(); ++i) {
@@ -327,6 +350,31 @@ VulkanRenderer::VulkanRenderer() {
   frag_stage.pName = "main";
 
   VkPipelineShaderStageCreateInfo shader_stages[] = {vert_stage, frag_stage};
+
+  VkDescriptorPoolSize descriptor_pool_size{};
+  descriptor_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  descriptor_pool_size.descriptorCount = 1;
+
+  VkDescriptorPoolCreateInfo descriptor_pool_info{};
+  descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  descriptor_pool_info.maxSets = 1;
+  descriptor_pool_info.poolSizeCount = 1;
+  descriptor_pool_info.pPoolSizes = &descriptor_pool_size;
+  if (vkCreateDescriptorPool(device_, &descriptor_pool_info, nullptr, &descriptor_pool_) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create descriptor pool");
+  }
+
+  VkDescriptorSetAllocateInfo descriptor_set_alloc_info{};
+  descriptor_set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  descriptor_set_alloc_info.descriptorPool = descriptor_pool_;
+  descriptor_set_alloc_info.descriptorSetCount = 1;
+  descriptor_set_alloc_info.pSetLayouts = &instance_set_layout_;
+
+  if (vkAllocateDescriptorSets(device_, &descriptor_set_alloc_info, &instance_descriptor_set_) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate descriptor sets");
+  }
 
   VkVertexInputBindingDescription binding{};
   binding.binding = 0;
@@ -432,6 +480,23 @@ VulkanRenderer::VulkanRenderer() {
   }
 
   instance_positions_ = std::make_unique<SsboBuffer<Mat4>>(device_, physical_device_);
+
+  VkDescriptorBufferInfo buffer_info{};
+  buffer_info.buffer = instance_positions_->buffer();
+  buffer_info.offset = 0;
+  buffer_info.range = VK_WHOLE_SIZE;
+
+  VkWriteDescriptorSet write{};
+  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write.dstSet = instance_descriptor_set_;
+  write.dstBinding = 0;
+  write.dstArrayElement = 0;
+  write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  write.descriptorCount = 1;
+  write.pBufferInfo = &buffer_info;
+
+  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+
   vkDestroyShaderModule(device_, vert_shader, nullptr);
   vkDestroyShaderModule(device_, frag_shader, nullptr);
 }
@@ -495,15 +560,23 @@ void VulkanRenderer::render_frame() {
   vkCmdBeginRenderPass(command_buffer_, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
   vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_);
 
+  vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_,
+                          0,  // firstSet
+                          1, &instance_descriptor_set_, 0, nullptr);
+
   LOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
-  for (InstanceId instance_id = 0; instance_id < instances_.size(); ++instance_id) {
-    const Instance& instance = instances_[instance_id];
-    const GpuMesh& mesh = meshes_[instance.mesh];
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(command_buffer_, 0, 1, &mesh.vertex_buffer, offsets);
-    vkCmdBindIndexBuffer(command_buffer_, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(command_buffer_, mesh.index_count, 1, 0, 0, 0);
-  }
+
+  // Right now, we assume that we have only one mesh, and every instance is an instance of that
+  // mesh.
+  // TODO(james): Modify the instances_, meshes_, and instance_positions_ data structures so that we
+  // render each mesh with the correct number of instances in a single command. The ordering of the
+  // mesh iteration must match the ordering of the instance_positions_ data to achieve this.
+  const GpuMesh& mesh = meshes_[0];
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(command_buffer_, 0, 1, &mesh.vertex_buffer, offsets);
+  vkCmdBindIndexBuffer(command_buffer_, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdDrawIndexed(command_buffer_, mesh.index_count, instances_.size(), 0, 0,
+                   /* offset of first instance of this mesh */ 0);
 
   vkCmdEndRenderPass(command_buffer_);
   vkEndCommandBuffer(command_buffer_);

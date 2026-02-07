@@ -31,19 +31,19 @@ int main(int argc, char* argv[]) {
   //   renderer.set_camera(camera);
   // }
 
-  auto start = std::chrono::high_resolution_clock::now();
+  const auto start{std::chrono::high_resolution_clock::now()};
 
   while (true) {
-    auto now = std::chrono::high_resolution_clock::now();
+    const auto now{std::chrono::high_resolution_clock::now()};
     float t = std::chrono::duration<float>(now - start).count();
 
-    Transform tr{};
-    tr.position = {std::sin(t) * 2.f, std::sin(t * 0.5f) * 1.f, 0.f};
-    tr.rotation = axis_angle({0.f, 1.f, 0.f}, t) * axis_angle({1.f, 0.f, 0.f}, t * 0.7f);
+    Transform position{};
+    position.position = {std::sin(t) * 2.f, std::sin(t * 0.5f) * 1.f, 0.f};
+    position.rotation = axis_angle({0.f, 1.f, 0.f}, t) * axis_angle({1.f, 0.f, 0.f}, t * 0.7f);
 
-    // renderer.update_position(cube_id, tr);
+    renderer.update_position(id, position);
     renderer.render_frame();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 }
