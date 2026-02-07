@@ -5,11 +5,13 @@
 
 #include <array>
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
 
 #include "base/resource_loader.h"
+#include "gfx/ssbo_buffer.h"
 #include "glog/logging.h"
 
 namespace ndyn::gfx {
@@ -429,6 +431,7 @@ VulkanRenderer::VulkanRenderer() {
     throw std::runtime_error("failed to create in-flight fence");
   }
 
+  instance_positions_ = std::make_unique<SsboBuffer<Mat4>>(device_, physical_device_);
   vkDestroyShaderModule(device_, vert_shader, nullptr);
   vkDestroyShaderModule(device_, frag_shader, nullptr);
 }
@@ -454,7 +457,7 @@ VulkanRenderer::~VulkanRenderer() {
 
 void VulkanRenderer::render_frame() {
   vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
-  vkResetFences(device_, 1, &in_flight_fence_);
+  vkResetCommandBuffer(command_buffer_, 0);
 
   uint32_t image_index;
   if (vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_, VK_NULL_HANDLE,
@@ -462,7 +465,17 @@ void VulkanRenderer::render_frame() {
     throw std::runtime_error("Failed to acquire swapchain image.");
   }
 
-  vkResetCommandBuffer(command_buffer_, 0);
+  {
+    auto updater{instance_positions_->begin_updates()};
+    updater.reserve(instances_.size());
+    for (size_t i = 0; i < instances_.size(); ++i) {
+      const Instance& instance{instances_[i]};
+      Mat4 position{create_model_matrix(instance.position)};
+      updater.update(i, position);
+    }
+    // Let the updater fall out of scope and be destroyed to trigger a flush.
+  }
+
   VkCommandBufferBeginInfo begin_info{};
   begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -485,10 +498,6 @@ void VulkanRenderer::render_frame() {
   LOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
   for (InstanceId instance_id = 0; instance_id < instances_.size(); ++instance_id) {
     const Instance& instance = instances_[instance_id];
-    // const Mat4 position{create_model_matrix(instance.position)};
-    // vkCmdPushConstants(command_buffer_, pipeline_layout_, VK_SHADER_STAGE_VERTEX_BIT, 0,
-    //                    sizeof(Mat4), &position);
-
     const GpuMesh& mesh = meshes_[instance.mesh];
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(command_buffer_, 0, 1, &mesh.vertex_buffer, offsets);
@@ -498,6 +507,8 @@ void VulkanRenderer::render_frame() {
 
   vkCmdEndRenderPass(command_buffer_);
   vkEndCommandBuffer(command_buffer_);
+
+  vkResetFences(device_, 1, &in_flight_fence_);
 
   VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   VkSubmitInfo submit_info{};

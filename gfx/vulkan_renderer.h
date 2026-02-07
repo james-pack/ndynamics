@@ -3,10 +3,12 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
+#include <memory>
 #include <vector>
 
 #include "gfx/math.h"
 #include "gfx/mesh.h"
+#include "gfx/ssbo_buffer.h"
 
 namespace ndyn::gfx {
 
@@ -51,6 +53,7 @@ class VulkanRenderer final {
 
   std::vector<GpuMesh> meshes_{};
   std::vector<Instance> instances_{};
+  std::unique_ptr<SsboBuffer<Mat4>> instance_positions_{};
 
   uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const;
 
