@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "gfx/alignment.h"
+
 namespace ndyn::gfx {
 
 struct Vec3 final {
@@ -46,7 +48,7 @@ struct Camera final {
   float fov_y_rad{1.0f};
 };
 
-struct Mat4 final {
+struct Mat4 final : GpuStdLayout {
   float m[4][4]{};
 
   Mat4 operator*(const Mat4& rhs) const;
