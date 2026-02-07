@@ -594,7 +594,7 @@ void VulkanRenderer::render_frame() {
   submit_info.signalSemaphoreCount = 1;  // signal when rendering is done
   submit_info.pSignalSemaphores = &render_finished_;
 
-  if (vkQueueSubmit(graphics_queue_, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS) {
+  if (vkQueueSubmit(graphics_queue_, 1, &submit_info, in_flight_fence_) != VK_SUCCESS) {
     throw std::runtime_error("Failed to submit draw command buffer.");
   }
 
