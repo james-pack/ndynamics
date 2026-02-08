@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
 
 #include "gfx/alignment.h"
 
@@ -10,6 +11,13 @@ struct Vec3 final {
   float x;
   float y;
   float z;
+};
+
+struct Vec4 final {
+  float x;
+  float y;
+  float z;
+  float a;
 };
 
 struct Quat final {
@@ -27,8 +35,30 @@ struct Quat final {
     };
   }
 
+  Quat normalize() const {
+    auto scale{std::hypot(w, std::hypot(x, y, z))};
+    return {w / scale, x / scale, y / scale, z / scale};
+  }
   Quat conjugate() const { return {w, -x, -y, -z}; }
 };
+
+inline Quat operator*(float scale, const Quat& q) {
+  return {
+      scale * q.w,
+      scale * q.x,
+      scale * q.y,
+      scale * q.z,
+  };
+}
+
+inline Quat operator*(const Quat& q, float scale) {
+  return {
+      scale * q.w,
+      scale * q.x,
+      scale * q.y,
+      scale * q.z,
+  };
+}
 
 struct Vertex final {
   float px, py, pz;
@@ -48,7 +78,7 @@ struct Camera final {
   float fov_y_rad{1.0f};
 };
 
-struct Mat4 final : GpuStdLayout {
+struct Mat4 final : GpuStdAlign {
   float m[4][4]{};
 
   Mat4 operator*(const Mat4& rhs) const;
@@ -61,6 +91,12 @@ struct Mat4 final : GpuStdLayout {
     r.m[3][3] = 1.f;
     return r;
   }
+};
+
+template <>
+inline constexpr bool SsboLayoutCheck<Mat4>::is_valid() {
+  static_assert(offsetof(Mat4, m) % 16 == 0);
+  return true;
 };
 
 Mat4 quaternion_to_rotation_matrix(const Quat& q);

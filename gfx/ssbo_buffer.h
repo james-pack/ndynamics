@@ -18,8 +18,12 @@ class Updater;
 template <typename Object>
 class SsboBuffer final {
  public:
-  static_assert(GpuLayoutCheck<Object>::value,
-                "SsboBuffer Objects must conform to the required GPU layout.");
+  static_assert(
+      GpuBasicAlignmentCheck<Object>::value,
+      "SsboBuffer Objects must be aligned correctly, according to std430, for use in an SSBO.");
+  static_assert(SsboLayoutCheck<Object>::value,
+                "SsboBuffer Objects must conform to the std430 GPU layout. (The Object *might* be "
+                "valid, but SsboLayoutCheck was not specialized for that type.)");
 
  private:
   VkDevice device_;
