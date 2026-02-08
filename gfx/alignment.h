@@ -19,9 +19,10 @@ struct GpuBasicAlignmentCheck final {
                   "Any types that are shared between host and GPU must conform to the C++ standard "
                   "layout where a pointer to the struct T also points to its first data member.");
     static_assert(alignof(T) % 16 == 0,
-                  "Any types that are shared between host and GPU must be 16-byte aligned");
+                  "Any types that are shared between host and GPU must be 16-byte aligned.");
     static_assert(sizeof(T) % 16 == 0,
-                  "Any types that are shared between host and GPU must have 16-byte size");
+                  "Any types that are shared between host and GPU must have a size that is a "
+                  "multiple of 16-bytes.");
     return true;
   }
 
