@@ -12,8 +12,8 @@ using namespace ndyn::gfx;
 namespace {
 
 Quat axis_angle(const Vec3& axis, float angle) {
-  float s = std::sin(angle * 0.5f);
-  return {std::cos(angle * 0.5f), axis.x * s, axis.y * s, axis.z * s};
+  const float s{std::sin(angle * 0.5f)};
+  return Quat{std::cos(angle * 0.5f), axis.x * s, axis.y * s, axis.z * s}.normalize();
 }
 
 }  // namespace
@@ -22,8 +22,8 @@ int main(int argc, char* argv[]) {
   ndyn::initialize(&argc, &argv);
 
   VulkanRenderer renderer{};
-  const MeshId mesh{renderer.add_mesh(create_triangle(1.f))};
-  const InstanceId id{renderer.add_instance(Instance{mesh})};
+  const MeshId mesh{renderer.add_mesh(create_cube(0.2f))};
+  const InstanceId id1{renderer.add_instance(Instance{mesh})};
 
   // {
   //   Camera camera{};
@@ -39,11 +39,9 @@ int main(int argc, char* argv[]) {
 
     Transform position{};
     position.position = {std::sin(t) * 2.f, std::sin(t * 0.5f) * 1.f, 0.f};
-    position.rotation = axis_angle({0.f, 1.f, 0.f}, t) * axis_angle({1.f, 0.f, 0.f}, t * 0.7f);
+    position.rotation = axis_angle({1.f, 1.f, 0.f}, 0.1f * t);
 
-    renderer.update_position(id, position);
+    renderer.update_position(id1, position);
     renderer.render_frame();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 }
