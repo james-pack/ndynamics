@@ -66,5 +66,6 @@ cc_binary(
     deps = [
         ":gfx",
         "//base",
+        "//third_party/glog",
     ],
 )
