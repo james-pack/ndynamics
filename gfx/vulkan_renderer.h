@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 
+#include "gfx/alignment.h"
+#include "gfx/material.h"
 #include "gfx/math.h"
 #include "gfx/mesh.h"
 #include "gfx/ssbo_buffer.h"
@@ -20,11 +22,26 @@ struct GpuMesh final {
 };
 using MeshId = uint32_t;
 
-struct Instance final {
+struct alignas(16) Instance final {
+  Mat4 position{Mat4::identity()};
+  Vec4 color{0.f, 1.f, 0.f, 1.f};
   MeshId mesh;
-  Transform position;
+  MaterialId material{0};
 };
 using InstanceId = uint32_t;
+
+template <>
+inline constexpr bool SsboLayoutCheck<Instance>::is_valid() {
+  static_assert(offsetof(Instance, position) == 0);
+  static_assert(offsetof(Instance, color) == 64);
+  static_assert(offsetof(Instance, mesh) == 80);
+  static_assert(offsetof(Instance, material) == 84);
+  static_assert(alignof(Instance) == 16);
+  static_assert(sizeof(Instance) == 96);
+  static_assert(SsboLayoutCheck<Mat4>::value);
+  static_assert(SsboLayoutCheck<Vec4>::value);
+  return true;
+};
 
 class VulkanRenderer final {
  private:
@@ -57,7 +74,9 @@ class VulkanRenderer final {
 
   std::vector<GpuMesh> meshes_{};
   std::vector<Instance> instances_{};
-  std::unique_ptr<SsboBuffer<Mat4>> instance_positions_{};
+  std::unique_ptr<SsboBuffer<Instance>> gpu_instances_{};
+  std::unique_ptr<SsboBuffer<Material>> gpu_materials_{};
+  MaterialId num_materials_{0};
 
   uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const;
 
@@ -69,9 +88,11 @@ class VulkanRenderer final {
 
   MeshId add_mesh(const Mesh& mesh);
   InstanceId add_instance(const Instance& instance);
-  void update_position(InstanceId id, const Transform& position) {
+  void update_position(InstanceId id, const Mat4& position) {
     instances_.at(id).position = position;
   }
+
+  MaterialId add_material(const Material& material);
 };
 
 }  // namespace ndyn::gfx
