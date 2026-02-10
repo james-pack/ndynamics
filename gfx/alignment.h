@@ -4,10 +4,6 @@
 
 namespace ndyn::gfx {
 
-struct alignas(16) GpuStdAlign {
-  // No members.
-};
-
 template <typename T>
 struct GpuBasicAlignmentCheck final {
  private:
@@ -29,13 +25,6 @@ struct GpuBasicAlignmentCheck final {
  public:
   static constexpr bool value{is_valid_object_for_gpu_buffers()};
 };
-
-// Double-check that the standard layout passes the layout check.
-static_assert(
-    GpuBasicAlignmentCheck<GpuStdAlign>::value,
-    "The GpuStdAlign must pass the GpuBasicAlignmentCheck else classes using GpuStdAlign will "
-    "not abide the layout rules for use in GPU buffers (SSBO, UBO). This is a necessary condition, "
-    "but is not sufficient for layout validation.");
 
 /**
  * Structure to validate the layout of a struct for use in an SSBO. This struct must be specialized
