@@ -17,7 +17,16 @@
 namespace ndyn::gfx {
 
 static constexpr const char VERTEX_SHADER[] = "gfx/pass_through.vert.spv";
-static constexpr const char FRAGMENT_SHADER[] = "gfx/render_red.frag.spv";
+static constexpr const char FRAGMENT_SHADER[] = "gfx/pass_through.frag.spv";
+// static constexpr const char FRAGMENT_SHADER[] = "gfx/render_red.frag.spv";
+
+static constexpr Material DEBUG_RED{
+    .diffuse_color = {1.f, 0.f, 0.f, 1.f},
+    .specular_color = {1.f, 1.f, 1.f, 1.f},
+    .shininess = 0.f,
+    .opacity = 0.f,
+    .texture_index = 0,
+};
 
 std::vector<uint32_t> load_spirv(std::string_view path) {
   const auto bytes{ResourceLoader::instance().load(path)};
@@ -259,19 +268,30 @@ VulkanRenderer::VulkanRenderer() {
   swapchain_images_.resize(image_count);
   vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
 
-  VkDescriptorSetLayoutBinding instance_binding{};
-  instance_binding.binding = 0;
-  instance_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  instance_binding.descriptorCount = 1;
-  instance_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  instance_binding.pImmutableSamplers = nullptr;
+  std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
+  // Instances.
+  bindings[0].binding = 0;
+  bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  bindings[0].descriptorCount = 1;
+  bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  bindings[0].pImmutableSamplers = nullptr;
+
+  // Materials.
+  bindings[1].binding = 1;
+  bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  bindings[1].descriptorCount = 1;
+  bindings[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  bindings[1].pImmutableSamplers = nullptr;
 
   VkDescriptorSetLayoutCreateInfo layout_info{};
   layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  layout_info.bindingCount = 1;
-  layout_info.pBindings = &instance_binding;
+  layout_info.bindingCount = bindings.size();
+  layout_info.pBindings = bindings.data();
 
-  vkCreateDescriptorSetLayout(device_, &layout_info, nullptr, &instance_set_layout_);
+  if (vkCreateDescriptorSetLayout(device_, &layout_info, nullptr, &instance_set_layout_) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("Could not create descriptor set layout");
+  }
 
   VkPipelineLayoutCreateInfo pipeline_layout_info{};
   pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -353,7 +373,7 @@ VulkanRenderer::VulkanRenderer() {
 
   VkDescriptorPoolSize descriptor_pool_size{};
   descriptor_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  descriptor_pool_size.descriptorCount = 1;
+  descriptor_pool_size.descriptorCount = 2;
 
   VkDescriptorPoolCreateInfo descriptor_pool_info{};
   descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -432,8 +452,8 @@ VulkanRenderer::VulkanRenderer() {
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.f;
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  // rasterizer.cullMode = VK_CULL_MODE_NONE; // Turn off culling for debugging.
-  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterizer.cullMode = VK_CULL_MODE_NONE;  // Turn off culling for debugging.
+  // rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
 
   VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -479,26 +499,35 @@ VulkanRenderer::VulkanRenderer() {
     throw std::runtime_error("failed to create in-flight fence");
   }
 
-  instance_positions_ = std::make_unique<SsboBuffer<Mat4>>(device_, physical_device_);
+  gpu_instances_ = std::make_unique<SsboBuffer<Instance>>(device_, physical_device_);
+  gpu_materials_ = std::make_unique<SsboBuffer<Material>>(device_, physical_device_);
 
-  VkDescriptorBufferInfo buffer_info{};
-  buffer_info.buffer = instance_positions_->buffer();
-  buffer_info.offset = 0;
-  buffer_info.range = VK_WHOLE_SIZE;
+  std::array<VkDescriptorBufferInfo, 2> buffer_info{};
+  buffer_info[0].buffer = gpu_instances_->buffer();
+  buffer_info[0].offset = 0;
+  buffer_info[0].range = VK_WHOLE_SIZE;
 
-  VkWriteDescriptorSet write{};
-  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  write.dstSet = instance_descriptor_set_;
-  write.dstBinding = 0;
-  write.dstArrayElement = 0;
-  write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  write.descriptorCount = 1;
-  write.pBufferInfo = &buffer_info;
+  buffer_info[1].buffer = gpu_materials_->buffer();
+  buffer_info[1].offset = 0;
+  buffer_info[1].range = VK_WHOLE_SIZE;
 
-  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  for (size_t i = 0; i < buffer_info.size(); ++i) {
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = instance_descriptor_set_;
+    write.dstBinding = i;
+    write.dstArrayElement = 0;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    write.descriptorCount = 1;
+    write.pBufferInfo = &buffer_info[i];
+
+    vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  }
 
   vkDestroyShaderModule(device_, vert_shader, nullptr);
   vkDestroyShaderModule(device_, frag_shader, nullptr);
+
+  add_material(DEBUG_RED);
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -520,6 +549,15 @@ VulkanRenderer::~VulkanRenderer() {
   glfwTerminate();
 }
 
+MaterialId VulkanRenderer::add_material(const Material& material) {
+  MaterialId id{num_materials_};
+  ++num_materials_;
+  auto updater{gpu_materials_->begin_updates()};
+  updater.reserve(num_materials_);
+  updater.update(id, material);
+  return id;
+}
+
 void VulkanRenderer::render_frame() {
   vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
   vkResetCommandBuffer(command_buffer_, 0);
@@ -531,20 +569,47 @@ void VulkanRenderer::render_frame() {
   }
 
   {
-    auto updater{instance_positions_->begin_updates()};
+    auto updater{gpu_instances_->begin_updates()};
     updater.reserve(instances_.size());
     for (size_t i = 0; i < instances_.size(); ++i) {
-      const Instance& instance{instances_[i]};
-      Mat4 position{create_model_matrix(instance.position)};
-      updater.update(i, position);
+      updater.update(i, instances_[i]);
     }
     // Let the updater fall out of scope and be destroyed to trigger a flush.
   }
+
+  // {
+  //   auto updater{gpu_materials_->begin_updates()};
+  //   updater.reserve(num_materials_);
+  //   // Let the updater fall out of scope and be destroyed to trigger a flush.
+  // }
 
   VkCommandBufferBeginInfo begin_info{};
   begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   vkBeginCommandBuffer(command_buffer_, &begin_info);
+
+  std::array<VkBufferMemoryBarrier, 2> barriers{};
+  barriers[0].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+  barriers[0].srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+  barriers[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  barriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barriers[0].buffer = gpu_instances_->buffer();
+  barriers[0].offset = 0;
+  barriers[0].size = VK_WHOLE_SIZE;
+
+  barriers[1].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+  barriers[1].srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+  barriers[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  barriers[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barriers[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barriers[1].buffer = gpu_materials_->buffer();
+  barriers[1].offset = 0;
+  barriers[1].size = VK_WHOLE_SIZE;
+
+  vkCmdPipelineBarrier(command_buffer_, VK_PIPELINE_STAGE_HOST_BIT,
+                       VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                       0, 0, nullptr, barriers.size(), barriers.data(), 0, nullptr);
 
   VkClearValue clear{};
   clear.color = {{0.f, 0.f, 0.f, 1.f}};
@@ -564,13 +629,8 @@ void VulkanRenderer::render_frame() {
                           0,  // firstSet
                           1, &instance_descriptor_set_, 0, nullptr);
 
-  LOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
+  DLOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
 
-  // Right now, we assume that we have only one mesh, and every instance is an instance of that
-  // mesh.
-  // TODO(james): Modify the instances_, meshes_, and instance_positions_ data structures so that we
-  // render each mesh with the correct number of instances in a single command. The ordering of the
-  // mesh iteration must match the ordering of the instance_positions_ data to achieve this.
   const GpuMesh& mesh = meshes_[0];
   VkDeviceSize offsets[] = {0};
   vkCmdBindVertexBuffers(command_buffer_, 0, 1, &mesh.vertex_buffer, offsets);
