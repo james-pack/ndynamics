@@ -1,8 +1,18 @@
 #version 450
 
-layout(location = 0) in vec3 frag_color;
+struct Material {
+  vec4 diffuse;
+  vec4 specular;
+  float shininess;
+  float opacity;
+  uint texture_index;
+};
+layout(std430, set = 0, binding = 1) readonly buffer MaterialBuffer { Material materials[]; };
+
+layout(location = 0) in flat uint material_id;
 layout(location = 0) out vec4 out_color;
 
 void main() {
-    out_color = vec4(frag_color, 1.0);
+  Material mat = materials[material_id];
+  out_color = mat.diffuse;
 }
