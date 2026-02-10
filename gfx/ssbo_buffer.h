@@ -15,7 +15,9 @@ namespace ndyn::gfx {
 template <typename Object>
 class Updater;
 
-template <typename Object>
+template <typename Object,                        //
+          size_t OBJECT_STRIDE = sizeof(Object),  //
+          size_t OBJECT_SIZE = sizeof(Object)>
 class SsboBuffer final {
  public:
   static_assert(
@@ -35,7 +37,7 @@ class SsboBuffer final {
 
   void allocate_buffer(size_t capacity) {
     capacity_ = capacity;
-    const VkDeviceSize buffer_size{capacity_ * sizeof(Object)};
+    const VkDeviceSize buffer_size{capacity_ * OBJECT_STRIDE};
 
     VkBufferCreateInfo buffer_info{};
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -73,7 +75,7 @@ class SsboBuffer final {
     const size_t old_capacity{capacity_};
 
     allocate_buffer(new_capacity);
-    std::memcpy(mapped_memory_, old_mapped, old_capacity * sizeof(Object));
+    std::memcpy(mapped_memory_, old_mapped, old_capacity * OBJECT_STRIDE);
 
     vkUnmapMemory(device_, old_memory);
     vkDestroyBuffer(device_, old_buffer, nullptr);
@@ -100,13 +102,13 @@ class SsboBuffer final {
       if (index >= capacity_) {
         throw std::out_of_range("Invalid index");
       }
-      std::memcpy(mapped_memory_ + index, &(*it), sizeof(Object));
+      std::memcpy(mapped_memory_ + index * OBJECT_STRIDE, &(*it), OBJECT_SIZE);
       ++index;
     }
   }
 
   void update(size_t pos, const Object& obj) {
-    std::memcpy(mapped_memory_ + pos, &obj, sizeof(Object));
+    std::memcpy(mapped_memory_ + pos * OBJECT_STRIDE, &obj, OBJECT_SIZE);
   }
 
   void flush() {
@@ -114,7 +116,7 @@ class SsboBuffer final {
     range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
     range.memory = memory_;
     range.offset = 0;
-    range.size = capacity_ * sizeof(Object);
+    range.size = VK_WHOLE_SIZE;  // capacity_ * OBJECT_SIZE;
     vkFlushMappedMemoryRanges(device_, 1, &range);
   }
 
@@ -127,7 +129,7 @@ class SsboBuffer final {
   friend class Updater<Object>;
 
  public:
-  SsboBuffer(VkDevice device, VkPhysicalDevice physical_device, size_t initial_capacity = 1024)
+  SsboBuffer(VkDevice device, VkPhysicalDevice physical_device, size_t initial_capacity = 65536)
       : device_(device), physical_device_(physical_device) {
     allocate_buffer(initial_capacity);
   }
@@ -149,7 +151,7 @@ class SsboBuffer final {
       throw std::out_of_range("Invalid index");
     }
 
-    return *static_cast<const Object*>(mapped_memory_ + index * sizeof(Object));
+    return *static_cast<const Object*>(mapped_memory_ + index * OBJECT_STRIDE);
   }
 
   Updater<Object> begin_updates() {
@@ -158,7 +160,7 @@ class SsboBuffer final {
     range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
     range.memory = memory_;
     range.offset = 0;
-    range.size = capacity_ * sizeof(Object);
+    range.size = VK_WHOLE_SIZE;  // capacity_ * OBJECT_SIZE;
     vkInvalidateMappedMemoryRanges(device_, 1, &range);
 
     return Updater<Object>(*this);
