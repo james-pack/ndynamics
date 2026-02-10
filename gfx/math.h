@@ -13,12 +13,22 @@ struct Vec3 final {
   float z;
 };
 
-struct Vec4 final {
+struct alignas(16) Vec4 final {
   float x;
   float y;
   float z;
   float a;
 };
+template <>
+inline constexpr bool SsboLayoutCheck<Vec4>::is_valid() {
+  static_assert(offsetof(Vec4, x) == 0);
+  static_assert(offsetof(Vec4, y) == 4);
+  static_assert(offsetof(Vec4, z) == 8);
+  static_assert(offsetof(Vec4, a) == 12);
+  static_assert(alignof(Vec4) == 16);
+  static_assert(sizeof(Vec4) == 16);
+  return true;
+}
 
 struct Quat final {
   float w;
@@ -78,7 +88,7 @@ struct Camera final {
   float fov_y_rad{1.0f};
 };
 
-struct Mat4 final : GpuStdAlign {
+struct alignas(16) Mat4 final {
   float m[4][4]{};
 
   Mat4 operator*(const Mat4& rhs) const;
@@ -96,6 +106,8 @@ struct Mat4 final : GpuStdAlign {
 template <>
 inline constexpr bool SsboLayoutCheck<Mat4>::is_valid() {
   static_assert(offsetof(Mat4, m) % 16 == 0);
+  static_assert(alignof(Mat4) == 16);
+  static_assert(sizeof(Mat4) == 64);
   return true;
 };
 
