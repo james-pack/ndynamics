@@ -7,21 +7,26 @@
 
 namespace ndyn::gfx {
 
-struct Material final : GpuStdAlign {
+struct alignas(16) Material final {
   Vec4 diffuse_color;
   Vec4 specular_color;
   float shininess;
   float opacity;
   uint texture_index;
 };
+using MaterialId = uint32_t;
 
 template <>
 inline constexpr bool SsboLayoutCheck<Material>::is_valid() {
-  return offsetof(Material, diffuse_color) % 16 == 0 and   //
-         offsetof(Material, specular_color) % 16 == 0 and  //
-         offsetof(Material, shininess) % 16 == 0 and       //
-         offsetof(Material, opacity) % 4 == 0 and          //
-         offsetof(Material, texture_index) % 4 == 0;
+  static_assert(offsetof(Material, diffuse_color) == 0);
+  static_assert(offsetof(Material, specular_color) == 16);
+  static_assert(offsetof(Material, shininess) == 32);
+  static_assert(offsetof(Material, opacity) == 36);
+  static_assert(offsetof(Material, texture_index) == 40);
+  static_assert(alignof(Material) == 16);
+  static_assert(sizeof(Material) == 48);
+  static_assert(SsboLayoutCheck<Vec4>::value);
+  return true;
 }
 
 }  // namespace ndyn::gfx
