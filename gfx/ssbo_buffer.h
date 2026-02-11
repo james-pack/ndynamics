@@ -129,7 +129,7 @@ class SsboBuffer final {
   friend class Updater<Object>;
 
  public:
-  SsboBuffer(VkDevice device, VkPhysicalDevice physical_device, size_t initial_capacity = 65536)
+  SsboBuffer(VkDevice device, VkPhysicalDevice physical_device, size_t initial_capacity = 16)
       : device_(device), physical_device_(physical_device) {
     allocate_buffer(initial_capacity);
   }
