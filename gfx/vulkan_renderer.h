@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -47,9 +48,10 @@ class VulkanRenderer final {
   VkSemaphore image_available_{VK_NULL_HANDLE};
   VkSemaphore render_finished_{VK_NULL_HANDLE};
 
-  VkDescriptorSetLayout instance_set_layout_{VK_NULL_HANDLE};
-  VkDescriptorPool descriptor_pool_{VK_NULL_HANDLE};
-  VkDescriptorSet instance_descriptor_set_{VK_NULL_HANDLE};
+  std::array<VkDescriptorSetLayout, 2> descriptor_set_layouts_{VK_NULL_HANDLE, VK_NULL_HANDLE};
+  VkDescriptorPool instance_descriptor_pool_{VK_NULL_HANDLE};
+  VkDescriptorPool material_descriptor_pool_{VK_NULL_HANDLE};
+  std::array<VkDescriptorSet, 2> descriptor_sets_{VK_NULL_HANDLE, VK_NULL_HANDLE};
 
   std::vector<GpuMesh> meshes_{};
   std::vector<Instance> instances_{};

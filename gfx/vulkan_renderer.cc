@@ -39,6 +39,49 @@ std::vector<uint32_t> load_spirv(std::string_view path) {
   return words;
 }
 
+void create_descriptor_set(VkDevice device, size_t descriptor_set_id, uint32_t shader_stage_flags,
+                           size_t num_descriptors, VkDescriptorPool& pool,
+                           VkDescriptorSetLayout& layout, VkDescriptorSet& descriptor_set) {
+  VkDescriptorSetLayoutBinding binding{};
+  binding.binding = 0;
+  binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  binding.descriptorCount = 1;
+  binding.stageFlags = shader_stage_flags;
+  binding.pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo layout_info{};
+  layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  layout_info.bindingCount = 1;
+  layout_info.pBindings = &binding;
+
+  if (vkCreateDescriptorSetLayout(device, &layout_info, nullptr, &layout) != VK_SUCCESS) {
+    throw std::runtime_error("Could not create descriptor set layout");
+  }
+
+  VkDescriptorPoolSize descriptor_pool_size{};
+  descriptor_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  descriptor_pool_size.descriptorCount = num_descriptors;
+
+  VkDescriptorPoolCreateInfo descriptor_pool_info{};
+  descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  descriptor_pool_info.maxSets = 1;
+  descriptor_pool_info.poolSizeCount = 1;
+  descriptor_pool_info.pPoolSizes = &descriptor_pool_size;
+  if (vkCreateDescriptorPool(device, &descriptor_pool_info, nullptr, &pool) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create descriptor pool");
+  }
+
+  VkDescriptorSetAllocateInfo descriptor_set_alloc_info{};
+  descriptor_set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  descriptor_set_alloc_info.descriptorPool = pool;
+  descriptor_set_alloc_info.descriptorSetCount = 1;
+  descriptor_set_alloc_info.pSetLayouts = &layout;
+
+  if (vkAllocateDescriptorSets(device, &descriptor_set_alloc_info, &descriptor_set) != VK_SUCCESS) {
+    throw std::runtime_error("failed to allocate descriptor sets");
+  }
+}
+
 VkShaderModule create_shader_module(VkDevice device, const std::vector<uint32_t>& shader_binary) {
   VkShaderModuleCreateInfo create_info{};
   create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -268,35 +311,18 @@ VulkanRenderer::VulkanRenderer() {
   swapchain_images_.resize(image_count);
   vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
 
-  std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
-  // Instances.
-  bindings[0].binding = 0;
-  bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  bindings[0].descriptorCount = 1;
-  bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-  bindings[0].pImmutableSamplers = nullptr;
-
-  // Materials.
-  bindings[1].binding = 1;
-  bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  bindings[1].descriptorCount = 1;
-  bindings[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-  bindings[1].pImmutableSamplers = nullptr;
-
-  VkDescriptorSetLayoutCreateInfo layout_info{};
-  layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  layout_info.bindingCount = bindings.size();
-  layout_info.pBindings = bindings.data();
-
-  if (vkCreateDescriptorSetLayout(device_, &layout_info, nullptr, &instance_set_layout_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Could not create descriptor set layout");
-  }
+  create_descriptor_set(device_, /* descriptor_set_id */ 0, VK_SHADER_STAGE_VERTEX_BIT,
+                        /* num_descriptors */ 1, instance_descriptor_pool_,
+                        descriptor_set_layouts_[0], descriptor_sets_[0]);
+  create_descriptor_set(device_, /* descriptor_set_id */ 1,
+                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                        /* num_descriptors */ 1, material_descriptor_pool_,
+                        descriptor_set_layouts_[1], descriptor_sets_[1]);
 
   VkPipelineLayoutCreateInfo pipeline_layout_info{};
   pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipeline_layout_info.setLayoutCount = 1;
-  pipeline_layout_info.pSetLayouts = &instance_set_layout_;
+  pipeline_layout_info.setLayoutCount = descriptor_set_layouts_.size();
+  pipeline_layout_info.pSetLayouts = descriptor_set_layouts_.data();
   pipeline_layout_info.pushConstantRangeCount = 0;
 
   if (vkCreatePipelineLayout(device_, &pipeline_layout_info, nullptr, &pipeline_layout_) !=
@@ -370,31 +396,6 @@ VulkanRenderer::VulkanRenderer() {
   frag_stage.pName = "main";
 
   VkPipelineShaderStageCreateInfo shader_stages[] = {vert_stage, frag_stage};
-
-  VkDescriptorPoolSize descriptor_pool_size{};
-  descriptor_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  descriptor_pool_size.descriptorCount = 2;
-
-  VkDescriptorPoolCreateInfo descriptor_pool_info{};
-  descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  descriptor_pool_info.maxSets = 1;
-  descriptor_pool_info.poolSizeCount = 1;
-  descriptor_pool_info.pPoolSizes = &descriptor_pool_size;
-  if (vkCreateDescriptorPool(device_, &descriptor_pool_info, nullptr, &descriptor_pool_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("failed to create descriptor pool");
-  }
-
-  VkDescriptorSetAllocateInfo descriptor_set_alloc_info{};
-  descriptor_set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  descriptor_set_alloc_info.descriptorPool = descriptor_pool_;
-  descriptor_set_alloc_info.descriptorSetCount = 1;
-  descriptor_set_alloc_info.pSetLayouts = &instance_set_layout_;
-
-  if (vkAllocateDescriptorSets(device_, &descriptor_set_alloc_info, &instance_descriptor_set_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("failed to allocate descriptor sets");
-  }
 
   VkVertexInputBindingDescription binding{};
   binding.binding = 0;
@@ -514,8 +515,8 @@ VulkanRenderer::VulkanRenderer() {
   for (size_t i = 0; i < buffer_info.size(); ++i) {
     VkWriteDescriptorSet write{};
     write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet = instance_descriptor_set_;
-    write.dstBinding = i;
+    write.dstSet = descriptor_sets_[i];
+    write.dstBinding = 0;
     write.dstArrayElement = 0;
     write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     write.descriptorCount = 1;
@@ -626,8 +627,8 @@ void VulkanRenderer::render_frame() {
   vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_);
 
   vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_,
-                          0,  // firstSet
-                          1, &instance_descriptor_set_, 0, nullptr);
+                          /* firstSet -- a form of offset */ 0, descriptor_sets_.size(),
+                          descriptor_sets_.data(), 0, nullptr);
 
   DLOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
 

@@ -7,7 +7,7 @@ struct Material {
   float opacity;
   uint texture_index;
 };
-layout(std430, set = 0, binding = 1) readonly buffer MaterialBuffer { Material materials[]; };
+layout(std430, set = 1, binding = 0) readonly buffer MaterialBuffer { Material materials[]; };
 
 layout(location = 0) in flat uint material_id;
 layout(location = 0) out vec4 out_color;
