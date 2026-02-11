@@ -2,7 +2,6 @@
 
 struct Instance {
   mat4 position;
-  vec4 color;
   uint mesh_id;
   uint material_id;
 };

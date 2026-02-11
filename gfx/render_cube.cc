@@ -55,8 +55,8 @@ int main(int argc, char* argv[]) {
 
   std::array<InstanceId, INSTANCE_COUNT> instances{};
   for (size_t i = 0; i < INSTANCE_COUNT; ++i) {
-    instances[i] = renderer.add_instance(
-        Instance{Mat4::identity(), BLUE.diffuse_color, mesh, materials[i % materials.size()]});
+    instances[i] =
+        renderer.add_instance(Instance{Mat4::identity(), mesh, materials[i % materials.size()]});
   }
 
   // {
