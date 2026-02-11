@@ -452,8 +452,8 @@ VulkanRenderer::VulkanRenderer() {
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.f;
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.cullMode = VK_CULL_MODE_NONE;  // Turn off culling for debugging.
-  // rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  // rasterizer.cullMode = VK_CULL_MODE_NONE;  // Turn off culling for debugging.
+  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
 
   VkPipelineMultisampleStateCreateInfo multisampling{};
