@@ -1,3 +1,4 @@
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <thread>
@@ -21,26 +22,42 @@ Quat axis_angle(const Vec3& axis, float angle) {
 
 }  // namespace
 
-static constexpr Material BLUE{.diffuse_color = {0.f, 0.f, 1.f, 1.f},
-                               .specular_color = {1.f, 1.f, 1.f, 1.f}};
+static constexpr size_t INSTANCE_COUNT{3};
+static constexpr Material RED{.diffuse_color = {1.f, 0.f, 0.f, 1.f},
+                              .specular_color = {1.f, 1.f, 1.f, 1.f}};
 
 static constexpr Material GREEN{.diffuse_color = {0.f, 1.f, 0.f, 1.f},
                                 .specular_color = {1.f, 1.f, 1.f, 1.f}};
+
+static constexpr Material BLUE{.diffuse_color = {0.f, 0.f, 1.f, 1.f},
+                               .specular_color = {1.f, 1.f, 1.f, 1.f}};
+
+static constexpr Material YELLOW{.diffuse_color = {1.f, 1.f, 0.f, 1.f},
+                                 .specular_color = {1.f, 1.f, 1.f, 1.f}};
+
+static constexpr Material CYAN{.diffuse_color = {0.f, 1.f, 1.f, 1.f},
+                               .specular_color = {1.f, 1.f, 1.f, 1.f}};
+
+static constexpr Material MAGENTA{.diffuse_color = {1.f, 0.f, 1.f, 1.f},
+                                  .specular_color = {1.f, 1.f, 1.f, 1.f}};
 
 int main(int argc, char* argv[]) {
   ndyn::initialize(&argc, &argv);
 
   VulkanRenderer renderer{};
 
-  const MeshId mesh{renderer.add_mesh(create_cube(0.7f))};
-  const MaterialId blue{renderer.add_material(BLUE)};
-  const MaterialId green{renderer.add_material(GREEN)};
+  const MeshId mesh{renderer.add_mesh(create_cube(0.5f))};
 
-  const InstanceId instance1{
-      renderer.add_instance(Instance{Mat4::identity(), BLUE.diffuse_color, mesh, blue})};
+  std::array materials{
+      renderer.add_material(CYAN), renderer.add_material(MAGENTA), renderer.add_material(YELLOW),
+      renderer.add_material(RED),  renderer.add_material(GREEN),   renderer.add_material(BLUE),
+  };
 
-  const InstanceId instance2{
-      renderer.add_instance(Instance{Mat4::identity(), GREEN.diffuse_color, mesh, green})};
+  std::array<InstanceId, INSTANCE_COUNT> instances{};
+  for (size_t i = 0; i < INSTANCE_COUNT; ++i) {
+    instances[i] = renderer.add_instance(
+        Instance{Mat4::identity(), BLUE.diffuse_color, mesh, materials[i % materials.size()]});
+  }
 
   // {
   //   Camera camera{};
@@ -48,23 +65,19 @@ int main(int argc, char* argv[]) {
   //   renderer.set_camera(camera);
   // }
 
-  Transform instance1_position{};
-  Transform instance2_position{};
   const auto start{std::chrono::high_resolution_clock::now()};
 
   while (true) {
     const auto now{std::chrono::high_resolution_clock::now()};
     float t = std::chrono::duration<float>(now - start).count();
 
-    instance1_position.position = {-0.2f, -0.2f, -0.2f};
-    instance1_position.rotation = axis_angle({0.f, 0.f, 1.f}, 0.1f * t);
-    Mat4 model_matrix1{create_model_matrix(instance1_position)};
-    renderer.update_position(instance1, model_matrix1);
-
-    instance2_position.position = {0.5f, 0.5f, 0.5f};
-    instance2_position.rotation = axis_angle({0.f, 0.f, 1.f}, 0.1f * t);
-    Mat4 model_matrix2{create_model_matrix(instance2_position)};
-    renderer.update_position(instance2, model_matrix2);
+    for (size_t i = 0; i < INSTANCE_COUNT; ++i) {
+      Transform instance_position{};
+      instance_position.position = {-2.8f + 1.7f * i, -0.8f + 0.7f * i, 0.2f + 1.7f * i};
+      instance_position.rotation = axis_angle({1.f, 0.f, 1.f}, 0.1f * t);
+      Mat4 model_matrix{create_model_matrix(instance_position)};
+      renderer.update_position(instances[i], model_matrix);
+    }
 
     renderer.render_frame();
 
