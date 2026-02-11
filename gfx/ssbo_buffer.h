@@ -34,6 +34,8 @@ class SsboBuffer final {
   VkDeviceMemory memory_{VK_NULL_HANDLE};
   char* mapped_memory_{nullptr};
   size_t capacity_{0};
+  // This flag starts as true in order to count the initial allocation.
+  bool was_reallocated_{true};
 
   void allocate_buffer(size_t capacity) {
     capacity_ = capacity;
@@ -80,6 +82,8 @@ class SsboBuffer final {
     vkUnmapMemory(device_, old_memory);
     vkDestroyBuffer(device_, old_buffer, nullptr);
     vkFreeMemory(device_, old_memory, nullptr);
+
+    was_reallocated_ = true;
   }
 
   uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const {
@@ -129,7 +133,7 @@ class SsboBuffer final {
   friend class Updater<Object>;
 
  public:
-  SsboBuffer(VkDevice device, VkPhysicalDevice physical_device, size_t initial_capacity = 16)
+  SsboBuffer(VkDevice device, VkPhysicalDevice physical_device, size_t initial_capacity = 2)
       : device_(device), physical_device_(physical_device) {
     allocate_buffer(initial_capacity);
   }
@@ -169,6 +173,9 @@ class SsboBuffer final {
   size_t capacity() const { return capacity_; }
 
   VkBuffer buffer() const { return buffer_; }
+
+  bool was_reallocated() const { return was_reallocated_; }
+  void reset_reallocated_flag() { was_reallocated_ = false; }
 };
 
 /**

@@ -503,28 +503,6 @@ VulkanRenderer::VulkanRenderer() {
   gpu_instances_ = std::make_unique<SsboBuffer<Instance>>(device_, physical_device_);
   gpu_materials_ = std::make_unique<SsboBuffer<Material>>(device_, physical_device_);
 
-  std::array<VkDescriptorBufferInfo, 2> buffer_info{};
-  buffer_info[0].buffer = gpu_instances_->buffer();
-  buffer_info[0].offset = 0;
-  buffer_info[0].range = VK_WHOLE_SIZE;
-
-  buffer_info[1].buffer = gpu_materials_->buffer();
-  buffer_info[1].offset = 0;
-  buffer_info[1].range = VK_WHOLE_SIZE;
-
-  for (size_t i = 0; i < buffer_info.size(); ++i) {
-    VkWriteDescriptorSet write{};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet = descriptor_sets_[i];
-    write.dstBinding = 0;
-    write.dstArrayElement = 0;
-    write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    write.descriptorCount = 1;
-    write.pBufferInfo = &buffer_info[i];
-
-    vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
-  }
-
   vkDestroyShaderModule(device_, vert_shader, nullptr);
   vkDestroyShaderModule(device_, frag_shader, nullptr);
 
@@ -583,6 +561,46 @@ void VulkanRenderer::render_frame() {
   //   updater.reserve(num_materials_);
   //   // Let the updater fall out of scope and be destroyed to trigger a flush.
   // }
+
+  if (gpu_instances_->was_reallocated()) {
+    VkDescriptorBufferInfo buffer_info{};
+    buffer_info.buffer = gpu_instances_->buffer();
+    buffer_info.offset = 0;
+    buffer_info.range = VK_WHOLE_SIZE;
+
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = descriptor_sets_[0];
+    write.dstBinding = 0;
+    write.dstArrayElement = 0;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    write.descriptorCount = 1;
+    write.pBufferInfo = &buffer_info;
+
+    vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+
+    gpu_instances_->reset_reallocated_flag();
+  }
+
+  if (gpu_materials_->was_reallocated()) {
+    VkDescriptorBufferInfo buffer_info{};
+    buffer_info.buffer = gpu_materials_->buffer();
+    buffer_info.offset = 0;
+    buffer_info.range = VK_WHOLE_SIZE;
+
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = descriptor_sets_[1];
+    write.dstBinding = 0;
+    write.dstArrayElement = 0;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    write.descriptorCount = 1;
+    write.pBufferInfo = &buffer_info;
+
+    vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+
+    gpu_materials_->reset_reallocated_flag();
+  }
 
   VkCommandBufferBeginInfo begin_info{};
   begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
