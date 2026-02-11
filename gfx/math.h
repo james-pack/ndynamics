@@ -75,16 +75,14 @@ struct Vertex final {
   float nx, ny, nz;
 };
 
-// TODO(james): Rename the Transform class as it is really a combination of position and
-// orientation.
-struct Transform final {
+struct Position final {
   Vec3 position{0.f, 0.f, 0.f};
-  Quat rotation{1.f, 0.f, 0.f, 0.f};
+  Quat orientation{1.f, 0.f, 0.f, 0.f};
 };
 
 struct Camera final {
   Vec3 position{0.f, 0.f, 5.f};
-  Quat rotation{1.f, 0.f, 0.f, 0.f};
+  Quat orientation{1.f, 0.f, 0.f, 0.f};
   float fov_y_rad{1.0f};
 };
 
@@ -112,7 +110,7 @@ inline constexpr bool SsboLayoutCheck<Mat4>::is_valid() {
 };
 
 Mat4 quaternion_to_rotation_matrix(const Quat& q);
-Mat4 create_model_matrix(const Transform& t);
+Mat4 create_model_matrix(const Position& t);
 Mat4 create_view_projection(const Camera& c);
 
 }  // namespace ndyn::gfx

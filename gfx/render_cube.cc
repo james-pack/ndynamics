@@ -72,9 +72,9 @@ int main(int argc, char* argv[]) {
     float t = std::chrono::duration<float>(now - start).count();
 
     for (size_t i = 0; i < INSTANCE_COUNT; ++i) {
-      Transform instance_position{};
+      Position instance_position{};
       instance_position.position = {-2.8f + 1.7f * i, -0.8f + 0.7f * i, 0.2f + 1.7f * i};
-      instance_position.rotation = axis_angle({1.f, 0.f, 1.f}, 0.1f * t);
+      instance_position.orientation = axis_angle({1.f, 0.f, 1.f}, 0.1f * t);
       Mat4 model_matrix{create_model_matrix(instance_position)};
       renderer.update_position(instances[i], model_matrix);
     }

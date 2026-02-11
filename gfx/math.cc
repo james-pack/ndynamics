@@ -30,8 +30,8 @@ Mat4 quaternion_to_rotation_matrix(const Quat& q) {
   return r;
 }
 
-Mat4 create_model_matrix(const Transform& t) {
-  const Quat& q = t.rotation;
+Mat4 create_model_matrix(const Position& t) {
+  const Quat& q = t.orientation;
 
   const float xx = q.x * q.x;
   const float yy = q.y * q.y;
@@ -81,7 +81,7 @@ Mat4 Mat4::operator*(const Mat4& rhs) const {
 namespace {
 
 Mat4 create_view(const Camera& cam) {
-  const Mat4 rotate{quaternion_to_rotation_matrix(cam.rotation.conjugate())};
+  const Mat4 rotate{quaternion_to_rotation_matrix(cam.orientation.conjugate())};
 
   Mat4 translate = Mat4::identity();
   translate.m[0][3] = -cam.position.x;
