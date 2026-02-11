@@ -9,6 +9,7 @@ cc_library(
     ],
     hdrs = [
         "alignment.h",
+        "instance.h",
         "material.h",
         "math.h",
         "mesh.h",

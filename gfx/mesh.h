@@ -11,6 +11,7 @@ struct Mesh final {
   std::vector<Vertex> vertices;
   std::vector<std::uint32_t> indices;
 };
+using MeshId = uint32_t;
 
 Mesh create_triangle(float side_length);
 Mesh create_cube(float size);
