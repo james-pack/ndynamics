@@ -105,7 +105,7 @@ VulkanRenderer::VulkanRenderer() {
   // Initialize GLFW and create a window
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // No OpenGL context
-  window_ = glfwCreateWindow(1200, 1000, "Vulkan Window", nullptr, nullptr);
+  window_ = glfwCreateWindow(1280, 1280, "Vulkan Window", nullptr, nullptr);
 
   VkApplicationInfo app_info{};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
