@@ -13,8 +13,4 @@ struct Mesh final {
 };
 using MeshId = uint32_t;
 
-Mesh create_triangle(float side_length);
-Mesh create_cube(float size);
-Mesh create_cylinder(float radius, float height, unsigned int segments);
-
 }  // namespace ndyn::gfx

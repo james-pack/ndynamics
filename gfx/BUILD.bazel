@@ -4,7 +4,7 @@ cc_library(
     name = "gfx",
     srcs = [
         "math.cc",
-        "mesh.cc",
+        "meshes.cc",
         "vulkan_renderer.cc",
     ],
     hdrs = [
@@ -13,6 +13,7 @@ cc_library(
         "material.h",
         "math.h",
         "mesh.h",
+        "meshes.h",
         "ssbo_buffer.h",
         "vulkan_renderer.h",
     ],

@@ -1,6 +1,9 @@
-#include "gfx/mesh.h"
+#include "gfx/meshes.h"
 
 #include <cmath>
+#include <cstdint>
+
+#include "gfx/mesh.h"
 
 namespace ndyn::gfx {
 

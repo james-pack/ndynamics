@@ -9,6 +9,7 @@
 #include "gfx/material.h"
 #include "gfx/math.h"
 #include "gfx/mesh.h"
+#include "gfx/meshes.h"
 #include "gfx/vulkan_renderer.h"
 #include "glog/logging.h"
 
