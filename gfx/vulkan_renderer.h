@@ -70,7 +70,7 @@ class VulkanRenderer final {
   MeshId add_mesh(const Mesh& mesh);
   InstanceId add_instance(const Instance& instance);
   void update_position(InstanceId id, const Mat4& position) {
-    instances_.at(id).position = position;
+    instances_.at(id).position = position.transpose();
   }
 
   MaterialId add_material(const Material& material);
