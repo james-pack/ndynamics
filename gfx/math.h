@@ -11,6 +11,15 @@ struct Vec3 final {
   float x;
   float y;
   float z;
+  Vec3 normalize() const {
+    static constexpr float epsilon{1e-18};
+    auto scale{std::hypot(x, y, z)};
+    if (scale < epsilon) {
+      return {0, 0, 0};
+    } else {
+      return {x / scale, y / scale, z / scale};
+    }
+  }
 };
 
 struct alignas(16) Vec4 final {
@@ -52,6 +61,12 @@ struct Quat final {
   Quat conjugate() const { return {w, -x, -y, -z}; }
 };
 
+inline Quat axis_angle(const Vec3& axis, float angle) {
+  Vec3 normed{axis.normalize()};
+  const float s{std::sin(0.5f * angle)};
+  return Quat{std::cos(0.5f * angle), s * normed.x, s * normed.y, s * normed.z};
+}
+
 inline Quat operator*(float scale, const Quat& q) {
   return {
       scale * q.w,
@@ -91,6 +106,16 @@ struct alignas(16) Mat4 final {
 
   Mat4 operator*(const Mat4& rhs) const;
 
+  Mat4 transpose() const {
+    Mat4 result;
+    for (size_t i = 0; i < 4; ++i) {
+      for (size_t j = 0; j < 4; ++j) {
+        result.m[j][i] = m[i][j];
+      }
+    }
+    return result;
+  }
+
   static Mat4 identity() {
     Mat4 r{};
     r.m[0][0] = 1.f;
@@ -109,8 +134,6 @@ inline constexpr bool SsboLayoutCheck<Mat4>::is_valid() {
   return true;
 };
 
-Mat4 quaternion_to_rotation_matrix(const Quat& q);
 Mat4 create_model_matrix(const Position& t);
-Mat4 create_view_projection(const Camera& c);
 
 }  // namespace ndyn::gfx
