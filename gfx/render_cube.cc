@@ -4,11 +4,14 @@
 #include <thread>
 
 #include "base/initializer.h"
+#include "gflags/gflags.h"
 #include "gfx/material.h"
 #include "gfx/math.h"
 #include "gfx/mesh.h"
 #include "gfx/vulkan_renderer.h"
 #include "glog/logging.h"
+
+DEFINE_uint32(num_cubes, 3, "Number of cubes to display.");
 
 using namespace ndyn::gfx;
 using namespace std::chrono_literals;
@@ -22,7 +25,6 @@ Quat axis_angle(const Vec3& axis, float angle) {
 
 }  // namespace
 
-static constexpr size_t INSTANCE_COUNT{3};
 static constexpr Material RED{.diffuse_color = {1.f, 0.f, 0.f, 1.f},
                               .specular_color = {1.f, 1.f, 1.f, 1.f}};
 
@@ -53,10 +55,11 @@ int main(int argc, char* argv[]) {
       renderer.add_material(RED),  renderer.add_material(GREEN),   renderer.add_material(BLUE),
   };
 
-  std::array<InstanceId, INSTANCE_COUNT> instances{};
-  for (size_t i = 0; i < INSTANCE_COUNT; ++i) {
-    instances[i] =
-        renderer.add_instance(Instance{Mat4::identity(), mesh, materials[i % materials.size()]});
+  std::vector<InstanceId> instances{};
+  instances.reserve(FLAGS_num_cubes);
+  for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
+    instances.push_back(
+        renderer.add_instance(Instance{Mat4::identity(), mesh, materials[i % materials.size()]}));
   }
 
   // {
@@ -71,7 +74,7 @@ int main(int argc, char* argv[]) {
     const auto now{std::chrono::high_resolution_clock::now()};
     float t = std::chrono::duration<float>(now - start).count();
 
-    for (size_t i = 0; i < INSTANCE_COUNT; ++i) {
+    for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
       Position instance_position{};
       instance_position.position = {-2.8f + 1.7f * i, -0.8f + 0.7f * i, 0.2f + 1.7f * i};
       instance_position.orientation = axis_angle({1.f, 0.f, 1.f}, 0.1f * t);
