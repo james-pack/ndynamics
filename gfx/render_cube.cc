@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
   VulkanRenderer renderer{};
 
-  const MeshId mesh{renderer.add_mesh(create_cube(0.2f))};
+  const MeshId mesh{renderer.add_mesh(create_cube(0.1f))};
   // const MeshId mesh{renderer.add_mesh(create_cylinder(0.2f, 0.5f, 8))};
 
   std::array materials{
@@ -64,9 +64,9 @@ int main(int argc, char* argv[]) {
 
     for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
       Position instance_position{};
-      instance_position.position = {1.f * std::cos(t + i / 5.f),  //
-                                    1.f * std::sin(t + i / 5.f),  //
-                                    0.5f - 1.f * i};
+      instance_position.position = {1.f * std::cos(t - i / 25.f),  //
+                                    1.f * std::sin(t - i / 25.f),  //
+                                    0.9f - 0.1f * i};
       instance_position.orientation = axis_angle({1.f, 0.f, 1.f}, M_PI / 4);
       Mat4 model_matrix{create_model_matrix(instance_position)};
       renderer.update_position(instances[i], model_matrix);
