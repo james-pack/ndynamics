@@ -17,9 +17,9 @@ cc_library(
         "vulkan_renderer.h",
     ],
     data = [
-        ":pass_through_fragment",
-        ":pass_through_vertex",
-        ":render_red",
+        ":debug_shader",
+        ":diffuse_color",
+        ":model",
         ":triangle_shader",
     ],
     visibility = ["//visibility:public"],
@@ -32,9 +32,9 @@ cc_library(
 )
 
 vertex_shader_library(
-    name = "pass_through_vertex",
+    name = "model",
     srcs = [
-        "pass_through.vert.glsl",
+        "model.vert.glsl",
     ],
 )
 
@@ -46,16 +46,16 @@ vertex_shader_library(
 )
 
 fragment_shader_library(
-    name = "render_red",
+    name = "debug_shader",
     srcs = [
-        "render_red.frag.glsl",
+        "debug.frag.glsl",
     ],
 )
 
 fragment_shader_library(
-    name = "pass_through_fragment",
+    name = "diffuse_color",
     srcs = [
-        "pass_through.frag.glsl",
+        "diffuse_color.frag.glsl",
     ],
 )
 

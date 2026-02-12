@@ -16,9 +16,8 @@
 
 namespace ndyn::gfx {
 
-static constexpr const char VERTEX_SHADER[] = "gfx/pass_through.vert.spv";
-static constexpr const char FRAGMENT_SHADER[] = "gfx/pass_through.frag.spv";
-// static constexpr const char FRAGMENT_SHADER[] = "gfx/render_red.frag.spv";
+static constexpr const char VERTEX_SHADER[] = "gfx/model.vert.spv";
+static constexpr const char FRAGMENT_SHADER[] = "gfx/diffuse_color.frag.spv";
 
 static constexpr Material DEBUG_RED{
     .diffuse_color = {1.f, 0.f, 0.f, 1.f},
