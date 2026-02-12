@@ -19,15 +19,15 @@ Mat4 create_model_matrix(const Position& p) {
 
   // Rotation.
   m.m[0][0] = 1.f - 2.f * (yy + zz);
-  m.m[1][0] = 2.f * (xy + wz);
-  m.m[2][0] = 2.f * (xz - wy);
+  m.m[0][1] = 2.f * (xy + wz);
+  m.m[0][2] = 2.f * (xz - wy);
 
-  m.m[0][1] = 2.f * (xy - wz);
+  m.m[1][0] = 2.f * (xy - wz);
   m.m[1][1] = 1.f - 2.f * (xx + zz);
-  m.m[2][1] = 2.f * (yz + wx);
+  m.m[1][2] = 2.f * (yz + wx);
 
-  m.m[0][2] = 2.f * (xz + wy);
-  m.m[1][2] = 2.f * (yz - wx);
+  m.m[2][0] = 2.f * (xz + wy);
+  m.m[2][1] = 2.f * (yz - wx);
   m.m[2][2] = 1.f - 2.f * (xx + yy);
 
   // Translation.
