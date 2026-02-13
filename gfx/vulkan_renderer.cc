@@ -12,6 +12,7 @@
 
 #include "base/resource_loader.h"
 #include "gfx/ssbo_buffer.h"
+#include "gfx/vulkan_utils.h"
 #include "glog/logging.h"
 
 namespace ndyn::gfx {
@@ -689,23 +690,6 @@ void VulkanRenderer::render_frame() {
   }
 }
 
-uint32_t VulkanRenderer::find_memory_type(uint32_t type_filter,
-                                          VkMemoryPropertyFlags properties) const {
-  VkPhysicalDeviceMemoryProperties mem_props{};
-  vkGetPhysicalDeviceMemoryProperties(physical_device_, &mem_props);
-
-  for (uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
-    const bool type_supported = type_filter & (1u << i);
-    const bool has_properties = (mem_props.memoryTypes[i].propertyFlags & properties) == properties;
-
-    if (type_supported && has_properties) {
-      return i;
-    }
-  }
-
-  throw std::runtime_error("Failed to find suitable Vulkan memory type.");
-}
-
 MeshId VulkanRenderer::add_mesh(const Mesh& mesh) {
   GpuMesh gpu_mesh{};
   gpu_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
@@ -743,7 +727,7 @@ MeshId VulkanRenderer::add_mesh(const Mesh& mesh) {
   staging_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   staging_alloc.allocationSize = staging_total_size;
   staging_alloc.memoryTypeIndex =
-      find_memory_type(vreq.memoryTypeBits & ireq.memoryTypeBits,
+      find_memory_type(physical_device_, vreq.memoryTypeBits & ireq.memoryTypeBits,
                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   vkAllocateMemory(device_, &staging_alloc, nullptr, &staging_memory);
@@ -783,8 +767,9 @@ MeshId VulkanRenderer::add_mesh(const Mesh& mesh) {
   VkMemoryAllocateInfo device_alloc{};
   device_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   device_alloc.allocationSize = device_total_size;
-  device_alloc.memoryTypeIndex = find_memory_type(vreq.memoryTypeBits & ireq.memoryTypeBits,
-                                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  device_alloc.memoryTypeIndex =
+      find_memory_type(physical_device_, vreq.memoryTypeBits & ireq.memoryTypeBits,
+                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   vkAllocateMemory(device_, &device_alloc, nullptr, &gpu_mesh.memory);
 

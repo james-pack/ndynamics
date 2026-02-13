@@ -6,6 +6,7 @@ cc_library(
         "math.cc",
         "meshes.cc",
         "vulkan_renderer.cc",
+        "vulkan_utils.cc",
     ],
     hdrs = [
         "alignment.h",
@@ -16,6 +17,7 @@ cc_library(
         "meshes.h",
         "ssbo_buffer.h",
         "vulkan_renderer.h",
+        "vulkan_utils.h",
     ],
     data = [
         ":debug_shader",

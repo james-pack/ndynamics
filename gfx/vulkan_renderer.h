@@ -59,8 +59,6 @@ class VulkanRenderer final {
   std::unique_ptr<SsboBuffer<Material>> gpu_materials_{};
   MaterialId num_materials_{0};
 
-  uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) const;
-
  public:
   VulkanRenderer();
   ~VulkanRenderer();
