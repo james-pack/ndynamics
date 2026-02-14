@@ -3,6 +3,7 @@ load(":build_defs.bzl", "compute_shader_library", "fragment_shader_library", "ve
 cc_library(
     name = "gfx",
     srcs = [
+        "camera.cc",
         "math.cc",
         "meshes.cc",
         "vulkan_renderer.cc",
@@ -10,12 +11,14 @@ cc_library(
     ],
     hdrs = [
         "alignment.h",
+        "camera.h",
         "instance.h",
         "material.h",
         "math.h",
         "mesh.h",
         "meshes.h",
         "ssbo_buffer.h",
+        "ubo_allocator.h",
         "vulkan_renderer.h",
         "vulkan_utils.h",
     ],
