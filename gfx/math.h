@@ -7,6 +7,11 @@
 
 namespace ndyn::gfx {
 
+struct Vec2 final {
+  float x;
+  float y;
+};
+
 struct Vec3 final {
   float x;
   float y;
@@ -93,12 +98,6 @@ struct Vertex final {
 struct Position final {
   Vec3 position{0.f, 0.f, 0.f};
   Quat orientation{1.f, 0.f, 0.f, 0.f};
-};
-
-struct Camera final {
-  Vec3 position{0.f, 0.f, 5.f};
-  Quat orientation{1.f, 0.f, 0.f, 0.f};
-  float fov_y_rad{1.0f};
 };
 
 struct alignas(16) Mat4 final {
