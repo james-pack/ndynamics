@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "gfx/alignment.h"
 #include "gfx/material.h"
 #include "gfx/math.h"
