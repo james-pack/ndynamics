@@ -81,3 +81,15 @@ cc_binary(
         "//third_party/glog",
     ],
 )
+
+cc_test(
+    name = "math_test",
+    srcs = [
+        "math_test.cc",
+    ],
+    deps = [
+        ":gfx",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
