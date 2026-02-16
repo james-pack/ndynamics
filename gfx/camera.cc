@@ -8,15 +8,17 @@ Mat4 make_view(const Position& pose) { return pose.invert().as_matrix_transform(
 
 CameraState PerspectiveCamera::make_camera_state() const {
   CameraState state{};
+  state.view = make_view(pose).transpose();
+
   state.position = {pose.position.x, pose.position.y, pose.position.z, 0.f};
 
   state.projection_params = {vertical_fov, aspect_ratio};
   state.clip_params = {near_plane, far_plane};
   state.is_perspective = true;
-  state.projection = make_perspective(vertical_fov, aspect_ratio, near_plane, far_plane);
+  state.projection =
+      make_perspective(vertical_fov, aspect_ratio, near_plane, far_plane).transpose();
 
-  state.view = make_view(pose);
-  state.view_projection = state.projection * state.view;
+  state.view_projection = state.view * state.projection;
   return state;
 }
 
@@ -25,9 +27,9 @@ Mat4 PerspectiveCamera::make_perspective(float fov_y, float aspect, float n, flo
   Mat4 m{};
   m.m[0][0] = 1.f / (aspect * tan_half);
   m.m[1][1] = -1.f / tan_half;
-  m.m[2][2] = f / (f - n);
-  m.m[2][3] = 1.f;
-  m.m[3][2] = -(f * n) / (f - n);
+  m.m[2][2] = f / (n - f);
+  m.m[3][2] = -1.f;
+  m.m[2][3] = (f * n) / (n - f);
   return m;
 }
 
