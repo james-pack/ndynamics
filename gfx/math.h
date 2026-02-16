@@ -31,10 +31,10 @@ struct Vec3 final {
 };
 
 struct alignas(16) Vec4 final {
-  float x;
-  float y;
-  float z;
-  float w;
+  float x{};
+  float y{};
+  float z{};
+  float w{1.f};
 };
 template <>
 inline constexpr bool SsboLayoutCheck<Vec4>::is_valid() {
@@ -48,10 +48,10 @@ inline constexpr bool SsboLayoutCheck<Vec4>::is_valid() {
 }
 
 struct Quat final {
-  float w;
-  float x;
-  float y;
-  float z;
+  float w{1.f};
+  float x{};
+  float y{};
+  float z{};
 
   Quat operator*(const Quat& rhs) const {
     return {
