@@ -20,6 +20,9 @@ using namespace std::chrono_literals;
 
 namespace {}  // namespace
 
+static constexpr Material WHITE{.diffuse_color = {1.f, 1.f, 1.f, 1.f},
+                                .specular_color = {1.f, 1.f, 1.f, 1.f}};
+
 static constexpr Material RED{.diffuse_color = {1.f, 0.f, 0.f, 1.f},
                               .specular_color = {1.f, 1.f, 1.f, 1.f}};
 
@@ -43,15 +46,20 @@ int main(int argc, char* argv[]) {
 
   VulkanRenderer renderer{};
 
-  const MeshId mesh{renderer.add_mesh(create_cube(0.25f))};
-
+  const MeshId mesh{renderer.add_mesh(create_cube(0.5f))};
+  const MaterialId white{renderer.add_material(WHITE)};
   std::array materials{
       renderer.add_material(CYAN), renderer.add_material(MAGENTA), renderer.add_material(YELLOW),
       renderer.add_material(RED),  renderer.add_material(GREEN),   renderer.add_material(BLUE),
   };
 
   std::vector<InstanceId> instances{};
-  instances.reserve(FLAGS_num_cubes);
+  instances.reserve(FLAGS_num_cubes + 1);
+
+  // Add an instance at the origin to make the origin easier to find.
+  const Position origin{};
+  instances.push_back(renderer.add_instance(Instance{origin.as_matrix_transform(), mesh, white}));
+
   for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
     instances.push_back(
         renderer.add_instance(Instance{Mat4::identity(), mesh, materials[i % materials.size()]}));
@@ -66,10 +74,10 @@ int main(int argc, char* argv[]) {
       Position instance_position{};
       instance_position.position = {1.f * std::cos(t - i / 25.f),  //
                                     1.f * std::sin(t - i / 25.f),  //
-                                    0.7f - 0.1f * i};
-      instance_position.orientation = axis_angle({1.f, 1.f, 1.f}, M_PI / 4 * t);
-      Mat4 model_matrix{create_model_matrix(instance_position)};
-      renderer.update_position(instances[i], model_matrix);
+                                    0.9f - 0.1f * i};
+      instance_position.orientation = Quat::axis_angle({1.f, 1.f, 1.f}, t);
+      Mat4 model_matrix{instance_position.as_matrix_transform()};
+      renderer.update_position(instances[i + 1], model_matrix);
     }
 
     renderer.render_frame();
