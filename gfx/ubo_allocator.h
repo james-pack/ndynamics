@@ -8,6 +8,7 @@
 #include <stdexcept>
 
 #include "gfx/vulkan_utils.h"
+#include "glog/logging.h"
 
 namespace ndyn::gfx {
 
@@ -63,6 +64,29 @@ class FrameScope final {
   }
 };
 
+inline void log_physical_device_properties(const VkPhysicalDeviceProperties& props) {
+  DLOG(INFO) << "Device Name: " << props.deviceName;
+  DLOG(INFO) << "Device Type: " << props.deviceType;
+  DLOG(INFO) << "API Version: " << VK_VERSION_MAJOR(props.apiVersion) << "."
+             << VK_VERSION_MINOR(props.apiVersion) << "." << VK_VERSION_PATCH(props.apiVersion);
+  DLOG(INFO) << "Driver Version: " << VK_VERSION_MAJOR(props.driverVersion) << "."
+             << VK_VERSION_MINOR(props.driverVersion) << "."
+             << VK_VERSION_PATCH(props.driverVersion);
+  DLOG(INFO) << "Vendor ID: " << props.vendorID;
+  DLOG(INFO) << "Device ID: " << props.deviceID;
+
+  const VkPhysicalDeviceLimits& limits = props.limits;
+  DLOG(INFO) << "Max Image Dimension 1D: " << limits.maxImageDimension1D;
+  DLOG(INFO) << "Max Image Dimension 2D: " << limits.maxImageDimension2D;
+  DLOG(INFO) << "Max Image Dimension 3D: " << limits.maxImageDimension3D;
+  DLOG(INFO) << "Max Uniform Buffer Range: " << limits.maxUniformBufferRange;
+  DLOG(INFO) << "Max Push Constants Size: " << limits.maxPushConstantsSize;
+  DLOG(INFO) << "Min Memory Map Alignment: " << limits.minMemoryMapAlignment;
+  DLOG(INFO) << "Non-Coherent Atom Size: " << limits.nonCoherentAtomSize;
+  DLOG(INFO) << "limits.minUnifromBufferOffsetAlignment: "
+             << limits.minUniformBufferOffsetAlignment;
+}
+
 /**
  * A persistently-mapped, per-frame linear allocator for dynamic UBO usage.
  *
@@ -94,9 +118,13 @@ class UboAllocator final {
   VkDeviceSize frame_base_{0};
   VkDeviceSize frame_offset_{0};
 
+  VkDeviceSize compute_frame_base(uint32_t frame_index) const {
+    return per_frame_size_runtime_ * (frame_index % FRAMES_IN_FLIGHT);
+  }
+
   void begin_frame_internal(uint32_t frame_index) {
     current_frame_ = frame_index % FRAMES_IN_FLIGHT;
-    frame_base_ = per_frame_size_runtime_ * current_frame_;
+    frame_base_ = compute_frame_base(frame_index);
     frame_offset_ = 0;
   }
 
@@ -136,11 +164,21 @@ class UboAllocator final {
       : device_(device), physical_device_(physical_device) {
     VkPhysicalDeviceProperties props{};
     vkGetPhysicalDeviceProperties(physical_device_, &props);
+
+    log_physical_device_properties(props);
+
     alignment_ = std::max<VkDeviceSize>(props.limits.minUniformBufferOffsetAlignment, 1);
     non_coherent_atom_size_ = std::max<VkDeviceSize>(props.limits.nonCoherentAtomSize, 1);
+    DLOG(INFO) << "UboAllocator::UboAllocator() -- alignment_: " << alignment_;
+    DLOG(INFO) << "UboAllocator::UboAllocator() -- non_coherent_atom_size_: "
+               << non_coherent_atom_size_;
 
-    per_frame_size_runtime_ = align_up(PER_FRAME_SIZE, alignment_);
+    per_frame_size_runtime_ =
+        align_up(PER_FRAME_SIZE, align_up(non_coherent_atom_size_, alignment_));
     const VkDeviceSize total_size = per_frame_size_runtime_ * FRAMES_IN_FLIGHT;
+    DLOG(INFO) << "UboAllocator::UboAllocator() -- per_frame_size_runtime_: "
+               << per_frame_size_runtime_;
+    DLOG(INFO) << "UboAllocator::UboAllocator() -- allocating total_size: " << total_size;
 
     VkBufferCreateInfo bci{};
     bci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -195,10 +233,10 @@ class UboAllocator final {
 
   VkBuffer buffer() const { return buffer_; }
 
-  VkDescriptorBufferInfo descriptor_info() const {
+  VkDescriptorBufferInfo descriptor_info(uint32_t frame_index) const {
     VkDescriptorBufferInfo info{};
     info.buffer = buffer_;
-    info.offset = 0;
+    info.offset = compute_frame_base(frame_index);
     info.range = per_frame_size_runtime_;
     return info;
   }
