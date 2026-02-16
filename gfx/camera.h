@@ -38,9 +38,6 @@ class Camera {
   virtual ~Camera() = default;
 
   virtual CameraState make_camera_state() const = 0;
-
- protected:
-  Mat4 make_view(const Position& pose) const;
 };
 
 class PerspectiveCamera final : public Camera {
@@ -64,16 +61,7 @@ class PerspectiveCamera final : public Camera {
   CameraState make_camera_state() const override;
 
  private:
-  static Mat4 make_perspective(float fov_y, float aspect, float n, float f) {
-    const float tan_half = std::tan(0.5f * fov_y);
-    Mat4 m{};
-    m.m[0][0] = 1.f / (aspect * tan_half);
-    m.m[1][1] = -1.f / tan_half;
-    m.m[2][2] = f / (f - n);
-    m.m[2][3] = 1.f;
-    m.m[3][2] = -(f * n) / (f - n);
-    return m;
-  }
+  static Mat4 make_perspective(float fov_y, float aspect, float n, float f);
 };
 
 class OrthographicCamera final : public Camera {
