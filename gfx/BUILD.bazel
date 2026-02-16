@@ -4,7 +4,9 @@ cc_library(
     name = "gfx",
     srcs = [
         "camera.cc",
+        "camera_strings.cc",
         "math.cc",
+        "math_strings.cc",
         "meshes.cc",
         "vulkan_renderer.cc",
         "vulkan_utils.cc",
@@ -12,9 +14,11 @@ cc_library(
     hdrs = [
         "alignment.h",
         "camera.h",
+        "camera_strings.h",
         "instance.h",
         "material.h",
         "math.h",
+        "math_strings.h",
         "mesh.h",
         "meshes.h",
         "ssbo_buffer.h",
