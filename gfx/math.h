@@ -63,15 +63,21 @@ struct Quat final {
   }
 
   Quat normalize() const {
+    static constexpr float epsilon{1e-18};
     auto scale{std::hypot(w, std::hypot(x, y, z))};
-    return {w / scale, x / scale, y / scale, z / scale};
+    if (scale < epsilon) {
+      return {1.f, 0.f, 0.f, 0.f};
+    } else {
+      return {w / scale, x / scale, y / scale, z / scale};
+    }
   }
+
   Quat conjugate() const { return {w, -x, -y, -z}; }
 
   static Quat axis_angle(const Vec3& axis, float angle_radians) {
     Vec3 normed{axis.normalize()};
     const float s{std::sin(0.5f * angle_radians)};
-    return Quat{std::cos(0.5f * angle_radians), s * normed.x, s * normed.y, s * normed.z};
+    return {std::cos(0.5f * angle_radians), s * normed.x, s * normed.y, s * normed.z};
   }
 };
 
