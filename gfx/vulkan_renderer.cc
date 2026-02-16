@@ -11,7 +11,9 @@
 #include <vector>
 
 #include "base/resource_loader.h"
+#include "gfx/camera_strings.h"
 #include "gfx/ssbo_buffer.h"
+#include "gfx/ubo_allocator.h"
 #include "gfx/vulkan_utils.h"
 #include "glog/logging.h"
 
@@ -39,12 +41,13 @@ std::vector<uint32_t> load_spirv(std::string_view path) {
   return words;
 }
 
-void create_descriptor_set(VkDevice device, size_t descriptor_set_id, uint32_t shader_stage_flags,
+void create_descriptor_set(VkDevice device, size_t descriptor_set_id,
+                           VkDescriptorType descriptor_type, VkShaderStageFlags shader_stage_flags,
                            size_t num_descriptors, VkDescriptorPool& pool,
                            VkDescriptorSetLayout& layout, VkDescriptorSet& descriptor_set) {
   VkDescriptorSetLayoutBinding binding{};
   binding.binding = 0;
-  binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  binding.descriptorType = descriptor_type;
   binding.descriptorCount = 1;
   binding.stageFlags = shader_stage_flags;
   binding.pImmutableSamplers = nullptr;
@@ -59,7 +62,7 @@ void create_descriptor_set(VkDevice device, size_t descriptor_set_id, uint32_t s
   }
 
   VkDescriptorPoolSize descriptor_pool_size{};
-  descriptor_pool_size.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  descriptor_pool_size.type = descriptor_type;
   descriptor_pool_size.descriptorCount = num_descriptors;
 
   VkDescriptorPoolCreateInfo descriptor_pool_info{};
@@ -102,7 +105,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
   return VK_FALSE;
 }
 
-VulkanRenderer::VulkanRenderer() {
+VulkanRenderer::VulkanRenderer()
+    : camera_(new PerspectiveCamera({{0.f, 0.f, 3.f}, {1.f, 0.f, 0.f, 0.f}},
+                                    /* ~115 degrees in radians */ 2.f,
+                                    /* square aspect ratio */ 1.f, /* near */ 0.1f,
+                                    /* far */ 100.f)) {
   // Initialize GLFW and create a window
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // No OpenGL context
@@ -311,13 +318,22 @@ VulkanRenderer::VulkanRenderer() {
   swapchain_images_.resize(image_count);
   vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
 
-  create_descriptor_set(device_, /* descriptor_set_id */ 0, VK_SHADER_STAGE_VERTEX_BIT,
+  create_descriptor_set(device_, INSTANCE_DESCRIPTOR_SET_INDEX, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                        VK_SHADER_STAGE_VERTEX_BIT,
                         /* num_descriptors */ 1, instance_descriptor_pool_,
-                        descriptor_set_layouts_[0], descriptor_sets_[0]);
-  create_descriptor_set(device_, /* descriptor_set_id */ 1,
+                        descriptor_set_layouts_[INSTANCE_DESCRIPTOR_SET_INDEX],
+                        descriptor_sets_[INSTANCE_DESCRIPTOR_SET_INDEX]);
+  create_descriptor_set(device_, MATERIAL_DESCRIPTOR_SET_INDEX, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                         /* num_descriptors */ 1, material_descriptor_pool_,
-                        descriptor_set_layouts_[1], descriptor_sets_[1]);
+                        descriptor_set_layouts_[MATERIAL_DESCRIPTOR_SET_INDEX],
+                        descriptor_sets_[MATERIAL_DESCRIPTOR_SET_INDEX]);
+  create_descriptor_set(device_, UBO_DESCRIPTOR_SET_INDEX,
+                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                        /* num_descriptors */ 1, ubo_descriptor_pool_,
+                        descriptor_set_layouts_[UBO_DESCRIPTOR_SET_INDEX],
+                        descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX]);
 
   VkPipelineLayoutCreateInfo pipeline_layout_info{};
   pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -503,6 +519,10 @@ VulkanRenderer::VulkanRenderer() {
   gpu_instances_ = std::make_unique<SsboBuffer<Instance>>(device_, physical_device_);
   gpu_materials_ = std::make_unique<SsboBuffer<Material>>(device_, physical_device_);
 
+  ubo_allocator_ =
+      std::make_unique<UboAllocator<UBO_ALLOCATION_SIZE_PER_FRAME, NUM_FRAMES_IN_FLIGHT>>(
+          device_, physical_device_);
+
   vkDestroyShaderModule(device_, vert_shader, nullptr);
   vkDestroyShaderModule(device_, frag_shader, nullptr);
 
@@ -547,6 +567,7 @@ void VulkanRenderer::render_frame() {
     throw std::runtime_error("Failed to acquire swapchain image.");
   }
 
+  // Update instance positions and orientation.
   {
     auto updater{gpu_instances_->begin_updates()};
     updater.reserve(instances_.size());
@@ -556,12 +577,14 @@ void VulkanRenderer::render_frame() {
     // Let the updater fall out of scope and be destroyed to trigger a flush.
   }
 
-  // {
-  //   auto updater{gpu_materials_->begin_updates()};
-  //   updater.reserve(num_materials_);
-  //   // Let the updater fall out of scope and be destroyed to trigger a flush.
-  // }
+  // Update Materials. This can be optimized as the materials don't change often.
+  {
+    auto updater{gpu_materials_->begin_updates()};
+    updater.reserve(num_materials_);
+    // Let the updater fall out of scope and be destroyed to trigger a flush.
+  }
 
+  // Update the descriptor sets for the SSBOs.
   if (gpu_instances_->was_reallocated()) {
     VkDescriptorBufferInfo buffer_info{};
     buffer_info.buffer = gpu_instances_->buffer();
@@ -644,9 +667,41 @@ void VulkanRenderer::render_frame() {
   vkCmdBeginRenderPass(command_buffer_, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
   vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_);
 
+  // Update the descriptor sets for the uniform objects.
+  static constexpr size_t FRAME_INDEX{0};
+  {
+    auto frame{ubo_allocator_->begin_frame(FRAME_INDEX)};
+
+    // Update the camera.
+    auto camera_allocation{frame.allocate<sizeof(CameraState)>()};
+    auto camera_state{camera_->make_camera_state()};
+    std::memcpy(camera_allocation.ptr, &camera_state, sizeof(CameraState));
+
+    DLOG(INFO) << "camera_state: " << camera_state;
+
+    vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_,
+                            UBO_DESCRIPTOR_SET_OFFSET, 1,
+                            &descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX], 1,
+                            &camera_allocation.dynamic_offset);
+  }
+  {
+    VkDescriptorBufferInfo buffer_info{ubo_allocator_->descriptor_info(FRAME_INDEX)};
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX];
+    write.dstBinding = 0;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    write.pBufferInfo = &buffer_info;
+
+    vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+  }
+
   vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_,
-                          /* firstSet -- a form of offset */ 0, descriptor_sets_.size(),
-                          descriptor_sets_.data(), 0, nullptr);
+                          0 /*SSBO_DESCRIPTOR_SET_OFFSET*/, 2 /*NUM_SSBO_DESCRIPTOR_SETS*/,
+                          descriptor_sets_.data() /*&descriptor_sets_[SSBO_DESCRIPTOR_SET_OFFSET]*/,
+                          0, nullptr);
 
   DLOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
 
