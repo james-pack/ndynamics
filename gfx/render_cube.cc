@@ -6,6 +6,7 @@
 
 #include "base/initializer.h"
 #include "gflags/gflags.h"
+#include "gfx/camera.h"
 #include "gfx/material.h"
 #include "gfx/math.h"
 #include "gfx/mesh.h"
@@ -46,7 +47,7 @@ int main(int argc, char* argv[]) {
 
   VulkanRenderer renderer{};
 
-  const MeshId mesh{renderer.add_mesh(create_cube(0.5f))};
+  const MeshId mesh{renderer.add_mesh(create_cube(0.25f))};
   const MaterialId white{renderer.add_material(WHITE)};
   std::array materials{
       renderer.add_material(CYAN), renderer.add_material(MAGENTA), renderer.add_material(YELLOW),
@@ -65,17 +66,25 @@ int main(int argc, char* argv[]) {
         renderer.add_instance(Instance{Mat4::identity(), mesh, materials[i % materials.size()]}));
   }
 
+  PerspectiveCamera camera{Position{{0.f, 0.f, 3.f}, {}},
+                           /* ~85 degrees in radians */ 1.5f,
+                           /* square aspect ratio */ 1.f, /* near */ 1.f,
+                           /* far */ 10.f};
+
   const auto start{std::chrono::high_resolution_clock::now()};
   while (true) {
     const auto now{std::chrono::high_resolution_clock::now()};
     float t = std::chrono::duration<float>(now - start).count();
 
+    camera.pose = {{3.f * std::sin(t), 0.f, 3.f * std::cos(t)}, Quat::axis_angle({0, 1, 0}, t)};
+    renderer.update_camera(camera.make_camera_state());
+
     for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
       Position instance_position{};
-      instance_position.position = {1.f * std::cos(t - i / 25.f),  //
-                                    1.f * std::sin(t - i / 25.f),  //
-                                    0.9f - 0.1f * i};
-      instance_position.orientation = Quat::axis_angle({1.f, 1.f, 1.f}, t);
+      instance_position.position = {1.f /** std::cos(t - i / 25.f)*/,  //
+                                    1.f /** std::sin(t - i / 25.f)*/,  //
+                                    0.9f - 0.5f * i};
+      // instance_position.orientation = Quat::axis_angle({1.f, 1.f, 1.f}, t);
       Mat4 model_matrix{instance_position.as_matrix_transform()};
       renderer.update_position(instances[i + 1], model_matrix);
     }
