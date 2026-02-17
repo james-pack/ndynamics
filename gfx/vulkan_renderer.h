@@ -81,7 +81,7 @@ class VulkanRenderer final {
 
   static constexpr size_t UBO_ALLOCATION_SIZE_PER_FRAME{sizeof(CameraState)};
   std::unique_ptr<UboAllocator<UBO_ALLOCATION_SIZE_PER_FRAME, 1>> ubo_allocator_{};
-  std::unique_ptr<Camera> camera_{};
+  CameraState camera_{CameraState::default_camera()};
 
  public:
   VulkanRenderer();
@@ -99,7 +99,7 @@ class VulkanRenderer final {
 
   MaterialId add_material(const Material& material);
 
-  void update_camera(std::unique_ptr<Camera>&& camera) { camera_ = std::move(camera); }
+  void update_camera(CameraState camera) { camera_ = std::move(camera); }
 };
 
 }  // namespace ndyn::gfx

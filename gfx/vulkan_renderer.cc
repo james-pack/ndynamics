@@ -105,11 +105,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
   return VK_FALSE;
 }
 
-VulkanRenderer::VulkanRenderer()
-    : camera_(new PerspectiveCamera({{0.f, 0.f, 3.f}, {1.f, 0.f, 0.f, 0.f}},
-                                    /* ~115 degrees in radians */ 2.f,
-                                    /* square aspect ratio */ 1.f, /* near */ 0.1f,
-                                    /* far */ 100.f)) {
+VulkanRenderer::VulkanRenderer() {
   // Initialize GLFW and create a window
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // No OpenGL context
@@ -674,10 +670,9 @@ void VulkanRenderer::render_frame() {
 
     // Update the camera.
     auto camera_allocation{frame.allocate<sizeof(CameraState)>()};
-    auto camera_state{camera_->make_camera_state()};
-    std::memcpy(camera_allocation.ptr, &camera_state, sizeof(CameraState));
+    std::memcpy(camera_allocation.ptr, &camera_, sizeof(CameraState));
 
-    DLOG(INFO) << "camera_state: " << camera_state;
+    DLOG(INFO) << "camera_: " << camera_;
 
     vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_,
                             UBO_DESCRIPTOR_SET_OFFSET, 1,
