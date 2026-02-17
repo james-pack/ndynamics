@@ -20,6 +20,8 @@ struct alignas(16) CameraState final {
   Vec2 projection_params;
   Vec2 clip_params;
   bool is_perspective;
+
+  static CameraState default_camera();
 };
 
 static_assert(offsetof(CameraState, view) == 0, "view offset incorrect");

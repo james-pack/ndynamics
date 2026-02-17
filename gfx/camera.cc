@@ -47,4 +47,15 @@ CameraState OrthographicCamera::make_camera_state() const {
   return state;
 }
 
+CameraState CameraState::default_camera() {
+  // The default camera is a perspective camera with an ~85 degree FOV at (0, 0, 3) looking down the
+  // z-axis in the -z direction.
+  PerspectiveCamera camera{Position{{0.f, 0.f, 3.f}, {}},
+                           /* ~85 degrees in radians */ 1.5f,
+                           /* square aspect ratio */ 1.f, /* near */ 1.f,
+                           /* far */ 10.f};
+
+  return camera.make_camera_state();
+}
+
 }  // namespace ndyn::gfx
