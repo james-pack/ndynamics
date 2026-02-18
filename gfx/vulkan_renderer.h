@@ -10,6 +10,7 @@
 #include "gfx/alignment.h"
 #include "gfx/camera.h"
 #include "gfx/instance.h"
+#include "gfx/light.h"
 #include "gfx/material.h"
 #include "gfx/math.h"
 #include "gfx/mesh.h"
@@ -82,9 +83,17 @@ class VulkanRenderer final {
   std::unique_ptr<SsboBuffer<Material>> gpu_materials_{};
   MaterialId num_materials_{0};
 
-  static constexpr size_t UBO_ALLOCATION_SIZE_PER_FRAME{sizeof(CameraState)};
+  // Note: changing this value does not automatically add more cameras. Other changes are required.
+  static constexpr size_t NUM_CAMERAS{1};
+  static constexpr size_t NUM_LIGHTS{3};
+
+  static constexpr size_t NUM_UBO_BINDINGS{2};
+  static constexpr size_t UBO_ALLOCATION_SIZE_PER_FRAME{sizeof(CameraState) +
+                                                        NUM_LIGHTS * sizeof(Light)};
   std::unique_ptr<UboAllocator<UBO_ALLOCATION_SIZE_PER_FRAME, 1>> ubo_allocator_{};
   CameraState camera_{CameraState::default_camera()};
+
+  std::array<Light, NUM_LIGHTS> lights_{};
 
  public:
   VulkanRenderer();

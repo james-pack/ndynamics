@@ -11,7 +11,10 @@
 #include <vector>
 
 #include "base/resource_loader.h"
+#include "gfx/camera.h"
 #include "gfx/camera_strings.h"
+#include "gfx/light.h"
+#include "gfx/light_strings.h"
 #include "gfx/ssbo_buffer.h"
 #include "gfx/ubo_allocator.h"
 #include "gfx/vulkan_utils.h"
@@ -20,7 +23,7 @@
 namespace ndyn::gfx {
 
 static constexpr const char VERTEX_SHADER[] = "gfx/model.vert.spv";
-static constexpr const char FRAGMENT_SHADER[] = "gfx/diffuse_color.frag.spv";
+static constexpr const char FRAGMENT_SHADER[] = "gfx/phong_illumination.frag.spv";
 
 static constexpr Material DEBUG_RED{
     .diffuse_color = {1.f, 0.f, 0.f, 1.f},
@@ -43,33 +46,43 @@ std::vector<uint32_t> load_spirv(std::string_view path) {
 
 void create_descriptor_set(VkDevice device, size_t descriptor_set_id,
                            VkDescriptorType descriptor_type, VkShaderStageFlags shader_stage_flags,
-                           size_t num_descriptors, VkDescriptorPool& pool,
+                           size_t num_bindings, VkDescriptorPool& pool,
                            VkDescriptorSetLayout& layout, VkDescriptorSet& descriptor_set) {
-  VkDescriptorSetLayoutBinding binding{};
-  binding.binding = 0;
-  binding.descriptorType = descriptor_type;
-  binding.descriptorCount = 1;
-  binding.stageFlags = shader_stage_flags;
-  binding.pImmutableSamplers = nullptr;
+  std::vector<VkDescriptorSetLayoutBinding> bindings{};
+  bindings.reserve(num_bindings);
+  for (size_t i = 0; i < num_bindings; ++i) {
+    VkDescriptorSetLayoutBinding binding{};
+    binding.binding = i;
+    binding.descriptorType = descriptor_type;
+    binding.descriptorCount = 1;
+    binding.stageFlags = shader_stage_flags;
+    binding.pImmutableSamplers = nullptr;
+    bindings.push_back(binding);
+  }
 
   VkDescriptorSetLayoutCreateInfo layout_info{};
   layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  layout_info.bindingCount = 1;
-  layout_info.pBindings = &binding;
+  layout_info.bindingCount = bindings.size();
+  layout_info.pBindings = bindings.data();
 
   if (vkCreateDescriptorSetLayout(device, &layout_info, nullptr, &layout) != VK_SUCCESS) {
     throw std::runtime_error("Could not create descriptor set layout");
   }
 
-  VkDescriptorPoolSize descriptor_pool_size{};
-  descriptor_pool_size.type = descriptor_type;
-  descriptor_pool_size.descriptorCount = num_descriptors;
+  std::vector<VkDescriptorPoolSize> descriptor_pool_sizes{};
+  descriptor_pool_sizes.reserve(num_bindings);
+  for (size_t i = 0; i < num_bindings; ++i) {
+    VkDescriptorPoolSize descriptor_pool_size{};
+    descriptor_pool_size.type = descriptor_type;
+    descriptor_pool_size.descriptorCount = 1;
+    descriptor_pool_sizes.push_back(descriptor_pool_size);
+  }
 
   VkDescriptorPoolCreateInfo descriptor_pool_info{};
   descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   descriptor_pool_info.maxSets = 1;
-  descriptor_pool_info.poolSizeCount = 1;
-  descriptor_pool_info.pPoolSizes = &descriptor_pool_size;
+  descriptor_pool_info.poolSizeCount = descriptor_pool_sizes.size();
+  descriptor_pool_info.pPoolSizes = descriptor_pool_sizes.data();
   if (vkCreateDescriptorPool(device, &descriptor_pool_info, nullptr, &pool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool");
   }
@@ -106,6 +119,18 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 }
 
 VulkanRenderer::VulkanRenderer() {
+  for (size_t i = 0; i < NUM_LIGHTS; ++i) {
+    lights_[i] = Light::no_light();
+  }
+  lights_.at(0) = Light::default_directional_light();
+  lights_.at(1) = Light::default_ambient_light();
+  lights_.at(2) = Light{
+      .position = {-1.f, -1.f, -2.f, 1.f},
+      .direction = {0.f, 1.f, 1.f, 1.f},
+      .color = {0.f, 0.5f, 0.5f, 0.6f},
+      .type = 1,
+  };
+
   // Initialize GLFW and create a window
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // No OpenGL context
@@ -392,19 +417,18 @@ VulkanRenderer::VulkanRenderer() {
 
   create_descriptor_set(device_, INSTANCE_DESCRIPTOR_SET_INDEX, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                         VK_SHADER_STAGE_VERTEX_BIT,
-                        /* num_descriptors */ 1, instance_descriptor_pool_,
+                        /* num_bindings */ 1, instance_descriptor_pool_,
                         descriptor_set_layouts_[INSTANCE_DESCRIPTOR_SET_INDEX],
                         descriptor_sets_[INSTANCE_DESCRIPTOR_SET_INDEX]);
   create_descriptor_set(device_, MATERIAL_DESCRIPTOR_SET_INDEX, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                         VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                        /* num_descriptors */ 1, material_descriptor_pool_,
+                        /* num_bindings */ 1, material_descriptor_pool_,
                         descriptor_set_layouts_[MATERIAL_DESCRIPTOR_SET_INDEX],
                         descriptor_sets_[MATERIAL_DESCRIPTOR_SET_INDEX]);
   create_descriptor_set(device_, UBO_DESCRIPTOR_SET_INDEX,
                         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                        /* num_descriptors */ 1, ubo_descriptor_pool_,
-                        descriptor_set_layouts_[UBO_DESCRIPTOR_SET_INDEX],
+                        VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, NUM_UBO_BINDINGS,
+                        ubo_descriptor_pool_, descriptor_set_layouts_[UBO_DESCRIPTOR_SET_INDEX],
                         descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX]);
 
   VkPipelineLayoutCreateInfo pipeline_layout_info{};
@@ -758,31 +782,53 @@ void VulkanRenderer::render_frame() {
   // Update the descriptor sets for the uniform objects.
   static constexpr size_t FRAME_INDEX{0};
   {
+    std::array<uint32_t, NUM_UBO_BINDINGS> offsets{};
+    std::array<uint32_t, NUM_UBO_BINDINGS> sizes{};
+    std::array<VkDescriptorBufferInfo, NUM_UBO_BINDINGS> buffer_infos{};
+    std::array<VkWriteDescriptorSet, NUM_UBO_BINDINGS> writes{};
+
     auto frame{ubo_allocator_->begin_frame(FRAME_INDEX)};
 
     // Update the camera.
     auto camera_allocation{frame.allocate<sizeof(CameraState)>()};
     std::memcpy(camera_allocation.ptr, &camera_, sizeof(CameraState));
+    offsets[0] = camera_allocation.dynamic_offset;
+    sizes[0] = camera_allocation.size;
 
     DLOG(INFO) << "camera_: " << camera_;
 
+    // Update all of the lights.
+    auto light_allocation{frame.allocate<NUM_LIGHTS * sizeof(Light)>()};
+    std::memcpy(light_allocation.ptr, lights_.data(), NUM_LIGHTS * sizeof(Light));
+    offsets[NUM_CAMERAS] = light_allocation.dynamic_offset;
+    sizes[NUM_CAMERAS] = light_allocation.size;
+
+    for (size_t light_index = 0; light_index < NUM_LIGHTS; ++light_index) {
+      DLOG(INFO) << "lights_[" << light_index << "]: " << lights_[light_index];
+    }
+
     vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_,
                             UBO_DESCRIPTOR_SET_OFFSET, 1,
-                            &descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX], 1,
-                            &camera_allocation.dynamic_offset);
-  }
-  {
-    VkDescriptorBufferInfo buffer_info{ubo_allocator_->descriptor_info(FRAME_INDEX)};
-    VkWriteDescriptorSet write{};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet = descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX];
-    write.dstBinding = 0;
-    write.dstArrayElement = 0;
-    write.descriptorCount = 1;
-    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    write.pBufferInfo = &buffer_info;
+                            &descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX], offsets.size(),
+                            offsets.data());
 
-    vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
+    for (size_t i = 0; i < NUM_UBO_BINDINGS; ++i) {
+      VkDescriptorBufferInfo& buffer_info{buffer_infos[i]};
+      buffer_info.buffer = ubo_allocator_->buffer();
+      buffer_info.offset = 0;
+      buffer_info.range = sizes[i];
+
+      VkWriteDescriptorSet& write{writes[i]};
+      write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write.dstSet = descriptor_sets_[UBO_DESCRIPTOR_SET_INDEX];
+      write.dstBinding = i;
+      write.dstArrayElement = 0;
+      write.descriptorCount = 1;
+      write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+      write.pBufferInfo = &buffer_info;
+    }
+
+    vkUpdateDescriptorSets(device_, writes.size(), writes.data(), 0, nullptr);
   }
 
   vkCmdBindDescriptorSets(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_,
