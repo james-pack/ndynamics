@@ -5,6 +5,8 @@ cc_library(
     srcs = [
         "camera.cc",
         "camera_strings.cc",
+        "light.cc",
+        "light_strings.cc",
         "math.cc",
         "math_strings.cc",
         "meshes.cc",
@@ -16,6 +18,8 @@ cc_library(
         "camera.h",
         "camera_strings.h",
         "instance.h",
+        "light.h",
+        "light_strings.h",
         "material.h",
         "math.h",
         "math_strings.h",
@@ -30,6 +34,7 @@ cc_library(
         ":debug_shader",
         ":diffuse_color",
         ":model",
+        ":phong_illumination",
         ":triangle_shader",
     ],
     visibility = ["//visibility:public"],
@@ -66,6 +71,13 @@ fragment_shader_library(
     name = "diffuse_color",
     srcs = [
         "diffuse_color.frag.glsl",
+    ],
+)
+
+fragment_shader_library(
+    name = "phong_illumination",
+    srcs = [
+        "phong_illumination.frag.glsl",
     ],
 )
 
