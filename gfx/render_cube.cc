@@ -19,36 +19,60 @@ DEFINE_uint32(num_cubes, 3, "Number of cubes to display.");
 using namespace ndyn::gfx;
 using namespace std::chrono_literals;
 
-static constexpr float DEFAULT_SHININESS{0.8f};
-static constexpr Vec4 DEFAULT_SPECULAR_COLOR{0.4f, 0.4f, 0.3f, 1.f};
+static constexpr float DEFAULT_SHININESS{0.75f};
+static constexpr Vec4 BRASSY_COLOR{0.7961f, 0.4275f, 0.3176f, 1.f};
+static constexpr Vec4 WHITE_COLOR{1.f, 1.f, 1.f, 1.f};
+static constexpr Vec4 DEFAULT_SPECULAR_COLOR{WHITE_COLOR};
+static constexpr float DEFAULT_OPACITY{1.f};
 
-static constexpr Material WHITE{.diffuse_color = {1.f, 1.f, 1.f, 1.f},
-                                .specular_color = DEFAULT_SPECULAR_COLOR,
-                                .shininess = DEFAULT_SHININESS};
+static constexpr Material WHITE{
+    .diffuse_color = {1.f, 1.f, 1.f, 1.f},
+    .specular_color = DEFAULT_SPECULAR_COLOR,
+    .shininess = DEFAULT_SHININESS,
+    .opacity = DEFAULT_OPACITY,
+};
 
-static constexpr Material RED{.diffuse_color = {1.f, 0.f, 0.f, 1.f},
-                              .specular_color = DEFAULT_SPECULAR_COLOR,
-                              .shininess = DEFAULT_SHININESS};
+static constexpr Material RED{
+    .diffuse_color = {1.f, 0.f, 0.f, 1.f},
+    .specular_color = DEFAULT_SPECULAR_COLOR,
+    .shininess = DEFAULT_SHININESS,
+    .opacity = DEFAULT_OPACITY,
+};
 
-static constexpr Material GREEN{.diffuse_color = {0.f, 1.f, 0.f, 1.f},
-                                .specular_color = DEFAULT_SPECULAR_COLOR,
-                                .shininess = DEFAULT_SHININESS};
+static constexpr Material GREEN{
+    .diffuse_color = {0.f, 1.f, 0.f, 1.f},
+    .specular_color = DEFAULT_SPECULAR_COLOR,
+    .shininess = DEFAULT_SHININESS,
+    .opacity = DEFAULT_OPACITY,
+};
 
-static constexpr Material BLUE{.diffuse_color = {0.f, 0.f, 1.f, 1.f},
-                               .specular_color = DEFAULT_SPECULAR_COLOR,
-                               .shininess = DEFAULT_SHININESS};
+static constexpr Material BLUE{
+    .diffuse_color = {0.f, 0.f, 1.f, 1.f},
+    .specular_color = DEFAULT_SPECULAR_COLOR,
+    .shininess = DEFAULT_SHININESS,
+    .opacity = DEFAULT_OPACITY,
+};
 
-static constexpr Material YELLOW{.diffuse_color = {1.f, 1.f, 0.f, 1.f},
-                                 .specular_color = DEFAULT_SPECULAR_COLOR,
-                                 .shininess = DEFAULT_SHININESS};
+static constexpr Material YELLOW{
+    .diffuse_color = {1.f, 1.f, 0.f, 1.f},
+    .specular_color = DEFAULT_SPECULAR_COLOR,
+    .shininess = DEFAULT_SHININESS,
+    .opacity = DEFAULT_OPACITY,
+};
 
-static constexpr Material CYAN{.diffuse_color = {0.f, 1.f, 1.f, 1.f},
-                               .specular_color = DEFAULT_SPECULAR_COLOR,
-                               .shininess = DEFAULT_SHININESS};
+static constexpr Material CYAN{
+    .diffuse_color = {0.f, 1.f, 1.f, 1.f},
+    .specular_color = DEFAULT_SPECULAR_COLOR,
+    .shininess = DEFAULT_SHININESS,
+    .opacity = DEFAULT_OPACITY,
+};
 
-static constexpr Material MAGENTA{.diffuse_color = {1.f, 0.f, 1.f, 1.f},
-                                  .specular_color = DEFAULT_SPECULAR_COLOR,
-                                  .shininess = DEFAULT_SHININESS};
+static constexpr Material MAGENTA{
+    .diffuse_color = {1.f, 0.f, 1.f, 1.f},
+    .specular_color = DEFAULT_SPECULAR_COLOR,
+    .shininess = DEFAULT_SHININESS,
+    .opacity = DEFAULT_OPACITY,
+};
 
 int main(int argc, char* argv[]) {
   ndyn::initialize(&argc, &argv);
