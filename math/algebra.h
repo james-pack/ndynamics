@@ -69,8 +69,8 @@ template <typename T = DefaultScalarType,
           InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
 using Vga2d = Algebra<T, 2, 0, 0, INNER_PRODUCT>;
 
-// VGA is a standard ("vanilla") 3D vectorspace geometric algebra. It is used in non-relativistic
-// physics and engineering applications.
+// VGA is a standard ("vanilla") 3D vectorspace geometric algebra, also known as 3D Euclidean
+// geometric algebra. It is used in non-relativistic physics and engineering applications.
 template <typename T = DefaultScalarType,
           InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
 using Vga = Algebra<T, 3, 0, 0, INNER_PRODUCT>;
