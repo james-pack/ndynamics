@@ -32,8 +32,8 @@ static_assert(offsetof(CameraState, projection_params) == 208,
               "projection_params offset incorrect");
 static_assert(offsetof(CameraState, clip_params) == 216, "clip_params offset incorrect");
 static_assert(offsetof(CameraState, is_perspective) == 224, "is_perspective offset incorrect");
-static_assert(sizeof(CameraState) % 16 == 0, "CameraState size must be multiple of 16");
-static_assert(alignof(CameraState) % 16 == 0, "CameraState alignment must be multiple of 16");
+static_assert(sizeof(CameraState) == 240, "CameraState size mismatch");
+static_assert(alignof(CameraState) == 16, "CameraState alignment mismatch");
 
 class Camera {
  public:
