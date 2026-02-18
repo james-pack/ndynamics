@@ -8,11 +8,11 @@
 namespace ndyn::gfx {
 
 struct alignas(16) Material final {
-  Vec4 diffuse_color;
-  Vec4 specular_color;
-  float shininess;
-  float opacity;
-  uint texture_index;
+  Vec4 diffuse_color{};
+  Vec4 specular_color{1.f, 1.f, 1.f, 1.f};
+  float shininess{0.f};
+  float opacity{1.f};
+  uint texture_index{};
 };
 using MaterialId = uint32_t;
 
