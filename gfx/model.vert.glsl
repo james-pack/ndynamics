@@ -21,10 +21,15 @@ layout(std140, set = 2, binding = 0) readonly uniform CameraStateBuffer { Camera
 layout(location = 0) in vec3 in_pos;
 layout(location = 1) in vec3 in_normal;
 
-layout(location = 0) out flat uint material_id;
+layout(location = 0) out vec3 frag_pos;
+layout(location = 1) out vec3 frag_normal;
+layout(location = 2) out flat uint material_id;
 
 void main() {
   mat4 model_pose = instances[gl_InstanceIndex].pose;
-  gl_Position = camera.view_projection * model_pose * vec4(in_pos, 1.0);
+  vec4 world_pos = model_pose * vec4(in_pos, 1.0);
+  gl_Position = camera.view_projection * world_pos;
+  frag_pos = vec3(world_pos.x, world_pos.y, world_pos.z);
+  frag_normal = in_normal;
   material_id = instances[gl_InstanceIndex].material_id;
 }
