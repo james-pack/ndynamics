@@ -25,7 +25,7 @@ constexpr size_t align_up(size_t size) {
   return (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1);
 }
 
-inline size_t align_up(size_t size, size_t alignment) {
+constexpr inline size_t align_up(size_t size, size_t alignment) {
   if (alignment == 0) return size;
   return (size + alignment - 1) & ~(alignment - 1);
 }
@@ -36,6 +36,7 @@ inline size_t align_up(size_t size, size_t alignment) {
 struct UboAllocation final {
   void* ptr{nullptr};
   uint32_t dynamic_offset{0};
+  uint32_t size{0};
 };
 
 template <size_t PER_FRAME_SIZE, uint32_t FRAMES_IN_FLIGHT>
@@ -141,6 +142,7 @@ class UboAllocator final {
     UboAllocation a{};
     a.ptr = ptr;
     a.dynamic_offset = static_cast<uint32_t>(offset);
+    a.size = aligned;
     return a;
   }
 
@@ -232,14 +234,6 @@ class UboAllocator final {
   }
 
   VkBuffer buffer() const { return buffer_; }
-
-  VkDescriptorBufferInfo descriptor_info(uint32_t frame_index) const {
-    VkDescriptorBufferInfo info{};
-    info.buffer = buffer_;
-    info.offset = compute_frame_base(frame_index);
-    info.range = per_frame_size_runtime_;
-    return info;
-  }
 };
 
 }  // namespace ndyn::gfx
