@@ -281,7 +281,52 @@ VulkanRenderer::VulkanRenderer() {
     throw std::runtime_error("failed to create swapchain");
   }
 
-  VkAttachmentDescription color_attachment{};
+  // Choose depth format (query supported formats if needed)
+  VkFormat depth_format = VK_FORMAT_D32_SFLOAT;
+
+  VkImageCreateInfo depth_image_info{};
+  depth_image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  depth_image_info.imageType = VK_IMAGE_TYPE_2D;
+  depth_image_info.format = depth_format;
+  depth_image_info.extent.width = swapchain_extent_.width;
+  depth_image_info.extent.height = swapchain_extent_.height;
+  depth_image_info.extent.depth = 1;
+  depth_image_info.mipLevels = 1;
+  depth_image_info.arrayLayers = 1;
+  depth_image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+  depth_image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+  depth_image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  depth_image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+  vkCreateImage(device_, &depth_image_info, nullptr, &depth_image_);
+
+  // Allocate memory for depth image (memory type must support device local)
+  VkMemoryRequirements depth_image_mem_req{};
+  vkGetImageMemoryRequirements(device_, depth_image_, &depth_image_mem_req);
+  VkMemoryAllocateInfo depth_image_alloc{};
+  depth_image_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  depth_image_alloc.allocationSize = depth_image_mem_req.size;
+  depth_image_alloc.memoryTypeIndex = find_memory_type(
+      physical_device_, depth_image_mem_req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  vkAllocateMemory(device_, &depth_image_alloc, nullptr, &depth_image_memory_);
+  vkBindImageMemory(device_, depth_image_, depth_image_memory_, 0);
+
+  VkImageViewCreateInfo depth_view_info{};
+  depth_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  depth_view_info.image = depth_image_;
+  depth_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  depth_view_info.format = depth_format;
+  depth_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+  depth_view_info.subresourceRange.baseMipLevel = 0;
+  depth_view_info.subresourceRange.levelCount = 1;
+  depth_view_info.subresourceRange.baseArrayLayer = 0;
+  depth_view_info.subresourceRange.layerCount = 1;
+
+  vkCreateImageView(device_, &depth_view_info, nullptr, &depth_image_view_);
+
+  std::array<VkAttachmentDescription, 2> render_pass_attachments{};
+  VkAttachmentDescription& color_attachment{render_pass_attachments[0]};
   color_attachment.format = swapchain_image_format;
   color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -289,21 +334,52 @@ VulkanRenderer::VulkanRenderer() {
   color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+  VkAttachmentDescription& depth_attachment{render_pass_attachments[1]};
+  // TODO(james): Get the format from the physical device properties. This should be done by picking
+  // the first format where optimalTilingFeatures and VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+  // are both set.
+  depth_attachment.format = VK_FORMAT_D32_SFLOAT;
+  depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
   VkAttachmentReference color_ref{};
   color_ref.attachment = 0;
   color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference depth_ref{};
+  depth_ref.attachment = 1;
+  depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   VkSubpassDescription subpass{};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &color_ref;
+  subpass.pDepthStencilAttachment = &depth_ref;
+
+  VkSubpassDependency subpass_dependency{};
+  subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  subpass_dependency.dstSubpass = 0;
+  subpass_dependency.srcStageMask =
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  subpass_dependency.dstStageMask =
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  subpass_dependency.srcAccessMask = 0;
+  subpass_dependency.dstAccessMask =
+      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
   VkRenderPassCreateInfo rp_info{};
   rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  rp_info.attachmentCount = 1;
-  rp_info.pAttachments = &color_attachment;
+  rp_info.attachmentCount = render_pass_attachments.size();
+  rp_info.pAttachments = render_pass_attachments.data();
   rp_info.subpassCount = 1;
   rp_info.pSubpasses = &subpass;
+  rp_info.dependencyCount = 1;
+  rp_info.pDependencies = &subpass_dependency;
 
   if (vkCreateRenderPass(device_, &rp_info, nullptr, &render_pass_) != VK_SUCCESS)
     throw std::runtime_error("vkCreateRenderPass failed");
@@ -366,11 +442,16 @@ VulkanRenderer::VulkanRenderer() {
 
   framebuffers_.resize(swapchain_image_views_.size());
   for (size_t i = 0; i < swapchain_image_views_.size(); ++i) {
+    std::array<VkImageView, 2> attachments{
+        swapchain_image_views_[i],
+        depth_image_view_,
+    };
+
     VkFramebufferCreateInfo fb_info{};
     fb_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     fb_info.renderPass = render_pass_;
-    fb_info.attachmentCount = 1;
-    fb_info.pAttachments = &swapchain_image_views_[i];
+    fb_info.attachmentCount = attachments.size();
+    fb_info.pAttachments = attachments.data();
     fb_info.width = swapchain_extent_.width;
     fb_info.height = swapchain_extent_.height;
     fb_info.layers = 1;
@@ -485,6 +566,14 @@ VulkanRenderer::VulkanRenderer() {
   color_blending.attachmentCount = 1;
   color_blending.pAttachments = &color_blend_attachment;
 
+  VkPipelineDepthStencilStateCreateInfo depth_state{};
+  depth_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depth_state.depthTestEnable = VK_TRUE;
+  depth_state.depthWriteEnable = VK_TRUE;
+  depth_state.depthCompareOp = VK_COMPARE_OP_LESS;
+  depth_state.depthBoundsTestEnable = VK_FALSE;
+  depth_state.stencilTestEnable = VK_FALSE;
+
   VkGraphicsPipelineCreateInfo pipeline_info{};
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipeline_info.stageCount = 2;
@@ -498,6 +587,7 @@ VulkanRenderer::VulkanRenderer() {
   pipeline_info.layout = pipeline_layout_;
   pipeline_info.renderPass = render_pass_;
   pipeline_info.subpass = 0;
+  pipeline_info.pDepthStencilState = &depth_state;
 
   if (vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, &pipeline_info, nullptr,
                                 &graphics_pipeline_) != VK_SUCCESS) {
@@ -649,16 +739,18 @@ void VulkanRenderer::render_frame() {
                        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                        0, 0, nullptr, barriers.size(), barriers.data(), 0, nullptr);
 
-  VkClearValue clear{};
-  clear.color = {{0.f, 0.f, 0.f, 1.f}};
+  std::array<VkClearValue, 2> clear{};
+  clear[0].color = {0.f, 0.f, 0.f, 1.f};
+  clear[1].depthStencil.depth = 1.f;
+  clear[1].depthStencil.stencil = 0;
   VkRenderPassBeginInfo rp_begin{};
   rp_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   rp_begin.renderPass = render_pass_;
   rp_begin.framebuffer = framebuffers_[image_index];
   rp_begin.renderArea.offset = {0, 0};
   rp_begin.renderArea.extent = swapchain_extent_;
-  rp_begin.clearValueCount = 1;
-  rp_begin.pClearValues = &clear;
+  rp_begin.clearValueCount = clear.size();
+  rp_begin.pClearValues = clear.data();
 
   vkCmdBeginRenderPass(command_buffer_, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
   vkCmdBindPipeline(command_buffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_);

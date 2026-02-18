@@ -59,6 +59,9 @@ class VulkanRenderer final {
   VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
   std::vector<VkImage> swapchain_images_{};
   std::vector<VkImageView> swapchain_image_views_{};
+  VkImage depth_image_{};
+  VkImageView depth_image_view_{};
+  VkDeviceMemory depth_image_memory_{};
   std::vector<VkFramebuffer> framebuffers_{};
 
   VkFence in_flight_fence_{VK_NULL_HANDLE};
