@@ -17,34 +17,34 @@ struct alignas(16) Light {
    * World-space position of the light. Used by point and spot lights to determine
    * direction toward the surface and distance attenuation.
    */
-  Vec4 position;
+  Vec4 position{};
 
   /**
    * Direction the light emits along. Used by directional lights and as the axis
    * of the emission cone for spot lights.
    */
-  alignas(16) Vec4 direction;
+  alignas(16) Vec4 direction{};
 
   /**
    * RGB emission color of the light, along with an intensity value in the alpha channel.
    */
-  alignas(16) Vec4 color;
+  alignas(16) Vec4 color{};
 
   /**
    * Inner cone angle (radians). Surfaces inside this angle receive full illumination
    * from a spot light.
    */
-  float spot_inner;
+  float spot_inner{};
 
   /**
    * Outer cone angle (radians). Illumination falls to zero at this boundary.
    */
-  float spot_outer;
+  float spot_outer{};
 
   /**
    * Light classification: 0 = point, 1 = directional, 2 = spot.
    */
-  uint32_t type;
+  uint32_t type{0};
 
   static Light no_light();
   static Light default_ambient_light();

@@ -2,16 +2,7 @@
 
 namespace ndyn::gfx {
 
-Light Light::no_light() {
-  Light result{};
-
-  result.position = {0.f, 0.f, 0.f, 1.f};
-  result.direction = {0.f, 0.f, 0.f, 1.f};
-  result.color = {0.f, 0.f, 0.f, 0.f};
-  result.type = 0;
-
-  return result;
-}
+Light Light::no_light() { return {}; }
 
 Light Light::default_ambient_light() {
   Light result{};
