@@ -38,7 +38,7 @@ struct Light {
 
   uint type;
 };
-layout(std140, set = 2, binding = 1) readonly uniform LightBuffer { Light lights[3]; };
+layout(std140, set = 2, binding = 1) readonly uniform LightBuffer { Light lights[16]; };
 
 void main() {
   Material mat = materials[material_id];

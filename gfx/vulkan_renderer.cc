@@ -119,9 +119,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 }
 
 VulkanRenderer::VulkanRenderer() {
-  for (size_t i = 0; i < NUM_LIGHTS; ++i) {
-    lights_[i] = Light::no_light();
-  }
   lights_.at(0) = Light::default_directional_light();
   lights_.at(1) = Light::default_ambient_light();
   lights_.at(2) = Light{
