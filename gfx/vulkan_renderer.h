@@ -85,6 +85,7 @@ class VulkanRenderer final {
 
   // Note: changing this value does not automatically add more cameras. Other changes are required.
   static constexpr size_t NUM_CAMERAS{1};
+
   static constexpr size_t NUM_LIGHTS{16};
 
   static constexpr size_t NUM_UBO_BINDINGS{2};

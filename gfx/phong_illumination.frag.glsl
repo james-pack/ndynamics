@@ -49,7 +49,7 @@ void main() {
   float attenuation = 1.0;
 
   vec3 color = vec3(0.0, 0.0, 0.0);
-  for (uint i = 0; i < 3; ++i) {
+  for (uint i = 0; i < 16; ++i) {
     Light light = lights[i];
     if (light.type == 0) {  // point light
       vec3 to_light = light.position.xyz - frag_pos;
