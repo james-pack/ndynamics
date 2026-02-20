@@ -678,7 +678,18 @@ void VulkanRenderer::render_frame() {
   {
     auto updater{gpu_instances_->begin_updates()};
     updater.reserve(instances_.size());
-    updater.update(instances_.begin(), instances_.end());
+    size_t pos{0};
+
+    // Group the instances by mesh so they can be rendered in indexed draw commands.
+    for (MeshId mesh = 0; mesh < meshes_.size(); ++mesh) {
+      auto [iter, end] = mesh_instances_.equal_range(mesh);
+      while (iter != end) {
+        updater.update(pos, instances_.at(iter->second));
+        ++pos;
+        ++iter;
+      }
+    }
+
     // Let the updater fall out of scope and be destroyed to trigger a flush.
   }
 
@@ -833,12 +844,17 @@ void VulkanRenderer::render_frame() {
 
   DLOG(INFO) << "VulkanRenderer::render_frame() -- instances_.size(): " << instances_.size();
 
-  const GpuMesh& mesh = meshes_[0];
-  VkDeviceSize offsets[] = {0};
-  vkCmdBindVertexBuffers(command_buffer_, 0, 1, &mesh.vertex_buffer, offsets);
-  vkCmdBindIndexBuffer(command_buffer_, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
-  vkCmdDrawIndexed(command_buffer_, mesh.index_count, instances_.size(), 0, 0,
-                   /* offset of first instance of this mesh */ 0);
+  size_t instance_index{0};
+  for (MeshId mesh_id = 0; mesh_id < meshes_.size(); ++mesh_id) {
+    const GpuMesh& mesh{meshes_.at(mesh_id)};
+    size_t num_instances{mesh_instances_.count(mesh_id)};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(command_buffer_, 0, 1, &mesh.vertex_buffer, offsets);
+    vkCmdBindIndexBuffer(command_buffer_, mesh.index_buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(command_buffer_, mesh.index_count, num_instances, 0, 0,
+                     /* offset of first instance of this mesh */ instance_index);
+    instance_index += num_instances;
+  }
 
   vkCmdEndRenderPass(command_buffer_);
   vkEndCommandBuffer(command_buffer_);
@@ -1009,13 +1025,14 @@ MeshId VulkanRenderer::add_mesh(const Mesh& mesh) {
 }
 
 InstanceId VulkanRenderer::add_instance(Instance instance) {
-  MaterialId material{instance.material};
-  InstanceId id{static_cast<InstanceId>(instances_.size() - 1)};
+  InstanceId id{static_cast<InstanceId>(instances_.size())};
+  const MeshId mesh{instance.mesh};
 
   // Note that the position matrix must be transposed as GLSL stores its matrices as column major,
   // but we use them on the host in row major.
   instance.position = instance.position.transpose();
   instances_.emplace_back(std::move(instance));
+  mesh_instances_.insert({mesh, id});
 
   return id;
 }

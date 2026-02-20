@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include <array>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -81,6 +82,7 @@ class VulkanRenderer final {
   std::vector<Instance> instances_{};
   std::unique_ptr<SsboBuffer<Instance>> gpu_instances_{};
   std::unique_ptr<SsboBuffer<Material>> gpu_materials_{};
+  std::multimap<MeshId, InstanceId> mesh_instances_{};
   MaterialId num_materials_{0};
 
   // Note: changing this value does not automatically add more cameras. Other changes are required.
