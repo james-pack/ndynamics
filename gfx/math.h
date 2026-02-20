@@ -102,6 +102,14 @@ inline Quat operator*(const Quat& q, float scale) {
 struct Vertex final {
   float px, py, pz;
   float nx, ny, nz;
+
+  static Vertex from_direction(Vec3 dir, float scale = 1.f) {
+    dir = dir.normalize();
+    return {
+        dir.x * scale, dir.y * scale, dir.z * scale,  //
+        dir.x,         dir.y,         dir.z,
+    };
+  }
 };
 
 struct Mat4;
