@@ -678,9 +678,7 @@ void VulkanRenderer::render_frame() {
   {
     auto updater{gpu_instances_->begin_updates()};
     updater.reserve(instances_.size());
-    for (size_t i = 0; i < instances_.size(); ++i) {
-      updater.update(i, instances_[i]);
-    }
+    updater.update(instances_.begin(), instances_.end());
     // Let the updater fall out of scope and be destroyed to trigger a flush.
   }
 
@@ -1010,9 +1008,22 @@ MeshId VulkanRenderer::add_mesh(const Mesh& mesh) {
   return static_cast<MeshId>(meshes_.size() - 1);
 }
 
-InstanceId VulkanRenderer::add_instance(const Instance& instance) {
-  instances_.emplace_back(instance);
-  return static_cast<InstanceId>(instances_.size() - 1);
+InstanceId VulkanRenderer::add_instance(Instance instance) {
+  MaterialId material{instance.material};
+  InstanceId id{static_cast<InstanceId>(instances_.size() - 1)};
+
+  // Note that the position matrix must be transposed as GLSL stores its matrices as column major,
+  // but we use them on the host in row major.
+  instance.position = instance.position.transpose();
+  instances_.emplace_back(std::move(instance));
+
+  return id;
+}
+
+void VulkanRenderer::update_position(InstanceId id, const Mat4& position) {
+  // Note that the position matrix must be transposed as GLSL stores its matrices as column major,
+  // but we use them on the host in row major.
+  instances_.at(id).position = position.transpose();
 }
 
 }  // namespace ndyn::gfx

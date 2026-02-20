@@ -103,12 +103,9 @@ class VulkanRenderer final {
   void render_frame();
 
   MeshId add_mesh(const Mesh& mesh);
-  InstanceId add_instance(const Instance& instance);
-  void update_position(InstanceId id, const Mat4& position) {
-    // Note that the position matrix must be transposed as GLSL stores its matrices as column major,
-    // but we use them on the host in row major.
-    instances_.at(id).position = position.transpose();
-  }
+
+  InstanceId add_instance(Instance instance);
+  void update_position(InstanceId id, const Mat4& position);
 
   MaterialId add_material(const Material& material);
 
