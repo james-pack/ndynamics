@@ -14,7 +14,7 @@
 #include "gfx/vulkan_renderer.h"
 #include "glog/logging.h"
 
-DEFINE_uint32(num_cubes, 3, "Number of cubes to display.");
+DEFINE_uint32(num_objects, 3, "Number of different objects to display.");
 
 using namespace ndyn::gfx;
 using namespace std::chrono_literals;
@@ -93,14 +93,14 @@ int main(int argc, char* argv[]) {
   };
 
   std::vector<InstanceId> instances{};
-  instances.reserve(FLAGS_num_cubes + 1);
+  instances.reserve(FLAGS_num_objects + 1);
 
   // Add an instance at the origin to make the origin easier to find.
   const Position origin{};
   instances.push_back(
       renderer.add_instance(Instance{origin.as_matrix_transform(), center_mesh, white}));
 
-  for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
+  for (size_t i = 0; i < FLAGS_num_objects; ++i) {
     instances.push_back(renderer.add_instance(
         Instance{Mat4::identity(), meshes.at(i % meshes.size()), materials[i % materials.size()]}));
   }
@@ -118,9 +118,9 @@ int main(int argc, char* argv[]) {
     camera.pose = {{3.f * std::sin(t), 0.f, 3.f * std::cos(t)}, Quat::axis_angle({0, 1, 0}, t)};
     renderer.update_camera(camera.make_camera_state());
 
-    for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
+    for (size_t i = 0; i < FLAGS_num_objects; ++i) {
       Position instance_position{};
-      const float phase{static_cast<float>(i * 2.f * M_PI / FLAGS_num_cubes)};
+      const float phase{static_cast<float>(i * 2.f * M_PI / FLAGS_num_objects)};
       instance_position.position = {1.f * std::cos(t - phase),  //
                                     1.f * std::sin(t - phase),  //
                                     1.f * std::sin(t / 4.f - phase)};

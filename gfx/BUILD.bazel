@@ -82,9 +82,9 @@ fragment_shader_library(
 )
 
 cc_binary(
-    name = "render_cube",
+    name = "render_scene",
     srcs = [
-        "render_cube.cc",
+        "render_scene.cc",
     ],
     deps = [
         ":gfx",
