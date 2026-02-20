@@ -21,6 +21,7 @@ using namespace std::chrono_literals;
 
 static constexpr float DEFAULT_SHININESS{0.75f};
 static constexpr Vec4 BRASSY_COLOR{0.7961f, 0.4275f, 0.3176f, 1.f};
+static constexpr Vec4 RED_TINTED_COLOR{0.8f, 0.5f, 0.5f, 1.f};
 static constexpr Vec4 WHITE_COLOR{1.f, 1.f, 1.f, 1.f};
 static constexpr Vec4 DEFAULT_SPECULAR_COLOR{WHITE_COLOR};
 static constexpr float DEFAULT_OPACITY{1.f};
@@ -79,7 +80,12 @@ int main(int argc, char* argv[]) {
 
   VulkanRenderer renderer{};
 
-  const MeshId mesh{renderer.add_mesh(create_cube(0.25f))};
+  const MeshId center_mesh{renderer.add_mesh(create_icosphere<3>(0.1f))};
+  std::vector<MeshId> meshes{
+      renderer.add_mesh(create_icosphere<0>(0.25f)),
+      renderer.add_mesh(create_icosphere<1>(0.25f)),
+      renderer.add_mesh(create_icosphere<2>(0.25f)),
+  };
   const MaterialId white{renderer.add_material(WHITE)};
   std::array materials{
       renderer.add_material(CYAN), renderer.add_material(MAGENTA), renderer.add_material(YELLOW),
@@ -91,11 +97,12 @@ int main(int argc, char* argv[]) {
 
   // Add an instance at the origin to make the origin easier to find.
   const Position origin{};
-  instances.push_back(renderer.add_instance(Instance{origin.as_matrix_transform(), mesh, white}));
+  instances.push_back(
+      renderer.add_instance(Instance{origin.as_matrix_transform(), center_mesh, white}));
 
   for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
-    instances.push_back(
-        renderer.add_instance(Instance{Mat4::identity(), mesh, materials[i % materials.size()]}));
+    instances.push_back(renderer.add_instance(
+        Instance{Mat4::identity(), meshes.at(i % meshes.size()), materials[i % materials.size()]}));
   }
 
   PerspectiveCamera camera{Position{{0.f, 0.f, 3.f}, {}},
@@ -113,10 +120,11 @@ int main(int argc, char* argv[]) {
 
     for (size_t i = 0; i < FLAGS_num_cubes; ++i) {
       Position instance_position{};
-      instance_position.position = {1.f /** std::cos(t - i / 25.f)*/,  //
-                                    1.f /** std::sin(t - i / 25.f)*/,  //
-                                    0.9f - 0.5f * i};
-      // instance_position.orientation = Quat::axis_angle({1.f, 1.f, 1.f}, t);
+      const float phase{static_cast<float>(i * 2.f * M_PI / FLAGS_num_cubes)};
+      instance_position.position = {1.f * std::cos(t - phase),  //
+                                    1.f * std::sin(t - phase),  //
+                                    1.f * std::sin(t / 4.f - phase)};
+      instance_position.orientation = Quat::axis_angle({1.f, 1.f, 1.f}, 3.f * t - phase);
       Mat4 model_matrix{instance_position.as_matrix_transform()};
       renderer.update_position(instances[i + 1], model_matrix);
     }
