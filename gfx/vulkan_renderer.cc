@@ -15,6 +15,8 @@
 #include "gfx/camera_strings.h"
 #include "gfx/light.h"
 #include "gfx/light_strings.h"
+#include "gfx/material.h"
+#include "gfx/materials.h"
 #include "gfx/ssbo_buffer.h"
 #include "gfx/ubo_allocator.h"
 #include "gfx/vulkan_utils.h"
@@ -23,15 +25,7 @@
 namespace ndyn::gfx {
 
 static constexpr const char VERTEX_SHADER[] = "gfx/model.vert.spv";
-static constexpr const char FRAGMENT_SHADER[] = "gfx/phong_illumination.frag.spv";
-
-static constexpr Material DEBUG_RED{
-    .diffuse_color = {1.f, 0.f, 0.f, 1.f},
-    .specular_color = {1.f, 1.f, 1.f, 1.f},
-    .shininess = 0.f,
-    .opacity = 0.f,
-    .texture_index = 0,
-};
+static constexpr const char FRAGMENT_SHADER[] = "gfx/material_lighting.frag.spv";
 
 std::vector<uint32_t> load_spirv(std::string_view path) {
   const auto bytes{ResourceLoader::instance().load(path)};
@@ -633,7 +627,9 @@ VulkanRenderer::VulkanRenderer() {
   vkDestroyShaderModule(device_, vert_shader, nullptr);
   vkDestroyShaderModule(device_, frag_shader, nullptr);
 
-  add_material(DEBUG_RED);
+  // This will give us a material with id of zero. Hopefully this can help detect instances that are
+  // missing material designations.
+  add_material(GLOSSY_RED);
 }
 
 VulkanRenderer::~VulkanRenderer() {

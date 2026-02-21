@@ -7,6 +7,8 @@ cc_library(
         "camera_strings.cc",
         "light.cc",
         "light_strings.cc",
+        "material.cc",
+        "materials.cc",
         "math.cc",
         "math_strings.cc",
         "meshes.cc",
@@ -21,6 +23,7 @@ cc_library(
         "light.h",
         "light_strings.h",
         "material.h",
+        "materials.h",
         "math.h",
         "math_strings.h",
         "mesh.h",
@@ -33,6 +36,7 @@ cc_library(
     data = [
         ":debug_shader",
         ":diffuse_color",
+        ":material_lighting",
         ":model",
         ":phong_illumination",
         ":triangle_shader",
@@ -78,6 +82,13 @@ fragment_shader_library(
     name = "phong_illumination",
     srcs = [
         "phong_illumination.frag.glsl",
+    ],
+)
+
+fragment_shader_library(
+    name = "material_lighting",
+    srcs = [
+        "material_lighting.frag.glsl",
     ],
 )
 

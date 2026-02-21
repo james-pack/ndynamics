@@ -8,6 +8,7 @@
 #include "gflags/gflags.h"
 #include "gfx/camera.h"
 #include "gfx/material.h"
+#include "gfx/materials.h"
 #include "gfx/math.h"
 #include "gfx/mesh.h"
 #include "gfx/meshes.h"
@@ -18,62 +19,6 @@ DEFINE_uint32(num_objects, 3, "Number of different objects to display.");
 
 using namespace ndyn::gfx;
 using namespace std::chrono_literals;
-
-static constexpr float DEFAULT_SHININESS{0.75f};
-static constexpr Vec4 BRASSY_COLOR{0.7961f, 0.4275f, 0.3176f, 1.f};
-static constexpr Vec4 RED_TINTED_COLOR{0.8f, 0.5f, 0.5f, 1.f};
-static constexpr Vec4 WHITE_COLOR{1.f, 1.f, 1.f, 1.f};
-static constexpr Vec4 DEFAULT_SPECULAR_COLOR{WHITE_COLOR};
-static constexpr float DEFAULT_OPACITY{1.f};
-
-static constexpr Material WHITE{
-    .diffuse_color = {1.f, 1.f, 1.f, 1.f},
-    .specular_color = DEFAULT_SPECULAR_COLOR,
-    .shininess = DEFAULT_SHININESS,
-    .opacity = DEFAULT_OPACITY,
-};
-
-static constexpr Material RED{
-    .diffuse_color = {1.f, 0.f, 0.f, 1.f},
-    .specular_color = DEFAULT_SPECULAR_COLOR,
-    .shininess = DEFAULT_SHININESS,
-    .opacity = DEFAULT_OPACITY,
-};
-
-static constexpr Material GREEN{
-    .diffuse_color = {0.f, 1.f, 0.f, 1.f},
-    .specular_color = DEFAULT_SPECULAR_COLOR,
-    .shininess = DEFAULT_SHININESS,
-    .opacity = DEFAULT_OPACITY,
-};
-
-static constexpr Material BLUE{
-    .diffuse_color = {0.f, 0.f, 1.f, 1.f},
-    .specular_color = DEFAULT_SPECULAR_COLOR,
-    .shininess = DEFAULT_SHININESS,
-    .opacity = DEFAULT_OPACITY,
-};
-
-static constexpr Material YELLOW{
-    .diffuse_color = {1.f, 1.f, 0.f, 1.f},
-    .specular_color = DEFAULT_SPECULAR_COLOR,
-    .shininess = DEFAULT_SHININESS,
-    .opacity = DEFAULT_OPACITY,
-};
-
-static constexpr Material CYAN{
-    .diffuse_color = {0.f, 1.f, 1.f, 1.f},
-    .specular_color = DEFAULT_SPECULAR_COLOR,
-    .shininess = DEFAULT_SHININESS,
-    .opacity = DEFAULT_OPACITY,
-};
-
-static constexpr Material MAGENTA{
-    .diffuse_color = {1.f, 0.f, 1.f, 1.f},
-    .specular_color = DEFAULT_SPECULAR_COLOR,
-    .shininess = DEFAULT_SHININESS,
-    .opacity = DEFAULT_OPACITY,
-};
 
 int main(int argc, char* argv[]) {
   ndyn::initialize(&argc, &argv);
@@ -86,10 +31,11 @@ int main(int argc, char* argv[]) {
       renderer.add_mesh(create_icosphere<1>(0.25f)),
       renderer.add_mesh(create_icosphere<2>(0.25f)),
   };
-  const MaterialId white{renderer.add_material(WHITE)};
+  const MaterialId white{renderer.add_material(MATTE_WHITE)};
   std::array materials{
-      renderer.add_material(CYAN), renderer.add_material(MAGENTA), renderer.add_material(YELLOW),
-      renderer.add_material(RED),  renderer.add_material(GREEN),   renderer.add_material(BLUE),
+      renderer.add_material(GLOSSY_CYAN),   renderer.add_material(GLOSSY_MAGENTA),
+      renderer.add_material(GLOSSY_YELLOW), renderer.add_material(GLOSSY_RED),
+      renderer.add_material(GLOSSY_GREEN),  renderer.add_material(GLOSSY_BLUE),
   };
 
   std::vector<InstanceId> instances{};
@@ -110,6 +56,7 @@ int main(int argc, char* argv[]) {
                            /* square aspect ratio */ 1.f, /* near */ 1.f,
                            /* far */ 10.f};
 
+  size_t frame_count{0};
   const auto start{std::chrono::high_resolution_clock::now()};
   while (true) {
     const auto now{std::chrono::high_resolution_clock::now()};
@@ -130,7 +77,13 @@ int main(int argc, char* argv[]) {
     }
 
     renderer.render_frame();
+    ++frame_count;
 
-    std::this_thread::sleep_for(5ms);
+    // Naive FPS calculation. Averages all frames over all time, rather than a weighted average of
+    // the last N frames.
+    const float avg_fps{frame_count / t};
+    if (avg_fps > 200) {
+      std::this_thread::sleep_for(5ms);
+    }
   }
 }
