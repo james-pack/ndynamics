@@ -81,7 +81,7 @@ class Geometry3D final {
     for (size_t i = 0; i < AlgebraType::NUM_BASIS_BLADES; ++i) {
       const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
                          allowed_bases.end()};
-      if (!allowed && v.basis(i) != 0) {
+      if (!allowed && v.coefficient(i) != 0) {
         return false;
       }
     }
@@ -93,7 +93,7 @@ class Geometry3D final {
     // is_meet_line() method.
     constexpr std::array<size_t, 6> allowed_bases{3, 5, 6, 9, 10, 12};
     for (size_t i = 0; i < AlgebraType::NUM_BASIS_BLADES; ++i) {
-      if (v.basis(i) != 0) {
+      if (v.coefficient(i) != 0) {
         const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
                            allowed_bases.end()};
         if (!allowed) {
@@ -110,7 +110,7 @@ class Geometry3D final {
     for (size_t i = 0; i < AlgebraType::NUM_BASIS_BLADES; ++i) {
       const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
                          allowed_bases.end()};
-      if (!allowed && v.basis(i) != 0) {
+      if (!allowed && v.coefficient(i) != 0) {
         return false;
       }
     }
@@ -122,7 +122,7 @@ class Geometry3D final {
     for (size_t i = 0; i < AlgebraType::NUM_BASIS_BLADES; ++i) {
       const bool allowed{std::find(allowed_bases.begin(), allowed_bases.end(), i) !=
                          allowed_bases.end()};
-      if (!allowed && v.basis(i) != 0) {
+      if (!allowed && v.coefficient(i) != 0) {
         return false;
       }
     }

@@ -82,7 +82,7 @@ class BasisRepresentation<Complex<ScalarType>> final {
   static std::string to_string(const Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
     for (size_t i = 1; i < BASES_COUNT; ++i) {
-      std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
+      std::string basis_result{vector_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
       if (!basis_result.empty()) {
         if (!result.empty()) {
           result.append(" + ");
@@ -124,7 +124,7 @@ class BasisRepresentation<Vga<ScalarType>> final {
   static std::string to_string(const Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
     for (size_t i = 1; i < BASES_COUNT; ++i) {
-      std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
+      std::string basis_result{vector_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
       if (!basis_result.empty()) {
         if (!result.empty()) {
           result.append(" + ");
@@ -161,7 +161,7 @@ class BasisRepresentation<Vga2d<ScalarType>> final {
   static std::string to_string(const Multivector<AlgebraType>& vec) {
     std::string result{vector_element_to_string(vec.scalar(), "")};
     for (size_t i = 1; i < BASES_COUNT; ++i) {
-      std::string basis_result{vector_element_to_string(vec.basis(i), bases_[i - 1].name)};
+      std::string basis_result{vector_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
       if (!basis_result.empty()) {
         if (!result.empty()) {
           result.append(" + ");

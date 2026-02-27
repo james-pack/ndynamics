@@ -16,7 +16,7 @@ template <typename MultivectorT>
   const auto difference{lhs - rhs};
   epsilon = abs(epsilon);
   for (size_t i = 0; i < MultivectorT::NUM_BASIS_BLADES; ++i) {
-    if (abs(difference.basis(i)) > epsilon) {
+    if (abs(difference.coefficient(i)) > epsilon) {
       return ::testing::AssertionFailure()
              << "lhs: " << lhs << ", rhs: " << rhs << ", difference: " << difference
              << " (epsilon: " << to_string(epsilon) << ")";

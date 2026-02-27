@@ -400,15 +400,6 @@ class Multivector final {
    *
    * TODO(james): Move these to the private section of the class or remove them altogether.
    *************************************************************************************************/
-  template <size_t N>
-  constexpr const ScalarType& element() {
-    static_assert(
-        N < NUM_BASIS_VECTORS,
-        "Template parameter to vector element function is out of range of the number of "
-        "vectors (grade 1 bases). Template parameter must be less than the NUM_BASIS_VECTORS.");
-    return coefficients_[1UL << N];
-  }
-
   // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
   // any Multivector. See the tests for examples.
   template <size_t N>
@@ -431,21 +422,8 @@ class Multivector final {
     }
   }
 
-  template <size_t n>
-  constexpr const ScalarType& basis() const {
-    static_assert(n < NUM_BASIS_BLADES, "Basis index out of range.");
-    return coefficients_[n];
-  }
-  constexpr const ScalarType& basis(size_t n) const { return coefficients_.at(n); }
-
-  constexpr const ScalarType& operator[](size_t n) const { return coefficients_.at(n); }
-
-  template <size_t n>
-  constexpr void set_basis(const ScalarType& v) {
-    static_assert(n < NUM_BASIS_BLADES, "Basis index out of range.");
-    coefficients_[n] = v;
-  }
-  constexpr void set_basis(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
+  constexpr const ScalarType& coefficient(size_t n) const { return coefficients_.at(n); }
+  constexpr void set_coefficient(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
 };
 
 // Operator overloads where the multivector is not on the left side.
