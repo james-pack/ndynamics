@@ -122,16 +122,16 @@ std::ostream& operator<<(std::ostream& os, const TableEntry<COMPONENT_COUNT>& t)
   return os;
 }
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
 class CayleyTable;
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t);
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
+std::string to_string(const CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>& t);
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
 class CayleyTable final {
  public:
-  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
+  static constexpr size_t QUADRATIC_FORM_COUNT{NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES};
   static constexpr size_t COMPONENT_COUNT{1UL << QUADRATIC_FORM_COUNT};
 
   // Note: failures in following situation can be avoided by templating the TableEntry class on the
@@ -148,7 +148,7 @@ class CayleyTable final {
   static constexpr Table generate_table() {
     Table result{};
 
-    CayleyEntryCalculator<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> entry_calculator{};
+    CayleyEntryCalculator<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES> entry_calculator{};
 
     for (size_t i = 0; i < COMPONENT_COUNT; ++i) {
       for (size_t j = 0; j < COMPONENT_COUNT; ++j) {
@@ -166,7 +166,7 @@ class CayleyTable final {
 
   Table table_{generate_table()};
 
-  friend std::string to_string<>(const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>&);
+  friend std::string to_string<>(const CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>&);
 
  public:
   constexpr CayleyTable() = default;
@@ -177,11 +177,11 @@ class CayleyTable final {
   }
 };
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-std::string to_string(const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
+std::string to_string(const CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>& t) {
   using std::to_string;
   static constexpr size_t COMPONENT_COUNT{
-      CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>::COMPONENT_COUNT};
+      CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>::COMPONENT_COUNT};
 
   std::string result{};
   result.append("\n<\n");
@@ -203,9 +203,9 @@ std::string to_string(const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BAS
   return result;
 }
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
 std::ostream& operator<<(std::ostream& os,
-                         const CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>& t) {
+                         const CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>& t) {
   os << to_string(t);
   return os;
 }

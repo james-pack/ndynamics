@@ -4,7 +4,7 @@
 
 namespace ndyn::math {
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
 class UnitaryOps final {};
 
 template <>

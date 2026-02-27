@@ -25,21 +25,21 @@ constexpr size_t count_bits_within_mask(const BitSet<N>& bits, const BitSet<N>& 
   return masked.count();
 }
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> positive_bases_bitmask() {
-  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(POSITIVE_BASES);
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
+static constexpr BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES> positive_bases_bitmask() {
+  return BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>::create_mask(NUM_POSITIVE_BASES);
 }
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> negative_bases_bitmask() {
-  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(NEGATIVE_BASES,
-                                                                           POSITIVE_BASES);
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
+static constexpr BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES> negative_bases_bitmask() {
+  return BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>::create_mask(NUM_NEGATIVE_BASES,
+                                                                           NUM_POSITIVE_BASES);
 }
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
-static constexpr BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES> zero_bases_bitmask() {
-  return BitSet<POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES>::create_mask(
-      ZERO_BASES, POSITIVE_BASES + NEGATIVE_BASES);
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
+static constexpr BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES> zero_bases_bitmask() {
+  return BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>::create_mask(
+      NUM_ZERO_BASES, NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES);
 }
 
 template <size_t QUADRATIC_FORM_COUNT, size_t current_bit>
@@ -64,10 +64,10 @@ constexpr int8_t accumulate_commutative_order(
 
 }  // namespace
 
-template <size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES>
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
 class CayleyEntryCalculator final {
  public:
-  static constexpr size_t QUADRATIC_FORM_COUNT{POSITIVE_BASES + NEGATIVE_BASES + ZERO_BASES};
+  static constexpr size_t QUADRATIC_FORM_COUNT{NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES};
 
   constexpr int8_t compute_commutative_order(const BitSet<QUADRATIC_FORM_COUNT>& lhs_bases,
                                              const BitSet<QUADRATIC_FORM_COUNT>& rhs_bases) const {
@@ -78,14 +78,14 @@ class CayleyEntryCalculator final {
     // need to consider commutativity.
     const BitSet<QUADRATIC_FORM_COUNT> self_multiplication{lhs_bases & rhs_bases};
 
-    if ((self_multiplication & zero_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+    if ((self_multiplication & zero_bases_bitmask<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>())
             .count() != 0) {
       // We are self-multiplying at least one zero basis vector. The result of this multiplication
       // will be zero.
       return 0;
     } else {
       if ((self_multiplication &
-           negative_bases_bitmask<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>())
+           negative_bases_bitmask<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>())
                   .count() %
               2 ==
           1) {

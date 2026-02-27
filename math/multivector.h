@@ -14,7 +14,7 @@
 
 namespace ndyn::math {
 
-// template <typename ScalarT, size_t POSITIVE_BASES, size_t NEGATIVE_BASES, size_t ZERO_BASES,
+// template <typename ScalarT, size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES,
 //           InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 template <typename AlgebraT>
 class Multivector final {
@@ -32,21 +32,17 @@ class Multivector final {
   // etc., and scalars.
   static constexpr size_t bases_count() { return AlgebraType::bases_count(); }
 
-  static constexpr size_t POSITIVE_BASES{AlgebraType::POSITIVE_BASES};
-  static constexpr size_t NEGATIVE_BASES{AlgebraType::NEGATIVE_BASES};
-  static constexpr size_t ZERO_BASES{AlgebraType::ZERO_BASES};
-
-  static constexpr size_t NUM_POSITIVE_BASES{AlgebraType::POSITIVE_BASES};
-  static constexpr size_t NUM_NEGATIVE_BASES{AlgebraType::NEGATIVE_BASES};
-  static constexpr size_t NUM_ZERO_BASES{AlgebraType::ZERO_BASES};
+  static constexpr size_t NUM_POSITIVE_BASES{AlgebraType::NUM_POSITIVE_BASES};
+  static constexpr size_t NUM_NEGATIVE_BASES{AlgebraType::NUM_NEGATIVE_BASES};
+  static constexpr size_t NUM_ZERO_BASES{AlgebraType::NUM_ZERO_BASES};
 
   static constexpr InnerProduct INNER_PRODUCT{AlgebraType::INNER_PRODUCT};
 
   static constexpr size_t SCALAR_BASIS_INDEX{0};
 
  private:
-  static constexpr CayleyTable<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES> cayley_table_{};
-  using UnitaryOpsType = UnitaryOps<POSITIVE_BASES, NEGATIVE_BASES, ZERO_BASES>;
+  static constexpr CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES> cayley_table_{};
+  using UnitaryOpsType = UnitaryOps<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>;
 
   std::array<ScalarType, bases_count()> coefficients_{};
 

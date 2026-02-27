@@ -36,10 +36,10 @@ class Geometry3D final {
  public:
   using AlgebraType = AlgebraT;
   static_assert(
-      AlgebraType::POSITIVE_BASES >= 3,
+      AlgebraType::NUM_POSITIVE_BASES >= 3,
       "Geometry3D requires a 3 or more dimensional algebra with at least one zero basis.");
   static_assert(
-      AlgebraType::ZERO_BASES >= 1,
+      AlgebraType::NUM_ZERO_BASES >= 1,
       "Geometry3D requires a 3 or more dimensional algebra with at least one zero basis.");
 
   using ScalarType = typename AlgebraType::ScalarType;
