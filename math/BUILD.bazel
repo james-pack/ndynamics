@@ -8,7 +8,7 @@ cc_library(
         "bit_basis.h",
         "bit_set.h",
         "cayley.h",
-        "cayley_entry_calculator.h",
+        "cayley_table_entry.h",
         "geometry.h",
         "integrators.h",
         "multivector.h",

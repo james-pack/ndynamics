@@ -14,13 +14,10 @@
 
 namespace ndyn::math {
 
-// template <typename ScalarT, size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES,
-//           InnerProduct INNER_PRODUCT_STYLE = InnerProduct::LEFT_CONTRACTION>
 template <typename AlgebraT>
 class Multivector final {
  public:
   using AlgebraType = AlgebraT;
-
   using ScalarType = typename AlgebraType::ScalarType;
 
   // Number of grade-1 basis elements (vectors) in this multivector.
@@ -41,7 +38,8 @@ class Multivector final {
   static constexpr size_t SCALAR_BASIS_INDEX{0};
 
  private:
-  static constexpr CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES> cayley_table_{};
+  static constexpr CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>
+      cayley_table_{};
   using UnitaryOpsType = UnitaryOps<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>;
 
   std::array<ScalarType, bases_count()> coefficients_{};
@@ -132,8 +130,8 @@ class Multivector final {
     for (size_t i = 0; i < bases_count(); ++i) {
       for (size_t j = 0; j < bases_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
-        result.coefficients_[cayley_entry.basis_index()] +=
-            cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+        result.coefficients_[cayley_entry.basis_index] +=
+            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
       }
     }
     return result;
@@ -168,7 +166,7 @@ class Multivector final {
         if ((i & j) == i) {
           const auto& cayley_entry{cayley_table_.entry(i, j)};
           result.coefficients_[j - i] +=
-              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
         }
       }
     }
@@ -206,13 +204,13 @@ class Multivector final {
           if ((i & j) == i) {
             const auto& cayley_entry{cayley_table_.entry(i, j)};
             result.coefficients_[j - i] +=
-                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+                cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
           }
         } else {
           if ((i & j) == j) {
             const auto& cayley_entry{cayley_table_.entry(j, i)};
             result.coefficients_[i - j] +=
-                cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+                cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
           }
         }
       }
@@ -255,9 +253,9 @@ class Multivector final {
       // bases.
       for (size_t j = 0; i + j < bases_count(); ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
-        if (bit_count(cayley_entry.basis_index()) == bit_count(i) + bit_count(j)) {
+        if (bit_count(cayley_entry.basis_index) == bit_count(i) + bit_count(j)) {
           result.coefficients_[i + j] +=
-              cayley_entry.quadratic_multiplier() * coefficients_[i] * rhs.coefficients_[j];
+              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
         }
       }
     }

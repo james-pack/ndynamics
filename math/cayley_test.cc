@@ -19,13 +19,13 @@ TEST(CayleyTableTest, CanGenerateScalarEntries) {
   static constexpr size_t SCALAR_GRADE{ScalarCayleyTable::SCALAR_GRADE};
   static constexpr ScalarCayleyTable table{};
   const auto entry{table.entry(0, 0)};
-  EXPECT_EQ(SCALAR_GRADE, entry.basis_index());
-  EXPECT_EQ(1, entry.quadratic_multiplier());
+  EXPECT_EQ(SCALAR_GRADE, entry.basis_index);
+  EXPECT_EQ(1, entry.quadratic_multiplier);
 }
 
-static constexpr TableEntry<ComplexCayleyTable::COMPONENT_COUNT>
-    complex_cayley_table[ComplexCayleyTable::COMPONENT_COUNT]
-                        [ComplexCayleyTable::COMPONENT_COUNT] =  //
+static constexpr TableEntry<ComplexCayleyTable::NUM_BASIS_BLADES>
+    complex_cayley_table[ComplexCayleyTable::NUM_BASIS_BLADES]
+                        [ComplexCayleyTable::NUM_BASIS_BLADES] =  //
     {
         {
             {0, 1}, {1, 1},  //
@@ -38,8 +38,8 @@ static constexpr TableEntry<ComplexCayleyTable::COMPONENT_COUNT>
 TEST(CayleyTableTest, CanGenerateComplexEntries) {
   static constexpr auto expected_table = complex_cayley_table;
   static constexpr ComplexCayleyTable table{};
-  for (size_t lhs_grade = 0; lhs_grade < ComplexCayleyTable::COMPONENT_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < ComplexCayleyTable::COMPONENT_COUNT; ++rhs_grade) {
+  for (size_t lhs_grade = 0; lhs_grade < ComplexCayleyTable::NUM_BASIS_BLADES; ++lhs_grade) {
+    for (size_t rhs_grade = 0; rhs_grade < ComplexCayleyTable::NUM_BASIS_BLADES; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -47,8 +47,8 @@ TEST(CayleyTableTest, CanGenerateComplexEntries) {
   }
 }
 
-static constexpr TableEntry<DualCayleyTable::COMPONENT_COUNT>
-    dual_cayley_table[DualCayleyTable::COMPONENT_COUNT][DualCayleyTable::COMPONENT_COUNT] =  //
+static constexpr TableEntry<DualCayleyTable::NUM_BASIS_BLADES>
+    dual_cayley_table[DualCayleyTable::NUM_BASIS_BLADES][DualCayleyTable::NUM_BASIS_BLADES] =  //
     {
         {
             {0, 1}, {1, 1},  //
@@ -61,8 +61,8 @@ static constexpr TableEntry<DualCayleyTable::COMPONENT_COUNT>
 TEST(CayleyTableTest, CanGenerateDualEntries) {
   static constexpr auto expected_table = dual_cayley_table;
   static constexpr DualCayleyTable table{};
-  for (size_t lhs_grade = 0; lhs_grade < DualCayleyTable::COMPONENT_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < DualCayleyTable::COMPONENT_COUNT; ++rhs_grade) {
+  for (size_t lhs_grade = 0; lhs_grade < DualCayleyTable::NUM_BASIS_BLADES; ++lhs_grade) {
+    for (size_t rhs_grade = 0; rhs_grade < DualCayleyTable::NUM_BASIS_BLADES; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -70,8 +70,8 @@ TEST(CayleyTableTest, CanGenerateDualEntries) {
   }
 }
 
-static constexpr TableEntry<CayleyTable<0, 3, 0>::COMPONENT_COUNT> nontrivial_cayley_table  //
-    [CayleyTable<0, 3, 0>::COMPONENT_COUNT][CayleyTable<0, 3, 0>::COMPONENT_COUNT] =        //
+static constexpr TableEntry<CayleyTable<0, 3, 0>::NUM_BASIS_BLADES> nontrivial_cayley_table  //
+    [CayleyTable<0, 3, 0>::NUM_BASIS_BLADES][CayleyTable<0, 3, 0>::NUM_BASIS_BLADES] =       //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -152,8 +152,8 @@ static constexpr TableEntry<CayleyTable<0, 3, 0>::COMPONENT_COUNT> nontrivial_ca
 TEST(CayleyTableTest, CanGenerateNontrivialEntries) {
   static constexpr auto expected_table = nontrivial_cayley_table;
   static constexpr CayleyTable<0, 3, 0> table{};
-  for (size_t lhs_grade = 0; lhs_grade < CayleyTable<0, 3, 0>::COMPONENT_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < CayleyTable<0, 3, 0>::COMPONENT_COUNT; ++rhs_grade) {
+  for (size_t lhs_grade = 0; lhs_grade < CayleyTable<0, 3, 0>::NUM_BASIS_BLADES; ++lhs_grade) {
+    for (size_t rhs_grade = 0; rhs_grade < CayleyTable<0, 3, 0>::NUM_BASIS_BLADES; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
@@ -161,9 +161,9 @@ TEST(CayleyTableTest, CanGenerateNontrivialEntries) {
   }
 }
 
-static constexpr TableEntry<SpacetimeCayleyTable::COMPONENT_COUNT>
-    spacetime_cayley_table[SpacetimeCayleyTable::COMPONENT_COUNT]
-                          [SpacetimeCayleyTable::COMPONENT_COUNT] =  //
+static constexpr TableEntry<SpacetimeCayleyTable::NUM_BASIS_BLADES>
+    spacetime_cayley_table[SpacetimeCayleyTable::NUM_BASIS_BLADES]
+                          [SpacetimeCayleyTable::NUM_BASIS_BLADES] =  //
     {
         // lhs_grade: 0 (scalar)
         {
@@ -474,8 +474,8 @@ static constexpr TableEntry<SpacetimeCayleyTable::COMPONENT_COUNT>
 TEST(CayleyTableTest, CanGenerateSpacetimeEntries) {
   static constexpr auto expected_table = spacetime_cayley_table;
   static constexpr SpacetimeCayleyTable table{};
-  for (size_t lhs_grade = 0; lhs_grade < SpacetimeCayleyTable::COMPONENT_COUNT; ++lhs_grade) {
-    for (size_t rhs_grade = 0; rhs_grade < SpacetimeCayleyTable::COMPONENT_COUNT; ++rhs_grade) {
+  for (size_t lhs_grade = 0; lhs_grade < SpacetimeCayleyTable::NUM_BASIS_BLADES; ++lhs_grade) {
+    for (size_t rhs_grade = 0; rhs_grade < SpacetimeCayleyTable::NUM_BASIS_BLADES; ++rhs_grade) {
       auto entry{table.entry(lhs_grade, rhs_grade)};
       EXPECT_EQ(expected_table[lhs_grade][rhs_grade], entry)
           << "lhs_grade: " << lhs_grade << ", rhs_grade: " << rhs_grade;
