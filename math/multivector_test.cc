@@ -215,7 +215,7 @@ TEST(MultivectorTest, ValidGradeOperatorOnSimpleSpacetimeNumbers) {
       for (const auto& c : {t, x, y, z}) {
         for (const auto& d : {t, x, y, z}) {
           const auto sum{a + b + c + d};
-          for (size_t i = 0; i < SpacetimeMultivector<float>::grade_count(); ++i) {
+          for (size_t i = 0; i < SpacetimeMultivector<float>::NUM_GRADES; ++i) {
             if (i == 1) {
               EXPECT_EQ(sum, sum.grade_projection(i));
             } else {

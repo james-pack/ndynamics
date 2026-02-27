@@ -22,18 +22,16 @@ class Multivector final {
 
   // Number of grade-1 basis elements (vectors) in this multivector.
   static constexpr size_t vector_count() { return AlgebraType::vector_count(); }
-  // Number of grades in this multivector, counting the scalar (grade-0) as its own grade.
-  static constexpr size_t grade_count() { return AlgebraType::grade_count(); }
-
-  // Number of bases in this multivector, including the number of vectors, bivectors, trivectors,
-  // etc., and scalars.
-  static constexpr size_t bases_count() { return AlgebraType::bases_count(); }
 
   static constexpr size_t NUM_POSITIVE_BASES{AlgebraType::NUM_POSITIVE_BASES};
   static constexpr size_t NUM_NEGATIVE_BASES{AlgebraType::NUM_NEGATIVE_BASES};
   static constexpr size_t NUM_ZERO_BASES{AlgebraType::NUM_ZERO_BASES};
 
   static constexpr InnerProduct INNER_PRODUCT{AlgebraType::INNER_PRODUCT};
+
+  static constexpr size_t NUM_BASIS_VECTORS{AlgebraType::NUM_BASIS_VECTORS};
+  static constexpr size_t NUM_BASIS_BLADES{AlgebraType::NUM_BASIS_BLADES};
+  static constexpr size_t NUM_GRADES{NUM_BASIS_VECTORS + 1};
 
   static constexpr size_t SCALAR_BASIS_INDEX{0};
 
@@ -42,7 +40,7 @@ class Multivector final {
       cayley_table_{};
   using UnitaryOpsType = UnitaryOps<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>;
 
-  std::array<ScalarType, bases_count()> coefficients_{};
+  std::array<ScalarType, NUM_BASIS_BLADES> coefficients_{};
 
  public:
   constexpr Multivector() = default;
@@ -77,11 +75,11 @@ class Multivector final {
   constexpr void set_scalar(const ScalarType& v) { coefficients_[SCALAR_BASIS_INDEX] = v; }
 
   constexpr Multivector grade_projection(size_t grade) const {
-    if (grade >= grade_count()) {
+    if (grade >= NUM_GRADES) {
       except<std::domain_error>("Requested grade is larger than maximum grade of this multivector");
     }
     Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       if (bit_count(i) == grade) {
         result.coefficients_[i] = coefficients_[i];
       }
@@ -97,7 +95,7 @@ class Multivector final {
 
   constexpr Multivector add(const Multivector& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       result.coefficients_[i] += rhs.coefficients_[i];
     }
     return result;
@@ -111,7 +109,7 @@ class Multivector final {
 
   constexpr Multivector subtract(const Multivector& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       result.coefficients_[i] -= rhs.coefficients_[i];
     }
     return result;
@@ -119,7 +117,7 @@ class Multivector final {
 
   constexpr Multivector multiply(const ScalarType& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       result.coefficients_[i] *= rhs;
     }
     return result;
@@ -127,8 +125,8 @@ class Multivector final {
 
   constexpr Multivector multiply(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      for (size_t j = 0; j < bases_count(); ++j) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         result.coefficients_[cayley_entry.basis_index] +=
             cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
@@ -139,7 +137,7 @@ class Multivector final {
 
   constexpr Multivector divide(const ScalarType& rhs) const {
     Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       result.coefficients_[i] /= rhs;
     }
     return result;
@@ -152,11 +150,11 @@ class Multivector final {
    */
   constexpr Multivector left_contraction(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       // Note the initialization in the for-loop below. All of the basiss where the grade of i
       // is less than the grade of j will not contribute to the result. Also, j must include every
       // basis in i otherwise the two bases are orthogonal to each other.
-      for (size_t j = i; j < bases_count(); ++j) {
+      for (size_t j = i; j < NUM_BASIS_BLADES; ++j) {
         // Here we ensure that the two bases are not orthogonal to each other, in the sense
         // that the rhs basis (j) must include all of the bases in the lhs basis (i).
         // Otherwise, the left_contraction of these bases is zero, and the result is unchanged.
@@ -190,8 +188,8 @@ class Multivector final {
    */
   constexpr Multivector bidirectional_inner(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      for (size_t j = 0; j < bases_count(); ++j) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
         // If the lhs basis is a lower grade, compute the inner product as the lhs basis
         // being projected on the rhs. Otherwise, project the rhs basis on the lhs. The
         // implementation here is to simply select the appropriate Cayley table entry according to
@@ -248,10 +246,10 @@ class Multivector final {
    */
   constexpr Multivector outer(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       // Note the exit condition of this for-loop. We only loop while i+j is less than the number of
       // bases.
-      for (size_t j = 0; i + j < bases_count(); ++j) {
+      for (size_t j = 0; i + j < NUM_BASIS_BLADES; ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         if (bit_count(cayley_entry.basis_index) == bit_count(i) + bit_count(j)) {
           result.coefficients_[i + j] +=
@@ -275,7 +273,7 @@ class Multivector final {
    */
   constexpr Multivector reverse() const {
     Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       const auto grade{bit_count(i)};
       if (grade % 4 == 2 || grade % 4 == 3) {
         result.coefficients_[i] *= -1;
@@ -289,7 +287,7 @@ class Multivector final {
    */
   constexpr Multivector conj() const {
     Multivector result{*this};
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       const auto grade{bit_count(i)};
       if (grade % 4 == 1 || grade % 4 == 2) {
         result.coefficients_[i] *= -1;
@@ -310,8 +308,8 @@ class Multivector final {
    */
   constexpr Multivector dual() const {
     Multivector result{};
-    for (size_t i = 0; i < bases_count(); ++i) {
-      result.coefficients_[bases_count() - 1 - i] = UnitaryOpsType::dual[i] * coefficients_[i];
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      result.coefficients_[NUM_BASIS_BLADES - 1 - i] = UnitaryOpsType::dual[i] * coefficients_[i];
     }
     return result;
   }
@@ -322,7 +320,7 @@ class Multivector final {
   constexpr bool operator==(const Multivector& rhs) const {
     // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
     // we have to implement this ourselves for earlier versions.
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       if (coefficients_[i] != rhs.coefficients_[i]) {
         return false;
       }
@@ -333,7 +331,7 @@ class Multivector final {
   constexpr bool operator!=(const Multivector& rhs) const {
     // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
     // we have to implement this ourselves for earlier versions.
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       if (coefficients_[i] != rhs.coefficients_[i]) {
         return true;
       }
@@ -376,14 +374,14 @@ class Multivector final {
 
   // Self-modifying operators.
   constexpr Multivector& operator+=(const Multivector& rhs) {
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       coefficients_[i] += rhs.coefficients_[i];
     }
     return *this;
   }
 
   constexpr Multivector& operator-=(const Multivector& rhs) {
-    for (size_t i = 0; i < bases_count(); ++i) {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       coefficients_[i] -= rhs.coefficients_[i];
     }
     return *this;
@@ -405,9 +403,9 @@ class Multivector final {
   template <size_t N>
   constexpr const ScalarType& element() {
     static_assert(
-        N < vector_count(),
+        N < NUM_BASIS_VECTORS,
         "Template parameter to vector element function is out of range of the number of "
-        "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
+        "vectors (grade 1 bases). Template parameter must be less than the NUM_BASIS_VECTORS.");
     return coefficients_[1UL << N];
   }
 
@@ -415,17 +413,17 @@ class Multivector final {
   // any Multivector. See the tests for examples.
   template <size_t N>
   static constexpr Multivector e() {
-    if constexpr (N >= vector_count()) {
+    if constexpr (N >= NUM_BASIS_VECTORS) {
       // Note: we use a static_assert here to generate an error message for the user. We could have
       // used a template parameter to restrict which basis creation functions are generated by the
       // compiler, but that approach resulted in a much more cryptic error message from the
       // compiler. For completeness, here is the function signature with the template restriction:
-      //   template <size_t N, std::enable_if_t<(N < vector_count()), bool> = true>
+      //   template <size_t N, std::enable_if_t<(N < NUM_BASIS_VECTORS), bool> = true>
       //   static constexpr Multivector e();
       static_assert(
-          N < vector_count(),
+          N < NUM_BASIS_VECTORS,
           "Template parameter to basis creation function is out of range of the number of "
-          "vectors (grade 1 bases). Template parameter must be less than the vector_count().");
+          "vectors (grade 1 bases). Template parameter must be less than the NUM_BASIS_VECTORS.");
     } else {
       Multivector result{};
       result.coefficients_[1UL << N] = 1;
@@ -435,7 +433,7 @@ class Multivector final {
 
   template <size_t n>
   constexpr const ScalarType& basis() const {
-    static_assert(n < bases_count(), "Basis index out of range.");
+    static_assert(n < NUM_BASIS_BLADES, "Basis index out of range.");
     return coefficients_[n];
   }
   constexpr const ScalarType& basis(size_t n) const { return coefficients_.at(n); }
@@ -444,7 +442,7 @@ class Multivector final {
 
   template <size_t n>
   constexpr void set_basis(const ScalarType& v) {
-    static_assert(n < bases_count(), "Basis index out of range.");
+    static_assert(n < NUM_BASIS_BLADES, "Basis index out of range.");
     coefficients_[n] = v;
   }
   constexpr void set_basis(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }

@@ -22,7 +22,7 @@ constexpr float correct_basis_sign(size_t basis_index, float coefficient) {
 template <typename BivectorNetType, typename VectorType>
 constexpr VectorType to_multivector(const BivectorNetType& bvec) {
   VectorType result{};
-  for (size_t i = 0; i < VectorType::bases_count(); ++i) {
+  for (size_t i = 0; i < VectorType::NUM_BASIS_BLADES; ++i) {
     result.set_basis(index_to_bit_basis<BivectorNetType>(i),
                      correct_basis_sign<BivectorNetType>(i, bvec[i]));
   }

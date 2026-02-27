@@ -34,16 +34,9 @@ class Algebra final {
 
   static constexpr InnerProduct INNER_PRODUCT{INNER_PRODUCT_STYLE};
 
-  // Number of grade-1 basis elements (vectors) in this multivector.
-  static constexpr size_t vector_count() {
-    return NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES;
-  }
-  // Number of grades in this multivector, counting the scalar (grade-0) as its own grade.
-  static constexpr size_t grade_count() { return vector_count() + 1; }
-
-  // Number of bases in this multivector, including the number of vectors, bivectors, trivectors,
-  // etc., and scalars.
-  static constexpr size_t bases_count() { return 1UL << vector_count(); }
+  static constexpr size_t NUM_BASIS_VECTORS{NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES +
+                                            NUM_ZERO_BASES};
+  static constexpr size_t NUM_BASIS_BLADES{1UL << NUM_BASIS_VECTORS};
 };
 
 using DefaultScalarType = float;

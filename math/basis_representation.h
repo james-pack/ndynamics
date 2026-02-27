@@ -37,7 +37,7 @@ template <typename AlgebraT>
 class BasisRepresentation final {
  public:
   using AlgebraType = AlgebraT;
-  static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
   // By default, an Algebra does not have any bases that have explicit names.
   // TODO(james): Autogenerate names of basis vectors in this default, unspecialized class.
   static constexpr size_t NAMED_BASES_COUNT{0};
@@ -66,7 +66,7 @@ template <typename ScalarType>
 class BasisRepresentation<Complex<ScalarType>> final {
  public:
   using AlgebraType = Complex<ScalarType>;
-  static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
@@ -98,7 +98,7 @@ template <typename ScalarType>
 class BasisRepresentation<Vga<ScalarType>> final {
  public:
   using AlgebraType = Vga<ScalarType>;
-  static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
@@ -140,7 +140,7 @@ template <typename ScalarType>
 class BasisRepresentation<Vga2d<ScalarType>> final {
  public:
   using AlgebraType = Vga2d<ScalarType>;
-  static constexpr size_t BASES_COUNT{AlgebraType::bases_count()};
+  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
