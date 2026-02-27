@@ -33,12 +33,7 @@ struct TableEntry final {
   // The basis index indicates which basis blade will be the result of the product of the basis
   // blades of this table entry.
   uint8_t basis_index{};
-
-  // The quadratic multiplier indicates if the result of the product of unit basis vectors
-  // represented by this table entry should be -1,0,1 according to the quadratic form of the vector
-  // space along with the commutativity relationships. It is the scalar portion of the product of
-  // the two unit basis vectors.
-  int8_t quadratic_multiplier{};
+  int8_t structure_constant{};
 
   static constexpr size_t MAX_BASIS_BLADES{std::numeric_limits<decltype(basis_index)>::max()};
   static_assert(NUM_BASIS_BLADES <= MAX_BASIS_BLADES,
@@ -47,21 +42,21 @@ struct TableEntry final {
                 "entries where the component count is larger.");
 
   constexpr bool operator==(const TableEntry& rhs) const {
-    return basis_index == rhs.basis_index && quadratic_multiplier == rhs.quadratic_multiplier;
+    return basis_index == rhs.basis_index && structure_constant == rhs.structure_constant;
   }
 };
 
 template <size_t NUM_BASIS_BLADES>
 struct TableEntry<NUM_BASIS_BLADES, std::enable_if_t<(NUM_BASIS_BLADES >= 8)> > final {
   uint64_t basis_index{};
-  int8_t quadratic_multiplier{};
+  int8_t structure_constant{};
 
   static constexpr size_t MAX_BASIS_BLADES{std::numeric_limits<decltype(basis_index)>::max()};
   static_assert(NUM_BASIS_BLADES <= MAX_BASIS_BLADES,
                 "This TableEntry class definition does not support enough components.");
 
   constexpr bool operator==(const TableEntry& rhs) const {
-    return basis_index == rhs.basis_index && quadratic_multiplier == rhs.quadratic_multiplier;
+    return basis_index == rhs.basis_index && structure_constant == rhs.structure_constant;
   }
 };
 
@@ -192,7 +187,7 @@ std::string to_string(const TableEntry<NUM_BASIS_BLADES>& t) {
       .append("(")  //
       .append(to_string(t.basis_index))
       .append(", ")
-      .append(to_string(t.quadratic_multiplier))
+      .append(to_string(t.structure_constant))
       .append(")");
 }
 

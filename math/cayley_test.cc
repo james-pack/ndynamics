@@ -20,7 +20,7 @@ TEST(CayleyTableTest, CanGenerateScalarEntries) {
   static constexpr ScalarCayleyTable table{};
   const auto entry{table.entry(0, 0)};
   EXPECT_EQ(SCALAR_GRADE, entry.basis_index);
-  EXPECT_EQ(1, entry.quadratic_multiplier);
+  EXPECT_EQ(1, entry.structure_constant);
 }
 
 static constexpr TableEntry<ComplexCayleyTable::NUM_BASIS_BLADES>

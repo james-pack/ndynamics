@@ -129,7 +129,7 @@ class Multivector final {
       for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         result.coefficients_[cayley_entry.basis_index] +=
-            cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+            cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
       }
     }
     return result;
@@ -164,7 +164,7 @@ class Multivector final {
         if ((i & j) == i) {
           const auto& cayley_entry{cayley_table_.entry(i, j)};
           result.coefficients_[j - i] +=
-              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+              cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
       }
     }
@@ -202,13 +202,13 @@ class Multivector final {
           if ((i & j) == i) {
             const auto& cayley_entry{cayley_table_.entry(i, j)};
             result.coefficients_[j - i] +=
-                cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+                cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
           }
         } else {
           if ((i & j) == j) {
             const auto& cayley_entry{cayley_table_.entry(j, i)};
             result.coefficients_[i - j] +=
-                cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+                cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
           }
         }
       }
@@ -253,7 +253,7 @@ class Multivector final {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         if (bit_count(cayley_entry.basis_index) == bit_count(i) + bit_count(j)) {
           result.coefficients_[i + j] +=
-              cayley_entry.quadratic_multiplier * coefficients_[i] * rhs.coefficients_[j];
+              cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
       }
     }
