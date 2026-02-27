@@ -11,7 +11,7 @@ namespace ndyn::ui {
 
 using namespace ndyn::math;
 
-template <typename AlgebraT>
+template <typename AlgebraT, typename RepresentationT = BasisRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::VectorType& expected) {
   Parser parser{};
@@ -20,7 +20,7 @@ template <typename AlgebraT>
     return ::testing::AssertionFailure() << "Could not parse line";
   }
 
-  Interpreter<AlgebraT> interpreter{};
+  Interpreter<AlgebraT, RepresentationT> interpreter{};
   interpreter.interpret(*ast);
 
   if (!interpreter.success) {
@@ -38,10 +38,10 @@ template <typename AlgebraT>
   return AreNear(interpreter.current_value, expected);
 }
 
-template <typename AlgebraT>
+template <typename AlgebraT, typename RepresentationT = BasisRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::ScalarType& expected) {
-  return MatchesValue<AlgebraT>(line, typename AlgebraT::VectorType{expected});
+  return MatchesValue<AlgebraT, RepresentationT>(line, typename AlgebraT::VectorType{expected});
 }
 
 TEST(InterpreterTest, CanInterpretSimpleScalarExpressions) {

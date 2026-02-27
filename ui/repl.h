@@ -12,16 +12,17 @@ DECLARE_bool(show_ast);
 
 namespace ndyn::ui {
 
-template <typename AlgebraT>
+template <typename AlgebraT, typename RepresentationT>
 class Repl final {
  public:
   using AlgebraType = AlgebraT;
+  using RepresentationType = RepresentationT;
 
  private:
   std::string line_{};
   std::shared_ptr<LineAst> ast_{};
   Parser parser_{};
-  Interpreter<AlgebraType> interpreter_{};
+  Interpreter<AlgebraType, RepresentationType> interpreter_{};
 
  public:
   void prompt() const { std::cout << "% " << std::flush; }

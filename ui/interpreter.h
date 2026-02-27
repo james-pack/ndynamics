@@ -10,18 +10,17 @@
 
 namespace ndyn::ui {
 
-template <typename AlgebraType>
+template <typename AlgebraType, typename RepresentationType>
 class Interpreter final : public Visitor {
   using VectorType = typename AlgebraType::VectorType;
   using ScalarType = typename AlgebraType::ScalarType;
-  using BasisRepresentation = math::BasisRepresentation<AlgebraType>;
 
   // Global symbol table
   std::unordered_map<std::string, VectorType> symbols{};
 
  public:
   Interpreter() {
-    for (const auto& base : BasisRepresentation::bases()) {
+    for (const auto& base : RepresentationType::bases()) {
       symbols.insert({base.name, base.basis});
     }
   }
