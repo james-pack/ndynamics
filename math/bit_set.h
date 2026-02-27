@@ -96,13 +96,17 @@ class BitSetT final {
 
   constexpr size_t size() const { return N; }
 
+  // Bit-wise operators.
+  // NOT
   constexpr BitSetT operator~() const { return BitSetT{~bits_}; }
+  // OR
   constexpr BitSetT operator|(const BitSetT& rhs) const { return BitSetT{bits_ | rhs.bits_}; }
   constexpr BitSetT operator|(uint64_t rhs) const { return BitSetT{bits_ | rhs}; }
+  // AND
   constexpr BitSetT operator&(const BitSetT& rhs) const { return BitSetT{bits_ & rhs.bits_}; }
   constexpr BitSetT operator&(uint64_t rhs) const { return BitSetT{bits_ & rhs}; }
-
-  constexpr BitSetT operator xor(const BitSetT& rhs) const { return bits_ xor rhs.bits_; }
+  // XOR
+  constexpr BitSetT operator^(const BitSetT& rhs) const { return bits_ ^ rhs.bits_; }
 
   constexpr BitSetT operator<<(size_t b) const { return BitSetT{bits_ << b}; }
   constexpr BitSetT operator>>(size_t b) const { return BitSetT{masked_bits() >> b}; }
