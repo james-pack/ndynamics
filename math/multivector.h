@@ -387,19 +387,6 @@ class Multivector final {
     return *this;
   }
 
-  /*************************************************************************************************
-   * These accessors rely on the notion of a "bit index". A bit index is a particular ordering of
-   * the bases in a multivector so that the basis vectors are indexed by powers of 2. In particular,
-   * the basis vector e0 is at index 1; the basis vector e1 is at index 2; the basis vector e2 is at
-   * index 4; etc. This particular indexing strategy allows for easy calculation of the Cayley
-   * tables for each algebra. It can also make for consistent indexing across algebras, except where
-   * particular conventions in a specific algebra force deviations from the pattern.
-   *
-   * In general, using these accessors requires a solid understanding of this indexing strategy and
-   * can be error-prone.
-   *
-   * TODO(james): Move these to the private section of the class or remove them altogether.
-   *************************************************************************************************/
   // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
   // any Multivector. See the tests for examples.
   template <size_t N>
@@ -422,6 +409,17 @@ class Multivector final {
     }
   }
 
+  /*************************************************************************************************
+   * These accessors rely on the notion of a "bit index". A bit index is a particular ordering of
+   * the bases in a multivector so that the basis vectors are indexed by powers of 2. In particular,
+   * the basis vector e0 is at index 1; the basis vector e1 is at index 2; the basis vector e2 is at
+   * index 4; etc. This particular indexing strategy allows for easy calculation of the Cayley
+   * tables for each algebra. It can also make for consistent indexing across algebras, except where
+   * particular conventions in a specific algebra force deviations from the pattern.
+   *
+   * In general, using these accessors requires a solid understanding of this indexing strategy and
+   * can be error-prone.
+   *************************************************************************************************/
   constexpr const ScalarType& coefficient(size_t n) const { return coefficients_.at(n); }
   constexpr void set_coefficient(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
 };
