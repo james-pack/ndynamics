@@ -14,7 +14,6 @@ cc_library(
         "multivector.h",
         "multivector_utils.h",
         "state.h",
-        "state_view.h",
         "unitary_ops.h",
     ],
     visibility = ["//visibility:public"],
