@@ -42,7 +42,7 @@ TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
   // sum to 7 or fewer.
   // Also, with 7 bases, we run into limits on the number of constexpr operations. This
   // limit can be raised by setting the -fconstexpr-ops-limit compile flag. To keep the testing
-  // configuration simpler, we set verify the lower limit below.
+  // configuration simpler, we verify the lower limit below.
   static constexpr size_t NUMBER_BASES{6};
   using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
   static constexpr auto x{Multivector<AlgebraType>::e<0>()};
