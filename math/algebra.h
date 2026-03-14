@@ -37,6 +37,8 @@ class Algebra final {
   static constexpr size_t NUM_BASIS_VECTORS{NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES +
                                             NUM_ZERO_BASES};
   static constexpr size_t NUM_BASIS_BLADES{1UL << NUM_BASIS_VECTORS};
+
+  static constexpr ScalarType EPSILON{1e-6};
 };
 
 using DefaultScalarType = float;
