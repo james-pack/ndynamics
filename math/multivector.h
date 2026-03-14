@@ -35,12 +35,28 @@ class Multivector final {
 
   static constexpr size_t SCALAR_BASIS_INDEX{0};
 
+  static constexpr ScalarType EPSILON{AlgebraType::EPSILON};
+
  private:
   static constexpr CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>
       cayley_table_{};
   using UnitaryOpsType = UnitaryOps<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>;
 
   std::array<ScalarType, NUM_BASIS_BLADES> coefficients_{};
+
+  /**
+   * Determine if a particular blade includes a basis vector that has a degenerate metric.
+   */
+  static constexpr bool includes_degenerate_basis(size_t blade_index) {
+    static constexpr size_t mask = []() {
+      size_t mask{};
+      for (size_t i = 0; i < NUM_ZERO_BASES; ++i) {
+        mask = mask | (1UL << i);
+      }
+      return mask;
+    }();
+    return (mask & blade_index) != 0;
+  }
 
  public:
   constexpr Multivector() = default;
@@ -59,14 +75,17 @@ class Multivector final {
   constexpr Multivector& operator=(const Multivector& rhs) = default;
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
-  // TODO(james): This is way too slow. Rewrite using a more explicit sum of a function of the
-  // coefficients.
   constexpr ScalarType square_magnitude() const {
-    const Multivector reversed{reverse()};
-    return multiply(reversed).scalar();
+    ScalarType result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      const auto& cayley_entry{cayley_table_.entry(i, i)};
+      result += cayley_entry.structure_constant * coefficients_[i] * coefficients_[i];
+    }
+
+    return result;
   }
 
-  constexpr Multivector normalized() const {
+  constexpr Multivector normalize() const {
     using std::sqrt;
     return divide(sqrt(square_magnitude()));
   }
@@ -146,24 +165,34 @@ class Multivector final {
   // Inner product variations.
 
   /**
-   * Left contraction projects the lhs (this Multivector) onto the rhs.
+   * Computes the left contraction (A ⌋ B) of this multivector (lhs) onto rhs.
+   *
+   * The left contraction A ⌋ B can be understood as the projection of A onto B:
+   * it extracts the component of B that is "complementary to" A within B.
+   * For basis blades, e_I ⌋ e_J is nonzero only when I ⊆ J (as sets of basis
+   * vector indices), and the result is the blade e_{J\I} (J with I removed),
+   * scaled by the appropriate structure constant from the Cayley table.
    */
   constexpr Multivector left_contraction(const Multivector& rhs) const {
     Multivector result{};
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
-      // Note the initialization in the for-loop below. All of the basiss where the grade of i
+      // The left contraction e_I ⌋ e_J is nonzero if and only if the basis
+      // vectors of I are a subset of those of J, expressed as a bitmask
+      // containment check. If I ⊄ J, these two basis blades are orthogonal
+      // under the left contraction and contribute nothing to the result.
+      // When i == 0 (scalar), this condition is always satisfied, so a scalar
+      // lhs simply scales the entire rhs.
+      // Note the initialization in the for-loop below. All of the bases where the grade of i
       // is less than the grade of j will not contribute to the result. Also, j must include every
       // basis in i otherwise the two bases are orthogonal to each other.
       for (size_t j = i; j < NUM_BASIS_BLADES; ++j) {
-        // Here we ensure that the two bases are not orthogonal to each other, in the sense
-        // that the rhs basis (j) must include all of the bases in the lhs basis (i).
-        // Otherwise, the left_contraction of these bases is zero, and the result is unchanged.
-        // Note that for i = 0 (the scalar basis of the lhs), this case will always be true, and
-        // the effective result is that the left contraction of scalars onto other bases adds a
-        // scaled version of the rhs to the result.
+        // When I ⊆ J, j ^ i (equivalently j - i here, since the bits of i
+        // are a subset of j) gives the bitmask for the remaining blade e_{J\I}
+        // after removing the bases of I from J. The structure constant accounts
+        // for any sign change from reordering basis vectors into canonical form.
         if ((i & j) == i) {
           const auto& cayley_entry{cayley_table_.entry(i, j)};
-          result.coefficients_[j - i] +=
+          result.coefficients_[i ^ j] +=
               cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
       }
@@ -172,10 +201,30 @@ class Multivector final {
   }
 
   /**
-   * Right contraction projects the rhs onto this Multivector, the lhs.
+   * Computes the right contraction of this multivector (lhs) onto rhs. This is the opposite of
+   * left_contraction(). See that method for more details.
    */
   constexpr Multivector right_contraction(const Multivector& rhs) const {
-    return rhs.left_contraction(*this);
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      for (size_t j = 0; j <= i; ++j) {
+        // The right contraction e_I ⌊ e_J is nonzero if and only if the basis
+        // vectors of J are a subset of those of I, expressed as a bitmask
+        // containment check. If J ⊄ I, these two basis blades contribute
+        // nothing to the result.
+        // When j == 0 (scalar rhs), this condition is always satisfied, so a
+        // scalar rhs simply scales the entire lhs.
+        if ((i & j) == j) {
+          // i ^ j removes the bases of J from I, giving the remaining blade
+          // e_{I\J}. The structure constant accounts for any sign change from
+          // reordering basis vectors into canonical form.
+          const auto& cayley_entry{cayley_table_.entry(i, j)};
+          result.coefficients_[i ^ j] +=
+              cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
+        }
+      }
+    }
+    return result;
   }
 
   /**
@@ -201,13 +250,13 @@ class Multivector final {
         if (i < j) {
           if ((i & j) == i) {
             const auto& cayley_entry{cayley_table_.entry(i, j)};
-            result.coefficients_[j - i] +=
+            result.coefficients_[j ^ i] +=
                 cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
           }
         } else {
           if ((i & j) == j) {
             const auto& cayley_entry{cayley_table_.entry(j, i)};
-            result.coefficients_[i - j] +=
+            result.coefficients_[i ^ j] +=
                 cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
           }
         }
@@ -218,13 +267,15 @@ class Multivector final {
 
   /**
    * The inner product. Note that the inner product is not uniformly defined across geometric
-   * algebra texts. In some texts, particularly those by Hestenes, the inner product is defined as
-   * the bidirectional_inner(). In other texts, usually those more focused on the mathematical
-   * structure, the inner product is defined as the left_contraction(). The right_contraction()
-   * style is provided for completeness. All of these approaches are useful, so the Multivector
+   * algebra texts. In some texts, especially those by Leo Dorst, the inner product is defined as
+   * the left_contraction(). The right_contraction() style was used extensively by Lounesto. A third
+   * style, the BIDIRECTIONAL innner product, also generates a vector result is implemented here as
+   * a form of completeness. All of these approaches are useful or worth study, so the Multivector
    * includes the style of the inner product as part of the type. The inner() method below
    * implements selecting the style based on the type definition. Finally, all three approaches are
-   * exposed in the API of this class, so they may be used explicitly as needed.
+   * exposed in the API of this class, so they may be used explicitly as needed. Note that
+   * Hestenes's approach is NOT included as it generates a scalar and has some properties that make
+   * it difficult to work with.
    */
   constexpr Multivector inner(const Multivector& rhs) const {
     static_assert(
@@ -242,17 +293,17 @@ class Multivector final {
   }
 
   /**
-   * The outer product, also known as the wedge operator and the progressive product.
+   * Computes the outer product, also known as the wedge operator and the progressive product.
    */
   constexpr Multivector outer(const Multivector& rhs) const {
     Multivector result{};
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       // Note the exit condition of this for-loop. We only loop while i+j is less than the number of
       // bases.
-      for (size_t j = 0; i + j < NUM_BASIS_BLADES; ++j) {
+      for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         if (bit_count(cayley_entry.basis_index) == bit_count(i) + bit_count(j)) {
-          result.coefficients_[i + j] +=
+          result.coefficients_[i ^ j] +=
               cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
       }
@@ -261,11 +312,14 @@ class Multivector final {
   }
 
   /**
-   * The regressive product, also known as the 'V' product. The dual of the regressive product is
-   * the outer product of the duals of the operands.
+   * Computes the regressive product, the dual counterpart of the outer product. Where the
+   * outer product constructs the smallest subspace containing both operands, the regressive
+   * product constructs the largest subspace contained in both. Whether this corresponds to
+   * a geometric join or meet depends on the embedding conventions of the geometry model
+   * in use — that assignment belongs in the model, not here.
    */
   constexpr Multivector regress(const Multivector& rhs) const {
-    return dual().outer(rhs.dual()).dual();
+    return dual().outer(rhs.dual()).undual();
   }
 
   /**
@@ -297,21 +351,109 @@ class Multivector final {
   }
 
   /**
-   * The inverse of a Multivector, if it exists. Note that this approach does not guarantee that an
-   * inverse exists, and if it does not exist, this method gives an incorrect value.
+   * Returns the inverse of this multivector under the geometric product, satisfying X * X⁻¹ = 1.
+   *
+   * This implementation uses the versor formula X⁻¹ = ~X / (X * ~X), which is correct only when
+   * X * ~X is a pure scalar — a property guaranteed for versors (elements that are products of
+   * invertible vectors, such as rotors, motors, and reflectors) but not for general multivectors.
+   * For a general multivector, X * ~X may contain higher-grade components; discarding them and
+   * dividing by only the scalar part produces an incorrect result with no indication of failure.
+   *
+   * Null elements (nonzero multivectors whose X * ~X = 0, such as ideal points and ideal lines in
+   * PGA) have no inverse by definition. This implementation returns zero for such elements, which
+   * is algebraically meaningless and will silently corrupt any computation that depends on it.
+   *
+   * A correct general inverse for arbitrary multivectors requires solving X * Y = 1 as a linear
+   * system over the full 2^n coefficient space, where n is the number of basis vectors. This is
+   * substantially more expensive and is not implemented here because the overwhelmingly common case
+   * in geometric algebra computations is versor inversion. For null elements, no such system has
+   * a solution and the correct response is to throw rather than return a sentinel value, as no
+   * downstream computation can meaningfully recover from an uninvertible element.
    */
-  constexpr Multivector inverse() const { return reverse() / square_magnitude(); }
+  // TODO(james): This implementation is only correct for versors. Extend to general Multivectors.
+  constexpr Multivector inverse() const {
+    const auto scale{square_magnitude()};
+    if (scale > epsilon) {
+      return reverse() / scale;
+    } else {
+      return 0;
+    }
+  }
 
   /**
-   * The dual of a Multivector. The product of a unit multivector and its dual should be the
-   * unit pseudoscalar.
+   * Duality maps a blade to its orthogonal complement via contraction with the pseudoscalar I
+   * (the highest-grade blade of the algebra, representing the entire space). Geometrically,
+   * the dual of a subspace is the subspace of all elements perpendicular to it — for example,
+   * in 3D the dual of a line through the origin is a plane through the origin.
+   *
+   * The two operations differ in how they behave when composed: undual(dual(X)) = X exactly,
+   * regardless of the algebra's signature. This is necessary because I² (the pseudoscalar
+   * squared, which is always a scalar) is +1 in some algebras, -1 in others (e.g. G(3,0),
+   * G(4,1)), and 0 in degenerate algebras (e.g. PGA G(3,0,1)). When I² = -1, applying the
+   * same duality operation twice returns -X rather than X, so a naive implementation of
+   * undual (i.e. undual(X) = X ⌋ I, identical to dual(X)) as a second application of dual would
+   * silently introduce a sign error. When I² = 0 the pseudoscalar has no scalar inverse at all,
+   * making a correction factor impossible. Using left contraction for dual and right contraction
+   * for undual resolves all three cases uniformly, with the sign correction emerging from the
+   * asymmetry between the two contractions rather than requiring an explicit case analysis on the
+   * signature.
    */
-  constexpr Multivector dual() const {
-    Multivector result{};
-    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
-      result.coefficients_[NUM_BASIS_BLADES - 1 - i] = UnitaryOpsType::dual[i] * coefficients_[i];
+  constexpr Multivector dual() const { return left_contraction(pseudoscalar()); }
+  constexpr Multivector undual() const { return right_contraction(pseudoscalar()); }
+
+  /**
+   * Returns true if this multivector is a versor — that is, a product of invertible vectors.
+   * Versors are the elements for which the inverse() formula X⁻¹ = ~X / (X * ~X) is correct.
+   *
+   * The test has two stages. First, the multivector must be purely even-grade or purely odd-grade;
+   * a mixed-grade element cannot be a versor and is rejected cheaply before the more expensive
+   * check. Second, the geometric product X * ~X must be a pure scalar — higher-grade components
+   * in this product indicate that the versor formula would silently discard algebraically
+   * significant terms. The scalar must also be nonzero, as null elements (ideal points and lines
+   * in PGA, for example) are not invertible and therefore not versors in the sense required by
+   * inverse().
+   *
+   * The tolerance parameter covers both the near-zero scalar check and the near-zero higher-grade
+   * coefficient check in X * ~X. Callers working in algebras with very large or very small
+   * coordinate magnitudes should scale this accordingly.
+   */
+  constexpr bool is_versor(const ScalarType tolerance = EPSILON) const {
+    // Note: std::abs() is not constexpr until C++23. This wrapper delegates to std::abs() when
+    // using C++23 or later, preserving full IEEE 754 compliance for production use, and falls back
+    // to a simple negation in constexpr contexts where special float values are not a concern.
+    constexpr auto abs = [](ScalarType v) constexpr -> ScalarType {
+#if defined(__cpp_lib_constexpr_cmath) && __cpp_lib_constexpr_cmath >= 202202L
+      return std::abs(v);
+#else
+      return v < ScalarType{0} ? -v : v;
+#endif
+    };
+
+    // Cheap structural rejection: versors are purely even- or purely odd-grade.
+    bool has_even{false};
+    bool has_odd{false};
+    for (size_t blade = 0; blade < NUM_BASIS_BLADES; ++blade) {
+      if (abs(coefficients_[blade]) > tolerance) {
+        // The grade of a blade is the number of bits set in its bitmask index (popcount).
+        if (bit_count(blade) % 2 == 0) {
+          has_even = true;
+        } else {
+          has_odd = true;
+        }
+      }
+      if (has_even && has_odd) {
+        return false;
+      }
     }
-    return result;
+
+    // X * ~X must be a nonzero pure scalar for the versor inverse formula to be valid.
+    const Multivector product{multiply(reverse())};
+    for (size_t blade = 1; blade < NUM_BASIS_BLADES; ++blade) {
+      if (abs(product.coefficients_[blade]) > tolerance) {
+        return false;
+      }
+    }
+    return abs(product.coefficients_[0]) > tolerance;
   }
 
   // Operator overloads.
@@ -387,6 +529,12 @@ class Multivector final {
     return *this;
   }
 
+  static constexpr Multivector pseudoscalar() const {
+    Multivector result{};
+    result.coefficients_[NUM_BASIS_BLADES - 1] = 1;
+    return result;
+  }
+
   // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
   // any Multivector. See the tests for examples.
   template <size_t N>
@@ -418,7 +566,8 @@ class Multivector final {
    * particular conventions in a specific algebra force deviations from the pattern.
    *
    * In general, using these accessors requires a solid understanding of this indexing strategy and
-   * can be error-prone.
+   * can be error-prone. They should be considered internal implementation details and not part of
+   * the API.
    *************************************************************************************************/
   constexpr const ScalarType& coefficient(size_t n) const { return coefficients_.at(n); }
   constexpr void set_coefficient(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
