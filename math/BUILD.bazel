@@ -9,11 +9,13 @@ cc_library(
         "bit_set.h",
         "cayley.h",
         "cayley_table_entry.h",
+        "geometry_model.h",
         "integrators.h",
         "multivector.h",
         "multivector_utils.h",
         "state.h",
         "unitary_ops.h",
+        "vga_model.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -140,23 +142,6 @@ cc_test(
 cc_test(
     name = "integrators_test",
     srcs = ["integrators_test.cc"],
-    deps = [
-        ":math",
-        ":testing",
-        "//third_party/gtest",
-    ],
-)
-
-cc_test(
-    name = "geometry_test",
-    srcs = [
-        # This geometry.h is wrong on several levels and needs to be removed, but I wanted to keep
-        # the concepts around as notes. Hence, I moved the header file directly into the test
-        # target.
-        # TODO(james): Remove these files.
-        "geometry.h",
-        "geometry_test.cc",
-    ],
     deps = [
         ":math",
         ":testing",
