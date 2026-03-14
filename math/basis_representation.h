@@ -173,4 +173,46 @@ class BasisRepresentation<Vga2d<ScalarType>> final {
   }
 };
 
+template <typename ScalarType>
+class BasisRepresentation<Pga<ScalarType>> final {
+ public:
+  using AlgebraType = Pga<ScalarType>;
+  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
+  static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
+
+ private:
+  static constexpr auto e0{Multivector<AlgebraType>::template e<0>()};
+  static constexpr auto e1{Multivector<AlgebraType>::template e<1>()};
+  static constexpr auto e2{Multivector<AlgebraType>::template e<2>()};
+
+  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
+      BasisName<AlgebraType>{"e0", e0},
+      {"e1", e1},
+      {"e01", e0* e1},
+      {"e2", e2},
+      {"e02", e0* e2},
+      {"e12", e1* e2},
+      {"e012", e0* e1* e2},
+  };
+
+ public:
+  constexpr BasisRepresentation() = default;
+
+  static constexpr const auto& bases() { return bases_; }
+
+  static std::string to_string(const Multivector<AlgebraType>& vec) {
+    std::string result{vector_element_to_string(vec.scalar(), "")};
+    for (size_t i = 1; i < BASES_COUNT; ++i) {
+      std::string basis_result{vector_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
+      if (!basis_result.empty()) {
+        if (!result.empty()) {
+          result.append(" + ");
+        }
+        result.append(basis_result);
+      }
+    }
+    return result;
+  }
+};
+
 }  // namespace ndyn::math
