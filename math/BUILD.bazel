@@ -12,7 +12,6 @@ cc_library(
         "geometry_model.h",
         "integrators.h",
         "multivector.h",
-        "multivector_utils.h",
         "state.h",
         "unitary_ops.h",
         "vga_model.h",
@@ -116,16 +115,6 @@ cc_test(
     srcs = ["multivector_scalability_test.cc"],
     deps = [
         ":math",
-        "//third_party/gtest",
-    ],
-)
-
-cc_test(
-    name = "multivector_utils_test",
-    srcs = ["multivector_utils_test.cc"],
-    deps = [
-        ":math",
-        ":testing",
         "//third_party/gtest",
     ],
 )
