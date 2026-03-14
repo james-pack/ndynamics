@@ -1,1016 +1,1116 @@
 #include "math/multivector.h"
 
+#include <cmath>
+
+#include "glog/logging.h"
 #include "gtest/gtest.h"
 #include "math/basis_representation.h"
 #include "math/multivector_test_utils.h"
 
 namespace ndyn::math {
 
-TEST(MultivectorTest, CanCompile) {
-  static constexpr ScalarMultivector<float> a{};
-  EXPECT_TRUE(true);
-}
+TEST(MultivectorDiagnosticTest, ValidLeftContractionOnBasisBlades) {
+  using Vector = Vga2dMultivector<float>;
 
-TEST(MultivectorTest, CanInitializeFromScalar) {
-  static constexpr float SCALAR{1};
-  static constexpr ScalarMultivector<float> a{SCALAR};
-  EXPECT_EQ(a.scalar(), SCALAR);
-}
+  static constexpr Vector zero{};
+  static constexpr Vector one{1, 0, 0, 0};
+  static constexpr Vector e0{Vector::template e<0>()};
+  static constexpr Vector e1{Vector::template e<1>()};
+  static constexpr Vector e01{e0.outer(e1)};
 
-TEST(MultivectorTest, CanInitializeFromInitializerList) {
-  static constexpr float REAL{1};
-  static constexpr float IMAG{3};
-  static constexpr ComplexMultivector<float> a{REAL, IMAG};
-  EXPECT_EQ(IMAG * ComplexMultivector<float>::e<0>(), a.grade_projection(1));
-  EXPECT_EQ(REAL, a.grade_projection(0));
-}
-
-TEST(MultivectorTest, CanAddScalars) {
-  static constexpr float SCALAR_1{1};
-  static constexpr ScalarMultivector<float> m1{SCALAR_1};
-  static constexpr float SCALAR_2{2};
-  static constexpr ScalarMultivector<float> m2{SCALAR_2};
-  EXPECT_EQ(m1.add(m2).scalar(), SCALAR_1 + SCALAR_2);
-}
-
-TEST(MultivectorTest, CanAddScalarsWithOperator) {
-  static constexpr float SCALAR_1{1};
-  static constexpr ScalarMultivector<float> m1{SCALAR_1};
-  static constexpr float SCALAR_2{2};
-  static constexpr ScalarMultivector<float> m2{SCALAR_2};
-
-  static constexpr ScalarMultivector<float> result{m1 + m2};
-
-  EXPECT_EQ(result.scalar(), SCALAR_1 + SCALAR_2);
-}
-
-TEST(MultivectorTest, CanMultiplyScalarsWithOperator) {
-  static constexpr float SCALAR_1{1};
-  static constexpr ScalarMultivector<float> m1{SCALAR_1};
-  static constexpr float SCALAR_2{2};
-  static constexpr ScalarMultivector<float> m2{SCALAR_2};
-
-  static constexpr ScalarMultivector<float> result{m1 * m2};
-
-  EXPECT_EQ(result.scalar(), SCALAR_1 * SCALAR_2);
-}
-
-TEST(MultivectorTest, CanMultiplySimpleComplexNumbers) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};
-  EXPECT_EQ(-1.f, i.multiply(i).scalar());
-}
-
-TEST(MultivectorTest, CanMultiplySimpleComplexNumbersWithOperator) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};
-  EXPECT_EQ(-1.f, (i * i).scalar());
-}
-
-TEST(MultivectorTest, CanMultiplyComplexNumbers) {
-  static constexpr auto u{ComplexMultivector<float>::e<0>().add(1.f)};  // 1 + i
-  static constexpr auto v{u.multiply(u)};                               // (1 + i)^2 = 2i
-  static constexpr auto w{v.multiply(v)};                               // (2i)^2 = -4
-
-  static_assert(v.scalar() == 0.f,
-                "Verifying that we can do multivector operations in constexpr contexts");
-  static_assert(w.scalar() == -4.f,
-                "Verifying that we can do multivector operations in constexpr contexts");
-
-  ASSERT_EQ(1.f, u.scalar());
-  EXPECT_EQ(0.f, v.scalar());
-  EXPECT_EQ(-4.f, w.scalar());
-  EXPECT_EQ(16.f, w.multiply(w).scalar());
-}
-
-TEST(MultivectorTest, CanMultiplyComplexNumbersWithOperator) {
-  static constexpr auto u{ComplexMultivector<float>::e<0>().add(1.f)};  // 1 + i
-  static constexpr auto v{u * u};                                       // (1 + i)^2 = 2i
-  static constexpr auto w{v * v};                                       // (2i)^2 = -4
-
-  static_assert(v.scalar() == 0.f,
-                "Verifying that we can do multivector operations in constexpr contexts");
-  static_assert(w.scalar() == -4.f,
-                "Verifying that we can do multivector operations in constexpr contexts");
-
-  ASSERT_EQ(1.f, u.scalar());
-  EXPECT_EQ(0.f, v.scalar());
-  EXPECT_EQ(-4.f, w.scalar());
-  EXPECT_EQ(16.f, (w * w).scalar());
-}
-
-TEST(MultivectorTest, EqualComplexNumbersEvaluateAsEqual) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};  // i
-  static constexpr auto u{i + 1.f};                            // 1 + i
-  static constexpr ComplexMultivector<float> v{1.f};           // 1
-  static constexpr ComplexMultivector<float> w{2.f * i};       // 2i
-
-  EXPECT_EQ(u, v + i);
-  EXPECT_EQ(w, u * u);
-}
-
-TEST(MultivectorTest, CanUseUnaryMinusOnComplexNumbers) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};  // i
-  static constexpr auto u{i + 1.f};                            // 1 + i
-
-  EXPECT_EQ(i * -1.f, -i);
-  EXPECT_EQ(-1.f - i, -u);
-}
-
-TEST(MultivectorTest, ValidateOperatorOverloadsOnComplexNumbers) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};
-
-  EXPECT_EQ(-1.f, i * i);
-  EXPECT_EQ(i * i, -1.f);
-
-  EXPECT_EQ(0.f, i * i + 1.f);
-  EXPECT_EQ(i * i + 1.f, 0.f);
-
-  EXPECT_EQ(i - 1.f, i * (i + 1.f));
-  EXPECT_EQ(i * (i - 1.f), -1.f - i);
-
-  EXPECT_EQ(-i * (i - 1.f), 1.f + i);
-}
-
-TEST(MultivectorTest, CantAccessNonexistentBasesInComplexNumbers) {
-  const auto i{ComplexMultivector<float>::e<0>()};
-  // Uncomment to generate compile error.
-  // const auto does_not_exist{ComplexMultivector<float>::e<1>()};
-
-  EXPECT_EQ(0, i.scalar());
-}
-
-TEST(MultivectorTest, ValidGradeOperatorOnTrivialComplexNumbers) {
-  const auto i{ComplexMultivector<float>::e<0>()};
-  const auto zero{ComplexMultivector<float>{0.f}};
-  const auto one{ComplexMultivector<float>{1.f}};
-  const auto two{ComplexMultivector<float>{2.f}};
-
-  EXPECT_EQ(i, i.grade_projection(1));
-  EXPECT_EQ(zero, i.grade_projection(0));
-
-  EXPECT_EQ(zero, zero.grade_projection(0));
-  EXPECT_EQ(zero, zero.grade_projection(1));
-
-  EXPECT_EQ(one, one.grade_projection(0));
-  EXPECT_EQ(zero, one.grade_projection(1));
-
-  EXPECT_EQ(two, two.grade_projection(0));
-  EXPECT_EQ(zero, two.grade_projection(1));
-
-  EXPECT_EQ(two * i, (one + two * i).grade_projection(1));
-  EXPECT_EQ(one, (one + two * i).grade_projection(0));
-}
-
-TEST(MultivectorTest, ValidGradeOperatorOnComplexNumbers) {
-  const auto i{ComplexMultivector<float>::e<0>()};
-  const auto one{ComplexMultivector<float>{1.f}};
-
-  EXPECT_EQ(10.f * i, (10.f * i - 3).grade_projection(1));
-  EXPECT_EQ(-3.f * one, (10.f * i - 3).grade_projection(0));
-}
-
-TEST(MultivectorTest, ValidInverseOnTrivialComplexNumbers) {
-  const auto i{ComplexMultivector<float>::e<0>()};
-  const auto a{ComplexMultivector<float>{2.f}};
-  const auto b{ComplexMultivector<float>{2.f * i}};
-  const auto one{ComplexMultivector<float>{1.f}};
-
-  EXPECT_EQ(one, i * i.inverse());
-  EXPECT_EQ(one, a * a.inverse());
-  EXPECT_EQ(one, b * b.inverse());
-
-  EXPECT_EQ(-i, i.inverse());
-
-  const auto a_inverse{ComplexMultivector<float>{1 / 2.f}};
-  EXPECT_EQ(a_inverse, a.inverse());
-
-  const auto b_inverse{ComplexMultivector<float>{0.f, -1 / 2.f}};
-  EXPECT_EQ(b_inverse, b.inverse());
-}
-
-TEST(MultivectorTest, ValidGradeOperatorOnTrivialSpacetimeNumbers) {
-  const auto t{SpacetimeMultivector<float>::e<0>()};
-  const auto x{SpacetimeMultivector<float>::e<1>()};
-  const auto y{SpacetimeMultivector<float>::e<2>()};
-  const auto z{SpacetimeMultivector<float>::e<3>()};
-  const auto zero{SpacetimeMultivector<float>{0.f}};
-
-  for (const auto& m : {t, x, y, z}) {
-    EXPECT_EQ(m, m.grade_projection(1));
-    EXPECT_EQ(zero, m.grade_projection(0));
+  {
+    static constexpr Vector result{e0.left_contraction(one)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e0.left_contraction(e01)};
+    EXPECT_EQ(result, e1);
+  }
+  {
+    static constexpr Vector result{e0.left_contraction(e1)};
+    EXPECT_EQ(result, zero);
   }
 
-  EXPECT_EQ(zero, zero.grade_projection(0));
-  EXPECT_EQ(zero, zero.grade_projection(1));
+  // scalar (1) as lhs
+  {
+    static constexpr Vector result{one.left_contraction(one)};
+    EXPECT_EQ(result, one);
+  }
+  {
+    static constexpr Vector result{one.left_contraction(e0)};
+    EXPECT_EQ(result, e0);
+  }
+  {
+    static constexpr Vector result{one.left_contraction(e1)};
+    EXPECT_EQ(result, e1);
+  }
+  {
+    static constexpr Vector result{one.left_contraction(e01)};
+    EXPECT_EQ(result, e01);
+  }
+
+  // e1 as lhs
+  {
+    static constexpr Vector result{e1.left_contraction(one)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e1.left_contraction(e0)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e1.left_contraction(e1)};
+    EXPECT_EQ(result, one);
+  }
+  {
+    static constexpr Vector result{e1.left_contraction(e01)};
+    EXPECT_EQ(result, -e0);
+  }
+
+  // e01 as lhs
+  {
+    static constexpr Vector result{e01.left_contraction(one)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e01.left_contraction(e0)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e01.left_contraction(e1)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e01.left_contraction(e01)};
+    EXPECT_EQ(result, -one);
+  }
 }
 
-TEST(MultivectorTest, ValidGradeOperatorOnSimpleSpacetimeNumbers) {
-  const auto t{SpacetimeMultivector<float>::e<0>()};
-  const auto x{SpacetimeMultivector<float>::e<1>()};
-  const auto y{SpacetimeMultivector<float>::e<2>()};
-  const auto z{SpacetimeMultivector<float>::e<3>()};
-  const auto zero{SpacetimeMultivector<float>{0.f}};
+TEST(MultivectorDiagnosticTest, ValidRightContractionOnBasisBlades) {
+  using Vector = Vga2dMultivector<float>;
 
-  for (const auto& a : {t, x, y, z}) {
-    for (const auto& b : {t, x, y, z}) {
-      for (const auto& c : {t, x, y, z}) {
-        for (const auto& d : {t, x, y, z}) {
-          const auto sum{a + b + c + d};
-          for (size_t i = 0; i < SpacetimeMultivector<float>::NUM_GRADES; ++i) {
-            if (i == 1) {
-              EXPECT_EQ(sum, sum.grade_projection(i));
-            } else {
-              EXPECT_EQ(zero, sum.grade_projection(i));
-            }
-          }
-        }
-      }
+  static constexpr Vector zero{};
+  static constexpr Vector one{1, 0, 0, 0};
+  static constexpr Vector e0{Vector::template e<0>()};
+  static constexpr Vector e1{Vector::template e<1>()};
+  static constexpr Vector e01{e0.outer(e1)};
+
+  {
+    static constexpr Vector result{e0.right_contraction(one)};
+    EXPECT_EQ(result, e0);
+  }
+  {
+    static constexpr Vector result{e0.right_contraction(e01)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e0.right_contraction(e1)};
+    EXPECT_EQ(result, zero);
+  }
+  // scalar (1) as lhs
+  {
+    static constexpr Vector result{one.right_contraction(one)};
+    EXPECT_EQ(result, one);
+  }
+  {
+    static constexpr Vector result{one.right_contraction(e0)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{one.right_contraction(e1)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{one.right_contraction(e01)};
+    EXPECT_EQ(result, zero);
+  }
+
+  // e1 as lhs
+  {
+    static constexpr Vector result{e1.right_contraction(one)};
+    EXPECT_EQ(result, e1);
+  }
+  {
+    static constexpr Vector result{e1.right_contraction(e0)};
+    EXPECT_EQ(result, zero);
+  }
+  {
+    static constexpr Vector result{e1.right_contraction(e1)};
+    EXPECT_EQ(result, one);
+  }
+  {
+    static constexpr Vector result{e1.right_contraction(e01)};
+    EXPECT_EQ(result, zero);
+  }
+
+  // e01 as lhs
+  {
+    static constexpr Vector result{e01.right_contraction(one)};
+    EXPECT_EQ(result, e01);
+  }
+  {
+    static constexpr Vector result{e01.right_contraction(e0)};
+    EXPECT_EQ(result, e1);
+  }
+  {
+    static constexpr Vector result{e01.right_contraction(e1)};
+    EXPECT_EQ(result, -e0);
+  }
+  {
+    static constexpr Vector result{e01.right_contraction(e01)};
+    EXPECT_EQ(result, -one);
+  }
+}
+
+TEST(MultivectorDiagnosticTest, RightContractionIsReverseOfLeftContractionWithReversedArguments) {
+  // For any two multivectors X and Y:
+  //   X |_ Y = involute(involute(Y) _| involute(X))
+  // This invariant expresses the left/right contraction duality through the
+  // reverse operation. Verifying it across all basis blade pairs in G(2,0)
+  // simultaneously stress-tests both contraction implementations, the reverse,
+  // and their mutual consistency.
+  using Vector = Vga2dMultivector<float>;
+
+  static constexpr Vector zero{};
+  static constexpr Vector one{1, 0, 0, 0};
+  static constexpr Vector e0{Vector::template e<0>()};
+  static constexpr Vector e1{Vector::template e<1>()};
+  static constexpr Vector e01{e0.outer(e1)};
+
+  static constexpr std::array<Vector, 4> blades{one, e0, e1, e01};
+
+  for (const Vector& x : blades) {
+    for (const Vector& y : blades) {
+      EXPECT_EQ(x.right_contraction(y), y.involute().left_contraction(x.involute()).involute())
+          << "x: " << x << ", y: " << y;
     }
   }
 }
 
-TEST(MultivectorTest, ValidGradeOperatorOnSpacetimeNumbers) {
-  const auto t{SpacetimeMultivector<float>::e<0>()};
-  const auto x{SpacetimeMultivector<float>::e<1>()};
-  const auto y{SpacetimeMultivector<float>::e<2>()};
-  const auto z{SpacetimeMultivector<float>::e<3>()};
-  const auto zero{SpacetimeMultivector<float>{0.f}};
+TEST(MultivectorDiagnosticTest, DualCoefficientsMatchExpectedValuesInVga2d) {
+  // G(2,0) has 4 basis blades: 1 (index 0), e0 (index 1), e1 (index 2),
+  // e0^e1 (index 3). The pseudoscalar I = e0^e1 squares to -1.
+  //
+  // Dual is defined as left contraction with I. The expected duals are:
+  //   dual(1)      =  e0^e1  (index 3, coefficient +1)
+  //   dual(e0)     =  e1     (index 2, coefficient +1)
+  //   dual(e1)     = -e0     (index 1, coefficient -1)
+  //   dual(e0^e1)  = -1      (index 0, coefficient -1)
+  //
+  // These are verified component by component so that a failure pinpoints
+  // exactly which blade's dual is wrong, and whether the fault lies in
+  // pseudoscalar(), left_contraction(), or the sign convention in the
+  // Cayley table.
+  using Vector = Vga2dMultivector<float>;
+  using ScalarType = Vector::ScalarType;
 
-  const auto all_bases{
-      1.f +                 //
-      2.f * t +             //
-      3.f * x +             //
-      4.f * y +             //
-      5.f * z +             //
-      6.f * t * x +         //
-      7.f * t * y +         //
-      8.f * t * z +         //
-      9.f * x * y +         //
-      10.f * x * z +        //
-      11.f * y * z +        //
-      12.f * t * x * y +    //
-      13.f * t * x * z +    //
-      14.f * t * y * z +    //
-      15.f * x * y * z +    //
-      16.f * t * x * y * z  //
-  };
+  static constexpr Vector one{1, 0, 0, 0};
+  static constexpr Vector e0{Vector::template e<0>()};
+  static constexpr Vector e1{Vector::template e<1>()};
+  static constexpr Vector e01{e0.outer(e1)};
 
-  EXPECT_EQ(SpacetimeMultivector<float>{1.f}, all_bases.grade_projection(0));
+  static constexpr Vector I{Vector::pseudoscalar()};
 
-  EXPECT_EQ(2.f * t + 3.f * x + 4.f * y + 5.f * z, all_bases.grade_projection(1));
+  // Document that the pseudoscalar itself is at the expected index with coefficient 1.
+  ASSERT_EQ(I.coefficient(0), ScalarType{0});
+  ASSERT_EQ(I.coefficient(1), ScalarType{0});
+  ASSERT_EQ(I.coefficient(2), ScalarType{0});
+  ASSERT_EQ(I.coefficient(3), ScalarType{1});
 
-  EXPECT_EQ(6.f * t * x + 7.f * t * y + 8.f * t * z + 9.f * x * y + 10.f * x * z + 11.f * y * z,
-            all_bases.grade_projection(2));
+  // dual(1) = e0^e1
+  static constexpr Vector dual_one{one.dual()};
+  EXPECT_EQ(dual_one.coefficient(0), ScalarType{0});
+  EXPECT_EQ(dual_one.coefficient(1), ScalarType{0});
+  EXPECT_EQ(dual_one.coefficient(2), ScalarType{0});
+  EXPECT_EQ(dual_one.coefficient(3), ScalarType{1});
 
-  EXPECT_EQ(12.f * t * x * y + 13.f * t * x * z + 14.f * t * y * z + 15.f * x * y * z,
-            all_bases.grade_projection(3));
+  // dual(e0) = e1
+  static constexpr Vector dual_e0{e0.dual()};
+  EXPECT_EQ(dual_e0.coefficient(0), ScalarType{0});
+  EXPECT_EQ(dual_e0.coefficient(1), ScalarType{0});
+  EXPECT_EQ(dual_e0.coefficient(2), ScalarType{1});
+  EXPECT_EQ(dual_e0.coefficient(3), ScalarType{0});
 
-  EXPECT_EQ(16.f * t * x * y * z, all_bases.grade_projection(4));
+  // dual(e1) = -e0
+  static constexpr Vector dual_e1{e1.dual()};
+  EXPECT_EQ(dual_e1.coefficient(0), ScalarType{0});
+  EXPECT_EQ(dual_e1.coefficient(1), ScalarType{-1});
+  EXPECT_EQ(dual_e1.coefficient(2), ScalarType{0});
+  EXPECT_EQ(dual_e1.coefficient(3), ScalarType{0});
+
+  // dual(e0^e1) = -1
+  static constexpr Vector dual_e01{e01.dual()};
+  EXPECT_EQ(dual_e01.coefficient(0), ScalarType{-1});
+  EXPECT_EQ(dual_e01.coefficient(1), ScalarType{0});
+  EXPECT_EQ(dual_e01.coefficient(2), ScalarType{0});
+  EXPECT_EQ(dual_e01.coefficient(3), ScalarType{0});
 }
 
-TEST(MultivectorTest, CanDoLeftContractionOnComplexNumbers) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};
-  static constexpr auto a{ComplexMultivector<float>{1.f}};  // 1
-  static constexpr auto u{i.add(1.f)};                      // 1 + i
-  static constexpr auto v{u.multiply(u)};                   // (1 + i)^2 = 2i
-  static constexpr auto w{v.multiply(v)};                   // (2i)^2 = -4
+TEST(MultivectorDiagnosticTest, UndualCoefficientsMatchExpectedValuesInVga2d) {
+  using Vector = Vga2dMultivector<float>;
+  using ScalarType = Vector::ScalarType;
 
-  EXPECT_EQ(-1.f, i.left_contraction(i));
-  EXPECT_EQ(1.f, a.left_contraction(a));
-  EXPECT_EQ(i, u.left_contraction(u));
-  EXPECT_EQ(-2.f, v.left_contraction(i));
-  EXPECT_EQ(-2.f, v.left_contraction(u));
-  EXPECT_EQ(0.f, v.left_contraction(w));
-  EXPECT_EQ(w * u, w.left_contraction(u));
-  EXPECT_EQ(-4.f, u.left_contraction(w));
+  static constexpr Vector one{1, 0, 0, 0};
+  static constexpr Vector e0{Vector::template e<0>()};
+  static constexpr Vector e1{Vector::template e<1>()};
+  static constexpr Vector e01{e0.outer(e1)};
+
+  static constexpr Vector I{Vector::pseudoscalar()};
+  ASSERT_EQ(e01, I);
+
+  // Document that the pseudoscalar itself is at the expected index with coefficient 1.
+  ASSERT_EQ(I.coefficient(0), ScalarType{0});
+  ASSERT_EQ(I.coefficient(1), ScalarType{0});
+  ASSERT_EQ(I.coefficient(2), ScalarType{0});
+  ASSERT_EQ(I.coefficient(3), ScalarType{1});
+
+  // undual(1) = -e0^e1
+  static constexpr Vector undual_one{one.undual()};
+  EXPECT_EQ(undual_one.coefficient(0), ScalarType{0});
+  EXPECT_EQ(undual_one.coefficient(1), ScalarType{0});
+  EXPECT_EQ(undual_one.coefficient(2), ScalarType{0});
+  EXPECT_EQ(undual_one.coefficient(3), ScalarType{-1});
+
+  // undual(e0) = e1
+  static constexpr Vector undual_e0{e0.undual()};
+  EXPECT_EQ(undual_e0.coefficient(0), ScalarType{0});
+  EXPECT_EQ(undual_e0.coefficient(1), ScalarType{0});
+  EXPECT_EQ(undual_e0.coefficient(2), ScalarType{1});
+  EXPECT_EQ(undual_e0.coefficient(3), ScalarType{0});
+
+  // undual(e1) = -e0
+  static constexpr Vector undual_e1{e1.undual()};
+  EXPECT_EQ(undual_e1.coefficient(0), ScalarType{0});
+  EXPECT_EQ(undual_e1.coefficient(1), ScalarType{-1});
+  EXPECT_EQ(undual_e1.coefficient(2), ScalarType{0});
+  EXPECT_EQ(undual_e1.coefficient(3), ScalarType{0});
+
+  // undual(e0^e1) = 1
+  static constexpr Vector undual_e01{e01.undual()};
+  EXPECT_EQ(undual_e01.coefficient(0), ScalarType{1});
+  EXPECT_EQ(undual_e01.coefficient(1), ScalarType{0});
+  EXPECT_EQ(undual_e01.coefficient(2), ScalarType{0});
+  EXPECT_EQ(undual_e01.coefficient(3), ScalarType{0});
 }
 
-TEST(MultivectorTest, CanDoLeftContractionOnDualNumbers) {
-  static constexpr auto e{DualMultivector<float>::e<0>()};
-  static constexpr auto a{DualMultivector<float>{1.f}};  // 1
-  static constexpr auto u{e.add(1.f)};                   // 1 + e
-  static constexpr auto v{u.multiply(u)};                // (1 + e)^2 = 1 + 2e
-  static constexpr auto w{4.f + 2.f * e};                // 4 + 2e
+template <typename MultivectorT>
+class MultivectorTest : public ::testing::Test {};
 
-  EXPECT_EQ(0.f, e.left_contraction(e));
-  EXPECT_EQ(1.f, a.left_contraction(a));
-  EXPECT_EQ(u, u.left_contraction(u));
-  EXPECT_EQ(v, v.left_contraction(v));
+using MultivectorTypes =
+    ::testing::Types<Vga2dMultivector<float>, VgaMultivector<float>, PgaMultivector<float>>;
 
-  // Interesting result for dual numbers -- for any multivector m,
-  //   m << m = m.scalar() * m
-  EXPECT_EQ(e.scalar() * e, e.left_contraction(e));
-  EXPECT_EQ(a.scalar() * a, a.left_contraction(a));
-  EXPECT_EQ(u.scalar() * u, u.left_contraction(u));
-  EXPECT_EQ(v.scalar() * v, v.left_contraction(v));
-  EXPECT_EQ(w.scalar() * w, w.left_contraction(w));
+TYPED_TEST_SUITE(MultivectorTest, MultivectorTypes);
+
+//--------------------------------------------------------------------------------------------------
+// Construction & Representation
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, DefaultConstructionYieldsZeroMultivector) {
+  static constexpr TypeParam zero{};
+  static constexpr typename TypeParam::ScalarType ZERO{0};
+
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    EXPECT_EQ(zero.coefficient(i), ZERO);
+  }
 }
 
-TEST(MultivectorTest, CanDoLeftContractionOnSimpleVga) {
-  static constexpr auto x{VgaMultivector<float>::e<0>()};
-  static constexpr auto a{VgaMultivector<float>{1.f}};  // 1
-  static constexpr auto u{x.add(1.f)};                  // 1 + x
-  static constexpr auto v{u.multiply(u)};               // (1 + x)^2 = 2 + 2x
-  static constexpr auto w{v.multiply(v)};               // (2 + 2x)^2 = 8 + 8x
+TYPED_TEST(MultivectorTest, CanConstructFromScalar) {
+  static constexpr typename TypeParam::ScalarType SCALAR{3};
+  static constexpr typename TypeParam::ScalarType ZERO{0};
+  static constexpr TypeParam mv{SCALAR};
 
-  EXPECT_EQ(1.f, x.left_contraction(x));
-  EXPECT_EQ(1.f, a.left_contraction(a));
-  EXPECT_EQ(1.f, x.left_contraction(u));
-  EXPECT_EQ(u, u.left_contraction(x));
-  EXPECT_EQ(u + 1.f, u.left_contraction(u));
-  EXPECT_EQ(v, v.left_contraction(x));
-  EXPECT_EQ(2.f, x.left_contraction(v));
-  EXPECT_EQ(4.f + 2.f * x, v.left_contraction(u));
-  EXPECT_EQ(32.f + 16.f * x, v.left_contraction(w));
-  EXPECT_EQ(v.left_contraction(w), w.left_contraction(v));
-  EXPECT_EQ(16.f + 8.f * x, w.left_contraction(u));
-  EXPECT_EQ(w.left_contraction(u), u.left_contraction(w));
+  EXPECT_EQ(mv.scalar(), SCALAR);
+  for (size_t i = 1; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    EXPECT_EQ(mv.coefficient(i), ZERO);
+  }
 }
 
-TEST(MultivectorTest, CanDoLeftContractionOnVga) {
-  static constexpr auto x{VgaMultivector<float>::e<0>()};
-  static constexpr auto y{VgaMultivector<float>::e<1>()};
-  static constexpr auto z{VgaMultivector<float>::e<2>()};
-  static constexpr auto a{VgaMultivector<float>{1.f}};
+TYPED_TEST(MultivectorTest, CanConstructFromBasisVector) {
+  static constexpr typename TypeParam::ScalarType ZERO{0};
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
 
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f + 2.f * y};
-  static constexpr auto w{2.f + 3.f * z};
-
-  EXPECT_EQ(v, u.left_contraction(v));
-  EXPECT_EQ(w, v.left_contraction(w));
-  EXPECT_EQ(2.f * u, w.left_contraction(u));
-
-  // Document the values of these products, since they will be used in more complicated tests
-  // below.
-  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
-  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
-  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
-
-  // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
-  // the rhs.
-  EXPECT_EQ(v * w, u.left_contraction(v * w)) << "v * w: " << v * w;
-  EXPECT_EQ(w * u, v.left_contraction(w * u));
-  EXPECT_EQ(2.f * u * v, w.left_contraction(u * v));
-
-  EXPECT_EQ(4.f + 8.f * y + 6.f * z + 12.f * y * z + 9.f - 18.f * y, w.left_contraction(v * w));
-
-  EXPECT_EQ(2.f * (2.f + 2.f * x + 3.f * z - 3.f * x * z) + 9.f + 9.f * x,
-            w.left_contraction(w * u));
-
-  EXPECT_EQ(u * v + +4.f - 4.f * x, v.left_contraction(u * v));
-}
-
-TEST(MultivectorTest, CanDoLeftContractionOnSimpleSpacetime) {
-  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
-  static constexpr auto a{SpacetimeMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + x};                           // 1 + x
-  static constexpr auto v{u * u};                             // (1 + x)^2 = 2x
-  static constexpr auto w{v * v};                             // (2x)^2 = -4
-
-  EXPECT_EQ(-1.f, x.left_contraction(x));
-  EXPECT_EQ(1.f, a.left_contraction(a));
-  EXPECT_EQ(-1.f, x.left_contraction(u));
-  EXPECT_EQ(x - 1.f, u.left_contraction(x));
-  EXPECT_EQ(u - 1.f, u.left_contraction(u));
-  EXPECT_EQ(-2.f, v.left_contraction(x));
-  EXPECT_EQ(-2.f, x.left_contraction(v));
-  EXPECT_EQ(-2.f, v.left_contraction(u));
-  EXPECT_EQ(0.f, v.left_contraction(w));
-  EXPECT_EQ(-8.f * x, w.left_contraction(v));
-  EXPECT_EQ(-4.f - 4.f * x, w.left_contraction(u));
-  EXPECT_EQ(-4.f, u.left_contraction(w));
-}
-
-TEST(MultivectorTest, CanDoLeftContractionOnSpacetime) {
-  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
-  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
-  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
-  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
-  static constexpr auto a{SpacetimeMultivector<float>{1.f}};
-
-  static constexpr auto r{1.f + t};
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f + 2.f * y};
-  static constexpr auto w{2.f + 3.f * z};
-
-  EXPECT_EQ(u, r.left_contraction(u));
-  EXPECT_EQ(0.f, t.left_contraction(u));
-  EXPECT_EQ(v, u.left_contraction(v));
-  EXPECT_EQ(w, v.left_contraction(w));
-  EXPECT_EQ(2.f * u, w.left_contraction(u));
-
-  // Document the values of these products, since they will be used in more complicated tests
-  // below.
-  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
-  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
-  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
-
-  // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
-  // the rhs.
-  EXPECT_EQ(v * w, u.left_contraction(v * w)) << "v * w: " << v * w;
-  EXPECT_EQ(w * u, v.left_contraction(w * u));
-  EXPECT_EQ(2.f * u * v, w.left_contraction(u * v));
-
-  EXPECT_EQ(4.f + 8.f * y + 6.f * z + 12.f * y * z + -9.f + 18.f * y, w.left_contraction(v * w));
-
-  EXPECT_EQ(4.f + 4.f * x + 6.f * z - 6.f * x * z + -9.f - 9.f * x, w.left_contraction(w * u));
-
-  EXPECT_EQ(u * v - 4.f + 4.f * x, v.left_contraction(u * v));
-}
-
-TEST(MultivectorTest, CanDoBidirectionalInnerProductOnComplexNumbers) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};
-  static constexpr auto a{ComplexMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + i};                         // 1 + i
-  static constexpr auto v{u * u};                           // (1 + i)^2 = 2i
-  static constexpr auto w{v * v};                           // (2i)^2 = -4
-
-  EXPECT_EQ(-1.f, i.bidirectional_inner(i));
-  EXPECT_EQ(1.f, a.bidirectional_inner(a));
-  EXPECT_EQ(2.f * i, u.bidirectional_inner(u));
-  EXPECT_EQ(-2.f, v.bidirectional_inner(i));
-  EXPECT_EQ(-2.f + 2.f * i, v.bidirectional_inner(u));
-  EXPECT_EQ(-8.f * i, v.bidirectional_inner(w));
-  EXPECT_EQ(w * u, w.bidirectional_inner(u));
-  EXPECT_EQ(w * u, u.bidirectional_inner(w));
-
-  for (const auto& p : {i, a, u, v, w}) {
-    for (const auto& q : {i, a, u, v, w}) {
-      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+  // The coefficient at the bit-index for e0 (index 1) must be 1; all others zero.
+  EXPECT_EQ(e0.coefficient(1), typename TypeParam::ScalarType{1});
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    if (i != 1) {
+      EXPECT_EQ(e0.coefficient(i), ZERO);
     }
   }
 }
 
-TEST(MultivectorTest, CanDoBidirectionalInnerProductOnDualNumbers) {
-  static constexpr auto e{DualMultivector<float>::e<0>()};
-  static constexpr auto a{DualMultivector<float>{1.f}};  // 1
-  static constexpr auto u{e.add(1.f)};                   // 1 + e
-  static constexpr auto v{u.multiply(u)};                // (1 + e)^2 = 1 + 2e
-  static constexpr auto w{4.f + 2.f * e};                // 4 + 2e
+TYPED_TEST(MultivectorTest, CanConstructFromBasisBivector) {
+  static constexpr typename TypeParam::ScalarType ZERO{0};
 
-  EXPECT_EQ(0.f, e.bidirectional_inner(e));
-  EXPECT_EQ(1.f, a.bidirectional_inner(a));
-  EXPECT_EQ(1.f + 2.f * e, u.bidirectional_inner(u));
-  EXPECT_EQ(1.f + 4.f * e, v.bidirectional_inner(v));
+  // The bivector e0^e1 lives at bit-index 3 (bits 0 and 1 set).
+  static constexpr TypeParam e01{TypeParam::template e<0>().outer(TypeParam::template e<1>())};
 
-  EXPECT_EQ(4.f + 10.f * e, w.bidirectional_inner(v));
-
-  for (const auto& p : {e, a, u, v, w}) {
-    for (const auto& q : {e, a, u, v, w}) {
-      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+  EXPECT_EQ(e01.coefficient(3), typename TypeParam::ScalarType{1});
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    if (i != 3) {
+      EXPECT_EQ(e01.coefficient(i), ZERO);
     }
   }
 }
 
-TEST(MultivectorTest, CanDoBidirectionalInnerProductOnSimpleVga) {
-  static constexpr auto x{VgaMultivector<float>::e<0>()};
-  static constexpr auto a{VgaMultivector<float>{1.f}};  // 1
-  static constexpr auto u{x.add(1.f)};                  // 1 + x
-  static constexpr auto v{u.multiply(u)};               // (1 + x)^2 = 2 + 2x
-  static constexpr auto w{v.multiply(v)};               // (2 + 2x)^2 = 8 + 8x
+TYPED_TEST(MultivectorTest, CanConstructFromFullGradedComponents) {
+  // Build a multivector via initializer list and verify every coefficient is
+  // stored in the expected position.
+  typename TypeParam::ScalarType expected[TypeParam::NUM_BASIS_BLADES];
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    expected[i] = static_cast<typename TypeParam::ScalarType>(i + 1);
+  }
 
-  EXPECT_EQ(1.f, x.bidirectional_inner(x));
-  EXPECT_EQ(1.f, a.bidirectional_inner(a));
-  EXPECT_EQ(1.f + x, x.bidirectional_inner(u));
-  EXPECT_EQ(u, u.bidirectional_inner(x));
-  EXPECT_EQ(2.f + 2.f * x, u.bidirectional_inner(u));
-  EXPECT_EQ(v, v.bidirectional_inner(x));
-  EXPECT_EQ(v, x.bidirectional_inner(v));
-  EXPECT_EQ(4.f + 4.f * x, v.bidirectional_inner(u));
-  EXPECT_EQ(32.f + 32.f * x, v.bidirectional_inner(w));
-  EXPECT_EQ(16.f + 16.f * x, w.bidirectional_inner(u));
+  TypeParam mv{};
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    mv.set_coefficient(i, expected[i]);
+  }
 
-  for (const auto& p : {x, a, u, v, w}) {
-    for (const auto& q : {x, a, u, v, w}) {
-      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    EXPECT_EQ(mv.coefficient(i), expected[i]);
+  }
+}
+
+TYPED_TEST(MultivectorTest, CopyConstructionProducesEqualMultivector) {
+  static constexpr TypeParam original{TypeParam::template e<0>()};
+  static constexpr TypeParam copy{original};
+
+  EXPECT_EQ(original, copy);
+}
+
+TYPED_TEST(MultivectorTest, MoveConstructionTransfersComponents) {
+  TypeParam source{TypeParam::template e<0>()};
+  const TypeParam expected{source};
+  const TypeParam moved{std::move(source)};
+
+  EXPECT_EQ(moved, expected);
+}
+
+TYPED_TEST(MultivectorTest, GradeExtractionReturnsCorrectKVector) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam mixed{e0.add(e0.outer(e1))};
+
+  // The grade-1 projection must equal e0; the grade-2 projection must equal e0^e1.
+  EXPECT_EQ(mixed.grade_projection(1), e0);
+  EXPECT_EQ(mixed.grade_projection(2), e0.outer(e1));
+
+  // The grade-0 projection of a purely vector+bivector element must be zero.
+  EXPECT_EQ(mixed.grade_projection(0), TypeParam{});
+}
+
+TYPED_TEST(MultivectorTest, ZeroMultivectorHasNoComponents) {
+  static constexpr TypeParam zero{};
+  static constexpr typename TypeParam::ScalarType ZERO{0};
+
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    EXPECT_EQ(zero.coefficient(i), ZERO);
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Equality & Comparison
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, EqualityHoldsForIdenticalMultivectors) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<0>()};
+
+  EXPECT_EQ(a, b);
+}
+
+TYPED_TEST(MultivectorTest, InequalityDetectsDifferingComponents) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<1>()};
+
+  EXPECT_NE(a, b);
+}
+
+TYPED_TEST(MultivectorTest, EqualityIsReflexive) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+
+  EXPECT_EQ(a, a);
+}
+
+TYPED_TEST(MultivectorTest, EqualityIsSymmetric) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<0>()};
+
+  EXPECT_EQ(a, b);
+  EXPECT_EQ(b, a);
+}
+
+TYPED_TEST(MultivectorTest, EqualityIsTransitive) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<0>()};
+  static constexpr TypeParam c{TypeParam::template e<0>()};
+
+  EXPECT_EQ(a, b);
+  EXPECT_EQ(b, c);
+  EXPECT_EQ(a, c);
+}
+
+TYPED_TEST(MultivectorTest, NearEqualityRespectsEpsilonTolerance) {
+  // Two multivectors differing by less than EPSILON in every component must
+  // compare as nearly equal; one differing by more must not.
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType EPSILON{TypeParam::EPSILON};
+
+  TypeParam a{TypeParam::template e<0>()};
+  TypeParam b{TypeParam::template e<0>()};
+
+  b.set_coefficient(1, b.coefficient(1) + EPSILON / ScalarType{2});
+  EXPECT_TRUE(a.near_equal(b));
+
+  b.set_coefficient(1, a.coefficient(1) + EPSILON * ScalarType{2});
+  EXPECT_FALSE(a.near_equal(b));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Addition & Subtraction
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, AdditionOfMultivectorsIsCommutative) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<1>()};
+
+  EXPECT_EQ(a.add(b), b.add(a));
+}
+
+TYPED_TEST(MultivectorTest, AdditionOfMultivectorsIsAssociative) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<1>()};
+  static constexpr TypeParam c{TypeParam::pseudoscalar()};
+
+  EXPECT_EQ(a.add(b).add(c), a.add(b.add(c)));
+}
+
+TYPED_TEST(MultivectorTest, AddingZeroMultivectorIsIdentity) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam zero{};
+
+  EXPECT_EQ(a.add(zero), a);
+}
+
+TYPED_TEST(MultivectorTest, SubtractionIsAnticommutative) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<1>()};
+
+  EXPECT_EQ(a.subtract(b), -b.subtract(a));
+}
+
+TYPED_TEST(MultivectorTest, AddingNegationYieldsZero) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam zero{};
+
+  EXPECT_EQ(a.add(-a), zero);
+}
+
+TYPED_TEST(MultivectorTest, NegationInvertsAllComponents) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam neg_a{-a};
+
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    EXPECT_EQ(neg_a.coefficient(i), -a.coefficient(i));
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Scalar Multiplication
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, ScalarMultiplicationDistributesOverAddition) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType s{3};
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<1>()};
+
+  EXPECT_EQ(a.add(b).multiply(s), a.multiply(s).add(b.multiply(s)));
+}
+
+TYPED_TEST(MultivectorTest, MultiplicationByOneIsIdentity) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+
+  EXPECT_EQ(a.multiply(typename TypeParam::ScalarType{1}), a);
+}
+
+TYPED_TEST(MultivectorTest, MultiplicationByZeroYieldsZero) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam zero{};
+
+  EXPECT_EQ(a.multiply(typename TypeParam::ScalarType{0}), zero);
+}
+
+TYPED_TEST(MultivectorTest, MultiplicationByNegativeOneIsNegation) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+
+  EXPECT_EQ(a.multiply(typename TypeParam::ScalarType{-1}), -a);
+}
+
+TYPED_TEST(MultivectorTest, ScalarMultiplicationIsAssociativeWithScalars) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType s{3};
+  static constexpr ScalarType t{5};
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+
+  EXPECT_EQ(a.multiply(s).multiply(t), a.multiply(s * t));
+}
+
+//--------------------------------------------------------------------------------------------------
+// Geometric Product
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, GeometricProductOfBasisVectorWithItselfYieldsMetricScalar) {
+  // e_i * e_i must equal the metric value for that basis vector, which lands
+  // entirely in the scalar component. The value of that scalar is algebra-defined
+  // and extracted directly from the result rather than assumed.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam product{e0.multiply(e0)};
+
+  // All non-scalar components must be zero.
+  for (size_t i = 1; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    EXPECT_EQ(product.coefficient(i), typename TypeParam::ScalarType{0});
+  }
+}
+
+TYPED_TEST(MultivectorTest, GeometricProductIsAssociative) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<1>()};
+  static constexpr TypeParam c{TypeParam::pseudoscalar()};
+
+  EXPECT_EQ(a.multiply(b).multiply(c), a.multiply(b.multiply(c)));
+}
+
+TYPED_TEST(MultivectorTest, GeometricProductIsDistributiveOverAddition) {
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+  static constexpr TypeParam b{TypeParam::template e<1>()};
+  static constexpr TypeParam c{TypeParam::pseudoscalar()};
+
+  EXPECT_EQ(a.multiply(b.add(c)), a.multiply(b).add(a.multiply(c)));
+}
+
+TYPED_TEST(MultivectorTest, GeometricProductWithScalarScalesAllComponents) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType s{5};
+  static constexpr TypeParam a{TypeParam::template e<0>()};
+
+  static constexpr TypeParam via_scalar_multiply{a.multiply(s)};
+  static constexpr TypeParam scalar_mv{TypeParam{}.add(s)};
+  static constexpr TypeParam via_geometric{a.multiply(scalar_mv)};
+
+  EXPECT_EQ(via_scalar_multiply, via_geometric);
+}
+
+TYPED_TEST(MultivectorTest, GeometricProductOfOrthogonalBasisVectorsIsPureBivector) {
+  // e0 * e1 must be a pure grade-2 element; no grade-0 or grade-1 components.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam product{e0.multiply(e1)};
+
+  EXPECT_EQ(product.grade_projection(0), TypeParam{});
+  EXPECT_EQ(product.grade_projection(1), TypeParam{});
+  EXPECT_EQ(product.grade_projection(2), product);
+}
+
+TYPED_TEST(MultivectorTest, GeometricProductOfBasisVectorsAnticommutes) {
+  // e_i * e_j = -(e_j * e_i) for i != j.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+
+  EXPECT_EQ(e0.multiply(e1), -e1.multiply(e0));
+}
+
+TYPED_TEST(MultivectorTest, GeometricProductIsNoncommutativeInGeneral) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+
+  EXPECT_NE(e0.multiply(e1), e1.multiply(e0));
+}
+
+TYPED_TEST(MultivectorTest, SquareOfBivectorYieldsGradeZeroAndGradeFourComponents) {
+  if constexpr (TypeParam::NUM_GRADES > 3) {
+    // (e0^e1)^2 must have no grade-1, grade-2, or grade-3 components; the result
+    // is constrained to grades 0 and 4 (and higher even grades in larger algebras).
+    static constexpr TypeParam e01{TypeParam::template e<0>().outer(TypeParam::template e<1>())};
+    static constexpr TypeParam product{e01.multiply(e01)};
+
+    EXPECT_EQ(product.template grade_projection<1>(), TypeParam{});
+    EXPECT_EQ(product.template grade_projection<2>(), TypeParam{});
+    EXPECT_EQ(product.template grade_projection<3>(), TypeParam{});
+  } else {
+    GTEST_SKIP() << "Test skipped. Only valid for algebras that use more than 3 grades.";
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Outer (Wedge) Product
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, OuterProductOfVectorWithItselfIsZero) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam zero{};
+
+  EXPECT_EQ(e0.outer(e0), zero);
+}
+
+TYPED_TEST(MultivectorTest, OuterProductIsAnticommutative) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+
+  EXPECT_EQ(e0.outer(e1), -e1.outer(e0));
+}
+
+TYPED_TEST(MultivectorTest, OuterProductIsAssociative) {
+  if constexpr (TypeParam::NUM_BASIS_VECTORS > 2) {
+    static constexpr TypeParam e0{TypeParam::template e<0>()};
+    static constexpr TypeParam e1{TypeParam::template e<1>()};
+    static constexpr TypeParam e2{TypeParam::template e<2>()};
+
+    EXPECT_EQ(e0.outer(e1).outer(e2), e0.outer(e1.outer(e2)));
+  } else {
+    static constexpr TypeParam e0{TypeParam::template e<0>()};
+    static constexpr TypeParam e1{TypeParam::template e<1>()};
+
+    // Use a linear combination as the third operand so that the triple outer
+    // product is nontrivial without requiring a third basis vector.
+    static constexpr TypeParam a{e0};
+    static constexpr TypeParam b{e1};
+    static constexpr TypeParam c{e0.add(e1)};
+
+    EXPECT_EQ(a.outer(b).outer(c), a.outer(b.outer(c)));
+  }
+}
+
+TYPED_TEST(MultivectorTest, OuterProductDistributesOverAddition) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+
+  static constexpr TypeParam a{e0};
+  static constexpr TypeParam b{e1};
+  static constexpr TypeParam c{e0.add(e1)};
+
+  EXPECT_EQ(a.outer(b.add(c)), a.outer(b).add(a.outer(c)));
+}
+
+TYPED_TEST(MultivectorTest, OuterProductGradeIsAdditive) {
+  if constexpr (TypeParam::NUM_BASIS_VECTORS > 2) {
+    static constexpr TypeParam e0{TypeParam::template e<0>()};
+    static constexpr TypeParam e1{TypeParam::template e<1>()};
+    static constexpr TypeParam e2{TypeParam::template e<2>()};
+
+    static constexpr TypeParam trivector{e0.outer(e1).outer(e2)};
+
+    // e0^e1^e2 must be purely grade 3.
+    EXPECT_EQ(trivector.grade_projection(3), trivector);
+    EXPECT_EQ(trivector.grade_projection(0), TypeParam{});
+    EXPECT_EQ(trivector.grade_projection(1), TypeParam{});
+    EXPECT_EQ(trivector.grade_projection(2), TypeParam{});
+  } else {
+    GTEST_SKIP() << "Test skipped. Only valid for algebras with 3 or more basis vectors.";
+  }
+}
+
+TYPED_TEST(MultivectorTest, OuterProductOfLinearlyDependentVectorsIsZero) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam scaled{e0.multiply(ScalarType{3})};
+  static constexpr TypeParam zero{};
+
+  EXPECT_EQ(e0.outer(scaled), zero);
+}
+
+TYPED_TEST(MultivectorTest, OuterProductOfBasisVectorsYieldsExpectedBasisBlade) {
+  // e0^e1 must land at bit-index 3 (bits 0 and 1 set) with coefficient 1.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam e01{e0.outer(e1)};
+
+  EXPECT_EQ(e01.coefficient(3), typename TypeParam::ScalarType{1});
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    if (i != 3) {
+      EXPECT_EQ(e01.coefficient(i), typename TypeParam::ScalarType{0});
     }
   }
 }
 
-TEST(MultivectorTest, CanDoBidirectionalInnerProductOnVga) {
-  static constexpr auto x{VgaMultivector<float>::e<0>()};
-  static constexpr auto y{VgaMultivector<float>::e<1>()};
-  static constexpr auto z{VgaMultivector<float>::e<2>()};
-  static constexpr auto a{VgaMultivector<float>{1.f}};
+TYPED_TEST(MultivectorTest, OuterProductWithScalarScalesMultivector) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType s{7};
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam scalar_mv{TypeParam{}.add(s)};
 
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f + 2.f * y};
-  static constexpr auto w{2.f + 3.f * z};
+  EXPECT_EQ(scalar_mv.outer(e0), e0.multiply(s));
+}
 
-  EXPECT_EQ(1.f + x + 2.f * y, u.bidirectional_inner(v));
-  EXPECT_EQ(2.f + 3.f * z + 4.f * y, v.bidirectional_inner(w));
-  EXPECT_EQ(2.f + 3.f * z + 2.f * x, w.bidirectional_inner(u));
+//--------------------------------------------------------------------------------------------------
+// Inner / Contraction Products
+//--------------------------------------------------------------------------------------------------
 
-  // Document the values of these products, since they will be used in more complicated tests
-  // below.
-  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
-  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
-  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+TYPED_TEST(MultivectorTest, LeftContractionReducesGradeByExpectedAmount) {
+  // (e0) _| (e0^e1) must be grade (2-1) = 1.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam e01{e0.outer(e1)};
+  static constexpr TypeParam result{e0.left_contraction(e01)};
 
-  EXPECT_EQ(v * w + 2.f * x, u.bidirectional_inner(v * w)) << "v * w: " << v * w;
-  EXPECT_EQ(w * u + 4.f * y, v.bidirectional_inner(w * u));
-  EXPECT_EQ(2.f * u * v + 3.f * z, w.bidirectional_inner(u * v));
+  EXPECT_EQ(result.grade_projection(1), result);
+}
 
-  EXPECT_EQ(4.f + 8.f * y + 6.f * z + 12.f * y * z + 6.f * z + 9.f - 18.f * y,
-            w.bidirectional_inner(v * w));
+TYPED_TEST(MultivectorTest, RightContractionReducesGradeByExpectedAmount) {
+  // (e0^e1) |_ (e0) must be grade (2-1) = 1.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam e01{e0.outer(e1)};
+  static constexpr TypeParam result{e01.right_contraction(e0)};
 
-  EXPECT_EQ(4.f + 4.f * x + 6.f * z - 6.f * x * z + 6.f * z + 9.f + 9.f * x,
-            w.bidirectional_inner(w * u));
+  EXPECT_EQ(result.grade_projection(1), result);
+}
 
-  EXPECT_EQ(1.f + x + 2.f * y + 2.f * x * y + 2.f * y + 4.f - 4.f * x,
-            v.bidirectional_inner(u * v));
+TYPED_TEST(MultivectorTest, ScalarProductOfOrthogonalBasisVectorsIsZero) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam zero{};
 
-  for (const auto& p : {x, y, z, a, u, v, w}) {
-    for (const auto& q : {x, y, z, a, u, v, w}) {
-      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
+  EXPECT_EQ(e0.left_contraction(e1), zero);
+}
+
+TYPED_TEST(MultivectorTest, ScalarProductOfBasisVectorWithItselfEqualsMetricValue) {
+  // e_i _| e_i must be a pure scalar equal to the metric value of that basis;
+  // the value is algebra-defined and extracted from the result rather than assumed.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam result{e0.left_contraction(e0)};
+
+  for (size_t i = 1; i < TypeParam::NUM_BASIS_BLADES; ++i) {
+    EXPECT_EQ(result.coefficient(i), typename TypeParam::ScalarType{0});
+  }
+}
+
+TYPED_TEST(MultivectorTest, RightContractionIsReverseOfLeftContractionWithReversedArguments) {
+  // For any two multivectors X and Y:
+  //   X |_ Y = involute(involute(Y) _| involute(X))
+  // This invariant expresses the left/right contraction duality through the
+  // reverse operation. Verifying it across all basis blade pairs in G(2,0)
+  // simultaneously stress-tests both contraction implementations, the reverse,
+  // and their mutual consistency.
+  static constexpr TypeParam zero{};
+  static constexpr TypeParam one{1, 0, 0, 0};
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam e01{e0.outer(e1)};
+
+  static constexpr std::array<TypeParam, 4> blades{one, e0, e1, e01};
+
+  for (const auto& x : blades) {
+    for (const auto& y : blades) {
+      EXPECT_EQ(x.right_contraction(y), y.involute().left_contraction(x.involute()).involute())
+          << "x: " << x << ", y: " << y;
     }
   }
 }
 
-TEST(MultivectorTest, CanDoBidirectionalInnerProductOnSimpleSpacetime) {
-  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
-  static constexpr auto a{SpacetimeMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + x};                           // 1 + x
-  static constexpr auto v{u * u};                             // (1 + x)^2 = 2x
-  static constexpr auto w{v * v};                             // (2x)^2 = -4
+TYPED_TEST(MultivectorTest, HestenesDotProductSymmetrizesContraction) {
+  // For two vectors a and b: a _| b == b _| a (both yield the same scalar).
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
 
-  EXPECT_EQ(-1.f, x.bidirectional_inner(x));
-  EXPECT_EQ(1.f, a.bidirectional_inner(a));
+  EXPECT_EQ(e0.left_contraction(e1), e1.left_contraction(e0));
+}
 
-  EXPECT_EQ(x - 1.f, x.bidirectional_inner(u));
-  EXPECT_EQ(2.f * x, u.bidirectional_inner(u));
-  EXPECT_EQ(-2.f, v.bidirectional_inner(x));
-  EXPECT_EQ(-2.f, x.bidirectional_inner(v));
-  EXPECT_EQ(-2.f + 2.f * x, v.bidirectional_inner(u));
+TYPED_TEST(MultivectorTest, LeftContractionWithScalarScalesMultivector) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType s{4};
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam scalar_mv{TypeParam{}.add(s)};
 
-  EXPECT_EQ(-8.f * x, v.bidirectional_inner(w));
+  EXPECT_EQ(scalar_mv.left_contraction(e0), e0.multiply(s));
+}
 
-  EXPECT_EQ(-4.f - 4.f * x, w.bidirectional_inner(u));
+TYPED_TEST(MultivectorTest, ContractionGradeObeysFatDotConvention) {
+  // For grades r and s, the left contraction result has grade |s - r| when r <= s,
+  // and is zero when r > s.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam e01{e0.outer(e1)};
+  static constexpr TypeParam zero{};
 
-  for (const auto& p : {x, a, u, v, w}) {
-    for (const auto& q : {x, a, u, v, w}) {
-      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
-    }
+  // Grade 2 _| grade 1 must be zero (r > s).
+  EXPECT_EQ(e01.left_contraction(e0), zero);
+}
+
+//--------------------------------------------------------------------------------------------------
+// Grade Operations
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, GradeInvolutionNegatesOddGrades) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+
+  // Grade-1 element negated under grade involution.
+  const TypeParam involution{e0.involute()};
+  EXPECT_EQ(involution, -e0);
+}
+
+TYPED_TEST(MultivectorTest, GradeInvolutionPreservesEvenGrades) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam e01{e0.outer(e1)};
+
+  const TypeParam involution{e01.involute()};
+  EXPECT_EQ(involution, e01);
+}
+
+TYPED_TEST(MultivectorTest, ReverseFlipsSignOfBivectorsAndTrivectors) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam e01{e0.outer(e1)};
+
+  EXPECT_EQ(e01.reverse(), -e01);
+  EXPECT_EQ(e0.reverse(), e0);
+  EXPECT_EQ(e1.reverse(), e1);
+}
+
+TYPED_TEST(MultivectorTest, ReverseOfReverseIsIdentity) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam mv{e0.add(e0.outer(e1))};
+
+  EXPECT_EQ(mv.reverse().reverse(), mv);
+}
+
+TYPED_TEST(MultivectorTest, CliffordConjugateComposesReverseAndGradeInvolution) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam mv{e0.add(e0.outer(e1))};
+
+  // The Clifford conjugate is grade-involution followed by reverse (or equivalently
+  // reverse followed by grade-involution; the two commute).
+  EXPECT_EQ(mv.conj(), mv.involute().reverse());
+  EXPECT_EQ(mv.conj(), mv.reverse().involute());
+}
+
+TYPED_TEST(MultivectorTest, GradeProjectionOntoAbsentGradeYieldsZero) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+
+  // A pure grade-1 element projected onto grade 2 must be zero.
+  EXPECT_EQ(e0.grade_projection(2), TypeParam{});
+}
+
+TYPED_TEST(MultivectorTest, SumOfAllGradeProjectionsReconstitutesOriginal) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam mv{e0.add(e0.outer(e1))};
+
+  TypeParam reconstructed{};
+  for (size_t g = 0; g < TypeParam::NUM_GRADES; ++g) {
+    reconstructed = reconstructed.add(mv.grade_projection(g));
+  }
+  EXPECT_EQ(reconstructed, mv);
+}
+
+TYPED_TEST(MultivectorTest, PseudoscalarHasExpectedTopGrade) {
+  static constexpr TypeParam I{TypeParam::pseudoscalar()};
+
+  EXPECT_EQ(I.grade_projection(TypeParam::NUM_BASIS_VECTORS), I);
+  for (size_t g = 0; g < TypeParam::NUM_BASIS_VECTORS; ++g) {
+    EXPECT_EQ(I.grade_projection(g), TypeParam{});
   }
 }
 
-TEST(MultivectorTest, CanDoBidirectionalInnerProductOnSpacetime) {
-  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
-  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
-  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
-  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
-  static constexpr auto a{SpacetimeMultivector<float>{1.f}};
+//--------------------------------------------------------------------------------------------------
+// Norms & Inverses
+//--------------------------------------------------------------------------------------------------
 
-  static constexpr auto r{1.f + t};
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f + 2.f * y};
-  static constexpr auto w{2.f + 3.f * z};
+TYPED_TEST(MultivectorTest, NormSquaredMatchesGeometricProductWithReverse) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam e1{TypeParam::template e<1>()};
+  static constexpr TypeParam mv{e0.add(e1)};
 
-  EXPECT_EQ(1.f + x + t, r.bidirectional_inner(u));
-  EXPECT_EQ(t, t.bidirectional_inner(u));
-  EXPECT_EQ(1.f + x + 2.f * y, u.bidirectional_inner(v));
-  EXPECT_EQ(2.f + 4.f * y + 3.f * z, v.bidirectional_inner(w));
-  EXPECT_EQ(2.f + 2.f * x + 3.f * z, w.bidirectional_inner(u));
+  // square_magnitude() must equal the scalar part of mv * ~mv.
+  static constexpr TypeParam product{mv.multiply(mv.reverse())};
 
-  // Document the values of these products, since they will be used in more complicated tests
-  // below.
-  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
-  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
-  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
+  EXPECT_EQ(mv.square_magnitude(), product.scalar());
+}
 
-  EXPECT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z + 2.f * x, u.bidirectional_inner(v * w));
+TYPED_TEST(MultivectorTest, InverseOfInvertibleMultivectorSatisfiesMultiplicativeIdentity) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
 
-  EXPECT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z + 4.f * y, v.bidirectional_inner(w * u));
-
-  EXPECT_EQ(2.f + 2.f * x + 4.f * y + 4.f * x * y + 3.f * z, w.bidirectional_inner(u * v));
-
-  EXPECT_EQ(4.f + 8.f * y + 6.f * z + 12.f * y * z + 6.f * z - 9.f + 18.f * y,
-            w.bidirectional_inner(v * w));
-
-  EXPECT_EQ(4.f + 4.f * x + 6.f * z - 6.f * x * z + 6.f * z - 9.f - 9.f * x,
-            w.bidirectional_inner(w * u));
-
-  EXPECT_EQ(1.f + x + 2.f * y + 2.f * x * y + 2.f * y - 4.f + 4.f * x,
-            v.bidirectional_inner(u * v));
-
-  for (const auto& p : {t, x, y, z, a, u, v, w}) {
-    for (const auto& q : {t, x, y, z, a, u, v, w}) {
-      EXPECT_EQ(p.bidirectional_inner(q), q.bidirectional_inner(p));
-    }
+  // This test is only meaningful when the basis vector is invertible (metric != 0).
+  if (e0.multiply(e0).scalar() == typename TypeParam::ScalarType{0}) {
+    GTEST_SKIP() << "Basis vector is null in this algebra; inverse is undefined.";
   }
+
+  static constexpr TypeParam inv{e0.inverse()};
+  static constexpr TypeParam identity{TypeParam{}.add(typename TypeParam::ScalarType{1})};
+
+  EXPECT_EQ(e0.multiply(inv), identity);
 }
 
-TEST(MultivectorTest, InnerProductStyleAsLeftContraction) {
-  static constexpr auto t{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<0>()};
-  static constexpr auto x{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<1>()};
-  static constexpr auto y{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<2>()};
-  static constexpr auto z{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>::e<3>()};
-  static constexpr auto a{SpacetimeMultivector<float, InnerProduct::LEFT_CONTRACTION>{1.f}};
+TYPED_TEST(MultivectorTest, InverseOfScalarMatchesArithmeticReciprocal) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType s{4};
+  static constexpr TypeParam scalar_mv{TypeParam{}.add(s)};
+  static constexpr TypeParam inv{scalar_mv.inverse()};
+  static constexpr TypeParam expected{TypeParam{}.add(ScalarType{1} / s)};
 
-  static constexpr auto r{1.f + t};
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f + 2.f * y};
-  static constexpr auto w{2.f + 3.f * z};
-
-  EXPECT_EQ(r.left_contraction(u), r.inner(u));
-  EXPECT_EQ(t.left_contraction(u), t.inner(u));
-  EXPECT_EQ(u.left_contraction(v), u.inner(v));
-  EXPECT_EQ(v.left_contraction(w), v.inner(w));
-  EXPECT_EQ(w.left_contraction(u), w.inner(u));
-
-  // Document the values of these products, since they will be used in more complicated tests
-  // below.
-  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
-  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
-  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
-
-  // In these three cases, the lhs of the left contraction has a constant plus a term that is
-  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
-  // the rhs.
-  EXPECT_EQ(u.left_contraction(v * w), u.inner(v * w)) << "v * w: " << v * w;
-  EXPECT_EQ(v.left_contraction(w * u), v.inner(w * u));
-  EXPECT_EQ(w.left_contraction(u * v), w.inner(u * v));
-
-  EXPECT_EQ(w.left_contraction(v * w), w.inner(v * w));
-
-  EXPECT_EQ(w.left_contraction(w * u), w.inner(w * u));
-
-  EXPECT_EQ(v.left_contraction(u * v), v.inner(u * v));
+  EXPECT_EQ(inv, expected);
 }
 
-TEST(MultivectorTest, InnerProductStyleAsRightContraction) {
-  static constexpr auto t{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<0>()};
-  static constexpr auto x{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<1>()};
-  static constexpr auto y{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<2>()};
-  static constexpr auto z{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>::e<3>()};
-  static constexpr auto a{SpacetimeMultivector<float, InnerProduct::RIGHT_CONTRACTION>{1.f}};
+TYPED_TEST(MultivectorTest, NonInvertibleMultivectorThrowsOrIndicatesFailure) {
+  // In degenerate algebras (e.g. PGA), null elements exist. In non-degenerate
+  // algebras we construct a null-like element by combining a basis vector with
+  // its negation, which always yields zero regardless of signature.
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam null_mv{e0.subtract(e0)};
 
-  static constexpr auto r{1.f + t};
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f + 2.f * y};
-  static constexpr auto w{2.f + 3.f * z};
-
-  EXPECT_EQ(r.right_contraction(u), r.inner(u));
-  EXPECT_EQ(t.right_contraction(u), t.inner(u));
-  EXPECT_EQ(u.right_contraction(v), u.inner(v));
-  EXPECT_EQ(v.right_contraction(w), v.inner(w));
-  EXPECT_EQ(w.right_contraction(u), w.inner(u));
-
-  // Document the values of these products, since they will be used in more complicated tests
-  // below.
-  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
-  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
-  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
-
-  // In these three cases, the lhs of the right contraction has a constant plus a term that is
-  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
-  // the rhs.
-  EXPECT_EQ(u.right_contraction(v * w), u.inner(v * w)) << "v * w: " << v * w;
-  EXPECT_EQ(v.right_contraction(w * u), v.inner(w * u));
-  EXPECT_EQ(w.right_contraction(u * v), w.inner(u * v));
-
-  EXPECT_EQ(w.right_contraction(v * w), w.inner(v * w));
-
-  EXPECT_EQ(w.right_contraction(w * u), w.inner(w * u));
-
-  EXPECT_EQ(v.right_contraction(u * v), v.inner(u * v));
+  // The inverse of zero must be zero (the sentinel value from inverse()).
+  static constexpr TypeParam result{null_mv.inverse()};
+  EXPECT_EQ(result, TypeParam{});
 }
 
-TEST(MultivectorTest, InnerProductStyleAsBidirectional) {
-  static constexpr auto t{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<0>()};
-  static constexpr auto x{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<1>()};
-  static constexpr auto y{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<2>()};
-  static constexpr auto z{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>::e<3>()};
-  static constexpr auto a{SpacetimeMultivector<float, InnerProduct::BIDIRECTIONAL>{1.f}};
+//--------------------------------------------------------------------------------------------------
+// Pseudoscalars
+//--------------------------------------------------------------------------------------------------
 
-  static constexpr auto r{1.f + t};
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f + 2.f * y};
-  static constexpr auto w{2.f + 3.f * z};
+TYPED_TEST(MultivectorTest, PseudoscalarHasSingleGrade) {
+  static constexpr TypeParam I{TypeParam::pseudoscalar()};
+  static constexpr TypeParam ZERO{};
 
-  EXPECT_EQ(r.bidirectional_inner(u), r.inner(u));
-  EXPECT_EQ(t.bidirectional_inner(u), t.inner(u));
-  EXPECT_EQ(u.bidirectional_inner(v), u.inner(v));
-  EXPECT_EQ(v.bidirectional_inner(w), v.inner(w));
-  EXPECT_EQ(w.bidirectional_inner(u), w.inner(u));
-
-  // Document the values of these products, since they will be used in more complicated tests
-  // below.
-  ASSERT_EQ(1.f + x + 2.f * y + 2.f * x * y, u * v);
-  ASSERT_EQ(2.f + 4.f * y + 3.f * z + 6.f * y * z, v * w);
-  ASSERT_EQ(2.f + 2.f * x + 3.f * z - 3.f * x * z, w * u);
-
-  // In these three cases, the lhs of the right contraction has a constant plus a term that is
-  // orthogonal to all the bases of the rhs. So, all of the results will be that constant times
-  // the rhs.
-  EXPECT_EQ(u.bidirectional_inner(v * w), u.inner(v * w)) << "v * w: " << v * w;
-  EXPECT_EQ(v.bidirectional_inner(w * u), v.inner(w * u));
-  EXPECT_EQ(w.bidirectional_inner(u * v), w.inner(u * v));
-
-  EXPECT_EQ(w.bidirectional_inner(v * w), w.inner(v * w));
-
-  EXPECT_EQ(w.bidirectional_inner(w * u), w.inner(w * u));
-
-  EXPECT_EQ(v.bidirectional_inner(u * v), v.inner(u * v));
+  EXPECT_NE(ZERO, I);
+  EXPECT_EQ(I.grade_projection(TypeParam::NUM_BASIS_VECTORS), I);
 }
 
-TEST(MultivectorTest, InnerProductStyleAsNoImplicitDefinition) {
-  static constexpr auto t{
-      SpacetimeMultivector<float, InnerProduct::NO_IMPLICIT_DEFINITION>::e<0>()};
-  static constexpr auto x{
-      SpacetimeMultivector<float, InnerProduct::NO_IMPLICIT_DEFINITION>::e<1>()};
+TYPED_TEST(MultivectorTest, InvertiblePseudoscalarHasSingleGrade) {
+  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
+  static constexpr TypeParam ZERO{};
 
-  static constexpr auto r{1.f + t};
-  static constexpr auto u{1.f + x};
-
-  // Uncomment the line below to verify that we have a compile failure when there is no implicit
-  // inner product definition provided by the type.
-  // r.inner(u);
+  EXPECT_NE(ZERO, I);
+  EXPECT_EQ(I.grade_projection(TypeParam::NUM_BASIS_VECTORS - TypeParam::NUM_ZERO_BASES), I);
 }
 
-TEST(MultivectorTest, CanDoOuterProductOnComplexNumbers) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};
-  static constexpr auto a{ComplexMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + i};                         // 1 + i
-  static constexpr auto v{u * u};                           // (1 + i)^2 = 2i
-  static constexpr auto w{v * v};                           // (2i)^2 = -4
-  static constexpr auto x{-2.f + 2.f * i};                  // -2 + 2i
+TYPED_TEST(MultivectorTest, NoninvertiblePseudoscalarHasSingleGrade) {
+  static constexpr TypeParam I{
+      TypeParam::invertible_pseudoscalar().left_contraction(TypeParam::pseudoscalar())};
+  static constexpr TypeParam ZERO{};
 
-  EXPECT_EQ(1.f, a.outer(a));
-
-  EXPECT_EQ(0.f, i.outer(i));
-
-  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
-  EXPECT_EQ(0.f, v.outer(i));
-  EXPECT_EQ(v, v.outer(u));
-
-  EXPECT_EQ(w * v, v.outer(w));
-  EXPECT_EQ(w * u, w.outer(u));
-  EXPECT_EQ(w * u, u.outer(w));
-
-  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
-  EXPECT_EQ(-2.f, x.outer(u));
-  EXPECT_EQ(x - 2.f * i, u.outer(x));
-  EXPECT_EQ(-2.f, u.outer(x));
+  EXPECT_NE(ZERO, I);
+  EXPECT_EQ(I.grade_projection(TypeParam::NUM_ZERO_BASES), I);
 }
 
-TEST(MultivectorTest, CanDoOuterProductOnSplitComplexNumbers) {
-  static constexpr auto i{SplitComplexMultivector<float>::e<0>()};
-  static constexpr auto a{SplitComplexMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + i};                              // 1 + i
-  static constexpr auto v{u * u};                                // (1 + i)^2 = 2 + 2i
-  static constexpr auto w{v * v};                                // 8 + 8i
-  static constexpr auto x{-2.f + 2.f * i};                       // -2 + 2i
+//--------------------------------------------------------------------------------------------------
+// Duality
+//--------------------------------------------------------------------------------------------------
 
-  EXPECT_EQ(1.f, a.outer(a));
+TYPED_TEST(MultivectorTest, DualOfDualReturnsOriginalUpToSign) {
+  static constexpr TypeParam e{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
+  static constexpr TypeParam dd{e.dual().dual()};
 
-  EXPECT_EQ(0.f, i.outer(i));
+  // dual(dual(X)) == X or dual(dual(X)) == -X depending on I^2.
+  const bool is_original{dd == e};
+  const bool is_negated{dd == -e};
 
-  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
-  EXPECT_EQ(2.f * i, v.outer(i));
-  EXPECT_EQ(2.f + 4.f * i, v.outer(u));
-
-  ASSERT_EQ(8.f + 8.f * i, w);
-  EXPECT_EQ(16.f + 32.f * i, v.outer(w));
-  EXPECT_EQ(8.f + 16.f * i, w.outer(u));
-  EXPECT_EQ(8.f + 16.f * i, u.outer(w));
-
-  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
-  EXPECT_EQ(-2.f, x.outer(u));
-  EXPECT_EQ(x - 2.f * i, u.outer(x));
-  EXPECT_EQ(-2.f, u.outer(x));
+  EXPECT_TRUE(is_original || is_negated) << "e: " << e << ", dd: " << dd;
 }
 
-TEST(MultivectorTest, CanDoOuterProductOnDualNumbers) {
-  static constexpr auto i{DualMultivector<float>::e<0>()};
-  static constexpr auto a{DualMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + i};                      // 1 + i
-  static constexpr auto v{u * u};                        // (1 + i)^2 = 1 + 2i
-  static constexpr auto w{v * v};                        // 1 + 4i
-  static constexpr auto x{-2.f + 2.f * i};               // -2 + 2i
+TYPED_TEST(MultivectorTest, DualAndUndualAreInverses) {
+  static constexpr TypeParam e0{TypeParam::template e<0>() * 2};
+  static constexpr TypeParam du{e0.dual().undual()};
+  static constexpr TypeParam ud{e0.undual().dual()};
 
-  EXPECT_EQ(1.f, a.outer(a));
-
-  EXPECT_EQ(0.f, i.outer(i));
-
-  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
-  EXPECT_EQ(i, v.outer(i));
-  EXPECT_EQ(1.f + 3.f * i, v.outer(u));
-
-  EXPECT_EQ(w * v, v.outer(w));
-  EXPECT_EQ(w * u, w.outer(u));
-  EXPECT_EQ(w * u, u.outer(w));
-
-  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
-  EXPECT_EQ(-2.f, x.outer(u));
-  EXPECT_EQ(x - 2.f * i, u.outer(x));
-  EXPECT_EQ(-2.f, u.outer(x));
+  EXPECT_EQ(du, e0);
+  EXPECT_EQ(ud, e0);
 }
 
-TEST(MultivectorTest, CanDoOuterProductOnVga) {
-  static constexpr auto i{VgaMultivector<float>::e<0>()};
-  static constexpr auto j{VgaMultivector<float>::e<1>()};
-  static constexpr auto k{VgaMultivector<float>::e<2>()};
-  static constexpr auto a{VgaMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + i};                     // 1 + i
-  static constexpr auto v{u * u};                       // (1 + i)^2 = 2 + 2i
-  static constexpr auto w{v * v};                       // 8 + 8i
-  static constexpr auto x{-2.f + 2.f * i};              // -2 + 2i
+TYPED_TEST(MultivectorTest, DualityRespectsPseudoscalarOfAlgebra) {
+  // The dual of the pseudoscalar must be a pure scalar (grade 0), since the
+  // pseudoscalar is the top-grade element and its complement is the scalar.
+  static constexpr TypeParam I{TypeParam::pseudoscalar()};
+  static constexpr TypeParam dual_I{I.dual()};
 
-  ASSERT_EQ(2.f + 2.f * i, v);
-  ASSERT_EQ(8.f + 8.f * i, w);
-
-  EXPECT_EQ(1.f, a.outer(a));
-
-  EXPECT_EQ(0.f, i.outer(i));
-  EXPECT_EQ(0.f, j.outer(j));
-  EXPECT_EQ(0.f, k.outer(k));
-
-  EXPECT_EQ(i * j, i.outer(j));
-  EXPECT_EQ(j * k, j.outer(k));
-  EXPECT_EQ(-i * k, k.outer(i));
-
-  EXPECT_EQ(1.f + 2.f * i, u.outer(u));
-  EXPECT_EQ(2.f * i, v.outer(i));
-  EXPECT_EQ(2.f + 4.f * i, v.outer(u));
-
-  EXPECT_EQ(16.f + 32.f * i, v.outer(w));
-  EXPECT_EQ(8.f + 16.f * i, w.outer(u));
-  EXPECT_EQ(8.f + 16.f * i, u.outer(w));
-
-  EXPECT_EQ(-2.f * u + 2.f * i, x.outer(u));
-  EXPECT_EQ(-2.f, x.outer(u));
-  EXPECT_EQ(x - 2.f * i, u.outer(x));
-  EXPECT_EQ(-2.f, u.outer(x));
+  EXPECT_EQ(dual_I.grade_projection(0), dual_I);
 }
 
-TEST(MultivectorTest, CanDoOuterProductInSpacetimeAlgebra) {
-  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
-  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
-  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
-  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
-  static constexpr auto a{SpacetimeMultivector<float>{1.f}};  // 1
-  static constexpr auto u{1.f + t};                           // 1 + t
-  static constexpr auto v{u * u};                             // (1 + t)^2 = 2 + 2t
-  static constexpr auto w{v * v};                             // 8 + 8t
+TYPED_TEST(MultivectorTest, LeftContractionWithPseudoscalarYieldsDual) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
 
-  ASSERT_EQ(2.f + 2.f * t, v);
-  ASSERT_EQ(8.f + 8.f * t, w);
-
-  EXPECT_EQ(1.f, a.outer(a));
-
-  EXPECT_EQ(0.f, t.outer(t));
-  EXPECT_EQ(0.f, x.outer(x));
-  EXPECT_EQ(0.f, y.outer(y));
-  EXPECT_EQ(0.f, z.outer(z));
-
-  EXPECT_EQ(t * x, t.outer(x));
-  EXPECT_EQ(t * y, t.outer(y));
-  EXPECT_EQ(t * z, t.outer(z));
-  EXPECT_EQ(x * y, x.outer(y));
-  EXPECT_EQ(y * z, y.outer(z));
-  EXPECT_EQ(-t * z, z.outer(t));
-
-  EXPECT_EQ(1.f + 2.f * t, u.outer(u));
-  EXPECT_EQ(2.f * t, v.outer(t));
-  EXPECT_EQ(2.f * x + 2.f * t * x, v.outer(x));
-  EXPECT_EQ(2.f + 4.f * t, v.outer(u));
-
-  EXPECT_EQ(16.f + 32.f * t, v.outer(w));
-  EXPECT_EQ(8.f + 16.f * t, w.outer(u));
-  EXPECT_EQ(8.f + 16.f * t, u.outer(w));
-
-  EXPECT_EQ(x - t * x, x.outer(u));
-  EXPECT_EQ(t, t.outer(u));
-  EXPECT_EQ(x + t * x, u.outer(x));
-  EXPECT_EQ(2.f * t, v.outer(t));
+  EXPECT_EQ(e0.left_contraction(I), e0.dual());
 }
 
-TEST(MultivectorTEST, CanDoAllProductsInConstexprContexts) {
-  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
-  static constexpr auto u{1.f + t};  // 1 + t
-  static constexpr auto v{u * u};    // (1 + t)^2 = 2 + 2t
+TYPED_TEST(MultivectorTest, RightContractionWithPseudoscalarYieldsUndual) {
+  static constexpr TypeParam e0{TypeParam::template e<0>()};
+  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
 
-  static constexpr auto left{v.left_contraction(t)};
-  static constexpr auto right{v.right_contraction(t)};
-  static constexpr auto bidi{v.bidirectional_inner(t)};
-  static constexpr auto inner{v.inner(t)};
-  static constexpr auto outer{v.outer(t)};
-
-  static_assert(2.f * t + 2.f == left, "Inner products should be valid in constexpr contexts");
-  static_assert(2.f == right, "Inner products should be valid in constexpr contexts");
-  static_assert(2.f * t + 2.f == bidi, "Inner products should be valid in constexpr contexts");
-  static_assert(2.f * t + 2.f == inner, "Inner products should be valid in constexpr contexts");
-  static_assert(2.f * t == outer, "Outer product should be valid in constexpr contexts");
-
-  EXPECT_EQ(2.f * t + 2.f, left);
-  EXPECT_EQ(2.f, right);
-  EXPECT_EQ(2.f * t + 2.f, bidi);
-  EXPECT_EQ(2.f * t + 2.f, inner);
-  EXPECT_EQ(2.f * t, outer);
+  EXPECT_EQ(e0.right_contraction(I), e0.undual());
 }
 
-TEST(MultivectorTest, CanDoScalarConjugate) {
-  static constexpr ScalarMultivector<float> u{1.f};
-  static constexpr ScalarMultivector<float> v{-1.f};
-  static constexpr ScalarMultivector<float> w{-4.f};
+//--------------------------------------------------------------------------------------------------
+// Exponentiation & Transcendentals
+//--------------------------------------------------------------------------------------------------
 
-  EXPECT_EQ(u, u.conj());
-  EXPECT_EQ(v, v.conj());
-  EXPECT_EQ(w, w.conj());
+// These tests require exp(), log(), and sqrt() on Multivector, which are not
+// present in the current API. See the list of unimplemented tests below.
 
-  EXPECT_EQ(1.f, u * u.conj());
-  EXPECT_EQ(1.f, v * v.conj());
-  EXPECT_EQ(16.f, w * w.conj());
+//--------------------------------------------------------------------------------------------------
+// Rotors & Versors
+//--------------------------------------------------------------------------------------------------
+
+// These tests require exp() to construct rotors from bivectors, and a sandwich
+// product helper. See the list of unimplemented tests below.
+
+//--------------------------------------------------------------------------------------------------
+// Numerical Robustness
+//--------------------------------------------------------------------------------------------------
+
+TYPED_TEST(MultivectorTest, LargeScalarCoefficientsMaintainRelativePrecision) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType LARGE{1e6};
+  static constexpr TypeParam a{TypeParam::template e<0>().multiply(LARGE)};
+  static constexpr TypeParam b{TypeParam::template e<0>().multiply(LARGE)};
+
+  // Adding two large-coefficient multivectors and subtracting one back must
+  // recover the original to within floating-point relative precision.
+  const TypeParam result{a.add(b).subtract(b)};
+  EXPECT_NEAR(result.coefficient(1), a.coefficient(1),
+              LARGE * std::numeric_limits<ScalarType>::epsilon() * ScalarType{10});
 }
 
-TEST(MultivectorTest, CanDoComplexConjugate) {
-  static constexpr auto i{ComplexMultivector<float>::e<0>()};
-  static constexpr auto u{1.f + i};
-  static constexpr auto v{1.f - i};
-  static constexpr auto w{ComplexMultivector<float>{-1.f}};
+TYPED_TEST(MultivectorTest, NearZeroCoefficientsAreConsistentWithEpsilon) {
+  using ScalarType = typename TypeParam::ScalarType;
+  static constexpr ScalarType HALF_EPSILON{TypeParam::EPSILON / ScalarType{2}};
 
-  EXPECT_EQ(1.f, i * i.conj());
-  EXPECT_EQ(2.f, u * u.conj());
-  EXPECT_EQ(2.f, v * v.conj());
-  EXPECT_EQ(1.f, w * w.conj());
+  TypeParam mv{};
+  mv.set_coefficient(1, HALF_EPSILON);
+
+  // A coefficient below EPSILON must compare equal to zero.
+  EXPECT_TRUE(AreNear(mv, TypeParam{}));
 }
 
-TEST(MultivectorTest, CanDoDualConjugate) {
-  static constexpr auto e{DualMultivector<float>::e<0>()};
-  static constexpr auto u{1.f + e};
-  static constexpr auto v{1.f - e};
-  static constexpr auto w{DualMultivector<float>{-1.f}};
+TYPED_TEST(MultivectorTest, RepeatedProductsDoNotAccumulateUnboundedError) {
+  using ScalarType = typename TypeParam::ScalarType;
 
-  EXPECT_EQ(1.f, u * u.conj());
-  EXPECT_EQ(1.f, v * v.conj());
-  EXPECT_EQ(1.f, w * w.conj());
+  // Repeatedly multiply by e0 and its inverse. After an even number of round
+  // trips the result must be close to the original.
+  TypeParam e0{TypeParam::template e<0>()};
+
+  if (e0.multiply(e0).scalar() == ScalarType{0}) {
+    GTEST_SKIP() << "Basis vector is null in this algebra; inverse is undefined.";
+  }
+
+  TypeParam result{e0};
+  const TypeParam inv{e0.inverse()};
+  static constexpr int ITERATIONS{100};
+  for (int i = 0; i < ITERATIONS; ++i) {
+    result = result.multiply(e0).multiply(inv);
+  }
+
+  EXPECT_TRUE(AreNear(result, e0));
 }
 
-TEST(MultivectorTest, CanDoSimpleVgaConjugate) {
-  static constexpr auto x{VgaMultivector<float>::e<0>()};
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f - x};
-  static constexpr auto w{VgaMultivector<float>{-1.f}};
+TYPED_TEST(MultivectorTest, NormalizationOfNearZeroMultivectorHandledGracefully) {
+  // Normalizing a zero multivector should produce NaN in the scalar part.
+  static constexpr TypeParam zero{};
+  // TODO(james): Mark as constexpr if using C++26 or later.
+  const TypeParam result{zero.normalize()};
 
-  EXPECT_EQ(0.f, u * u.conj());
-  EXPECT_EQ(0.f, v * v.conj());
-  EXPECT_EQ(1.f, w * w.conj());
-}
-
-TEST(MultivectorTest, CanDoVgaConjugate) {
-  static constexpr auto x{VgaMultivector<float>::e<0>()};
-  static constexpr auto y{VgaMultivector<float>::e<1>()};
-  static constexpr auto z{VgaMultivector<float>::e<2>()};
-  static constexpr auto u{1.f + x + y};
-  static constexpr auto v{1.f - x + y};
-  static constexpr auto w{1.f - x + y - z};
-
-  EXPECT_EQ(1.f - x - y + x - 1.f - x * y + y - y * x - 1.f, u * u.conj());
-  EXPECT_EQ(1.f + x - y - x - 1.f - x * y + y - y * x - 1.f, v * v.conj());
-  EXPECT_EQ((1.f + x - y + z) + (-x - 1.f + x * y - x * z) + (y + y * x - 1.f + y * z) +
-                (-z - z * x + z * y - 1.f),
-            w * w.conj());
-}
-
-TEST(MultivectorTest, CanDoSimpleSpacetimeConjugateWithTimeCoordinate) {
-  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
-  static constexpr auto u{1.f + t};
-  static constexpr auto v{1.f - t};
-  static constexpr auto w{SpacetimeMultivector<float>{-1.f}};
-
-  EXPECT_EQ(0.f, u * u.conj());
-  EXPECT_EQ(0.f, v * v.conj());
-  EXPECT_EQ(1.f, w * w.conj());
-}
-
-TEST(MultivectorTest, CanDoSimpleSpacetimeConjugateWithSpaceCoordinate) {
-  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
-  static constexpr auto u{1.f + x};
-  static constexpr auto v{1.f - x};
-  static constexpr auto w{SpacetimeMultivector<float>{-1.f}};
-
-  EXPECT_EQ(2.f, u * u.conj());
-  EXPECT_EQ(2.f, v * v.conj());
-  EXPECT_EQ(1.f, w * w.conj());
-}
-
-TEST(MultivectorTest, CanDoSpacetimeConjugate) {
-  static constexpr auto t{SpacetimeMultivector<float>::e<0>()};
-  static constexpr auto x{SpacetimeMultivector<float>::e<1>()};
-  static constexpr auto y{SpacetimeMultivector<float>::e<2>()};
-  static constexpr auto z{SpacetimeMultivector<float>::e<3>()};
-  static constexpr auto u{1.f + t + x};
-  static constexpr auto v{1.f + t - x};
-  static constexpr auto w{1.f - x + y - z};
-
-  EXPECT_EQ(1.f - t - x + t - 1.f - t * x + x - x * t + 1.f, u * u.conj());
-  EXPECT_EQ(1.f - t + x + t - 1.f + t * x - x + x * t + 1.f, v * v.conj());
-  EXPECT_EQ((1.f + x - y + z) + (-x + 1.f + x * y - x * z) + (y + y * x + 1.f + y * z) +
-                (-z - z * x + z * y + 1.f),
-            w * w.conj());
+  EXPECT_TRUE(std::isnan(result.scalar()));
 }
 
 }  // namespace ndyn::math

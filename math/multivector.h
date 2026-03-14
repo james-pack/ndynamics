@@ -44,18 +44,19 @@ class Multivector final {
 
   std::array<ScalarType, NUM_BASIS_BLADES> coefficients_{};
 
+  static constexpr size_t DEGENERATE_BASIS_MASK = []() {
+    size_t mask{};
+    for (size_t i = 0; i < NUM_ZERO_BASES; ++i) {
+      mask = mask | (1UL << i);
+    }
+    return mask;
+  }();
+
   /**
    * Determine if a particular blade includes a basis vector that has a degenerate metric.
    */
   static constexpr bool includes_degenerate_basis(size_t blade_index) {
-    static constexpr size_t mask = []() {
-      size_t mask{};
-      for (size_t i = 0; i < NUM_ZERO_BASES; ++i) {
-        mask = mask | (1UL << i);
-      }
-      return mask;
-    }();
-    return (mask & blade_index) != 0;
+    return (DEGENERATE_BASIS_MASK & blade_index) != 0;
   }
 
  public:
@@ -85,13 +86,29 @@ class Multivector final {
     return result;
   }
 
-  constexpr Multivector normalize() const {
+  // TODO(james): Mark as constexpr if using C++26 or later. std::sqrt() is constexpr starting in
+  // that dialect.
+  Multivector normalize() const {
     using std::sqrt;
     return divide(sqrt(square_magnitude()));
   }
 
   constexpr const ScalarType& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
   constexpr void set_scalar(const ScalarType& v) { coefficients_[SCALAR_BASIS_INDEX] = v; }
+
+  template <size_t GRADE>
+  constexpr Multivector grade_projection() const {
+    static_assert(GRADE < NUM_GRADES,
+                  "Requested grade is larger than maximum grade of this multivector");
+
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if (bit_count(i) == GRADE) {
+        result.coefficients_[i] = coefficients_[i];
+      }
+    }
+    return result;
+  }
 
   constexpr Multivector grade_projection(size_t grade) const {
     if (grade >= NUM_GRADES) {
@@ -185,7 +202,7 @@ class Multivector final {
       // Note the initialization in the for-loop below. All of the bases where the grade of i
       // is less than the grade of j will not contribute to the result. Also, j must include every
       // basis in i otherwise the two bases are orthogonal to each other.
-      for (size_t j = i; j < NUM_BASIS_BLADES; ++j) {
+      for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
         // When I ⊆ J, j ^ i (equivalently j - i here, since the bits of i
         // are a subset of j) gives the bitmask for the remaining blade e_{J\I}
         // after removing the bases of I from J. The structure constant accounts
@@ -207,7 +224,7 @@ class Multivector final {
   constexpr Multivector right_contraction(const Multivector& rhs) const {
     Multivector result{};
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
-      for (size_t j = 0; j <= i; ++j) {
+      for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
         // The right contraction e_I ⌊ e_J is nonzero if and only if the basis
         // vectors of J are a subset of those of I, expressed as a bitmask
         // containment check. If J ⊄ I, these two basis blades contribute
@@ -218,7 +235,7 @@ class Multivector final {
           // i ^ j removes the bases of J from I, giving the remaining blade
           // e_{I\J}. The structure constant accounts for any sign change from
           // reordering basis vectors into canonical form.
-          const auto& cayley_entry{cayley_table_.entry(i, j)};
+          const auto& cayley_entry{cayley_table_.entry(j, i)};
           result.coefficients_[i ^ j] +=
               cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
@@ -319,7 +336,7 @@ class Multivector final {
    * in use — that assignment belongs in the model, not here.
    */
   constexpr Multivector regress(const Multivector& rhs) const {
-    return dual().outer(rhs.dual()).undual();
+    return (dual().outer(rhs.dual())).undual();
   }
 
   /**
@@ -337,13 +354,36 @@ class Multivector final {
   }
 
   /**
-   * The conjugate of this Multivector.
+   * The Clifford conjugate of this Multivector.
    */
   constexpr Multivector conj() const {
     Multivector result{*this};
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       const auto grade{bit_count(i)};
       if (grade % 4 == 1 || grade % 4 == 2) {
+        result.coefficients_[i] *= -1;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * The grade involution of this Multivector.
+   *
+   * Involution negates all odd-grade components and preserves all even-grade
+   * components. It is the unique algebra automorphism that distinguishes the even and odd
+   * subspaces: even(X) = (X + involute(X)) / 2 and odd(X) = (X - involute(X)) / 2. This
+   * decomposition is fundamental to versor application — for an odd-grade versor V such as a
+   * reflector, the correct sandwich product is V * x * involute(V)^{-1}, which differs from the
+   * reverse-based form used for even-grade versors such as rotors. Without involute(), correctly
+   * transforming vectors by odd-grade versors requires the caller to manually negate the
+   * appropriate grades, which is error-prone and obscures the geometric intent of the operation.
+   */
+  constexpr Multivector involute() const {
+    Multivector result{*this};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      const auto grade{bit_count(i)};
+      if (grade % 2 == 1) {
         result.coefficients_[i] *= -1;
       }
     }
@@ -373,10 +413,12 @@ class Multivector final {
   // TODO(james): This implementation is only correct for versors. Extend to general Multivectors.
   constexpr Multivector inverse() const {
     const auto scale{square_magnitude()};
-    if (scale > epsilon) {
+    if (scale > EPSILON) {
       return reverse() / scale;
     } else {
-      return 0;
+      // TODO(james): Determine better error handling mechanisms. For now, attempt to divide by
+      // zero, just results in the zero Multivector.
+      return {};
     }
   }
 
@@ -398,8 +440,8 @@ class Multivector final {
    * asymmetry between the two contractions rather than requiring an explicit case analysis on the
    * signature.
    */
-  constexpr Multivector dual() const { return left_contraction(pseudoscalar()); }
-  constexpr Multivector undual() const { return right_contraction(pseudoscalar()); }
+  constexpr Multivector dual() const { return left_contraction(invertible_pseudoscalar()); }
+  constexpr Multivector undual() const { return right_contraction(invertible_pseudoscalar()); }
 
   /**
    * Returns true if this multivector is a versor — that is, a product of invertible vectors.
@@ -458,7 +500,8 @@ class Multivector final {
 
   // Operator overloads.
 
-  // Equality.
+  // Equality. Note that these operators implement exact equality. Use near_equal() below for a more
+  // reasonable equality check.
   constexpr bool operator==(const Multivector& rhs) const {
     // Note that std::array::operator==() does not work in a constexpr environment until C++20, so
     // we have to implement this ourselves for earlier versions.
@@ -479,6 +522,17 @@ class Multivector final {
       }
     }
     return false;
+  }
+
+  constexpr bool near_equal(const Multivector& rhs, const ScalarType tolerance = EPSILON) const {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      const ScalarType diff{coefficients_[i] - rhs.coefficients_[i]};
+      const ScalarType abs_diff{diff < ScalarType{0} ? -diff : diff};
+      if (abs_diff > tolerance) {
+        return false;
+      }
+    }
+    return true;
   }
 
   constexpr bool operator==(const ScalarType& rhs) const { return *this == Multivector{rhs}; }
@@ -529,9 +583,15 @@ class Multivector final {
     return *this;
   }
 
-  static constexpr Multivector pseudoscalar() const {
+  static constexpr Multivector pseudoscalar() {
     Multivector result{};
     result.coefficients_[NUM_BASIS_BLADES - 1] = 1;
+    return result;
+  }
+
+  static constexpr Multivector invertible_pseudoscalar() {
+    Multivector result{};
+    result.coefficients_[(NUM_BASIS_BLADES - 1) & (~DEGENERATE_BASIS_MASK)] = 1;
     return result;
   }
 
