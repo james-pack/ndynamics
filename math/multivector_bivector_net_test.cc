@@ -1695,4 +1695,244 @@ TEST(R410BivectorNetDirectTest, OuterProductMatches) {
   EXPECT_EQ(expected, result);
 }
 
+TEST(R000BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{0};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R001BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{0};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R010BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{0};
+  static constexpr size_t N{1};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R011BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{0};
+  static constexpr size_t N{1};
+  static constexpr size_t Z{1};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R100BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{1};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R101BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{1};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R110BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{1};
+  static constexpr size_t N{1};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R111BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{1};
+  static constexpr size_t N{1};
+  static constexpr size_t Z{1};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R130BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{1};
+  static constexpr size_t N{3};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R200BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{2};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R210BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{2};
+  static constexpr size_t N{1};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R300BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R310BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{3};
+  static constexpr size_t N{1};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R401BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{4};
+  static constexpr size_t N{0};
+  static constexpr size_t Z{1};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
+TEST(R410BivectorNetDirectTest, InvoluteMatches) {
+  using ScalarType = float;
+  static constexpr size_t P{4};
+  static constexpr size_t N{1};
+  static constexpr size_t Z{0};
+  using AlgebraType = Algebra<ScalarType, P, N, Z>;
+  using VectorType = typename AlgebraType::VectorType;
+  using BivectorNetType = typename BivectorNetTypes<P, N, Z>::type;
+
+  BivectorNetType bvec1{create_with_counting<BivectorNetType>()};
+  VectorType v1{to_multivector<BivectorNetType, VectorType>(bvec1)};
+  VectorType result{v1.involute()};
+  VectorType expected{to_multivector<BivectorNetType, VectorType>(bvec1.Involute())};
+  EXPECT_EQ(expected, result);
+}
+
 }  // namespace ndyn::math
