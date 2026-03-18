@@ -742,14 +742,26 @@ TYPED_TEST(MultivectorTest, DualOfDualReturnsSimpleOriginalUpToSign) {
 }
 
 TYPED_TEST(MultivectorTest, DualOfDualReturnsOriginalUpToSign) {
-  static constexpr TypeParam e{TypeParam::template e<TypeParam::NUM_ZERO_BASES>() * 2};
-  static constexpr TypeParam dd{e.dual().dual()};
+  for (size_t i = TypeParam::NUM_ZERO_BASES; i < TypeParam::NUM_BASIS_VECTORS; ++i) {
+    const TypeParam e{TypeParam::template e(i) * (i + 1)};
+    const TypeParam dd{e.dual().dual()};
 
-  // dual(dual(X)) == X or dual(dual(X)) == -X depending on I^2.
-  const bool is_original{dd == e};
-  const bool is_negated{dd == -e};
+    // dual(dual(X)) == X or dual(dual(X)) == -X depending on I^2.
+    const bool is_original{dd == e};
+    const bool is_negated{dd == -e};
 
-  EXPECT_TRUE(is_original || is_negated) << "e: " << e << ", dd: " << dd;
+    EXPECT_TRUE(is_original || is_negated) << "e: " << e << ", dd: " << dd;
+  }
+}
+
+TYPED_TEST(MultivectorTest, FourApplicationsOfDualReturnsOriginal) {
+  for (size_t i = TypeParam::NUM_ZERO_BASES; i < TypeParam::NUM_BASIS_VECTORS; ++i) {
+    const TypeParam e{TypeParam::template e(i) * (i + 1)};
+    const TypeParam dd{e.dual().dual()};
+    const TypeParam dddd{dd.dual().dual()};
+
+    EXPECT_EQ(e, dddd) << "e: " << e << ", dd: " << dd << ", dddd: " << dddd;
+  }
 }
 
 TYPED_TEST(MultivectorTest, DualAndUndualAreInverses) {
