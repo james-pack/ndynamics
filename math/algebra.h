@@ -9,7 +9,8 @@ enum class InnerProduct : uint8_t {
   LEFT_CONTRACTION,
   RIGHT_CONTRACTION,
   BIDIRECTIONAL,  // Left contraction when the grade of the lhs is lower, right contraction
-                  // otherwise. Used in texts by Hestenes and others.
+                  // otherwise. Used to develop's Hestenes's inner product.
+  HESTENES,
   NO_IMPLICIT_DEFINITION,
 };
 
