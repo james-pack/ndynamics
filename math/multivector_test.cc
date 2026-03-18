@@ -9,295 +9,12 @@
 
 namespace ndyn::math {
 
-TEST(MultivectorDiagnosticTest, ValidLeftContractionOnBasisBlades) {
-  using Vector = Vga2dMultivector<float>;
-
-  static constexpr Vector zero{};
-  static constexpr Vector one{1, 0, 0, 0};
-  static constexpr Vector e0{Vector::template e<0>()};
-  static constexpr Vector e1{Vector::template e<1>()};
-  static constexpr Vector e01{e0.outer(e1)};
-
-  {
-    static constexpr Vector result{e0.left_contraction(one)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e0.left_contraction(e01)};
-    EXPECT_EQ(result, e1);
-  }
-  {
-    static constexpr Vector result{e0.left_contraction(e1)};
-    EXPECT_EQ(result, zero);
-  }
-
-  // scalar (1) as lhs
-  {
-    static constexpr Vector result{one.left_contraction(one)};
-    EXPECT_EQ(result, one);
-  }
-  {
-    static constexpr Vector result{one.left_contraction(e0)};
-    EXPECT_EQ(result, e0);
-  }
-  {
-    static constexpr Vector result{one.left_contraction(e1)};
-    EXPECT_EQ(result, e1);
-  }
-  {
-    static constexpr Vector result{one.left_contraction(e01)};
-    EXPECT_EQ(result, e01);
-  }
-
-  // e1 as lhs
-  {
-    static constexpr Vector result{e1.left_contraction(one)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e1.left_contraction(e0)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e1.left_contraction(e1)};
-    EXPECT_EQ(result, one);
-  }
-  {
-    static constexpr Vector result{e1.left_contraction(e01)};
-    EXPECT_EQ(result, -e0);
-  }
-
-  // e01 as lhs
-  {
-    static constexpr Vector result{e01.left_contraction(one)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e01.left_contraction(e0)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e01.left_contraction(e1)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e01.left_contraction(e01)};
-    EXPECT_EQ(result, -one);
-  }
-}
-
-TEST(MultivectorDiagnosticTest, ValidRightContractionOnBasisBlades) {
-  using Vector = Vga2dMultivector<float>;
-
-  static constexpr Vector zero{};
-  static constexpr Vector one{1, 0, 0, 0};
-  static constexpr Vector e0{Vector::template e<0>()};
-  static constexpr Vector e1{Vector::template e<1>()};
-  static constexpr Vector e01{e0.outer(e1)};
-
-  {
-    static constexpr Vector result{e0.right_contraction(one)};
-    EXPECT_EQ(result, e0);
-  }
-  {
-    static constexpr Vector result{e0.right_contraction(e01)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e0.right_contraction(e1)};
-    EXPECT_EQ(result, zero);
-  }
-  // scalar (1) as lhs
-  {
-    static constexpr Vector result{one.right_contraction(one)};
-    EXPECT_EQ(result, one);
-  }
-  {
-    static constexpr Vector result{one.right_contraction(e0)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{one.right_contraction(e1)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{one.right_contraction(e01)};
-    EXPECT_EQ(result, zero);
-  }
-
-  // e1 as lhs
-  {
-    static constexpr Vector result{e1.right_contraction(one)};
-    EXPECT_EQ(result, e1);
-  }
-  {
-    static constexpr Vector result{e1.right_contraction(e0)};
-    EXPECT_EQ(result, zero);
-  }
-  {
-    static constexpr Vector result{e1.right_contraction(e1)};
-    EXPECT_EQ(result, one);
-  }
-  {
-    static constexpr Vector result{e1.right_contraction(e01)};
-    EXPECT_EQ(result, zero);
-  }
-
-  // e01 as lhs
-  {
-    static constexpr Vector result{e01.right_contraction(one)};
-    EXPECT_EQ(result, e01);
-  }
-  {
-    static constexpr Vector result{e01.right_contraction(e0)};
-    EXPECT_EQ(result, e1);
-  }
-  {
-    static constexpr Vector result{e01.right_contraction(e1)};
-    EXPECT_EQ(result, -e0);
-  }
-  {
-    static constexpr Vector result{e01.right_contraction(e01)};
-    EXPECT_EQ(result, -one);
-  }
-}
-
-TEST(MultivectorDiagnosticTest, RightContractionIsReverseOfLeftContractionWithReversedArguments) {
-  // For any two multivectors X and Y:
-  //   X |_ Y = involute(involute(Y) _| involute(X))
-  // This invariant expresses the left/right contraction duality through the
-  // reverse operation. Verifying it across all basis blade pairs in G(2,0)
-  // simultaneously stress-tests both contraction implementations, the reverse,
-  // and their mutual consistency.
-  using Vector = Vga2dMultivector<float>;
-
-  static constexpr Vector zero{};
-  static constexpr Vector one{1, 0, 0, 0};
-  static constexpr Vector e0{Vector::template e<0>()};
-  static constexpr Vector e1{Vector::template e<1>()};
-  static constexpr Vector e01{e0.outer(e1)};
-
-  static constexpr std::array<Vector, 4> blades{one, e0, e1, e01};
-
-  for (const Vector& x : blades) {
-    for (const Vector& y : blades) {
-      EXPECT_EQ(x.right_contraction(y), y.involute().left_contraction(x.involute()).involute())
-          << "x: " << x << ", y: " << y;
-    }
-  }
-}
-
-TEST(MultivectorDiagnosticTest, DualCoefficientsMatchExpectedValuesInVga2d) {
-  // G(2,0) has 4 basis blades: 1 (index 0), e0 (index 1), e1 (index 2),
-  // e0^e1 (index 3). The pseudoscalar I = e0^e1 squares to -1.
-  //
-  // Dual is defined as left contraction with I. The expected duals are:
-  //   dual(1)      =  e0^e1  (index 3, coefficient +1)
-  //   dual(e0)     =  e1     (index 2, coefficient +1)
-  //   dual(e1)     = -e0     (index 1, coefficient -1)
-  //   dual(e0^e1)  = -1      (index 0, coefficient -1)
-  //
-  // These are verified component by component so that a failure pinpoints
-  // exactly which blade's dual is wrong, and whether the fault lies in
-  // pseudoscalar(), left_contraction(), or the sign convention in the
-  // Cayley table.
-  using Vector = Vga2dMultivector<float>;
-  using ScalarType = Vector::ScalarType;
-
-  static constexpr Vector one{1, 0, 0, 0};
-  static constexpr Vector e0{Vector::template e<0>()};
-  static constexpr Vector e1{Vector::template e<1>()};
-  static constexpr Vector e01{e0.outer(e1)};
-
-  static constexpr Vector I{Vector::pseudoscalar()};
-
-  // Document that the pseudoscalar itself is at the expected index with coefficient 1.
-  ASSERT_EQ(I.coefficient(0), ScalarType{0});
-  ASSERT_EQ(I.coefficient(1), ScalarType{0});
-  ASSERT_EQ(I.coefficient(2), ScalarType{0});
-  ASSERT_EQ(I.coefficient(3), ScalarType{1});
-
-  // dual(1) = e0^e1
-  static constexpr Vector dual_one{one.dual()};
-  EXPECT_EQ(dual_one.coefficient(0), ScalarType{0});
-  EXPECT_EQ(dual_one.coefficient(1), ScalarType{0});
-  EXPECT_EQ(dual_one.coefficient(2), ScalarType{0});
-  EXPECT_EQ(dual_one.coefficient(3), ScalarType{1});
-
-  // dual(e0) = e1
-  static constexpr Vector dual_e0{e0.dual()};
-  EXPECT_EQ(dual_e0.coefficient(0), ScalarType{0});
-  EXPECT_EQ(dual_e0.coefficient(1), ScalarType{0});
-  EXPECT_EQ(dual_e0.coefficient(2), ScalarType{1});
-  EXPECT_EQ(dual_e0.coefficient(3), ScalarType{0});
-
-  // dual(e1) = -e0
-  static constexpr Vector dual_e1{e1.dual()};
-  EXPECT_EQ(dual_e1.coefficient(0), ScalarType{0});
-  EXPECT_EQ(dual_e1.coefficient(1), ScalarType{-1});
-  EXPECT_EQ(dual_e1.coefficient(2), ScalarType{0});
-  EXPECT_EQ(dual_e1.coefficient(3), ScalarType{0});
-
-  // dual(e0^e1) = -1
-  static constexpr Vector dual_e01{e01.dual()};
-  EXPECT_EQ(dual_e01.coefficient(0), ScalarType{-1});
-  EXPECT_EQ(dual_e01.coefficient(1), ScalarType{0});
-  EXPECT_EQ(dual_e01.coefficient(2), ScalarType{0});
-  EXPECT_EQ(dual_e01.coefficient(3), ScalarType{0});
-}
-
-TEST(MultivectorDiagnosticTest, UndualCoefficientsMatchExpectedValuesInVga2d) {
-  using Vector = Vga2dMultivector<float>;
-  using ScalarType = Vector::ScalarType;
-
-  static constexpr Vector one{1, 0, 0, 0};
-  static constexpr Vector e0{Vector::template e<0>()};
-  static constexpr Vector e1{Vector::template e<1>()};
-  static constexpr Vector e01{e0.outer(e1)};
-
-  static constexpr Vector I{Vector::pseudoscalar()};
-  ASSERT_EQ(e01, I);
-
-  // Document that the pseudoscalar itself is at the expected index with coefficient 1.
-  ASSERT_EQ(I.coefficient(0), ScalarType{0});
-  ASSERT_EQ(I.coefficient(1), ScalarType{0});
-  ASSERT_EQ(I.coefficient(2), ScalarType{0});
-  ASSERT_EQ(I.coefficient(3), ScalarType{1});
-
-  // undual(1) = -e0^e1
-  static constexpr Vector undual_one{one.undual()};
-  EXPECT_EQ(undual_one.coefficient(0), ScalarType{0});
-  EXPECT_EQ(undual_one.coefficient(1), ScalarType{0});
-  EXPECT_EQ(undual_one.coefficient(2), ScalarType{0});
-  EXPECT_EQ(undual_one.coefficient(3), ScalarType{-1});
-
-  // undual(e0) = e1
-  static constexpr Vector undual_e0{e0.undual()};
-  EXPECT_EQ(undual_e0.coefficient(0), ScalarType{0});
-  EXPECT_EQ(undual_e0.coefficient(1), ScalarType{0});
-  EXPECT_EQ(undual_e0.coefficient(2), ScalarType{1});
-  EXPECT_EQ(undual_e0.coefficient(3), ScalarType{0});
-
-  // undual(e1) = -e0
-  static constexpr Vector undual_e1{e1.undual()};
-  EXPECT_EQ(undual_e1.coefficient(0), ScalarType{0});
-  EXPECT_EQ(undual_e1.coefficient(1), ScalarType{-1});
-  EXPECT_EQ(undual_e1.coefficient(2), ScalarType{0});
-  EXPECT_EQ(undual_e1.coefficient(3), ScalarType{0});
-
-  // undual(e0^e1) = 1
-  static constexpr Vector undual_e01{e01.undual()};
-  EXPECT_EQ(undual_e01.coefficient(0), ScalarType{1});
-  EXPECT_EQ(undual_e01.coefficient(1), ScalarType{0});
-  EXPECT_EQ(undual_e01.coefficient(2), ScalarType{0});
-  EXPECT_EQ(undual_e01.coefficient(3), ScalarType{0});
-}
-
 template <typename MultivectorT>
 class MultivectorTest : public ::testing::Test {};
 
 using MultivectorTypes =
-    ::testing::Types<Vga2dMultivector<float>, VgaMultivector<float>, PgaMultivector<float>>;
+    ::testing::Types<Vga2dMultivector<float>, VgaMultivector<float>, Pga2dMultivector<float>,
+                     PgaMultivector<float>, SpacetimeMultivector<float>>;
 
 TYPED_TEST_SUITE(MultivectorTest, MultivectorTypes);
 
@@ -786,11 +503,9 @@ TYPED_TEST(MultivectorTest, ScalarProductOfBasisVectorWithItselfEqualsMetricValu
 
 TYPED_TEST(MultivectorTest, RightContractionIsReverseOfLeftContractionWithReversedArguments) {
   // For any two multivectors X and Y:
-  //   X |_ Y = involute(involute(Y) _| involute(X))
+  //   X |_ Y = ~(~Y _| ~X)
   // This invariant expresses the left/right contraction duality through the
-  // reverse operation. Verifying it across all basis blade pairs in G(2,0)
-  // simultaneously stress-tests both contraction implementations, the reverse,
-  // and their mutual consistency.
+  // reverse operation.
   static constexpr TypeParam zero{};
   static constexpr TypeParam one{1, 0, 0, 0};
   static constexpr TypeParam e0{TypeParam::template e<0>()};
@@ -801,7 +516,7 @@ TYPED_TEST(MultivectorTest, RightContractionIsReverseOfLeftContractionWithRevers
 
   for (const auto& x : blades) {
     for (const auto& y : blades) {
-      EXPECT_EQ(x.right_contraction(y), y.involute().left_contraction(x.involute()).involute())
+      EXPECT_EQ(x.right_contraction(y), y.reverse().left_contraction(x.reverse()).reverse())
           << "x: " << x << ", y: " << y;
     }
   }
@@ -905,15 +620,6 @@ TYPED_TEST(MultivectorTest, SumOfAllGradeProjectionsReconstitutesOriginal) {
   EXPECT_EQ(reconstructed, mv);
 }
 
-TYPED_TEST(MultivectorTest, PseudoscalarHasExpectedTopGrade) {
-  static constexpr TypeParam I{TypeParam::pseudoscalar()};
-
-  EXPECT_EQ(I.grade_projection(TypeParam::NUM_BASIS_VECTORS), I);
-  for (size_t g = 0; g < TypeParam::NUM_BASIS_VECTORS; ++g) {
-    EXPECT_EQ(I.grade_projection(g), TypeParam{});
-  }
-}
-
 //--------------------------------------------------------------------------------------------------
 // Norms & Inverses
 //--------------------------------------------------------------------------------------------------
@@ -969,37 +675,74 @@ TYPED_TEST(MultivectorTest, NonInvertibleMultivectorThrowsOrIndicatesFailure) {
 // Pseudoscalars
 //--------------------------------------------------------------------------------------------------
 
-TYPED_TEST(MultivectorTest, PseudoscalarHasSingleGrade) {
+TYPED_TEST(MultivectorTest, InvertiblePseudoscalarHasAllNonzeroBases) {
+  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
+  TypeParam expected{1};
+
+  for (size_t i = TypeParam::NUM_ZERO_BASES; i < TypeParam::NUM_BASIS_VECTORS; ++i) {
+    expected = expected.outer(TypeParam::e(i));
+  }
+
+  EXPECT_EQ(expected, I);
+}
+
+TYPED_TEST(MultivectorTest, PseudoscalarHasExpectedGrade) {
   static constexpr TypeParam I{TypeParam::pseudoscalar()};
   static constexpr TypeParam ZERO{};
 
-  EXPECT_NE(ZERO, I);
   EXPECT_EQ(I.grade_projection(TypeParam::NUM_BASIS_VECTORS), I);
+  for (size_t g = 0; g < TypeParam::NUM_BASIS_VECTORS; ++g) {
+    EXPECT_EQ(ZERO, I.grade_projection(g));
+  }
 }
 
-TYPED_TEST(MultivectorTest, InvertiblePseudoscalarHasSingleGrade) {
+TYPED_TEST(MultivectorTest, InvertiblePseudoscalarHasExpectedGrade) {
   static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
   static constexpr TypeParam ZERO{};
 
-  EXPECT_NE(ZERO, I);
-  EXPECT_EQ(I.grade_projection(TypeParam::NUM_BASIS_VECTORS - TypeParam::NUM_ZERO_BASES), I);
-}
-
-TYPED_TEST(MultivectorTest, NoninvertiblePseudoscalarHasSingleGrade) {
-  static constexpr TypeParam I{
-      TypeParam::invertible_pseudoscalar().left_contraction(TypeParam::pseudoscalar())};
-  static constexpr TypeParam ZERO{};
-
-  EXPECT_NE(ZERO, I);
-  EXPECT_EQ(I.grade_projection(TypeParam::NUM_ZERO_BASES), I);
+  for (size_t g = 0; g < TypeParam::NUM_BASIS_VECTORS; ++g) {
+    if (g == TypeParam::NUM_BASIS_VECTORS - TypeParam::NUM_ZERO_BASES) {
+      EXPECT_EQ(I, I.grade_projection(g));
+    } else {
+      EXPECT_EQ(ZERO, I.grade_projection(g));
+    }
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
 // Duality
 //--------------------------------------------------------------------------------------------------
 
+TYPED_TEST(MultivectorTest, DualOfNonzeroBasesIsNotZero) {
+  static constexpr TypeParam ZERO{};
+
+  for (size_t i = TypeParam::NUM_ZERO_BASES; i < TypeParam::NUM_BASIS_VECTORS; ++i) {
+    TypeParam e{TypeParam::e(i)};
+    TypeParam d{e.dual()};
+    EXPECT_NE(ZERO, d) << "d: " << d << ", e: " << e;
+  }
+}
+
+TYPED_TEST(MultivectorTest, DualOfDualReturnsSimpleOriginalUpToSign) {
+  static constexpr TypeParam ZERO{};
+  static constexpr TypeParam e0{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
+  static constexpr TypeParam e1{TypeParam::template e<TypeParam::NUM_ZERO_BASES + 1>()};
+  static constexpr TypeParam d0{e0.dual()};
+  static constexpr TypeParam dd0{e0.dual().dual()};
+  static constexpr TypeParam d1{e1.dual()};
+  static constexpr TypeParam dd1{e1.dual().dual()};
+
+  EXPECT_NE(ZERO, d0);
+  EXPECT_NE(ZERO, dd0);
+  EXPECT_TRUE(dd0 == e0 || dd0 == -e0) << "e0: " << e0 << ", dd0: " << dd0 << ", d0: " << d0;
+
+  EXPECT_NE(ZERO, d1);
+  EXPECT_NE(ZERO, dd1);
+  EXPECT_TRUE(dd1 == e1 || dd1 == -e1) << "e1: " << e1 << ", dd1: " << dd1 << ", d1: " << d1;
+}
+
 TYPED_TEST(MultivectorTest, DualOfDualReturnsOriginalUpToSign) {
-  static constexpr TypeParam e{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
+  static constexpr TypeParam e{TypeParam::template e<TypeParam::NUM_ZERO_BASES>() * 2};
   static constexpr TypeParam dd{e.dual().dual()};
 
   // dual(dual(X)) == X or dual(dual(X)) == -X depending on I^2.
@@ -1010,12 +753,15 @@ TYPED_TEST(MultivectorTest, DualOfDualReturnsOriginalUpToSign) {
 }
 
 TYPED_TEST(MultivectorTest, DualAndUndualAreInverses) {
-  static constexpr TypeParam e0{TypeParam::template e<0>() * 2};
-  static constexpr TypeParam du{e0.dual().undual()};
-  static constexpr TypeParam ud{e0.undual().dual()};
+  static constexpr TypeParam v{TypeParam::template e<TypeParam::NUM_ZERO_BASES>() * 2};
+  static constexpr TypeParam d{v.dual()};
+  static constexpr TypeParam u{v.undual()};
+  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
+  static constexpr TypeParam du{v.dual().undual()};
+  static constexpr TypeParam ud{v.undual().dual()};
 
-  EXPECT_EQ(du, e0);
-  EXPECT_EQ(ud, e0);
+  EXPECT_EQ(du, v) << "du: " << du << ", v: " << v << ", d: " << d << ", u: " << u << ", I: " << I;
+  EXPECT_EQ(ud, v);
 }
 
 TYPED_TEST(MultivectorTest, DualityRespectsPseudoscalarOfAlgebra) {
@@ -1027,18 +773,23 @@ TYPED_TEST(MultivectorTest, DualityRespectsPseudoscalarOfAlgebra) {
   EXPECT_EQ(dual_I.grade_projection(0), dual_I);
 }
 
-TYPED_TEST(MultivectorTest, LeftContractionWithPseudoscalarYieldsDual) {
-  static constexpr TypeParam e0{TypeParam::template e<0>()};
+TYPED_TEST(MultivectorTest, ContractionWithReversePseudoscalarYieldsDual) {
+  static constexpr TypeParam e0{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
   static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
 
-  EXPECT_EQ(e0.left_contraction(I), e0.dual());
+  EXPECT_EQ(e0.left_contraction(I.reverse()), e0.dual());
 }
 
-TYPED_TEST(MultivectorTest, RightContractionWithPseudoscalarYieldsUndual) {
-  static constexpr TypeParam e0{TypeParam::template e<0>()};
+TYPED_TEST(MultivectorTest, ContractionWithPseudoscalarYieldsUndualUpToSign) {
+  static constexpr TypeParam e0{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
   static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
 
-  EXPECT_EQ(e0.right_contraction(I), e0.undual());
+  static constexpr TypeParam value{e0.left_contraction(I)};
+
+  static constexpr bool is_same(e0.undual() == value);
+  static constexpr bool is_negated(-e0.undual() == value);
+
+  EXPECT_TRUE(is_same || is_negated) << "value: " << value;
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
+#include <limits>
 #include <stdexcept>
 
 #include "base/bits.h"
@@ -33,13 +34,14 @@ class Multivector final {
   static constexpr size_t NUM_BASIS_BLADES{AlgebraType::NUM_BASIS_BLADES};
   static constexpr size_t NUM_GRADES{NUM_BASIS_VECTORS + 1};
 
-  static constexpr size_t SCALAR_BASIS_INDEX{0};
-
   static constexpr ScalarType EPSILON{AlgebraType::EPSILON};
 
  private:
+  static constexpr size_t SCALAR_BASIS_INDEX{0};
+
   static constexpr CayleyTable<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>
       cayley_table_{};
+
   using UnitaryOpsType = UnitaryOps<NUM_POSITIVE_BASES, NUM_NEGATIVE_BASES, NUM_ZERO_BASES>;
 
   std::array<ScalarType, NUM_BASIS_BLADES> coefficients_{};
@@ -58,6 +60,18 @@ class Multivector final {
   static constexpr bool includes_degenerate_basis(size_t blade_index) {
     return (DEGENERATE_BASIS_MASK & blade_index) != 0;
   }
+
+  // Note: std::abs() is not constexpr until C++23. This wrapper delegates to std::abs() when
+  // using C++23 or later, preserving full IEEE 754 compliance for production use, and falls back
+  // to a simple negation in constexpr contexts where special float values are not a concern.
+  template <typename T>
+  static constexpr T abs(T v) {
+#if defined(__cpp_lib_constexpr_cmath) && __cpp_lib_constexpr_cmath >= 202202L
+    return std::abs(v);
+#else
+    return v < 0 ? -v : v;
+#endif
+  };
 
  public:
   constexpr Multivector() = default;
@@ -181,62 +195,60 @@ class Multivector final {
 
   // Inner product variations.
 
-  /**
-   * Computes the left contraction (A ⌋ B) of this multivector (lhs) onto rhs.
-   *
-   * The left contraction A ⌋ B can be understood as the projection of A onto B:
-   * it extracts the component of B that is "complementary to" A within B.
-   * For basis blades, e_I ⌋ e_J is nonzero only when I ⊆ J (as sets of basis
-   * vector indices), and the result is the blade e_{J\I} (J with I removed),
-   * scaled by the appropriate structure constant from the Cayley table.
-   */
   constexpr Multivector left_contraction(const Multivector& rhs) const {
     Multivector result{};
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
-      // The left contraction e_I ⌋ e_J is nonzero if and only if the basis
-      // vectors of I are a subset of those of J, expressed as a bitmask
-      // containment check. If I ⊄ J, these two basis blades are orthogonal
-      // under the left contraction and contribute nothing to the result.
-      // When i == 0 (scalar), this condition is always satisfied, so a scalar
-      // lhs simply scales the entire rhs.
-      // Note the initialization in the for-loop below. All of the bases where the grade of i
-      // is less than the grade of j will not contribute to the result. Also, j must include every
-      // basis in i otherwise the two bases are orthogonal to each other.
-      for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
-        // When I ⊆ J, j ^ i (equivalently j - i here, since the bits of i
-        // are a subset of j) gives the bitmask for the remaining blade e_{J\I}
-        // after removing the bases of I from J. The structure constant accounts
-        // for any sign change from reordering basis vectors into canonical form.
-        if ((i & j) == i) {
-          const auto& cayley_entry{cayley_table_.entry(i, j)};
-          result.coefficients_[i ^ j] +=
-              cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
+      const ScalarType lhs_value{coefficients_[i]};
+      if (abs(lhs_value) > EPSILON) {
+        const uint8_t lhs_grade{bit_count(i)};
+        for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
+          const uint8_t rhs_grade{bit_count(j)};
+          if (rhs_grade >= lhs_grade) {
+            const auto grade_difference{rhs_grade - lhs_grade};
+            const auto& cayley_entry{cayley_table_.entry(i, j)};
+            if (bit_count(cayley_entry.basis_index) == grade_difference) {
+              result.coefficients_[cayley_entry.basis_index] +=
+                  cayley_entry.structure_constant * lhs_value * rhs.coefficients_[j];
+            }
+          }
         }
       }
     }
     return result;
   }
 
-  /**
-   * Computes the right contraction of this multivector (lhs) onto rhs. This is the opposite of
-   * left_contraction(). See that method for more details.
-   */
   constexpr Multivector right_contraction(const Multivector& rhs) const {
     Multivector result{};
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      const ScalarType lhs_value{coefficients_[i]};
+      if (abs(lhs_value) > EPSILON) {
+        const uint8_t lhs_grade{bit_count(i)};
+        for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
+          const uint8_t rhs_grade{bit_count(j)};
+          if (lhs_grade >= rhs_grade) {
+            const auto grade_difference{lhs_grade - rhs_grade};
+            const auto& cayley_entry{cayley_table_.entry(i, j)};
+            if (bit_count(cayley_entry.basis_index) == grade_difference) {
+              result.coefficients_[cayley_entry.basis_index] +=
+                  cayley_entry.structure_constant * lhs_value * rhs.coefficients_[j];
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  constexpr Multivector bidirectional_inner_product(const Multivector& rhs) const {
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      const uint8_t lhs_grade{bit_count(i)};
       for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
-        // The right contraction e_I ⌊ e_J is nonzero if and only if the basis
-        // vectors of J are a subset of those of I, expressed as a bitmask
-        // containment check. If J ⊄ I, these two basis blades contribute
-        // nothing to the result.
-        // When j == 0 (scalar rhs), this condition is always satisfied, so a
-        // scalar rhs simply scales the entire lhs.
-        if ((i & j) == j) {
-          // i ^ j removes the bases of J from I, giving the remaining blade
-          // e_{I\J}. The structure constant accounts for any sign change from
-          // reordering basis vectors into canonical form.
-          const auto& cayley_entry{cayley_table_.entry(j, i)};
-          result.coefficients_[i ^ j] +=
+        const uint8_t rhs_grade{bit_count(j)};
+        const auto& cayley_entry{cayley_table_.entry(i, j)};
+        const auto grade_difference{abs(static_cast<int16_t>(lhs_grade) - rhs_grade)};
+        if (cayley_entry.basis_index == grade_difference) {
+          result.coefficients_[cayley_entry.basis_index] +=
               cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
       }
@@ -244,38 +256,19 @@ class Multivector final {
     return result;
   }
 
-  /**
-   * The bidirectional inner project projects each pair of bases individually, according to
-   * which basis has the lower grade. When the lhs basis has the lower grade, the lhs
-   * basis is projected onto the rhs basis. Similarly, the rhs basis is projected onto
-   * the lhs basis when the rhs basis has the lower grade. When the two have the same grade,
-   * the operation is symmetric and can be thought of as projecting the lhs basis onto the rhs
-   * basis or vice versa.
-   */
-  constexpr Multivector bidirectional_inner(const Multivector& rhs) const {
+  constexpr Multivector hestenes_inner_product(const Multivector& rhs) const {
     Multivector result{};
-    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
-      for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
-        // If the lhs basis is a lower grade, compute the inner product as the lhs basis
-        // being projected on the rhs. Otherwise, project the rhs basis on the lhs. The
-        // implementation here is to simply select the appropriate Cayley table entry according to
-        // which basis is being projected.
-        // Note that the grade of the basis and value of the basis are not the same. The
-        // grade is the number of bits set in the value. But, if the value is lower and the grade is
-        // higher (value of 3, meaning a grade of 2, is less than a value of 4, a grade of 1), the
-        // resulting bases are orthogonal and the inner product will be zero.
-        if (i < j) {
-          if ((i & j) == i) {
-            const auto& cayley_entry{cayley_table_.entry(i, j)};
-            result.coefficients_[j ^ i] +=
-                cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
-          }
-        } else {
-          if ((i & j) == j) {
-            const auto& cayley_entry{cayley_table_.entry(j, i)};
-            result.coefficients_[i ^ j] +=
-                cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
-          }
+    // Hestenes's inner product gives a 0 multivector when either side is a scalar. That means that
+    // we ignore scalar terms when computing the inner product by starting the iteration at 1.
+    for (size_t i = 1; i < NUM_BASIS_BLADES; ++i) {
+      const uint8_t lhs_grade{bit_count(i)};
+      for (size_t j = 1; j < NUM_BASIS_BLADES; ++j) {
+        const uint8_t rhs_grade{bit_count(j)};
+        const auto& cayley_entry{cayley_table_.entry(i, j)};
+        const auto grade_difference{abs(static_cast<int16_t>(lhs_grade) - rhs_grade)};
+        if (cayley_entry.basis_index == grade_difference) {
+          result.coefficients_[cayley_entry.basis_index] +=
+              cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
       }
     }
@@ -285,14 +278,15 @@ class Multivector final {
   /**
    * The inner product. Note that the inner product is not uniformly defined across geometric
    * algebra texts. In some texts, especially those by Leo Dorst, the inner product is defined as
-   * the left_contraction(). The right_contraction() style was used extensively by Lounesto. A third
-   * style, the BIDIRECTIONAL innner product, also generates a vector result is implemented here as
-   * a form of completeness. All of these approaches are useful or worth study, so the Multivector
-   * includes the style of the inner product as part of the type. The inner() method below
-   * implements selecting the style based on the type definition. Finally, all three approaches are
-   * exposed in the API of this class, so they may be used explicitly as needed. Note that
-   * Hestenes's approach is NOT included as it generates a scalar and has some properties that make
-   * it difficult to work with.
+   * the left_contraction(). The right_contraction() style was used extensively by Lounesto.
+   * Hestenes used a similar operation that was effectively a left contraction when the grade of the
+   * lhs was higher and a right contraction when the rhs grade was higher, but all inner products
+   * with scalars were zero. We add the bidirectional inner product which is essentially Hestenes's
+   * inner product but without the special condition around scalars. All of these approaches are
+   * useful, or at least worth study, so the Multivector includes the style of the inner product as
+   * part of the type. The inner() method below implements selecting the style based on the type
+   * definition. Finally, all three approaches are exposed in the API of this class, so they may be
+   * used explicitly as needed.
    */
   constexpr Multivector inner(const Multivector& rhs) const {
     static_assert(
@@ -305,7 +299,9 @@ class Multivector final {
     } else if constexpr (INNER_PRODUCT == InnerProduct::RIGHT_CONTRACTION) {
       return right_contraction(rhs);
     } else if constexpr (INNER_PRODUCT == InnerProduct::BIDIRECTIONAL) {
-      return bidirectional_inner(rhs);
+      return bidirectional_inner_product(rhs);
+    } else if constexpr (INNER_PRODUCT == InnerProduct::HESTENES) {
+      return hestenes_inner_product(rhs);
     }
   }
 
@@ -320,7 +316,7 @@ class Multivector final {
       for (size_t j = 0; j < NUM_BASIS_BLADES; ++j) {
         const auto& cayley_entry{cayley_table_.entry(i, j)};
         if (bit_count(cayley_entry.basis_index) == bit_count(i) + bit_count(j)) {
-          result.coefficients_[i ^ j] +=
+          result.coefficients_[cayley_entry.basis_index] +=
               cayley_entry.structure_constant * coefficients_[i] * rhs.coefficients_[j];
         }
       }
@@ -422,26 +418,14 @@ class Multivector final {
     }
   }
 
-  /**
-   * Duality maps a blade to its orthogonal complement via contraction with the pseudoscalar I
-   * (the highest-grade blade of the algebra, representing the entire space). Geometrically,
-   * the dual of a subspace is the subspace of all elements perpendicular to it — for example,
-   * in 3D the dual of a line through the origin is a plane through the origin.
-   *
-   * The two operations differ in how they behave when composed: undual(dual(X)) = X exactly,
-   * regardless of the algebra's signature. This is necessary because I² (the pseudoscalar
-   * squared, which is always a scalar) is +1 in some algebras, -1 in others (e.g. G(3,0),
-   * G(4,1)), and 0 in degenerate algebras (e.g. PGA G(3,0,1)). When I² = -1, applying the
-   * same duality operation twice returns -X rather than X, so a naive implementation of
-   * undual (i.e. undual(X) = X ⌋ I, identical to dual(X)) as a second application of dual would
-   * silently introduce a sign error. When I² = 0 the pseudoscalar has no scalar inverse at all,
-   * making a correction factor impossible. Using left contraction for dual and right contraction
-   * for undual resolves all three cases uniformly, with the sign correction emerging from the
-   * asymmetry between the two contractions rather than requiring an explicit case analysis on the
-   * signature.
-   */
-  constexpr Multivector dual() const { return left_contraction(invertible_pseudoscalar()); }
-  constexpr Multivector undual() const { return right_contraction(invertible_pseudoscalar()); }
+  constexpr Multivector dual() const {
+    return left_contraction(invertible_pseudoscalar().reverse());
+  }
+
+  constexpr Multivector undual() const {
+    constexpr ScalarType sign{(NUM_NEGATIVE_BASES % 2) == 1 ? -1 : 1};
+    return sign * left_contraction(invertible_pseudoscalar());
+  }
 
   /**
    * Returns true if this multivector is a versor — that is, a product of invertible vectors.
@@ -460,17 +444,6 @@ class Multivector final {
    * coordinate magnitudes should scale this accordingly.
    */
   constexpr bool is_versor(const ScalarType tolerance = EPSILON) const {
-    // Note: std::abs() is not constexpr until C++23. This wrapper delegates to std::abs() when
-    // using C++23 or later, preserving full IEEE 754 compliance for production use, and falls back
-    // to a simple negation in constexpr contexts where special float values are not a concern.
-    constexpr auto abs = [](ScalarType v) constexpr -> ScalarType {
-#if defined(__cpp_lib_constexpr_cmath) && __cpp_lib_constexpr_cmath >= 202202L
-      return std::abs(v);
-#else
-      return v < ScalarType{0} ? -v : v;
-#endif
-    };
-
     // Cheap structural rejection: versors are purely even- or purely odd-grade.
     bool has_even{false};
     bool has_odd{false};
@@ -565,6 +538,12 @@ class Multivector final {
   // Regressive, or 'V', product.
   constexpr Multivector operator&(const Multivector& rhs) const { return regress(rhs); }
 
+  // Left contraction.
+  constexpr Multivector operator<<(const Multivector& rhs) const { return left_contraction(rhs); }
+
+  // Right contraction.
+  constexpr Multivector operator>>(const Multivector& rhs) const { return right_contraction(rhs); }
+
   // Division by a scalar.
   constexpr Multivector operator/(const ScalarType& rhs) const { return divide(rhs); }
 
@@ -583,6 +562,7 @@ class Multivector final {
     return *this;
   }
 
+  // Factory methods for select basis blades.
   static constexpr Multivector pseudoscalar() {
     Multivector result{};
     result.coefficients_[NUM_BASIS_BLADES - 1] = 1;
@@ -591,7 +571,7 @@ class Multivector final {
 
   static constexpr Multivector invertible_pseudoscalar() {
     Multivector result{};
-    result.coefficients_[(NUM_BASIS_BLADES - 1) & (~DEGENERATE_BASIS_MASK)] = 1;
+    result.coefficients_[(NUM_BASIS_BLADES - 1) & ~(DEGENERATE_BASIS_MASK)] = 1;
     return result;
   }
 
@@ -617,6 +597,14 @@ class Multivector final {
     }
   }
 
+  // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
+  // any Multivector. See the tests for examples.
+  static constexpr Multivector e(size_t N) {
+    Multivector result{};
+    result.coefficients_.at(1UL << N) = 1;
+    return result;
+  }
+
   /*************************************************************************************************
    * These accessors rely on the notion of a "bit index". A bit index is a particular ordering of
    * the bases in a multivector so that the basis vectors are indexed by powers of 2. In particular,
@@ -626,8 +614,8 @@ class Multivector final {
    * particular conventions in a specific algebra force deviations from the pattern.
    *
    * In general, using these accessors requires a solid understanding of this indexing strategy and
-   * can be error-prone. They should be considered internal implementation details and not part of
-   * the API.
+   * can be error-prone. They should be considered internal implementation details used for testing
+   * only and not part of the API.
    *************************************************************************************************/
   constexpr const ScalarType& coefficient(size_t n) const { return coefficients_.at(n); }
   constexpr void set_coefficient(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
