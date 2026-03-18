@@ -80,23 +80,23 @@ constexpr size_t count_bits_within_mask(const BitSet<N>& bits, const BitSet<N>& 
 
 template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
 static constexpr BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>
+zero_bases_bitmask() {
+  return BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>::create_mask(
+      NUM_ZERO_BASES);
+}
+
+template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
+static constexpr BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>
 positive_bases_bitmask() {
   return BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>::create_mask(
-      NUM_POSITIVE_BASES);
+      NUM_POSITIVE_BASES, NUM_ZERO_BASES);
 }
 
 template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
 static constexpr BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>
 negative_bases_bitmask() {
   return BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>::create_mask(
-      NUM_NEGATIVE_BASES, NUM_POSITIVE_BASES);
-}
-
-template <size_t NUM_POSITIVE_BASES, size_t NUM_NEGATIVE_BASES, size_t NUM_ZERO_BASES>
-static constexpr BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>
-zero_bases_bitmask() {
-  return BitSet<NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + NUM_ZERO_BASES>::create_mask(
-      NUM_ZERO_BASES, NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES);
+      NUM_NEGATIVE_BASES, NUM_ZERO_BASES + NUM_POSITIVE_BASES);
 }
 
 template <size_t NUM_BASIS_VECTORS, size_t current_bit>
