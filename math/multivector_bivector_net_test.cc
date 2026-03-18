@@ -55,7 +55,7 @@ template <typename BivectorNetType>
 BivectorNetType create_with_counting() {
   BivectorNetType result{};
   for (size_t i = 0; i < BivectorNetType::NUM_BASES; ++i) {
-    result[i] = i;
+    result[i] = i + 1;
   }
   return result;
 }
@@ -585,7 +585,7 @@ TEST(R000BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R001BivectorNetDirectTest, DualMatches) {
@@ -601,7 +601,7 @@ TEST(R001BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R010BivectorNetDirectTest, DualMatches) {
@@ -617,7 +617,7 @@ TEST(R010BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R011BivectorNetDirectTest, DualMatches) {
@@ -633,7 +633,7 @@ TEST(R011BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R100BivectorNetDirectTest, DualMatches) {
@@ -649,7 +649,7 @@ TEST(R100BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R110BivectorNetDirectTest, DualMatches) {
@@ -665,7 +665,7 @@ TEST(R110BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R101BivectorNetDirectTest, DualMatches) {
@@ -681,7 +681,7 @@ TEST(R101BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R111BivectorNetDirectTest, DualMatches) {
@@ -697,7 +697,7 @@ TEST(R111BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R130BivectorNetDirectTest, DualMatches) {
@@ -713,7 +713,7 @@ TEST(R130BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R200BivectorNetDirectTest, DualMatches) {
@@ -729,7 +729,7 @@ TEST(R200BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R201BivectorNetDirectTest, DualMatches) {
@@ -745,7 +745,7 @@ TEST(R201BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R210BivectorNetDirectTest, DualMatches) {
@@ -761,7 +761,7 @@ TEST(R210BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R300BivectorNetDirectTest, DualMatches) {
@@ -777,7 +777,7 @@ TEST(R300BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R301BivectorNetDirectTest, DualMatches) {
@@ -793,7 +793,7 @@ TEST(R301BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R401BivectorNetDirectTest, DualMatches) {
@@ -809,7 +809,7 @@ TEST(R401BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R410BivectorNetDirectTest, DualMatches) {
@@ -825,7 +825,7 @@ TEST(R410BivectorNetDirectTest, DualMatches) {
   VectorType v{to_multivector<BivectorNetType, VectorType>(bvec)};
   VectorType result{v.dual()};
   VectorType expected{to_multivector<BivectorNetType, VectorType>(!bvec)};
-  EXPECT_EQ(expected, result);
+  EXPECT_EQ(expected, result) << "expected: " << expected << ", result: " << result << ", v: " << v;
 }
 
 TEST(R000BivectorNetDirectTest, RegressiveProductMatches) {
