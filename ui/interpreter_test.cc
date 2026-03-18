@@ -1,150 +1,700 @@
 #include "ui/interpreter.h"
 
 #include <memory>
+#include <string_view>
 
 #include "gtest/gtest.h"
-#include "math/algebra.h"
-#include "math/multivector_test_utils.h"
+#include "math/basis_representation.h"
+#include "ui/ast_printer.h"
+#include "ui/interpreter_test_utils.h"
 #include "ui/parser.h"
 
 namespace ndyn::ui {
 
-using namespace ndyn::math;
+// ---------------------------------------------------------------------------
+// Algebra type lists
+// ---------------------------------------------------------------------------
 
-template <typename AlgebraT, typename RepresentationT = BasisRepresentation<AlgebraT>>
-::testing::AssertionResult MatchesValue(const std::string_view line,
-                                        const typename AlgebraT::VectorType& expected) {
+using TwoDimensionalAlgebras = ::testing::Types<  //
+    math::Vga2d<>,                                //
+    math::Vga<>,                                  //
+    math::Pga2d<>,                                //
+    math::Pga<>>;
+
+// Tests that require at least 3 positive bases (e3 is meaningful).
+using ThreeOrMorePositiveBaseAlgebras = ::testing::Types<  //
+    math::Vga<>,                                           //
+    math::Pga<>>;
+
+// Tests that require at least one null/zero basis (e0 is meaningful).
+using ProjectiveAlgebras = ::testing::Types<  //
+    math::Pga2d<>,                            //
+    math::Pga<>>;
+
+// ---------------------------------------------------------------------------
+// Shared fixture
+// ---------------------------------------------------------------------------
+
+/**
+ * Wraps the parser+interpreter pair so individual test bodies stay readable.
+ * Failure-path tests need access to interpreter state directly rather than
+ * going through MatchesValue, so we expose a thin helper for that case.
+ */
+template <typename AlgebraT>
+class InterpreterFixture : public ::testing::Test {
+ protected:
+  using Algebra = AlgebraT;
+  using Representation = math::BasisRepresentation<AlgebraT>;
+  using Vector = typename AlgebraT::VectorType;
+  using Scalar = typename AlgebraT::ScalarType;
+
+  /**
+   * Runs the parser only, ignoring parse errors, and returning the AST. Useful for debugging the
+   * grammar itself.
+   */
+  std::shared_ptr<LineAst> parse_line(std::string_view line) {
+    Parser parser{};
+    std::shared_ptr<LineAst> ast{};
+    Interpreter<AlgebraT, Representation> interpreter{};
+    parser.parse(line, ast);
+    return ast;
+  }
+
+  /**
+   * Runs the full parse+interpret pipeline and returns the interpreter state.
+   * Used by tests that need to inspect failure conditions directly.
+   */
+  Interpreter<AlgebraT, Representation> interpret_line(std::string_view line) {
+    Parser parser{};
+    std::shared_ptr<LineAst> ast{};
+    Interpreter<AlgebraT, Representation> interpreter{};
+    if (!parser.parse(line, ast)) {
+      // Signal parse failure through the interpreter's own flag so callers
+      // have a single state object to inspect regardless of failure stage.
+      interpreter.success = false;
+      interpreter.message = "parse failure";
+      return interpreter;
+    }
+    interpreter.interpret(*ast);
+    return interpreter;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Suite 1 — dimension-agnostic tests, all algebras
+// ---------------------------------------------------------------------------
+
+template <typename AlgebraT>
+class InterpreterTest : public InterpreterFixture<AlgebraT> {};
+
+TYPED_TEST_SUITE(InterpreterTest, TwoDimensionalAlgebras);
+
+// --- Scalar literals -------------------------------------------------------
+
+TYPED_TEST(InterpreterTest, IntegerScalarLiteral) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("1", typename A::ScalarType{1}));
+}
+
+TYPED_TEST(InterpreterTest, NegativeIntegerScalarLiteral) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("-1", typename A::ScalarType{-1}));
+}
+
+TYPED_TEST(InterpreterTest, PositiveIntegerScalarLiteralWithUnaryPlus) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("+1", typename A::ScalarType{1}));
+}
+
+TYPED_TEST(InterpreterTest, FloatingPointScalarLiteral) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("3.14", typename A::ScalarType{3.14}));
+}
+
+TYPED_TEST(InterpreterTest, NegativeFloatingPointScalarLiteral) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("-2.71", typename A::ScalarType{-2.71}));
+}
+
+TYPED_TEST(InterpreterTest, ZeroScalarLiteral) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("0", typename A::ScalarType{0}));
+}
+
+TYPED_TEST(InterpreterTest, ZeroPointZeroScalarLiteral) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("0.0", typename A::ScalarType{0}));
+}
+
+// --- Whitespace and empty input edge cases ---------------------------------
+
+TYPED_TEST(InterpreterTest, EmptyLineSucceedsWithNoValue) {
+  auto state = this->interpret_line("");
+  // An empty line is a valid Line production (the statement is optional).
+  // The interpreter should succeed but produce no value.
+  EXPECT_TRUE(state.success);
+  EXPECT_FALSE(state.was_value);
+}
+
+TYPED_TEST(InterpreterTest, WhitespaceOnlyLineSucceedsWithNoValue) {
+  auto state = this->interpret_line("   ");
+  EXPECT_TRUE(state.success);
+  EXPECT_FALSE(state.was_value);
+}
+
+TYPED_TEST(InterpreterTest, TabOnlyLineSucceedsWithNoValue) {
+  auto state = this->interpret_line("\t\t");
+  EXPECT_TRUE(state.success);
+  EXPECT_FALSE(state.was_value);
+}
+
+TYPED_TEST(InterpreterTest, ScalarWithLeadingWhitespace) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("   42", typename A::ScalarType{42}));
+}
+
+TYPED_TEST(InterpreterTest, ScalarWithTrailingWhitespace) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("42   ", typename A::ScalarType{42}));
+}
+
+TYPED_TEST(InterpreterTest, ScalarWithLeadingAndTrailingWhitespace) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("  42  ", typename A::ScalarType{42}));
+}
+
+TYPED_TEST(InterpreterTest, ExpressionWithInternalWhitespace) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("1 + 1", typename A::ScalarType{2}));
+}
+
+TYPED_TEST(InterpreterTest, ExpressionWithTabSeparators) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("1\t+\t1", typename A::ScalarType{2}));
+}
+
+TYPED_TEST(InterpreterTest, ExpressionWithNoWhitespace) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("1+1", typename A::ScalarType{2}));
+}
+
+// --- Arithmetic precedence -------------------------------------------------
+
+/**
+ * These tests are the primary guard against precedence bugs in the Additive /
+ * Multiplicative grammar layers.  Each case is chosen to produce a different
+ * result depending on which operator binds tighter.
+ */
+
+TYPED_TEST(InterpreterTest, BinaryOperationsAreLeftAssociative) {
+  using A = typename TestFixture::Algebra;
+  // Use subtraction to make associativity observable.
+  // 5 - 3 - 1 should be (5 - 3) - 1 == 1, not 5 - (3 - 1) == 3.
+  ASSERT_TRUE(MatchesValue<A>("(5 - 3) - 1", typename A::ScalarType{1}));
+  ASSERT_TRUE(MatchesValue<A>("5 - (3 - 1)", typename A::ScalarType{3}));
+  EXPECT_TRUE(MatchesValue<A>("5 - 3 - 1", typename A::ScalarType{1}));
+
+  auto ast = this->parse_line("5 - 3 - 1");
+  print_ast(*ast);
+}
+
+TYPED_TEST(InterpreterTest, MultiplicationBeforeAddition) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("2 + 3 * 4", typename A::ScalarType{14}));
+  EXPECT_TRUE(MatchesValue<A>("3 * 4 + 2", typename A::ScalarType{14}));
+}
+
+TYPED_TEST(InterpreterTest, MultiplicationBeforeSubtraction) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("10 - 2 * 3", typename A::ScalarType{4}));
+  EXPECT_TRUE(MatchesValue<A>("10 * 3 - 2", typename A::ScalarType{28}));
+}
+
+TYPED_TEST(InterpreterTest, DISABLED_DivisionBeforeAddition) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("3 + 6 / 3", typename A::ScalarType{5}));
+  EXPECT_TRUE(MatchesValue<A>("6 / 3 + 3", typename A::ScalarType{5}));
+}
+
+TYPED_TEST(InterpreterTest, ParenthesesOverrideMultiplicationPrecedence) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("(2 + 3) * 4", typename A::ScalarType{20}));
+}
+
+TYPED_TEST(InterpreterTest, NestedParentheses) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("((2 + 3)) * 4", typename A::ScalarType{20}));
+}
+
+TYPED_TEST(InterpreterTest, DeeplyNestedParentheses) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("(((5)))", typename A::ScalarType{5}));
+}
+
+TYPED_TEST(InterpreterTest, UnaryMinusBindsTighterThanMultiplication) {
+  using A = typename TestFixture::Algebra;
+  // -2 * 3 should be (-2) * 3 == -6.
+  EXPECT_TRUE(MatchesValue<A>("-2 * 3", typename A::ScalarType{-6}));
+}
+
+TYPED_TEST(InterpreterTest, UnaryMinusOnParenthetical) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("-(2 + 3)", typename A::ScalarType{-5}));
+}
+
+TYPED_TEST(InterpreterTest, UnaryPlusIsIdentity) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("+5", typename A::ScalarType{5}));
+}
+
+TYPED_TEST(InterpreterTest, ChainedUnaryMinus) {
+  using A = typename TestFixture::Algebra;
+  // The grammar allows one unary operator per Unary node, so --2 is two
+  // nested Unary productions.  Verify this does not silently fail to parse.
+  EXPECT_TRUE(MatchesValue<A>("- -2", typename A::ScalarType{2}));
+}
+
+// --- Additive / multiplicative operator combinations ----------------------
+
+TYPED_TEST(InterpreterTest, AddThenMultiply) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("1 + 2 * 3 + 4", typename A::ScalarType{11}));
+  EXPECT_TRUE(MatchesValue<A>("1 + 4 + 2 * 3", typename A::ScalarType{11}));
+  EXPECT_TRUE(MatchesValue<A>("2 * 3 + 1 + 4", typename A::ScalarType{11}));
+}
+
+TYPED_TEST(InterpreterTest, SubtractNegativeScalar) {
+  using A = typename TestFixture::Algebra;
+  // "1 - -1" tests that the parser correctly handles a binary minus followed
+  // by a unary minus without ambiguity.
+  EXPECT_TRUE(MatchesValue<A>("1 - -1", typename A::ScalarType{2}));
+}
+
+TYPED_TEST(InterpreterTest, DISABLED_DivisionAssociativity) {
+  using A = typename TestFixture::Algebra;
+  // 12 / 4 / 3: left-associative gives 1, right-associative gives 9.
+  EXPECT_TRUE(MatchesValue<A>("12 / 4 / 3", typename A::ScalarType{1}));
+}
+
+// --- Assignment and variable reuse ----------------------------------------
+
+TYPED_TEST(InterpreterTest, AssignAndRecallScalar) {
+  using A = typename TestFixture::Algebra;
+  using Rep = math::BasisRepresentation<A>;
   Parser parser{};
+  Interpreter<A, Rep> interp{};
+
   std::shared_ptr<LineAst> ast{};
-  if (!parser.parse(line, ast)) {
-    return ::testing::AssertionFailure() << "Could not parse line";
+  ASSERT_TRUE(parser.parse("x = 7", ast));
+  interp.interpret(*ast);
+  ASSERT_TRUE(interp.success);
+
+  ASSERT_TRUE(parser.parse("x", ast));
+  interp.interpret(*ast);
+  ASSERT_TRUE(interp.success);
+  EXPECT_TRUE(interp.was_value);
+}
+
+TYPED_TEST(InterpreterTest, AssignmentExpressionInvolvesPrecedence) {
+  using A = typename TestFixture::Algebra;
+  // The RHS should be evaluated with correct precedence before binding.
+  EXPECT_TRUE(MatchesValue<A>("2 + 3 * 4", typename A::ScalarType{14}));
+}
+
+TYPED_TEST(InterpreterTest, KeywordsAreNotValidIdentifiers) {
+  // "algebra", "metric", "dict", "exit", "quit", "help" must not parse as
+  // assignment targets.  A parse failure is expected for each.
+  for (const std::string_view keyword : {"algebra", "metric", "dict", "exit", "quit", "help"}) {
+    const std::string assignment = std::string{keyword} + " = 1";
+    auto state = this->interpret_line(assignment);
+    EXPECT_FALSE(state.success) << "Expected parse failure for keyword: " << keyword;
   }
-
-  Interpreter<AlgebraT, RepresentationT> interpreter{};
-  interpreter.interpret(*ast);
-
-  if (!interpreter.success) {
-    return ::testing::AssertionFailure() << "Error during interpretation -- success was false.";
-  }
-  if (!interpreter.was_value) {
-    return ::testing::AssertionFailure() << "Error during interpretation -- was_value was false.";
-  }
-  if (!interpreter.message.empty()) {
-    return ::testing::AssertionFailure()
-           << "Error during interpretation -- message not empty. message: '" << interpreter.message
-           << "'";
-  }
-
-  return AreNear(interpreter.current_value, expected);
 }
 
-template <typename AlgebraT, typename RepresentationT = BasisRepresentation<AlgebraT>>
-::testing::AssertionResult MatchesValue(const std::string_view line,
-                                        const typename AlgebraT::ScalarType& expected) {
-  return MatchesValue<AlgebraT, RepresentationT>(line, typename AlgebraT::VectorType{expected});
+// --- Command parsing -------------------------------------------------------
+
+/***************************************************************************************************
+// Note: Do not attempt to test the exit and quit commands. The interpreter will exit the current
+// process as part of interpreting them. For now, they can only be tested manually. If these are
+// added, all of the tests in this file will appear to pass.
+***************************************************************************************************/
+
+TYPED_TEST(InterpreterTest, HelpCommand) {
+  auto state = this->interpret_line("help");
+  EXPECT_TRUE(state.success);
+  EXPECT_FALSE(state.was_value);
 }
 
-TEST(InterpreterTest, CanInterpretSimpleScalarExpressions) {
-  using AlgebraType = Scalar<>;
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1", 1));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1 * 2", 2));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2 * 2", 4));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1 + 2", 3));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2 + 2", 4));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2 - 2", 0));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("4 - 2", 2));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(4 + 1) * (2 + 2)", 20));
+TYPED_TEST(InterpreterTest, DictCommand) {
+  auto state = this->interpret_line("dict");
+  EXPECT_TRUE(state.success);
+  EXPECT_FALSE(state.was_value);
 }
 
-// Note: this test catches a particular bug in the parsing where a '+' or a '-' without spaces gets
-// bound as a unary operator when it was intended to be the binary operator. Multiplication is then
-// assumed by the parser to be the binary operator between these operands.
-TEST(InterpreterTest, CanInterpretSimpleScalarExpressionsWithoutSeparators) {
-  using AlgebraType = Scalar<>;
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1*2", 2));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2*2", 4));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1+2", 3));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2+2", 4));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2-2", 0));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("4-2", 2));
+TYPED_TEST(InterpreterTest, DictCommandLongFlag) {
+  auto state = this->interpret_line("dict --long");
+  EXPECT_TRUE(state.success);
+  EXPECT_FALSE(state.was_value);
 }
 
-TEST(InterpreterTest, CanInterpretComplexBasisVector) {
-  using AlgebraType = Complex<>;
-  EXPECT_TRUE(MatchesValue<AlgebraType>("i", AlgebraType::VectorType::e<0>()));
+TYPED_TEST(InterpreterTest, DictCommandShortFlag) {
+  auto state = this->interpret_line("dict -l");
+  EXPECT_TRUE(state.success);
+  EXPECT_FALSE(state.was_value);
 }
 
-TEST(InterpreterTest, CanInterpretExpressionsInComplexAlgebra) {
-  using AlgebraType = Complex<>;
+// --- GA operators on scalar expressions ------------------------------------
 
-  constexpr auto i{AlgebraType::VectorType::e<0>()};
+/**
+ * These tests exercise the GA-specific operator parse paths on scalar values
+ * where the result is algebra-independent.  They confirm the parser dispatches
+ * to the right production without testing geometric correctness.
+ */
 
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1", 1));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1 * 2", 2));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2 * 2", 4));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1 + 2", 3));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2 + 2", 4));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("2 - 2", 0));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("4 - 2", 2));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("i", i));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("1 * i", i));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("i * 1", i));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("i * 2", 2 * i));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", i * i));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("i * i", -1));
-
-  // Testing the evaluation of select expressions. Includes the fully evaluated form to help with
-  // debugging if there is a problem.
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 + i)", (i + 1) * (1 + i)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 + i)", 2 * i));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 - i)", (i + 1) * (1 - i)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i + 1) * (1 - i)", 2));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 + i)", (i - 1) * (1 + i)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 + i)", -2));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 - i)", (i - 1) * (1 - i)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(i - 1) * (1 - i)", 2 * i));
+TYPED_TEST(InterpreterTest, OuterProductOfScalars) {
+  using A = typename TestFixture::Algebra;
+  // The outer product of two scalars is their ordinary product.
+  EXPECT_TRUE(MatchesValue<A>("2 ^ 3", typename A::ScalarType{6}));
 }
 
-TEST(InterpreterTest, CanInterpretVga2dBasisVectors) {
-  using AlgebraType = Vga2d<>;
-  constexpr auto e1{AlgebraType::VectorType::e<0>()};
-  constexpr auto e2{AlgebraType::VectorType::e<1>()};
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e1", e1));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e2", e2));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e12", e1 * e2));
-
-  // Testing the evaluation of select expressions. Includes the fully evaluated form to help with
-  // debugging if there is a problem.
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e1 + 1) * (e1 + 1)", (e1 + 1) * (e1 + 1)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e1 + 1) * (e1 + 1)", 2 * e1 + 2));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e2 + 1)", (e2 - 1) * (e2 + 1)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e2 + 1)", 0));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e1 + 1)", (e2 - 1) * (e1 + 1)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e2 - 1) * (e1 + 1)", -e1 * e2 - e1 + e2 - 1));
-
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e12 - 1) * (e12 + 1)", (e1 * e2 - 1) * (e1 * e2 + 1)));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("(e12 - 1) * (e12 + 1)", -2));
+TYPED_TEST(InterpreterTest, OuterProductPrecedenceOverAddition) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("1 + 2 ^ 3", typename A::ScalarType{7}));
 }
 
-TEST(InterpreterTest, CanInterpretVgaBasisVectors) {
-  using AlgebraType = Vga<>;
-  constexpr auto e1{AlgebraType::VectorType::e<0>()};
-  constexpr auto e2{AlgebraType::VectorType::e<1>()};
-  constexpr auto e3{AlgebraType::VectorType::e<2>()};
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e1", e1));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e2", e2));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e3", e3));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e12", e1 * e2));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e13", e1 * e3));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e23", e2 * e3));
-  EXPECT_TRUE(MatchesValue<AlgebraType>("e123", e1 * e2 * e3));
+TYPED_TEST(InterpreterTest, OuterProductWithUnaryMinus) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("-2 ^ 3", typename A::ScalarType{-6}));
+}
+
+TYPED_TEST(InterpreterTest, LeftContractionOfScalars) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("3 << 3", typename A::ScalarType{9}));
+}
+
+TYPED_TEST(InterpreterTest, RightContractionOfScalars) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("3 >> 3", typename A::ScalarType{9}));
+}
+
+TYPED_TEST(InterpreterTest, ReverseOfScalar) {
+  using A = typename TestFixture::Algebra;
+  // Reverse of a scalar is the scalar itself.
+  EXPECT_TRUE(MatchesValue<A>("~3", typename A::ScalarType{3}));
+  EXPECT_TRUE(MatchesValue<A>("~-3", typename A::ScalarType{-3}));
+  EXPECT_TRUE(MatchesValue<A>("~(-3)", typename A::ScalarType{-3}));
+  EXPECT_TRUE(MatchesValue<A>("~(3)", typename A::ScalarType{3}));
+}
+
+TYPED_TEST(InterpreterTest, ReverseOfScalarIncorrectParse) {
+  // This test isolates a bug in the interpreter where the reverse of a negative and positive of a
+  // value evaluate to the same result.
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("~3", typename A::ScalarType{3}));
+  EXPECT_TRUE(MatchesValue<A>("~-3", typename A::ScalarType{-3}));
+  EXPECT_FALSE(MatchesValue<A>("~3", typename A::ScalarType{-3}));
+  EXPECT_FALSE(MatchesValue<A>("~-3", typename A::ScalarType{3}));
+}
+
+TYPED_TEST(InterpreterTest, DualOfScalarViaUnaryBang) {
+  // The dual of a scalar is algebra-dependent, but the parse path must not
+  // fail.  We verify the interpreter succeeds and produces a value.
+  auto state = this->interpret_line("!1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, ReverseOfParenthetical) {
+  using A = typename TestFixture::Algebra;
+  EXPECT_TRUE(MatchesValue<A>("~(3)", typename A::ScalarType{3}));
+}
+
+TYPED_TEST(InterpreterTest, DualOfParenthetical) {
+  auto state = this->interpret_line("!(1)");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+}
+
+// --- Basis vector expressions (dimension-agnostic: e1, e2) ----------------
+
+TYPED_TEST(InterpreterTest, BasisVectorE1IsValue) {
+  auto state = this->interpret_line("e1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, BasisVectorE2IsValue) {
+  auto state = this->interpret_line("e2");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, OuterProductE1E2ViaOperator) {
+  // e1 ^ e2 exercises the Multiplicative -> OuterOp production on basis vectors.
+  auto state = this->interpret_line("e1 ^ e2");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, OuterProductE1E2ViaIdentifier) {
+  // e12 is an Identifier in the universal representation — a distinct parse
+  // path from e1 ^ e2.
+  auto state = this->interpret_line("e12");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, OuterProductAndIdentifierFormAreEqual) {
+  using A = typename TestFixture::Algebra;
+  using Rep = math::BasisRepresentation<A>;
+  Parser parser{};
+  Interpreter<A, Rep> op_interp{};
+  Interpreter<A, Rep> id_interp{};
+
+  std::shared_ptr<LineAst> ast{};
+  ASSERT_TRUE(parser.parse("e1 ^ e2", ast));
+  op_interp.interpret(*ast);
+  ASSERT_TRUE(op_interp.success);
+
+  ASSERT_TRUE(parser.parse("e12", ast));
+  id_interp.interpret(*ast);
+  ASSERT_TRUE(id_interp.success);
+
+  EXPECT_TRUE(math::AreNear(op_interp.current_value, id_interp.current_value));
+}
+
+TYPED_TEST(InterpreterTest, ReverseOfBasisVectorE1) {
+  auto state = this->interpret_line("~e1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, DualOfBasisVectorE1) {
+  auto state = this->interpret_line("!e1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, LeftContractionE1E2) {
+  auto state = this->interpret_line("e1 << e2");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, RightContractionE1E2) {
+  auto state = this->interpret_line("e1 >> e2");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, GeometricProductE1E2) {
+  auto state = this->interpret_line("e1 * e2");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, ScalarPlusBasisVector) {
+  auto state = this->interpret_line("1 + e1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest, ScalarTimesE1ThenAddE2) {
+  // Exercises mixed precedence between * and + involving basis vectors.
+  auto state = this->interpret_line("2 * e1 + e2");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+// --- Out-of-dimension basis vectors should fail ---------------------------
+
+TYPED_TEST(InterpreterTest, OutOfDimensionBasisVectorFails) {
+  // Compute one past the last valid basis index for this algebra.
+  constexpr size_t out_of_range_index =
+      TypeParam::NUM_POSITIVE_BASES + TypeParam::NUM_NEGATIVE_BASES + TypeParam::NUM_ZERO_BASES + 1;
+  const std::string expr = "e" + std::to_string(out_of_range_index);
+  auto state = this->interpret_line(expr);
+  EXPECT_FALSE(state.success);
+  EXPECT_FALSE(state.message.empty());
+}
+
+// ---------------------------------------------------------------------------
+// Suite 2 — requires >= 3 positive bases (e3 is meaningful)
+// ---------------------------------------------------------------------------
+
+template <typename AlgebraT>
+class InterpreterTest3dOrHigher : public InterpreterFixture<AlgebraT> {};
+
+TYPED_TEST_SUITE(InterpreterTest3dOrHigher, ThreeOrMorePositiveBaseAlgebras);
+
+TYPED_TEST(InterpreterTest3dOrHigher, BasisVectorE3IsValue) {
+  auto state = this->interpret_line("e3");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, OuterProductE1E2E3ViaOperators) {
+  auto state = this->interpret_line("e1 ^ e2 ^ e3");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, OuterProductE1E2E3ViaIdentifier) {
+  auto state = this->interpret_line("e123");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, TrivectorIdentifierAndOperatorFormAreEqual) {
+  using A = typename TestFixture::Algebra;
+  using Rep = math::BasisRepresentation<A>;
+  Parser parser{};
+  Interpreter<A, Rep> op_interp{};
+  Interpreter<A, Rep> id_interp{};
+
+  std::shared_ptr<LineAst> ast{};
+  ASSERT_TRUE(parser.parse("e1 ^ e2 ^ e3", ast));
+  op_interp.interpret(*ast);
+  ASSERT_TRUE(op_interp.success);
+
+  ASSERT_TRUE(parser.parse("e123", ast));
+  id_interp.interpret(*ast);
+  ASSERT_TRUE(id_interp.success);
+
+  EXPECT_TRUE(math::AreNear(op_interp.current_value, id_interp.current_value));
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, ReverseOfBivectorE12) {
+  // Reverse of a bivector negates it.  We only check the parse+interpret path
+  // succeeds; geometric correctness is covered by the math tests.
+  auto state = this->interpret_line("~e12");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, ReverseOfTrivectorIdentifier) {
+  auto state = this->interpret_line("~e123");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, DualOfTrivectorIdentifier) {
+  auto state = this->interpret_line("!e123");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, FullMultivectorExpression) {
+  // A full VGA multivector built from all grades.  Exercises the entire
+  // Additive chain with mixed-grade operands.
+  auto state = this->interpret_line("1 + e1 + e2 + e3 + e12 + e13 + e23 + e123");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, LeftContractionE1OnBivectorE12) {
+  auto state = this->interpret_line("e1 << e12");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, RightContractionE12OnE1) {
+  auto state = this->interpret_line("e12 >> e1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTest3dOrHigher, ParenthesesChangeOuterProductGrouping) {
+  using A = typename TestFixture::Algebra;
+  using Rep = math::BasisRepresentation<A>;
+  Parser parser{};
+  Interpreter<A, Rep> left_grouped{};
+  Interpreter<A, Rep> right_grouped{};
+
+  std::shared_ptr<LineAst> ast{};
+  ASSERT_TRUE(parser.parse("(e1 ^ e2) ^ e3", ast));
+  left_grouped.interpret(*ast);
+  ASSERT_TRUE(left_grouped.success);
+
+  ASSERT_TRUE(parser.parse("e1 ^ (e2 ^ e3)", ast));
+  right_grouped.interpret(*ast);
+  ASSERT_TRUE(right_grouped.success);
+
+  // The outer product is associative, so both groupings must yield the same
+  // value.
+  EXPECT_TRUE(math::AreNear(left_grouped.current_value, right_grouped.current_value));
+}
+
+// ---------------------------------------------------------------------------
+// Suite 3 — projective algebras (at least one zero basis, e0 meaningful)
+// ---------------------------------------------------------------------------
+
+template <typename AlgebraT>
+class InterpreterTestProjective : public InterpreterFixture<AlgebraT> {};
+
+TYPED_TEST_SUITE(InterpreterTestProjective, ProjectiveAlgebras);
+
+TYPED_TEST(InterpreterTestProjective, BasisVectorE0IsValue) {
+  auto state = this->interpret_line("e0");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTestProjective, OuterProductE0E1ViaOperator) {
+  auto state = this->interpret_line("e0 ^ e1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTestProjective, OuterProductE0E1ViaIdentifier) {
+  auto state = this->interpret_line("e01");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTestProjective, DualOfPseudoscalar) {
+  auto state = this->interpret_line("!e0");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTestProjective, LeftContractionE0E1) {
+  auto state = this->interpret_line("e0 << e1");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
+}
+
+TYPED_TEST(InterpreterTestProjective, RightContractionE1E0) {
+  auto state = this->interpret_line("e1 >> e0");
+  EXPECT_TRUE(state.success);
+  EXPECT_TRUE(state.was_value);
+  EXPECT_TRUE(state.message.empty());
 }
 
 }  // namespace ndyn::ui

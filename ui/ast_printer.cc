@@ -22,10 +22,12 @@ class AstPrinter final : public Visitor {
 
   void visit(ScalarAst&) override;
   void visit(IdentifierAst&) override;
+  void visit(ParentheticalAst&) override;
   void visit(RvalueAst&) override;
   void visit(UnaryAst&) override;
   void visit(BinaryAst&) override;
 
+  void visit(UnaryOpAst&) override;
   void visit(BinaryOpAst&) override;
 
   void visit(DictCommandAst&) override;
@@ -104,6 +106,21 @@ void AstPrinter::visit(IdentifierAst& node) {
   --indent_;
 }
 
+void AstPrinter::visit(ParentheticalAst& node) {
+  LOG(INFO) << std::string(indent_ * 2, ' ') << "Parenthetical";
+  ++indent_;
+  // Visit children.
+  LOG(INFO) << std::string(indent_ * 2, ' ') << "[OPERAND]";
+  ++indent_;
+  if (node.operand) {
+    node.operand->visit(*this);
+  } else {
+    LOG(INFO) << std::string(indent_ * 2, ' ') << "<empty operand>";
+  }
+  --indent_;
+  --indent_;
+}
+
 void AstPrinter::visit(RvalueAst& node) {
   LOG(INFO) << std::string(indent_ * 2, ' ') << "Rvalue";
   ++indent_;
@@ -116,16 +133,34 @@ void AstPrinter::visit(RvalueAst& node) {
   --indent_;
 }
 
+void AstPrinter::visit(UnaryOpAst& node) {
+  LOG(INFO) << std::string(indent_ * 2, ' ') << "UnaryOp";
+  ++indent_;
+  // Visit children.
+  LOG(INFO) << std::string(indent_ * 2, ' ') << "[OP] '" << to_string(node.op) << "'";
+  --indent_;
+}
+
 void AstPrinter::visit(UnaryAst& node) {
   LOG(INFO) << std::string(indent_ * 2, ' ') << "Unary";
   ++indent_;
   // Visit children.
-  LOG(INFO) << std::string(indent_ * 2, ' ') << "[OP] '" << to_string(node.op) << "'";
+  LOG(INFO) << std::string(indent_ * 2, ' ') << "[OPERATOR]";
+  ++indent_;
+  if (node.op) {
+    node.op->visit(*this);
+  } else {
+    LOG(INFO) << std::string(indent_ * 2, ' ') << "<empty operand>";
+  }
+  --indent_;
+  LOG(INFO) << std::string(indent_ * 2, ' ') << "[OPERAND]";
+  ++indent_;
   if (node.operand) {
     node.operand->visit(*this);
   } else {
     LOG(INFO) << std::string(indent_ * 2, ' ') << "<empty operand>";
   }
+  --indent_;
   --indent_;
 }
 

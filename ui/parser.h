@@ -14,18 +14,45 @@ struct Ast {
   virtual void visit(Visitor& v) = 0;
 };
 
-enum class UnaryOp { Plus, Minus };
+enum class UnaryOp { Plus, Minus, Dual, Reverse };
 std::string to_string(UnaryOp);
 
-enum class BinaryOp { Add, Sub, Mult, Div, Outer, Inner };
+struct UnaryOpAst final : Ast {
+  UnaryOp op;
+
+  UnaryOpAst(UnaryOp op) : op(op) {}
+
+  void visit(Visitor& v) override;
+};
+
+enum class BinaryOp { Add, Sub, Mult, Div, Outer, LeftContract, RightContract };
 std::string to_string(BinaryOp);
 
-struct ExpressionAst : Ast {};
+struct BinaryOpAst final : Ast {
+  BinaryOp op;
+
+  BinaryOpAst(BinaryOp op) : op(op) {}
+
+  void visit(Visitor& v) override;
+};
+
+struct ExpressionAst : Ast {
+  virtual void ingest_terms(std::shared_ptr<ExpressionAst> lhs, std::shared_ptr<BinaryOpAst> op,
+                            std::shared_ptr<ExpressionAst>& holder);
+};
 
 struct ScalarAst final : ExpressionAst {
   float value;
 
   explicit ScalarAst(float value) : value(value) {}
+
+  void visit(Visitor& v) override;
+};
+
+struct ParentheticalAst final : ExpressionAst {
+  std::shared_ptr<ExpressionAst> operand;
+
+  explicit ParentheticalAst(std::shared_ptr<ExpressionAst> operand) : operand(std::move(operand)) {}
 
   void visit(Visitor& v) override;
 };
@@ -48,19 +75,11 @@ struct RvalueAst final : ExpressionAst {
 };
 
 struct UnaryAst final : ExpressionAst {
-  UnaryOp op;
+  std::shared_ptr<UnaryOpAst> op;
   std::shared_ptr<ExpressionAst> operand;
 
-  UnaryAst(UnaryOp op, std::shared_ptr<ExpressionAst> operand)
-      : op(op), operand(std::move(operand)) {}
-
-  void visit(Visitor& v) override;
-};
-
-struct BinaryOpAst final : ExpressionAst {
-  BinaryOp op;
-
-  BinaryOpAst(BinaryOp op) : op(op) {}
+  UnaryAst(std::shared_ptr<UnaryOpAst> op, std::shared_ptr<ExpressionAst> operand)
+      : op(std::move(op)), operand(std::move(operand)) {}
 
   void visit(Visitor& v) override;
 };
@@ -72,9 +91,12 @@ struct BinaryAst final : ExpressionAst {
 
   BinaryAst(std::shared_ptr<BinaryOpAst> op, std::shared_ptr<ExpressionAst> lhs,
             std::shared_ptr<ExpressionAst> rhs)
-      : op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+      : op(std::move(op)), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
   void visit(Visitor& v) override;
+
+  void ingest_terms(std::shared_ptr<ExpressionAst> lhs, std::shared_ptr<BinaryOpAst> op,
+                    std::shared_ptr<ExpressionAst>& holder) override;
 };
 
 struct StatementAst : Ast {};
@@ -117,8 +139,9 @@ struct StatementExpressionAst final : StatementAst {
 };
 
 struct LineAst final : Ast {
-  std::shared_ptr<StatementAst> statement;  // null = empty line
+  std::shared_ptr<StatementAst> statement{nullptr};  // null = empty line
 
+  LineAst() = default;
   explicit LineAst(std::shared_ptr<StatementAst> statement) : statement(std::move(statement)) {}
 
   void visit(Visitor& v) override;
@@ -134,6 +157,7 @@ struct Visitor {
 
   virtual void visit(ScalarAst&) = 0;
   virtual void visit(IdentifierAst&) = 0;
+  virtual void visit(ParentheticalAst&) = 0;
   virtual void visit(RvalueAst&) = 0;
   virtual void visit(UnaryAst&) = 0;
   virtual void visit(BinaryAst&) = 0;
@@ -146,6 +170,7 @@ struct Visitor {
   virtual void visit(CommandAst&);
   virtual void visit(StatementAst&);
 
+  virtual void visit(UnaryOpAst&);
   virtual void visit(BinaryOpAst&);
 };
 

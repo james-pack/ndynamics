@@ -34,6 +34,8 @@ class Interpreter final : public Visitor {
   void visit(LineAst& node) override {
     if (node.statement) {
       node.statement->visit(*this);
+    } else {
+      was_value = false;
     }
     DLOG(INFO) << "Line";
   }
@@ -70,16 +72,28 @@ class Interpreter final : public Visitor {
     }
   }
 
+  void visit(ParentheticalAst& node) override {
+    node.operand->visit(*this);
+
+    DLOG(INFO) << "Parenthetical";
+  }
+
   void visit(UnaryAst& node) override {
     node.operand->visit(*this);
 
     DLOG(INFO) << "Unary";
-    switch (node.op) {
+    switch (node.op->op) {
       case UnaryOp::Plus:
         // No-op. Nothing gets changed.
         break;
       case UnaryOp::Minus:
         current_value = -1 * current_value;
+        break;
+      case UnaryOp::Dual:
+        current_value = current_value.dual();
+        break;
+      case UnaryOp::Reverse:
+        current_value = current_value.reverse();
         break;
     }
   }
@@ -108,8 +122,11 @@ class Interpreter final : public Visitor {
       case BinaryOp::Outer:
         current_value = lhs.outer(rhs);
         break;
-      case BinaryOp::Inner:
-        current_value = lhs.inner(rhs);
+      case BinaryOp::LeftContract:
+        current_value = lhs.left_contraction(rhs);
+        break;
+      case BinaryOp::RightContract:
+        current_value = lhs.right_contraction(rhs);
         break;
       default:
         except<std::logic_error>("Unsupported binary operation: " + to_string(node.op->op));
@@ -141,10 +158,10 @@ class Interpreter final : public Visitor {
   void interpret(Ast& node) {
     // Mark as failure where failure occurs.
     success = true;
-    // Assume result will be a value.
-    was_value = true;
     // Clear out the message so that previous error messages don't get reported in this run.
     message.clear();
+    // Assume result will be a value.
+    was_value = true;
     node.visit(*this);
   }
 };

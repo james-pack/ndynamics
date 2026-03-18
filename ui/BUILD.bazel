@@ -34,12 +34,39 @@ cc_binary(
     ],
 )
 
+cc_library(
+    name = "interpreter_test_utils",
+    testonly = True,
+    hdrs = ["interpreter_test_utils.h"],
+    deps = [
+        ":ui",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
+    ],
+)
+
 cc_test(
     name = "interpreter_test",
     srcs = [
         "interpreter_test.cc",
     ],
     deps = [
+        ":interpreter_test_utils",
+        ":ui",
+        "//math",
+        "//math:testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "interpreter_diagnostic_test",
+    srcs = [
+        "interpreter_diagnostic_test.cc",
+    ],
+    deps = [
+        ":interpreter_test_utils",
         ":ui",
         "//math",
         "//math:testing",
