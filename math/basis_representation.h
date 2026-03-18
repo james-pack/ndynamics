@@ -174,9 +174,9 @@ class BasisRepresentation<Vga2d<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<Pga<ScalarType>> final {
+class BasisRepresentation<Pga2d<ScalarType>> final {
  public:
-  using AlgebraType = Pga<ScalarType>;
+  using AlgebraType = Pga2d<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
@@ -193,6 +193,108 @@ class BasisRepresentation<Pga<ScalarType>> final {
       {"e02", e0* e2},
       {"e12", e1* e2},
       {"e012", e0* e1* e2},
+  };
+
+ public:
+  constexpr BasisRepresentation() = default;
+
+  static constexpr const auto& bases() { return bases_; }
+
+  static std::string to_string(const Multivector<AlgebraType>& vec) {
+    std::string result{vector_element_to_string(vec.scalar(), "")};
+    for (size_t i = 1; i < BASES_COUNT; ++i) {
+      std::string basis_result{vector_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
+      if (!basis_result.empty()) {
+        if (!result.empty()) {
+          result.append(" + ");
+        }
+        result.append(basis_result);
+      }
+    }
+    return result;
+  }
+};
+
+template <typename ScalarType>
+class BasisRepresentation<Pga<ScalarType>> final {
+ public:
+  using AlgebraType = Pga<ScalarType>;
+  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
+  static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
+
+ private:
+  static constexpr auto e0{Multivector<AlgebraType>::template e<0>()};
+  static constexpr auto e1{Multivector<AlgebraType>::template e<1>()};
+  static constexpr auto e2{Multivector<AlgebraType>::template e<2>()};
+  static constexpr auto e3{Multivector<AlgebraType>::template e<3>()};
+
+  static constexpr std::array<BasisName<AlgebraType, 6>, NAMED_BASES_COUNT> bases_{
+      BasisName<AlgebraType, 6>{"e0", e0},
+      {"e1", e1},
+      {"e01", e0* e1},
+      {"e2", e2},
+      {"e02", e0* e2},
+      {"e12", e1* e2},
+      {"e012", e0* e1* e2},
+      {"e3", e3},
+      {"e03", e0* e3},
+      {"e13", e1* e3},
+      {"e23", e2* e3},
+      {"e013", e0* e1* e3},
+      {"e023", e0* e2* e3},
+      {"e123", e1* e2* e3},
+      {"e0123", e0* e1* e2* e3},
+  };
+
+ public:
+  constexpr BasisRepresentation() = default;
+
+  static constexpr const auto& bases() { return bases_; }
+
+  static std::string to_string(const Multivector<AlgebraType>& vec) {
+    std::string result{vector_element_to_string(vec.scalar(), "")};
+    for (size_t i = 1; i < BASES_COUNT; ++i) {
+      std::string basis_result{vector_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
+      if (!basis_result.empty()) {
+        if (!result.empty()) {
+          result.append(" + ");
+        }
+        result.append(basis_result);
+      }
+    }
+    return result;
+  }
+};
+
+template <typename ScalarType>
+class BasisRepresentation<Spacetime<ScalarType>> final {
+ public:
+  using AlgebraType = Spacetime<ScalarType>;
+  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
+  static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
+
+ private:
+  static constexpr auto ct{Multivector<AlgebraType>::template e<0>()};
+  static constexpr auto x{Multivector<AlgebraType>::template e<1>()};
+  static constexpr auto y{Multivector<AlgebraType>::template e<2>()};
+  static constexpr auto z{Multivector<AlgebraType>::template e<3>()};
+
+  static constexpr std::array<BasisName<AlgebraType, 6>, NAMED_BASES_COUNT> bases_{
+      BasisName<AlgebraType, 6>{"ct", ct},
+      {"x", x},
+      {"ctx", ct* x},
+      {"y", y},
+      {"cty", ct* y},
+      {"xy", x* y},
+      {"ctxy", ct* x* y},
+      {"z", z},
+      {"ctz", ct* z},
+      {"xz", x* z},
+      {"yz", y* z},
+      {"ctxz", ct* x* z},
+      {"ctyz", ct* y* z},
+      {"xyz", x* y* z},
+      {"ctxyz", ct* x* y* z},
   };
 
  public:
