@@ -2,8 +2,9 @@
 
 #include <memory>
 
+#include "glog/logging.h"
 #include "gtest/gtest.h"
-#include "math/canonical_basis_representation.h"
+#include "math/generic_basis_representation.h"
 #include "math/multivector_test_utils.h"
 #include "ui/ast_printer.h"
 #include "ui/interpreter.h"
@@ -11,12 +12,14 @@
 
 namespace ndyn::ui {
 
-template <typename AlgebraT,
-          typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
+template <typename Algebra, typename Representation = math::GenericBasisRepresentation<Algebra>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
-                                        const typename AlgebraT::VectorType& expected,
+                                        const typename Algebra::VectorType& expected,
                                         bool do_ast_print = false) {
   Parser parser{};
+  Interpreter<Algebra, Representation> interpreter{};
+  DLOG(INFO) << "interpreter symbol table on startup: " << interpreter.dump_symbol_table();
+
   std::shared_ptr<LineAst> ast{};
   if (!parser.parse(line, ast)) {
     return ::testing::AssertionFailure() << "Could not parse line";
@@ -26,11 +29,12 @@ template <typename AlgebraT,
     print_ast(*ast);
   }
 
-  Interpreter<AlgebraT, RepresentationT> interpreter{};
   interpreter.interpret(*ast);
 
   if (!interpreter.success) {
-    return ::testing::AssertionFailure() << "Error during interpretation -- success was false.";
+    return ::testing::AssertionFailure()
+           << "Error during interpretation -- success was false. interpreter.message: "
+           << interpreter.message;
   }
   if (!interpreter.was_value) {
     return ::testing::AssertionFailure() << "Error during interpretation -- was_value was false.";
@@ -41,11 +45,12 @@ template <typename AlgebraT,
            << "'";
   }
 
-  return math::AreNear(interpreter.current_value, expected);
+  return math::AreNear<Algebra>(interpreter.current_value, expected)
+         << "interpreter.current_value: " << Representation::to_string(interpreter.current_value)
+         << ", expected: " << Representation::to_string(expected);
 }
 
-template <typename AlgebraT,
-          typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
+template <typename AlgebraT, typename RepresentationT = math::GenericBasisRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::ScalarType& expected,
                                         bool do_ast_print = false) {
