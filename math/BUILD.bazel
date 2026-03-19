@@ -10,6 +10,7 @@ cc_library(
         "canonical_basis_representation.h",
         "cayley.h",
         "cayley_table_entry.h",
+        "generic_basis_representation.h",
         "geometry_model.h",
         "integrators.h",
         "multivector.h",
