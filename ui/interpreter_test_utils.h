@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "gtest/gtest.h"
-#include "math/basis_representation.h"
+#include "math/canonical_basis_representation.h"
 #include "math/multivector_test_utils.h"
 #include "ui/ast_printer.h"
 #include "ui/interpreter.h"
@@ -11,7 +11,8 @@
 
 namespace ndyn::ui {
 
-template <typename AlgebraT, typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
+template <typename AlgebraT,
+          typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::VectorType& expected,
                                         bool do_ast_print = false) {
@@ -43,7 +44,8 @@ template <typename AlgebraT, typename RepresentationT = math::CanonicalBasisRepr
   return math::AreNear(interpreter.current_value, expected);
 }
 
-template <typename AlgebraT, typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
+template <typename AlgebraT,
+          typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::ScalarType& expected,
                                         bool do_ast_print = false) {

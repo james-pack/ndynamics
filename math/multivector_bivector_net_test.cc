@@ -3,7 +3,7 @@
 #include <initializer_list>
 
 #include "gtest/gtest.h"
-#include "math/basis_representation.h"
+#include "math/canonical_basis_representation.h"
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
 #include "math/testing/bivector.h"

@@ -4,7 +4,7 @@
 #include <string_view>
 
 #include "gtest/gtest.h"
-#include "math/basis_representation.h"
+#include "math/canonical_basis_representation.h"
 #include "ui/ast_printer.h"
 #include "ui/interpreter_test_utils.h"
 #include "ui/parser.h"

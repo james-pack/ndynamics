@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "gtest/gtest.h"
+#include "math/canonical_basis_representation.h"
 #include "sensor/bus.h"
 #include "sensor/fake_bus.h"
 #include "sensor/measurement_channel.h"

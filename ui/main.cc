@@ -2,6 +2,7 @@
 #include "glog/logging.h"
 #include "math/algebra.h"
 #include "math/basis_representation.h"
+#include "math/canonical_basis_representation.h"
 #include "ui/algebra_options.h"
 #include "ui/repl.h"
 

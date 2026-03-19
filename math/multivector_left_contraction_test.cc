@@ -2,7 +2,7 @@
 
 #include "glog/logging.h"
 #include "gtest/gtest.h"
-#include "math/basis_representation.h"
+#include "math/canonical_basis_representation.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {

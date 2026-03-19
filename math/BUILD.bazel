@@ -7,6 +7,7 @@ cc_library(
         "basis_representation.h",
         "bit_basis.h",
         "bit_set.h",
+        "canonical_basis_representation.h",
         "cayley.h",
         "cayley_table_entry.h",
         "geometry_model.h",
