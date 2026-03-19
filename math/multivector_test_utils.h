@@ -4,21 +4,27 @@
 #include <string>
 
 #include "gtest/gtest.h"
+#include "math/basis_representation.h"
+#include "math/generic_basis_representation.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {
 
-template <typename MultivectorT>
-::testing::AssertionResult AreNear(const MultivectorT& lhs, const MultivectorT& rhs,
-                                   typename MultivectorT::ScalarType epsilon = 0.0001) {
+template <typename Algebra,  //
+          BasisRepresentation<Algebra> Representation = math::GenericBasisRepresentation<Algebra> >
+::testing::AssertionResult AreNear(const typename Algebra::VectorType& lhs,  //
+                                   const typename Algebra::VectorType& rhs,  //
+                                   typename Algebra::ScalarType epsilon = 0.0001) {
   using std::abs;
   using std::to_string;
   const auto difference{lhs - rhs};
   epsilon = abs(epsilon);
-  for (size_t i = 0; i < MultivectorT::NUM_BASIS_BLADES; ++i) {
+  for (size_t i = 0; i < Algebra::VectorType::NUM_BASIS_BLADES; ++i) {
     if (abs(difference.coefficient(i)) > epsilon) {
       return ::testing::AssertionFailure()
-             << "lhs: " << lhs << ", rhs: " << rhs << ", difference: " << difference
+             << "lhs: " << Representation::to_string(lhs)
+             << ", rhs: " << Representation::to_string(rhs)
+             << ", difference: " << Representation::to_string(difference)
              << " (epsilon: " << to_string(epsilon) << ")";
     }
   }

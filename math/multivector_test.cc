@@ -837,17 +837,19 @@ TYPED_TEST(MultivectorTest, LargeScalarCoefficientsMaintainRelativePrecision) {
 
 TYPED_TEST(MultivectorTest, NearZeroCoefficientsAreConsistentWithEpsilon) {
   using ScalarType = typename TypeParam::ScalarType;
+  using AlgebraType = typename TypeParam::AlgebraType;
   static constexpr ScalarType HALF_EPSILON{TypeParam::EPSILON / ScalarType{2}};
 
   TypeParam mv{};
   mv.set_coefficient(1, HALF_EPSILON);
 
   // A coefficient below EPSILON must compare equal to zero.
-  EXPECT_TRUE(AreNear(mv, TypeParam{}));
+  EXPECT_TRUE(AreNear<AlgebraType>(mv, TypeParam{}));
 }
 
 TYPED_TEST(MultivectorTest, RepeatedProductsDoNotAccumulateUnboundedError) {
   using ScalarType = typename TypeParam::ScalarType;
+  using AlgebraType = typename TypeParam::AlgebraType;
 
   // Repeatedly multiply by e0 and its inverse. After an even number of round
   // trips the result must be close to the original.
@@ -864,7 +866,7 @@ TYPED_TEST(MultivectorTest, RepeatedProductsDoNotAccumulateUnboundedError) {
     result = result.multiply(e0).multiply(inv);
   }
 
-  EXPECT_TRUE(AreNear(result, e0));
+  EXPECT_TRUE(AreNear<AlgebraType>(result, e0));
 }
 
 TYPED_TEST(MultivectorTest, NormalizationOfNearZeroMultivectorHandledGracefully) {

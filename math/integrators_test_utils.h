@@ -30,6 +30,7 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
 
   static constexpr ScalarType delta_t{0.1f};
@@ -47,7 +48,7 @@ template <typename Integrator>
 
   StateType s1 = integrator(delta_t, s0);
 
-  return AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+  return AreNear<AlgebraType>(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
          << " <- element<0>";
 }
 
@@ -70,6 +71,7 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
 
   if constexpr (StateType::depth() >= 2) {
@@ -97,12 +99,12 @@ template <typename Integrator>
     StateType s1 = integrator(delta_t, s0);
 
     ::testing::AssertionResult result{::testing::AssertionSuccess()};
-    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
              << " <- element<0>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
              << " <- element<1>";
     return result;
   } else {
@@ -130,6 +132,7 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
 
   if constexpr (StateType::depth() >= 3) {
@@ -163,18 +166,19 @@ template <typename Integrator>
     StateType s1 = integrator(delta_t, s0);
 
     ::testing::AssertionResult result{::testing::AssertionSuccess()};
-    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
              << " <- element<0>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
              << " <- element<1>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
-             << " <- element<2>";
+    result =
+        AreNear<AlgebraType>(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
+        << " <- element<2>";
     return result;
   } else {
     return ::testing::AssertionSuccess();
@@ -202,6 +206,7 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
 
   if constexpr (StateType::depth() >= 4) {
@@ -242,22 +247,23 @@ template <typename Integrator>
     StateType s1 = integrator(delta_t, s0);
 
     ::testing::AssertionResult result{::testing::AssertionSuccess()};
-    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
              << " <- element<0>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
              << " <- element<1>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
-             << " <- element<2>";
+    result =
+        AreNear<AlgebraType>(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
+        << " <- element<2>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_jerk, s1.template element<3>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_jerk, s1.template element<3>(), sqrt(2 * delta_t))
              << " <- element<3>";
     return result;
   } else {
@@ -271,6 +277,7 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
 
   static constexpr ScalarType delta_t{0.1f};
@@ -289,7 +296,7 @@ template <typename Integrator>
 
   StateType s1 = integrator(delta_t, s0);
 
-  return AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+  return AreNear<AlgebraType>(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
          << " <- element<0>";
 }
 
@@ -315,6 +322,8 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ScalarType = typename StateType::ScalarType;
+  using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
 
   if constexpr (StateType::depth() >= 2) {
     static constexpr ScalarType delta_t{0.5f};
@@ -335,12 +344,14 @@ template <typename Integrator>
     StateType s1 = integrator(delta_t, s0);
 
     ::testing::AssertionResult result{::testing::AssertionSuccess()};
-    result = AreNear(expected.template element<0>(), s1.template element<0>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected.template element<0>(), s1.template element<0>(),
+                                  sqrt(2 * delta_t))
              << " <- element<0>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected.template element<1>(), s1.template element<1>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected.template element<1>(), s1.template element<1>(),
+                                  sqrt(2 * delta_t))
              << " <- element<1>";
     return result;
   } else {
@@ -354,6 +365,7 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
 
   if constexpr (StateType::depth() >= 3) {
@@ -382,18 +394,19 @@ template <typename Integrator>
     StateType s1 = integrator(delta_t, s0);
 
     ::testing::AssertionResult result{::testing::AssertionSuccess()};
-    result = AreNear(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_position, s1.template element<0>(), sqrt(2 * delta_t))
              << " <- element<0>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected_velocity, s1.template element<1>(), sqrt(2 * delta_t))
              << " <- element<1>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
-             << " <- element<2>";
+    result =
+        AreNear<AlgebraType>(expected_acceleration, s1.template element<2>(), sqrt(2 * delta_t))
+        << " <- element<2>";
     return result;
   } else {
     return ::testing::AssertionSuccess();
@@ -428,6 +441,8 @@ template <typename Integrator>
 
   using StateType = typename Integrator::StateType;
   using ScalarType = typename StateType::ScalarType;
+  using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
 
   if constexpr (StateType::depth() >= 4) {
     static constexpr ScalarType delta_t{0.1f};
@@ -453,22 +468,26 @@ template <typename Integrator>
     StateType s1 = integrator(delta_t, s0);
 
     ::testing::AssertionResult result{::testing::AssertionSuccess()};
-    result = AreNear(expected.template element<0>(), s1.template element<0>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected.template element<0>(), s1.template element<0>(),
+                                  sqrt(2 * delta_t))
              << " <- element<0>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected.template element<1>(), s1.template element<1>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected.template element<1>(), s1.template element<1>(),
+                                  sqrt(2 * delta_t))
              << " <- element<1>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected.template element<2>(), s1.template element<2>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected.template element<2>(), s1.template element<2>(),
+                                  sqrt(2 * delta_t))
              << " <- element<2>";
     if (!result) {
       return result;
     }
-    result = AreNear(expected.template element<3>(), s1.template element<3>(), sqrt(2 * delta_t))
+    result = AreNear<AlgebraType>(expected.template element<3>(), s1.template element<3>(),
+                                  sqrt(2 * delta_t))
              << " <- element<3>";
     return result;
   } else {
@@ -495,6 +514,7 @@ template <typename Integrator>
   using StateType = typename Integrator::StateType;
   using ScalarType = typename StateType::ScalarType;
   using ValueType = typename StateType::ValueType;
+  using AlgebraType = typename ValueType::AlgebraType;
 
   if constexpr (StateType::depth() >= 2) {
     static constexpr ScalarType delta_t{0.01f};
@@ -517,15 +537,15 @@ template <typename Integrator>
       current_state = integrator(delta_t, current_state);
       ValueType expected_position{initial_position + (i + 1) * delta_t * initial_velocity +
                                   (i + 1) * delta_t * delta_t / 2 * acceleration};
-      result =
-          AreNear(expected_position, current_state.template element<0>(), acceleration * delta_t)
-          << " <- element<0>; i: " << i;
+      result = AreNear<AlgebraType>(expected_position, current_state.template element<0>(),
+                                    acceleration * delta_t)
+               << " <- element<0>; i: " << i;
       if (!result) {
         return result;
       }
       ValueType expected_velocity{initial_velocity + (i + 1) * delta_t * acceleration};
-      result = AreNear(expected_velocity, current_state.template element<1>(),
-                       acceleration * sqrt(delta_t))
+      result = AreNear<AlgebraType>(expected_velocity, current_state.template element<1>(),
+                                    acceleration * sqrt(delta_t))
                << " <- element<1>; i: " << i;
       if (!result) {
         return result;
