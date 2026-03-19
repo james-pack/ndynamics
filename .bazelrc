@@ -1,6 +1,6 @@
 # Defaults for all builds
 build --enable_platform_specific_config
-build --config=c++17
+build --config=c++20
 build --config=platform_build
 
 build:linux --platforms=//platforms:linux_x86_64_general
@@ -13,7 +13,6 @@ build:large_multivectors --cxxopt -fconstexpr-ops-limit=10000000000
 build:save_assembly --save_temps
 
 # Settings for different C++ dialects
-build:c++17 --cxxopt -std=c++17
 build:c++20 --cxxopt -std=c++20
 build:c++2a --cxxopt -std=c++2a
 build:c++23 --cxxopt -std=c++23
