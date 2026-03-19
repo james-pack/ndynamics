@@ -10,7 +10,7 @@
 
 namespace ndyn::ui {
 
-template <typename AlgebraType, math::BasisRepresentation RepresentationType>
+template <typename AlgebraType, math::BasisRepresentation Representation>
 class Interpreter final : public Visitor {
   using VectorType = typename AlgebraType::VectorType;
   using ScalarType = typename AlgebraType::ScalarType;
@@ -20,8 +20,7 @@ class Interpreter final : public Visitor {
 
  public:
   Interpreter() {
-    for (auto iter = RepresentationType::bases_begin(); iter != RepresentationType::bases_end();
-         ++iter) {
+    for (auto iter = Representation::bases_begin(); iter != Representation::bases_end(); ++iter) {
       symbols.insert({iter->name, iter->basis});
     }
   }
@@ -134,15 +133,25 @@ class Interpreter final : public Visitor {
     }
   }
 
-  void visit(DictCommandAst& node) override {
-    for (const auto& [name, value] : symbols) {
-      message.append("  ");
-      message.append(name);
-      if (node.long_form) {
-        message.append("\t=\t").append(to_string(value));
+  std::string dump_symbol_table(bool long_form = false) const {
+    std::string result{"\n"};
+    if (!symbols.empty()) {
+      for (const auto& [name, value] : symbols) {
+        result.append("  ");
+        result.append(name);
+        if (long_form) {
+          result.append("\t=\t").append(Representation::to_string(value));
+        }
+        result.append("\n");
       }
-      message.append("\n");
+    } else {
+      result = "    <empty symbol table>\n";
     }
+    return result;
+  }
+
+  void visit(DictCommandAst& node) override {
+    message.append(dump_symbol_table(node.long_form));
     was_value = false;
   }
 
