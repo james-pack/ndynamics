@@ -15,7 +15,7 @@ namespace ndyn::math {
 /**
  * Class to hold the name of each basis multivector for each algebra.
  */
-template <typename AlgebraT>
+template <typename AlgebraT, typename Enable = void>
 class CanonicalBasisRepresentation final {
  public:
   using AlgebraType = AlgebraT;
@@ -81,27 +81,49 @@ class CanonicalBasisRepresentation<Complex<ScalarType>> final {
 };
 static_assert(BasisRepresentation<CanonicalBasisRepresentation<Complex<>>>);
 
-template <typename ScalarType>
-class CanonicalBasisRepresentation<Vga<ScalarType>> final {
+/**
+ * Canonical representation for algebras with only positive basis metrics. These are primarily the
+ * Euclidean algebras like VGA.
+ */
+template <typename AlgebraT>
+class CanonicalBasisRepresentation<AlgebraT,
+                                   std::enable_if_t<AlgebraT::NUM_POSITIVE_BASES <= 3 &&  //
+                                                    AlgebraT::NUM_NEGATIVE_BASES == 0 &&  //
+                                                    AlgebraT::NUM_ZERO_BASES == 0>>
+    final {
  public:
-  using AlgebraType = Vga<ScalarType>;
+  using AlgebraType = AlgebraT;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
   static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
 
  private:
-  static constexpr auto e1{Multivector<AlgebraType>::template e<0>()};
-  static constexpr auto e2{Multivector<AlgebraType>::template e<1>()};
-  static constexpr auto e3{Multivector<AlgebraType>::template e<2>()};
-
-  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
-      BasisName<AlgebraType>{"e1", e1},
-      {"e2", e2},
-      {"e12", e1* e2},
-      {"e3", e3},
-      {"e13", e1* e3},
-      {"e23", e2* e3},
-      {"e123", e1* e2* e3},
-  };
+  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_ = []() {
+    std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> result{};
+    size_t index{0};
+    if constexpr (AlgebraType::NUM_BASIS_VECTORS >= 1) {
+      result[index++] = BasisName<AlgebraType>{"e1", Multivector<AlgebraType>::template e<0>()};
+    }
+    if constexpr (AlgebraType::NUM_BASIS_VECTORS >= 2) {
+      result[index++] = BasisName<AlgebraType>{"e2", Multivector<AlgebraType>::template e<1>()};
+      result[index++] =
+          BasisName<AlgebraType>{"e12", Multivector<AlgebraType>::template e<0>() *
+                                            Multivector<AlgebraType>::template e<1>()};
+    }
+    if constexpr (AlgebraType::NUM_BASIS_VECTORS >= 3) {
+      result[index++] = BasisName<AlgebraType>{"e3", Multivector<AlgebraType>::template e<2>()};
+      result[index++] =
+          BasisName<AlgebraType>{"e13", Multivector<AlgebraType>::template e<0>() *
+                                            Multivector<AlgebraType>::template e<2>()};
+      result[index++] =
+          BasisName<AlgebraType>{"e23", Multivector<AlgebraType>::template e<1>() *
+                                            Multivector<AlgebraType>::template e<2>()};
+      result[index++] =
+          BasisName<AlgebraType>{"e123", Multivector<AlgebraType>::template e<0>() *
+                                             Multivector<AlgebraType>::template e<1>() *
+                                             Multivector<AlgebraType>::template e<2>()};
+    }
+    return result;
+  }();
 
  public:
   constexpr CanonicalBasisRepresentation() = default;
@@ -113,7 +135,7 @@ class CanonicalBasisRepresentation<Vga<ScalarType>> final {
 
   static std::string to_string(const Multivector<AlgebraType>& vec) {
     std::string result{basis_element_to_string(vec.scalar(), "")};
-    for (size_t i = 1; i < BASES_COUNT; ++i) {
+    for (size_t i = 1; i < NAMED_BASES_COUNT; ++i) {
       std::string basis_result{basis_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
       if (!basis_result.empty()) {
         if (!result.empty()) {
@@ -126,46 +148,6 @@ class CanonicalBasisRepresentation<Vga<ScalarType>> final {
   }
 };
 static_assert(BasisRepresentation<CanonicalBasisRepresentation<Vga<>>>);
-
-template <typename ScalarType>
-class CanonicalBasisRepresentation<Vga2d<ScalarType>> final {
- public:
-  using AlgebraType = Vga2d<ScalarType>;
-  static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
-  static constexpr size_t NAMED_BASES_COUNT{BASES_COUNT - 1};
-
- private:
-  static constexpr auto e1{Multivector<AlgebraType>::template e<0>()};
-  static constexpr auto e2{Multivector<AlgebraType>::template e<1>()};
-
-  static constexpr std::array<BasisName<AlgebraType>, NAMED_BASES_COUNT> bases_{
-      BasisName<AlgebraType>{"e1", e1},
-      {"e2", e2},
-      {"e12", e1* e2},
-  };
-
- public:
-  constexpr CanonicalBasisRepresentation() = default;
-
-  static constexpr const BasisName<AlgebraType>* bases_begin() { return &bases_[0]; }
-  static constexpr const BasisName<AlgebraType>* bases_end() {
-    return &bases_[0] + NAMED_BASES_COUNT;
-  }
-
-  static std::string to_string(const Multivector<AlgebraType>& vec) {
-    std::string result{basis_element_to_string(vec.scalar(), "")};
-    for (size_t i = 1; i < BASES_COUNT; ++i) {
-      std::string basis_result{basis_element_to_string(vec.coefficient(i), bases_[i - 1].name)};
-      if (!basis_result.empty()) {
-        if (!result.empty()) {
-          result.append(" + ");
-        }
-        result.append(basis_result);
-      }
-    }
-    return result;
-  }
-};
 static_assert(BasisRepresentation<CanonicalBasisRepresentation<Vga2d<>>>);
 
 template <typename ScalarType>
