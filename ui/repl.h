@@ -4,6 +4,7 @@
 #include <string>
 
 #include "gflags/gflags.h"
+#include "math/basis_representation.h"
 #include "ui/ast_printer.h"
 #include "ui/interpreter.h"
 #include "ui/parser.h"
@@ -12,7 +13,7 @@ DECLARE_bool(show_ast);
 
 namespace ndyn::ui {
 
-template <typename AlgebraT, typename RepresentationT>
+template <typename AlgebraT, math::BasisRepresentation<AlgebraT> RepresentationT>
 class Repl final {
  public:
   using AlgebraType = AlgebraT;

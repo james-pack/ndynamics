@@ -10,7 +10,7 @@
 
 namespace ndyn::ui {
 
-template <typename AlgebraType, typename RepresentationType>
+template <typename AlgebraType, math::BasisRepresentation RepresentationType>
 class Interpreter final : public Visitor {
   using VectorType = typename AlgebraType::VectorType;
   using ScalarType = typename AlgebraType::ScalarType;

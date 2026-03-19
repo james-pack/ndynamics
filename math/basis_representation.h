@@ -2,8 +2,11 @@
 
 #include <array>
 #include <cmath>
+#include <concepts>
+#include <cstddef>
 #include <ostream>
 #include <string>
+#include <type_traits>
 
 #include "math/algebra.h"
 #include "math/multivector.h"
@@ -29,6 +32,41 @@ std::string basis_element_to_string(ScalarType s, std::string_view basis_name) {
   }
   return result;
 }
+
+template <typename T>
+concept HasAlgebraType = requires { typename T::AlgebraType; };
+
+template <typename T, typename AlgebraT = typename T::AlgebraType>
+concept BasisRepresentation =
+    // Must expose the associated AlgebraType.
+    HasAlgebraType<T> &&                                //
+    std::same_as<typename T::AlgebraType, AlgebraT> &&  //
+
+    // Must be default-constructible (even though all members are static,
+    // the class must be instantiable so generic code can hold values of T).
+    std::is_default_constructible_v<T> &&  //
+
+    requires {
+      // Must include a NAMED_BASES_COUNT: static constexpr size_t.
+      // This should be the available number of named bases.
+      { std::integral_constant<size_t, T::NAMED_BASES_COUNT>{} };
+
+      // NAMED_BASES_COUNT must equal or exceed the number of bases in the algebra. Note that we
+      // subtract one from the number of basis blades as the scalar is considered a basis blade but
+      // it does not need a name.
+      requires(T::NAMED_BASES_COUNT >= AlgebraT::NUM_BASIS_BLADES - 1);
+    } &&  //
+
+    requires {
+      // The names for the bases should be iterable.
+      { T::bases_begin() } -> std::same_as<const BasisName<typename T::AlgebraType>*>;
+      { T::bases_end() } -> std::same_as<const BasisName<typename T::AlgebraType>*>;
+    } &&  //
+
+    requires(const Multivector<typename T::AlgebraType>& vec) {
+      // BasisRepresentations should provide mechanisms to print Multivectors in the same algebra.
+      { T::to_string(vec) } -> std::same_as<std::string>;
+    };
 
 /**
  * Class to hold the name of each basis multivector for each algebra.
@@ -97,6 +135,7 @@ class CanonicalBasisRepresentation<Complex<ScalarType>> final {
     return result;
   }
 };
+static_assert(BasisRepresentation<CanonicalBasisRepresentation<Complex<>>>);
 
 template <typename ScalarType>
 class CanonicalBasisRepresentation<Vga<ScalarType>> final {
@@ -142,6 +181,7 @@ class CanonicalBasisRepresentation<Vga<ScalarType>> final {
     return result;
   }
 };
+static_assert(BasisRepresentation<CanonicalBasisRepresentation<Vga<>>>);
 
 template <typename ScalarType>
 class CanonicalBasisRepresentation<Vga2d<ScalarType>> final {
@@ -182,6 +222,7 @@ class CanonicalBasisRepresentation<Vga2d<ScalarType>> final {
     return result;
   }
 };
+static_assert(BasisRepresentation<CanonicalBasisRepresentation<Vga2d<>>>);
 
 template <typename ScalarType>
 class CanonicalBasisRepresentation<Pga2d<ScalarType>> final {
@@ -227,6 +268,7 @@ class CanonicalBasisRepresentation<Pga2d<ScalarType>> final {
     return result;
   }
 };
+static_assert(BasisRepresentation<CanonicalBasisRepresentation<Pga2d<>>>);
 
 template <typename ScalarType>
 class CanonicalBasisRepresentation<Pga<ScalarType>> final {
@@ -281,6 +323,7 @@ class CanonicalBasisRepresentation<Pga<ScalarType>> final {
     return result;
   }
 };
+static_assert(BasisRepresentation<CanonicalBasisRepresentation<Pga<>>>);
 
 template <typename ScalarType>
 class CanonicalBasisRepresentation<Spacetime<ScalarType>> final {
@@ -335,5 +378,6 @@ class CanonicalBasisRepresentation<Spacetime<ScalarType>> final {
     return result;
   }
 };
+static_assert(BasisRepresentation<CanonicalBasisRepresentation<Spacetime<>>>);
 
 }  // namespace ndyn::math
