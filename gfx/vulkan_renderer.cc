@@ -633,21 +633,70 @@ VulkanRenderer::VulkanRenderer() {
 }
 
 VulkanRenderer::~VulkanRenderer() {
+  // Wait for the device to finish all operations before cleanup
   vkDeviceWaitIdle(device_);
-  if (in_flight_fence_) vkDestroyFence(device_, in_flight_fence_, nullptr);
-  if (image_available_) vkDestroySemaphore(device_, image_available_, nullptr);
-  if (render_finished_) vkDestroySemaphore(device_, render_finished_, nullptr);
-  if (graphics_pipeline_) vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
-  if (pipeline_layout_) vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
-  if (render_pass_) vkDestroyRenderPass(device_, render_pass_, nullptr);
-  if (command_pool_) vkDestroyCommandPool(device_, command_pool_, nullptr);
-  if (device_) vkDestroyDevice(device_, nullptr);
-  if (instance_) vkDestroyInstance(instance_, nullptr);
 
-  if (window_) {
-    glfwDestroyWindow(window_);
+  // Destroy synchronization primitives
+  vkDestroyFence(device_, in_flight_fence_, nullptr);
+  vkDestroySemaphore(device_, render_finished_, nullptr);
+  vkDestroySemaphore(device_, image_available_, nullptr);
+
+  for (auto& mesh : meshes_) {
+    vkDestroyBuffer(device_, mesh.vertex_buffer, nullptr);
+    vkDestroyBuffer(device_, mesh.index_buffer, nullptr);
+    vkFreeMemory(device_, mesh.memory, nullptr);
   }
 
+  // Destroy GPU buffers (RAII wrappers, destroyed before pipeline/descriptors)
+  gpu_instances_.reset();
+  gpu_materials_.reset();
+  ubo_allocator_.reset();
+
+  // Destroy graphics pipeline and layout
+  vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
+  vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
+
+  // Destroy descriptor pools and set layouts
+  for (size_t i = 0; i < descriptor_set_layouts_.size(); ++i) {
+    vkDestroyDescriptorSetLayout(device_, descriptor_set_layouts_[i], nullptr);
+  }
+  vkDestroyDescriptorPool(device_, instance_descriptor_pool_, nullptr);
+  vkDestroyDescriptorPool(device_, material_descriptor_pool_, nullptr);
+  vkDestroyDescriptorPool(device_, ubo_descriptor_pool_, nullptr);
+
+  // Destroy framebuffers
+  for (VkFramebuffer fb : framebuffers_) {
+    vkDestroyFramebuffer(device_, fb, nullptr);
+  }
+
+  // Destroy swapchain image views (swapchain images themselves are owned by the swapchain)
+  for (VkImageView view : swapchain_image_views_) {
+    vkDestroyImageView(device_, view, nullptr);
+  }
+
+  // Destroy render pass
+  vkDestroyRenderPass(device_, render_pass_, nullptr);
+
+  // Destroy depth buffer resources
+  vkDestroyImageView(device_, depth_image_view_, nullptr);
+  vkFreeMemory(device_, depth_image_memory_, nullptr);
+  vkDestroyImage(device_, depth_image_, nullptr);
+
+  // Destroy swapchain
+  vkDestroySwapchainKHR(device_, swapchain_, nullptr);
+
+  // Destroy command pool (implicitly frees command_buffer_)
+  vkDestroyCommandPool(device_, command_pool_, nullptr);
+
+  // Destroy logical device
+  vkDestroyDevice(device_, nullptr);
+
+  // Destroy surface and instance
+  vkDestroySurfaceKHR(instance_, surface_, nullptr);
+  vkDestroyInstance(instance_, nullptr);
+
+  // Destroy GLFW window
+  glfwDestroyWindow(window_);
   glfwTerminate();
 }
 
