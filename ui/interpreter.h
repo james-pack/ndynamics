@@ -20,8 +20,9 @@ class Interpreter final : public Visitor {
 
  public:
   Interpreter() {
-    for (const auto& base : RepresentationType::bases()) {
-      symbols.insert({base.name, base.basis});
+    for (auto iter = RepresentationType::bases_begin(); iter != RepresentationType::bases_end();
+         ++iter) {
+      symbols.insert({iter->name, iter->basis});
     }
   }
 
