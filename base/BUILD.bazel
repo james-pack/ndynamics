@@ -20,7 +20,6 @@ cc_library(
         }) + [
             "bits.h",
             "except.h",
-            "pi.h",
             "resource_loader.h",
             "units.h",
         ],
