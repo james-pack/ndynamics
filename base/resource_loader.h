@@ -10,6 +10,10 @@
 
 namespace ndyn {
 
+/**
+ * Structure to find resource files from the build outputs and read them at runtime without
+ * hardcoding any absolute paths or assumptions about the layout of the build output.
+ */
 class ResourceLoader final {
  private:
   static std::once_flag init_flag_;
