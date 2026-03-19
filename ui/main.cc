@@ -16,22 +16,22 @@ int main(int argc, char* argv[]) {
   if (algebra == Algebras::Scalar) {
     using Algebra = Scalar<>;
     std::cout << "Scalar algebra (real numbers)\n";
-    Repl<Algebra, BasisRepresentation<Algebra>> repl{};
+    Repl<Algebra, CanonicalBasisRepresentation<Algebra>> repl{};
     repl.loop();
   } else if (algebra == Algebras::Complex) {
     using Algebra = Complex<>;
     std::cout << "Complex algebra\n";
-    Repl<Algebra, BasisRepresentation<Algebra>> repl{};
+    Repl<Algebra, CanonicalBasisRepresentation<Algebra>> repl{};
     repl.loop();
   } else if (algebra == Algebras::Euclid2d) {
     using Algebra = Vga2d<>;
     std::cout << "2D Euclidean algebra\n";
-    Repl<Algebra, BasisRepresentation<Algebra>> repl{};
+    Repl<Algebra, CanonicalBasisRepresentation<Algebra>> repl{};
     repl.loop();
   } else if (algebra == Algebras::Euclid3d) {
     using Algebra = Vga<>;
     std::cout << "3D Euclidean algebra\n";
-    Repl<Algebra, BasisRepresentation<Algebra>> repl{};
+    Repl<Algebra, CanonicalBasisRepresentation<Algebra>> repl{};
     repl.loop();
   }
   return 0;

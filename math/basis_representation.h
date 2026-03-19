@@ -34,7 +34,7 @@ std::string basis_element_to_string(ScalarType s, std::string_view basis_name) {
  * Class to hold the name of each basis multivector for each algebra.
  */
 template <typename AlgebraT>
-class BasisRepresentation final {
+class CanonicalBasisRepresentation final {
  public:
   using AlgebraType = AlgebraT;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
@@ -42,7 +42,7 @@ class BasisRepresentation final {
   // TODO(james): Autogenerate names of basis vectors in this default, unspecialized class.
   static constexpr size_t NAMED_BASES_COUNT{0};
 
-  constexpr BasisRepresentation() = default;
+  constexpr CanonicalBasisRepresentation() = default;
 
   static constexpr const BasisName<AlgebraType>* bases_begin() { return nullptr; }
   static constexpr const BasisName<AlgebraType>* bases_end() { return nullptr; }
@@ -54,7 +54,7 @@ class BasisRepresentation final {
 
 template <typename AlgebraType>
 std::string to_string(const Multivector<AlgebraType>& v) {
-  return BasisRepresentation<AlgebraType>::to_string(v);
+  return CanonicalBasisRepresentation<AlgebraType>::to_string(v);
 }
 
 template <typename AlgebraType>
@@ -64,7 +64,7 @@ std::ostream& operator<<(std::ostream& os, const Multivector<AlgebraType>& v) {
 }
 
 template <typename ScalarType>
-class BasisRepresentation<Complex<ScalarType>> final {
+class CanonicalBasisRepresentation<Complex<ScalarType>> final {
  public:
   using AlgebraType = Complex<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
@@ -76,7 +76,7 @@ class BasisRepresentation<Complex<ScalarType>> final {
   };
 
  public:
-  constexpr BasisRepresentation() = default;
+  constexpr CanonicalBasisRepresentation() = default;
 
   static constexpr const BasisName<AlgebraType>* bases_begin() { return &bases_[0]; }
   static constexpr const BasisName<AlgebraType>* bases_end() {
@@ -99,7 +99,7 @@ class BasisRepresentation<Complex<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<Vga<ScalarType>> final {
+class CanonicalBasisRepresentation<Vga<ScalarType>> final {
  public:
   using AlgebraType = Vga<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
@@ -121,7 +121,7 @@ class BasisRepresentation<Vga<ScalarType>> final {
   };
 
  public:
-  constexpr BasisRepresentation() = default;
+  constexpr CanonicalBasisRepresentation() = default;
 
   static constexpr const BasisName<AlgebraType>* bases_begin() { return &bases_[0]; }
   static constexpr const BasisName<AlgebraType>* bases_end() {
@@ -144,7 +144,7 @@ class BasisRepresentation<Vga<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<Vga2d<ScalarType>> final {
+class CanonicalBasisRepresentation<Vga2d<ScalarType>> final {
  public:
   using AlgebraType = Vga2d<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
@@ -161,7 +161,7 @@ class BasisRepresentation<Vga2d<ScalarType>> final {
   };
 
  public:
-  constexpr BasisRepresentation() = default;
+  constexpr CanonicalBasisRepresentation() = default;
 
   static constexpr const BasisName<AlgebraType>* bases_begin() { return &bases_[0]; }
   static constexpr const BasisName<AlgebraType>* bases_end() {
@@ -184,7 +184,7 @@ class BasisRepresentation<Vga2d<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<Pga2d<ScalarType>> final {
+class CanonicalBasisRepresentation<Pga2d<ScalarType>> final {
  public:
   using AlgebraType = Pga2d<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
@@ -206,7 +206,7 @@ class BasisRepresentation<Pga2d<ScalarType>> final {
   };
 
  public:
-  constexpr BasisRepresentation() = default;
+  constexpr CanonicalBasisRepresentation() = default;
 
   static constexpr const BasisName<AlgebraType>* bases_begin() { return &bases_[0]; }
   static constexpr const BasisName<AlgebraType>* bases_end() {
@@ -229,7 +229,7 @@ class BasisRepresentation<Pga2d<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<Pga<ScalarType>> final {
+class CanonicalBasisRepresentation<Pga<ScalarType>> final {
  public:
   using AlgebraType = Pga<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
@@ -260,7 +260,7 @@ class BasisRepresentation<Pga<ScalarType>> final {
   };
 
  public:
-  constexpr BasisRepresentation() = default;
+  constexpr CanonicalBasisRepresentation() = default;
 
   static constexpr const BasisName<AlgebraType>* bases_begin() { return &bases_[0]; }
   static constexpr const BasisName<AlgebraType>* bases_end() {
@@ -283,7 +283,7 @@ class BasisRepresentation<Pga<ScalarType>> final {
 };
 
 template <typename ScalarType>
-class BasisRepresentation<Spacetime<ScalarType>> final {
+class CanonicalBasisRepresentation<Spacetime<ScalarType>> final {
  public:
   using AlgebraType = Spacetime<ScalarType>;
   static constexpr size_t BASES_COUNT{AlgebraType::NUM_BASIS_BLADES};
@@ -314,7 +314,7 @@ class BasisRepresentation<Spacetime<ScalarType>> final {
   };
 
  public:
-  constexpr BasisRepresentation() = default;
+  constexpr CanonicalBasisRepresentation() = default;
 
   static constexpr const BasisName<AlgebraType>* bases_begin() { return &bases_[0]; }
   static constexpr const BasisName<AlgebraType>* bases_end() {

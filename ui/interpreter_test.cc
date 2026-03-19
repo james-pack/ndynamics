@@ -44,7 +44,7 @@ template <typename AlgebraT>
 class InterpreterFixture : public ::testing::Test {
  protected:
   using Algebra = AlgebraT;
-  using Representation = math::BasisRepresentation<AlgebraT>;
+  using Representation = math::CanonicalBasisRepresentation<AlgebraT>;
   using Vector = typename AlgebraT::VectorType;
   using Scalar = typename AlgebraT::ScalarType;
 
@@ -280,7 +280,7 @@ TYPED_TEST(InterpreterTest, DISABLED_DivisionAssociativity) {
 
 TYPED_TEST(InterpreterTest, AssignAndRecallScalar) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::BasisRepresentation<A>;
+  using Rep = math::CanonicalBasisRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> interp{};
 
@@ -451,7 +451,7 @@ TYPED_TEST(InterpreterTest, OuterProductE1E2ViaIdentifier) {
 
 TYPED_TEST(InterpreterTest, OuterProductAndIdentifierFormAreEqual) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::BasisRepresentation<A>;
+  using Rep = math::CanonicalBasisRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> op_interp{};
   Interpreter<A, Rep> id_interp{};
@@ -562,7 +562,7 @@ TYPED_TEST(InterpreterTest3dOrHigher, OuterProductE1E2E3ViaIdentifier) {
 
 TYPED_TEST(InterpreterTest3dOrHigher, TrivectorIdentifierAndOperatorFormAreEqual) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::BasisRepresentation<A>;
+  using Rep = math::CanonicalBasisRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> op_interp{};
   Interpreter<A, Rep> id_interp{};
@@ -627,7 +627,7 @@ TYPED_TEST(InterpreterTest3dOrHigher, RightContractionE12OnE1) {
 
 TYPED_TEST(InterpreterTest3dOrHigher, ParenthesesChangeOuterProductGrouping) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::BasisRepresentation<A>;
+  using Rep = math::CanonicalBasisRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> left_grouped{};
   Interpreter<A, Rep> right_grouped{};

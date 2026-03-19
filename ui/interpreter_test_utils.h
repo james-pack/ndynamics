@@ -11,7 +11,7 @@
 
 namespace ndyn::ui {
 
-template <typename AlgebraT, typename RepresentationT = math::BasisRepresentation<AlgebraT>>
+template <typename AlgebraT, typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::VectorType& expected,
                                         bool do_ast_print = false) {
@@ -43,7 +43,7 @@ template <typename AlgebraT, typename RepresentationT = math::BasisRepresentatio
   return math::AreNear(interpreter.current_value, expected);
 }
 
-template <typename AlgebraT, typename RepresentationT = math::BasisRepresentation<AlgebraT>>
+template <typename AlgebraT, typename RepresentationT = math::CanonicalBasisRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::ScalarType& expected,
                                         bool do_ast_print = false) {
