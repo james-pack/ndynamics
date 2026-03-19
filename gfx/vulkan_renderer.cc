@@ -664,6 +664,8 @@ void VulkanRenderer::render_frame() {
   vkWaitForFences(device_, 1, &in_flight_fence_, VK_TRUE, UINT64_MAX);
   vkResetCommandBuffer(command_buffer_, 0);
 
+  glfwPollEvents();
+
   uint32_t image_index;
   if (vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, image_available_, VK_NULL_HANDLE,
                             &image_index) != VK_SUCCESS) {

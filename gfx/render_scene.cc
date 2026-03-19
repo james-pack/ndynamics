@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
 
   size_t frame_count{0};
   const auto start{std::chrono::high_resolution_clock::now()};
-  while (true) {
+  while (!renderer.window_close_requested()) {
     const auto now{std::chrono::high_resolution_clock::now()};
     float t = std::chrono::duration<float>(now - start).count();
 

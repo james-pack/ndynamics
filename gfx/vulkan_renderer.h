@@ -112,6 +112,8 @@ class VulkanRenderer final {
   MaterialId add_material(const Material& material);
 
   void update_camera(CameraState camera) { camera_ = std::move(camera); }
+
+  bool window_close_requested() { return glfwWindowShouldClose(window_); }
 };
 
 }  // namespace ndyn::gfx
