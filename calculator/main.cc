@@ -3,8 +3,8 @@
 #include "math/algebra.h"
 #include "math/basis_representation.h"
 #include "math/canonical_basis_representation.h"
-#include "ui/algebra_options.h"
-#include "ui/repl.h"
+#include "calculator/algebra_options.h"
+#include "calculator/repl.h"
 
 using namespace ndyn::ui;
 

@@ -6,7 +6,7 @@
 
 #include "base/except.h"
 #include "math/basis_representation.h"
-#include "ui/parser.h"
+#include "calculator/parser.h"
 
 namespace ndyn::ui {
 
@@ -159,9 +159,9 @@ class Interpreter final : public Visitor {
 
   void visit(HelpCommandAst&) override {
     message.append("Commands:\n")
-        .append("  help        Show this help\n")
-        .append("  exit        Exit the REPL\n")
-        .append("  dict [-l]   Show defined symbols\n");
+        .append("  help|?        Show this help\n")
+        .append("  exit          Exit the REPL\n")
+        .append("  dict [-l]     Show defined symbols. The long form also shows values.\n");
     was_value = false;
   }
 

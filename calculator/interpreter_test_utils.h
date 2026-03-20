@@ -6,9 +6,9 @@
 #include "gtest/gtest.h"
 #include "math/generic_basis_representation.h"
 #include "math/multivector_test_utils.h"
-#include "ui/ast_printer.h"
-#include "ui/interpreter.h"
-#include "ui/parser.h"
+#include "calculator/ast_printer.h"
+#include "calculator/interpreter.h"
+#include "calculator/parser.h"
 
 namespace ndyn::ui {
 

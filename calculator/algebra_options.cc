@@ -1,4 +1,4 @@
-#include "ui/algebra_options.h"
+#include "calculator/algebra_options.h"
 
 #include <algorithm>
 #include <array>

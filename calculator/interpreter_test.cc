@@ -1,4 +1,4 @@
-#include "ui/interpreter.h"
+#include "calculator/interpreter.h"
 
 #include <memory>
 #include <string_view>
@@ -6,9 +6,9 @@
 #include "gtest/gtest.h"
 #include "math/canonical_basis_representation.h"
 #include "math/generic_basis_representation.h"
-#include "ui/ast_printer.h"
-#include "ui/interpreter_test_utils.h"
-#include "ui/parser.h"
+#include "calculator/ast_printer.h"
+#include "calculator/interpreter_test_utils.h"
+#include "calculator/parser.h"
 
 namespace ndyn::ui {
 

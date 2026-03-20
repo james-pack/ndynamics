@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui/parser.h"
+#include "calculator/parser.h"
 
 namespace ndyn::ui {
 

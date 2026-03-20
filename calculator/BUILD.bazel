@@ -1,5 +1,5 @@
 cc_library(
-    name = "ui",
+    name = "calculator",
     srcs = [
         "algebra_options.cc",
         "ast_printer.cc",
@@ -23,12 +23,12 @@ cc_library(
 )
 
 cc_binary(
-    name = "repl",
+    name = "calc",
     srcs = [
         "main.cc",
     ],
     deps = [
-        ":ui",
+        ":calculator",
         "//base",
         "//third_party/glog",
     ],
@@ -39,7 +39,7 @@ cc_library(
     testonly = True,
     hdrs = ["interpreter_test_utils.h"],
     deps = [
-        ":ui",
+        ":calculator",
         "//math",
         "//math:testing",
         "//third_party/gtest",
@@ -52,8 +52,8 @@ cc_test(
         "interpreter_test.cc",
     ],
     deps = [
+        ":calculator",
         ":interpreter_test_utils",
-        ":ui",
         "//math",
         "//math:testing",
         "//third_party/gtest",
@@ -66,8 +66,8 @@ cc_test(
         "interpreter_diagnostic_test.cc",
     ],
     deps = [
+        ":calculator",
         ":interpreter_test_utils",
-        ":ui",
         "//math",
         "//math:testing",
         "//third_party/gtest",

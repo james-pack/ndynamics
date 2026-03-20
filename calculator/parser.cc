@@ -1,4 +1,4 @@
-#include "ui/parser.h"
+#include "calculator/parser.h"
 
 #include <memory>
 #include <string>
@@ -50,7 +50,7 @@ Parenthetical <- "(" _ Expression _ ")"
 Command <- DictCommand / ExitCommand / HelpCommand
 DictCommand <- "dict" _ ("-l" / "--long")?
 ExitCommand <- "exit" / "quit"
-HelpCommand <- "help"
+HelpCommand <- "help" / "?"
 
 ~_ <- [ \t]*
 )GRAMMAR";

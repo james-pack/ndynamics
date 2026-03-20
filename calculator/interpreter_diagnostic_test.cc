@@ -4,9 +4,9 @@
 #include "math/algebra.h"
 #include "math/canonical_basis_representation.h"
 #include "math/multivector_test_utils.h"
-#include "ui/interpreter.h"
-#include "ui/interpreter_test_utils.h"
-#include "ui/parser.h"
+#include "calculator/interpreter.h"
+#include "calculator/interpreter_test_utils.h"
+#include "calculator/parser.h"
 
 namespace ndyn::ui {
 

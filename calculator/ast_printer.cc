@@ -1,9 +1,9 @@
-#include "ui/ast_printer.h"
+#include "calculator/ast_printer.h"
 
 #include <string>
 
 #include "glog/logging.h"
-#include "ui/parser.h"
+#include "calculator/parser.h"
 
 namespace ndyn::ui {
 

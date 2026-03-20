@@ -5,9 +5,9 @@
 
 #include "gflags/gflags.h"
 #include "math/basis_representation.h"
-#include "ui/ast_printer.h"
-#include "ui/interpreter.h"
-#include "ui/parser.h"
+#include "calculator/ast_printer.h"
+#include "calculator/interpreter.h"
+#include "calculator/parser.h"
 
 DECLARE_bool(show_ast);
 
