@@ -5,8 +5,8 @@
 #include <unordered_map>
 
 #include "base/except.h"
-#include "math/basis_representation.h"
 #include "calculator/parser.h"
+#include "math/basis_representation.h"
 
 namespace ndyn::ui {
 
@@ -15,15 +15,15 @@ class Interpreter final : public Visitor {
   using VectorType = typename AlgebraType::VectorType;
   using ScalarType = typename AlgebraType::ScalarType;
 
-  // Global symbol table
-  std::unordered_map<std::string, VectorType> symbols{};
-
  public:
   Interpreter() {
     for (auto iter = Representation::bases_begin(); iter != Representation::bases_end(); ++iter) {
       symbols.insert({iter->name, iter->basis});
     }
   }
+
+  // Global symbol table
+  std::unordered_map<std::string, VectorType> symbols{};
 
   // Result of the last evaluated expression.
   VectorType current_value{};
@@ -34,15 +34,23 @@ class Interpreter final : public Visitor {
   void visit(LineAst& node) override {
     if (node.statement) {
       node.statement->visit(*this);
+      was_value = true;
+    } else if (node.command) {
+      node.command->visit(*this);
+      was_value = false;
     } else {
       was_value = false;
     }
     DLOG(INFO) << "Line";
   }
 
-  void visit(StatementExpressionAst& node) override {
-    node.expression->visit(*this);
-    DLOG(INFO) << "StatementExpression";
+  void visit(StatementAst& node) override {
+    if (node.expression) {
+      node.expression->visit(*this);
+    } else if (node.assignment) {
+      node.assignment->visit(*this);
+    }
+    DLOG(INFO) << "Statement";
     symbols["_"] = current_value;
   }
 
@@ -133,15 +141,13 @@ class Interpreter final : public Visitor {
     }
   }
 
-  std::string dump_symbol_table(bool long_form = false) const {
-    std::string result{"\n"};
+  std::string dump_symbol_table() const {
+    std::string result{};
     if (!symbols.empty()) {
       for (const auto& [name, value] : symbols) {
         result.append("  ");
         result.append(name);
-        if (long_form) {
-          result.append("\t=\t").append(Representation::to_string(value));
-        }
+        result.append("\t=\t").append(Representation::to_string(value));
         result.append("\n");
       }
     } else {
@@ -150,19 +156,15 @@ class Interpreter final : public Visitor {
     return result;
   }
 
-  void visit(DictCommandAst& node) override {
-    message.append(dump_symbol_table(node.long_form));
-    was_value = false;
-  }
+  void visit(DictCommandAst& node) override { message.append(dump_symbol_table()); }
 
   void visit(ExitCommandAst&) override { std::exit(0); }
 
   void visit(HelpCommandAst&) override {
     message.append("Commands:\n")
-        .append("  help|?        Show this help\n")
-        .append("  exit          Exit the REPL\n")
-        .append("  dict [-l]     Show defined symbols. The long form also shows values.\n");
-    was_value = false;
+        .append("  help|?        Show this help.\n")
+        .append("  exit          Exit the calculator.\n")
+        .append("  dict          Show defined symbols.\n");
   }
 
   void interpret(Ast& node) {
@@ -170,8 +172,6 @@ class Interpreter final : public Visitor {
     success = true;
     // Clear out the message so that previous error messages don't get reported in this run.
     message.clear();
-    // Assume result will be a value.
-    was_value = true;
     node.visit(*this);
   }
 };

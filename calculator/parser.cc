@@ -10,17 +10,15 @@
 namespace ndyn::ui {
 
 const char grammar_definition[] = R"GRAMMAR(
-Line <- _ Statement? _
+Line <- _ Command _ / _ Statement _ / _
 
-Statement <- Assignment
-           / Expression
-           / Command
+Statement <- Assignment / Expression
 
 Assignment <- Identifier _ "=" _ Expression
 
 Identifier <- !Keyword [a-zA-Z_][a-zA-Z0-9_]*
 
-Keyword <- Command / "algebra" / "metric"
+Keyword <- "dict" / "help" / "quit" / "exit" / "algebra" / "metric"
 
 Expression <- Term ( _ ( AddOp / SubOp ) _ Expression )?
 AddOp <- "+"
@@ -48,7 +46,7 @@ Scalar <- [+-]? [0-9]+ ("." [0-9]+)?
 Parenthetical <- "(" _ Expression _ ")"
 
 Command <- DictCommand / ExitCommand / HelpCommand
-DictCommand <- "dict" _ ("-l" / "--long")?
+DictCommand <- "dict"
 ExitCommand <- "exit" / "quit"
 HelpCommand <- "help" / "?"
 
@@ -221,9 +219,8 @@ void attach_actions(peg::parser& p, std::shared_ptr<LineAst>& result) {
   };
 
   p["DictCommand"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<CommandAst> {
-    DLOG(INFO) << "[DictCommand] -- sv.size(): " << sv.size();
-    bool long_form = !sv.empty() && sv.size() > 1;
-    return std::make_shared<DictCommandAst>(long_form);
+    DLOG(INFO) << "[DictCommand] -- sv.size(): " << sv.size() << ", sv.choice(): " << sv.choice();
+    return std::make_shared<DictCommandAst>();
   };
 
   p["ExitCommand"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<CommandAst> {
@@ -243,28 +240,32 @@ void attach_actions(peg::parser& p, std::shared_ptr<LineAst>& result) {
 
   p["Statement"] = [](const peg::SemanticValues& sv) -> std::shared_ptr<StatementAst> {
     DLOG(INFO) << "[Statement] -- sv.size(): " << sv.size();
-    if (sv.size() == 1) {
-      if (sv[0].type() == typeid(std::shared_ptr<AssignmentAst>)) {
-        return std::any_cast<std::shared_ptr<AssignmentAst>>(sv[0]);
-      } else if (sv[0].type() == typeid(std::shared_ptr<ExpressionAst>)) {
-        return std::make_shared<StatementExpressionAst>(
-            std::any_cast<std::shared_ptr<ExpressionAst>>(sv[0]));
-      } else if (sv[0].type() == typeid(std::shared_ptr<CommandAst>)) {
-        return std::any_cast<std::shared_ptr<CommandAst>>(sv[0]);
-      } else {
+    switch (sv.choice()) {
+      case 0:
+        return std::make_shared<StatementAst>(std::any_cast<std::shared_ptr<AssignmentAst>>(sv[0]));
+      case 1:
+        return std::make_shared<StatementAst>(std::any_cast<std::shared_ptr<ExpressionAst>>(sv[0]));
+      default:
         except<std::logic_error>("Unknown statement type");
-      }
     }
     return nullptr;
   };
 
   p["Line"] = [&result](const peg::SemanticValues& sv) -> std::shared_ptr<LineAst> {
-    DLOG(INFO) << "[Line] -- sv.size(): " << sv.size();
-    if (sv.size() > 0) {
-      std::shared_ptr<StatementAst> stmt = std::any_cast<std::shared_ptr<StatementAst>>(sv[0]);
-      result = std::make_shared<LineAst>(stmt);
-    } else {
-      result = std::make_shared<LineAst>();
+    DLOG(INFO) << "[Line] -- sv.size(): " << sv.size() << ", sv.choice: " << sv.choice();
+    switch (sv.choice()) {
+      case 0: {
+        std::shared_ptr<CommandAst> cmd = std::any_cast<std::shared_ptr<CommandAst>>(sv[0]);
+        result = std::make_shared<LineAst>(cmd);
+        break;
+      }
+      case 1: {
+        std::shared_ptr<StatementAst> stmt = std::any_cast<std::shared_ptr<StatementAst>>(sv[0]);
+        result = std::make_shared<LineAst>(stmt);
+        break;
+      }
+      default:
+        result = std::make_shared<LineAst>();
     }
     return result;
   };
@@ -301,7 +302,7 @@ void DictCommandAst::visit(Visitor& v) { v.visit(*this); }
 void ExitCommandAst::visit(Visitor& v) { v.visit(*this); }
 void HelpCommandAst::visit(Visitor& v) { v.visit(*this); }
 
-void StatementExpressionAst::visit(Visitor& v) { v.visit(*this); }
+void StatementAst::visit(Visitor& v) { v.visit(*this); }
 void AssignmentAst::visit(Visitor& v) { v.visit(*this); }
 
 void LineAst::visit(Visitor& v) { v.visit(*this); }

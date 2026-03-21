@@ -99,15 +99,9 @@ struct BinaryAst final : ExpressionAst {
                     std::shared_ptr<ExpressionAst>& holder) override;
 };
 
-struct StatementAst : Ast {};
-
-struct CommandAst : StatementAst {};
+struct CommandAst : Ast {};
 
 struct DictCommandAst final : CommandAst {
-  bool long_form;
-
-  explicit DictCommandAst(bool long_form) : long_form(long_form) {}
-
   void visit(Visitor& v) override;
 };
 
@@ -119,7 +113,7 @@ struct HelpCommandAst final : CommandAst {
   void visit(Visitor& v) override;
 };
 
-struct AssignmentAst final : StatementAst {
+struct AssignmentAst final : Ast {
   std::shared_ptr<IdentifierAst> name;
   std::shared_ptr<ExpressionAst> value;
 
@@ -129,20 +123,26 @@ struct AssignmentAst final : StatementAst {
   void visit(Visitor& v) override;
 };
 
-struct StatementExpressionAst final : StatementAst {
+struct StatementAst final : Ast {
   std::shared_ptr<ExpressionAst> expression;
+  std::shared_ptr<AssignmentAst> assignment;
 
-  explicit StatementExpressionAst(std::shared_ptr<ExpressionAst> expression)
+  explicit StatementAst(std::shared_ptr<ExpressionAst> expression)
       : expression(std::move(expression)) {}
+
+  explicit StatementAst(std::shared_ptr<AssignmentAst> assignment)
+      : assignment(std::move(assignment)) {}
 
   void visit(Visitor& v) override;
 };
 
 struct LineAst final : Ast {
-  std::shared_ptr<StatementAst> statement{nullptr};  // null = empty line
+  std::shared_ptr<StatementAst> statement{nullptr};
+  std::shared_ptr<CommandAst> command{nullptr};
 
   LineAst() = default;
   explicit LineAst(std::shared_ptr<StatementAst> statement) : statement(std::move(statement)) {}
+  explicit LineAst(std::shared_ptr<CommandAst> command) : command(std::move(command)) {}
 
   void visit(Visitor& v) override;
 };
@@ -151,8 +151,8 @@ struct Visitor {
   virtual ~Visitor() = default;
 
   virtual void visit(LineAst&) = 0;
+  virtual void visit(StatementAst&) = 0;
 
-  virtual void visit(StatementExpressionAst&) = 0;
   virtual void visit(AssignmentAst&) = 0;
 
   virtual void visit(ScalarAst&) = 0;
@@ -168,7 +168,6 @@ struct Visitor {
 
   virtual void visit(ExpressionAst&);
   virtual void visit(CommandAst&);
-  virtual void visit(StatementAst&);
 
   virtual void visit(UnaryOpAst&);
   virtual void visit(BinaryOpAst&);

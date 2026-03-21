@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "glog/logging.h"
 #include "calculator/parser.h"
+#include "glog/logging.h"
 
 namespace ndyn::ui {
 
@@ -16,8 +16,8 @@ class AstPrinter final : public Visitor {
 
  public:
   void visit(LineAst&) override;
+  void visit(StatementAst&) override;
 
-  void visit(StatementExpressionAst&) override;
   void visit(AssignmentAst&) override;
 
   void visit(ScalarAst&) override;
@@ -54,13 +54,15 @@ void AstPrinter::visit(LineAst& node) {
   // Visit children.
   if (node.statement) {
     node.statement->visit(*this);
+  } else if (node.command) {
+    node.command->visit(*this);
   } else {
     LOG(INFO) << std::string(indent_ * 2, ' ') << "<empty>";
   }
   --indent_;
 }
 
-void AstPrinter::visit(StatementExpressionAst& node) {
+void AstPrinter::visit(StatementAst& node) {
   LOG(INFO) << std::string(indent_ * 2, ' ') << "Top-level Expression";
   ++indent_;
   // Visit children.

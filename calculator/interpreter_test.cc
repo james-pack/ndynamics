@@ -3,12 +3,12 @@
 #include <memory>
 #include <string_view>
 
-#include "gtest/gtest.h"
-#include "math/canonical_basis_representation.h"
-#include "math/generic_basis_representation.h"
 #include "calculator/ast_printer.h"
 #include "calculator/interpreter_test_utils.h"
 #include "calculator/parser.h"
+#include "gtest/gtest.h"
+#include "math/canonical_basis_representation.h"
+#include "math/generic_basis_representation.h"
 
 namespace ndyn::ui {
 
@@ -57,6 +57,8 @@ class InterpreterFixture : public ::testing::Test {
   using Vector = typename AlgebraT::VectorType;
   using Scalar = typename AlgebraT::ScalarType;
 
+  Interpreter<AlgebraT, Representation> interpreter{};
+
   /**
    * Runs the parser only, ignoring parse errors, and returning the AST. Useful for debugging the
    * grammar itself.
@@ -64,7 +66,6 @@ class InterpreterFixture : public ::testing::Test {
   std::shared_ptr<LineAst> parse_line(std::string_view line) {
     Parser parser{};
     std::shared_ptr<LineAst> ast{};
-    Interpreter<AlgebraT, Representation> interpreter{};
     parser.parse(line, ast);
     return ast;
   }
@@ -75,7 +76,6 @@ class InterpreterFixture : public ::testing::Test {
    */
   Interpreter<AlgebraT, Representation> interpret_line(std::string_view line) {
     Parser parser{};
-    Interpreter<AlgebraT, Representation> interpreter{};
     DLOG(INFO) << "interpreter symbol table on startup: " << interpreter.dump_symbol_table();
     std::shared_ptr<LineAst> ast{};
     if (!parser.parse(line, ast)) {
@@ -90,6 +90,52 @@ class InterpreterFixture : public ::testing::Test {
   }
 };
 
+template <typename AlgebraT>
+class BaseInterpreterBehavior : public InterpreterFixture<AlgebraT> {};
+
+TYPED_TEST_SUITE(BaseInterpreterBehavior, ZeroBasisVectors);
+
+TYPED_TEST(BaseInterpreterBehavior, BasisBladesInSymbolTableAfterConstruction) {
+  using A = typename TestFixture::Algebra;
+  if constexpr (A::NUM_BASIS_BLADES > 1) {
+    // Testing the exact number of symbols is not a good idea. The symbols are determined by the
+    // basis representation, so testing the exact number would really be testing whatever
+    // implementation is providing those representations. Testing if it is non-empty also relies on
+    // the basis representation, but here we want to assert that the interpreter is using the
+    // representation.
+    EXPECT_FALSE(this->interpreter.symbols.empty());
+  } else {
+    // The real numbers (aka, the scalar algebra) will have no basis blades in the symbol table.
+    EXPECT_TRUE(this->interpreter.symbols.empty());
+  }
+}
+
+TYPED_TEST(BaseInterpreterBehavior, InterpretingExpressionAddsUnderscoreToTheSymbolTable) {
+  using A = typename TestFixture::Algebra;
+  this->interpret_line("1");
+  EXPECT_TRUE(math::AreNear<A>(typename A::VectorType{1}, this->interpreter.symbols.at("_")));
+}
+
+TYPED_TEST(BaseInterpreterBehavior, InterpretingAssignmentAddsThatSymbolToTheSymbolTable) {
+  using A = typename TestFixture::Algebra;
+  this->interpret_line("x=1");
+  EXPECT_TRUE(math::AreNear<A>(typename A::VectorType{1}, this->interpreter.symbols.at("x")));
+}
+
+TYPED_TEST(BaseInterpreterBehavior, InterpretingAssignmentAddsUnderscoreToTheSymbolTable) {
+  using A = typename TestFixture::Algebra;
+  this->interpret_line("x=1");
+  EXPECT_TRUE(math::AreNear<A>(typename A::VectorType{1}, this->interpreter.symbols.at("_")));
+}
+
+TYPED_TEST(BaseInterpreterBehavior, InterpretingCommandDoesNotAddToTheSymbolTable) {
+  auto prev_symbols{this->interpreter.symbols};
+  this->interpret_line("help");
+  this->interpret_line("dict");
+  this->interpret_line("dict -l");
+  EXPECT_EQ(prev_symbols, this->interpreter.symbols);
+}
+
 // ---------------------------------------------------------------------------
 // Suite 1 — dimension-agnostic tests, all algebras
 // ---------------------------------------------------------------------------
@@ -99,7 +145,7 @@ class ScalarHandlingAndGeneralInterpreterBehavior : public InterpreterFixture<Al
 
 TYPED_TEST_SUITE(ScalarHandlingAndGeneralInterpreterBehavior, ZeroBasisVectors);
 
-// --- Scalar literals -------------------------------------------------------
+// Scalar value handling.
 
 TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, IntegerScalarLiteral) {
   using A = typename TestFixture::Algebra;
@@ -136,7 +182,7 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, ZeroPointZeroScalarLiter
   EXPECT_TRUE(MatchesValue<A>("0.0", typename A::ScalarType{0}));
 }
 
-// --- Whitespace and empty input edge cases ---------------------------------
+// Whitespace and empty input edge cases.
 
 TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, EmptyLineSucceedsWithNoValue) {
   auto state = this->interpret_line("");
@@ -188,7 +234,7 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, ExpressionWithNoWhitespa
   EXPECT_TRUE(MatchesValue<A>("1+1", typename A::ScalarType{2}));
 }
 
-// --- Arithmetic precedence -------------------------------------------------
+// Arithmetic precedence.
 
 /**
  * These tests are the primary guard against precedence bugs in the Additive /
@@ -265,8 +311,6 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, ChainedUnaryMinus) {
   EXPECT_TRUE(MatchesValue<A>("- -2", typename A::ScalarType{2}));
 }
 
-// --- Additive / multiplicative operator combinations ----------------------
-
 TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, AddThenMultiply) {
   using A = typename TestFixture::Algebra;
   EXPECT_TRUE(MatchesValue<A>("1 + 2 * 3 + 4", typename A::ScalarType{11}));
@@ -287,7 +331,7 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, DISABLED_DivisionAssocia
   EXPECT_TRUE(MatchesValue<A>("12 / 4 / 3", typename A::ScalarType{1}));
 }
 
-// --- Assignment and variable reuse ----------------------------------------
+// Variable handling.
 
 TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, AssignAndRecallScalar) {
   using A = typename TestFixture::Algebra;
@@ -322,7 +366,7 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, KeywordsAreNotValidIdent
   }
 }
 
-// --- Command parsing -------------------------------------------------------
+// Commands.
 
 /***************************************************************************************************
 // Note: Do not attempt to test the exit and quit commands. The interpreter will exit the current
@@ -337,24 +381,13 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, HelpCommand) {
 }
 
 TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, DictCommand) {
+  ASSERT_TRUE(this->interpreter.success);
   auto state = this->interpret_line("dict");
   EXPECT_TRUE(state.success);
   EXPECT_FALSE(state.was_value);
 }
 
-TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, DictCommandLongFlag) {
-  auto state = this->interpret_line("dict --long");
-  EXPECT_TRUE(state.success);
-  EXPECT_FALSE(state.was_value);
-}
-
-TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, DictCommandShortFlag) {
-  auto state = this->interpret_line("dict -l");
-  EXPECT_TRUE(state.success);
-  EXPECT_FALSE(state.was_value);
-}
-
-// --- GA operators on scalar expressions ------------------------------------
+// GA operators on scalar expressions.
 
 /**
  * These tests exercise the GA-specific operator parse paths on scalar values
@@ -427,7 +460,7 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, DualOfParenthetical) {
   EXPECT_TRUE(state.was_value);
 }
 
-// --- Basis vector expressions (dimension-agnostic: e1, e2) ----------------
+// Basis vector expressions.
 
 template <typename AlgebraT>
 class Interpreting2dAlgebras : public InterpreterFixture<AlgebraT> {};
@@ -534,7 +567,7 @@ TYPED_TEST(Interpreting2dAlgebras, ScalarTimesE1ThenAddE2) {
   EXPECT_TRUE(state.message.empty());
 }
 
-// --- Out-of-dimension basis vectors should fail ---------------------------
+// Out-of-dimension basis vectors should fail.
 
 TYPED_TEST(Interpreting2dAlgebras, OutOfDimensionBasisVectorFails) {
   // Compute one past the last valid basis index for this algebra.
@@ -619,8 +652,6 @@ TYPED_TEST(Interpreting3dAlgebras, DualOfTrivectorIdentifier) {
 }
 
 TYPED_TEST(Interpreting3dAlgebras, FullMultivectorExpression) {
-  // A full VGA multivector built from all grades.  Exercises the entire
-  // Additive chain with mixed-grade operands.
   auto state = this->interpret_line("1 + e1 + e2 + e3 + e12 + e13 + e23 + e123");
   EXPECT_TRUE(state.success);
   EXPECT_TRUE(state.was_value);
