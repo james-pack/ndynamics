@@ -158,11 +158,15 @@ TEST_F(InterpreterTest, UnicodeIdentifier) { EXPECT_TRUE(parse("ε")); }
 TEST_F(InterpreterTest, SubscriptedIdentifier) { EXPECT_TRUE(parse("v₀")); }
 TEST_F(InterpreterTest, SubscriptedUnicodeIdentifier) { EXPECT_TRUE(parse("λ₁")); }
 TEST_F(InterpreterTest, SuperscriptedIdentifier) { EXPECT_TRUE(parse("β⁻")); }
+TEST_F(InterpreterTest, OtherUnicodeIdentifier) { EXPECT_TRUE(parse("gμν")); }
 
 TEST_F(InterpreterTest, AccentedIdentifierInAssignment) { EXPECT_TRUE(parse("sphère = e1")); }
 TEST_F(InterpreterTest, UnicodeIdentifierInAssignment) { EXPECT_TRUE(parse("ε = e1")); }
 TEST_F(InterpreterTest, SubscriptedIdentifierInAssignment) { EXPECT_TRUE(parse("v₀ = e1")); }
 TEST_F(InterpreterTest, SubscriptedUnicodeIdentifierInAssignment) { EXPECT_TRUE(parse("λ₁ = e1")); }
 TEST_F(InterpreterTest, SuperscriptedIdentifierInAssignment) { EXPECT_TRUE(parse("β⁻ = e1*e2")); }
+TEST_F(InterpreterTest, MiscUnicodeStatement) {
+  EXPECT_TRUE(parse("r₊ = (G*M + (G²*M² - a²*c²)^(1/2)) / c²"));
+}
 
 }  // namespace ndyn::ui
