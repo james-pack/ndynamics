@@ -54,3 +54,14 @@ def load_source_dependencies():
             ],
             build_file = "//third_party/peglib:peglib.BUILD",
         )
+
+    if not native.existing_rule("com_github_juliastrings_utf8proc"):
+        http_archive(
+            name = "com_github_juliastrings_utf8proc",
+            sha256 = "abfed50b6d4da51345713661370290f4f4747263ee73dc90356299dfc7990c78",
+            strip_prefix = "utf8proc-2.11.3",
+            urls = [
+                "https://github.com/JuliaStrings/utf8proc/archive/refs/tags/v2.11.3.tar.gz",
+            ],
+            build_file = "//third_party/utf8proc:utf8proc.BUILD",
+        )

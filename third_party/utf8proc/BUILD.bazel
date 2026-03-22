@@ -1,0 +1,7 @@
+cc_library(
+    name = "utf8proc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_juliastrings_utf8proc",
+    ],
+)
