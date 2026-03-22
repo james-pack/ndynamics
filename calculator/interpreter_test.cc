@@ -498,6 +498,27 @@ TYPED_TEST(Interpreting2dAlgebras, OuterProductE1E2ViaIdentifier) {
   EXPECT_TRUE(state.message.empty()) << state.message;
 }
 
+TYPED_TEST(Interpreting2dAlgebras, AccentedIdentifier) {
+  auto state = this->interpret_line("sphère = 2 * e12");
+  EXPECT_TRUE(state.success) << state.message;
+  EXPECT_TRUE(state.was_value) << state.message;
+  EXPECT_TRUE(state.message.empty()) << state.message;
+}
+
+TYPED_TEST(Interpreting2dAlgebras, UnicodeIdentifier) {
+  auto state = this->interpret_line("ε = e1");
+  EXPECT_TRUE(state.success) << state.message;
+  EXPECT_TRUE(state.was_value) << state.message;
+  EXPECT_TRUE(state.message.empty()) << state.message;
+}
+
+TYPED_TEST(Interpreting2dAlgebras, SubscriptedIdentifier) {
+  auto state = this->interpret_line("v₀ = 3 * e1");
+  EXPECT_TRUE(state.success) << state.message;
+  EXPECT_TRUE(state.was_value) << state.message;
+  EXPECT_TRUE(state.message.empty()) << state.message;
+}
+
 TYPED_TEST(Interpreting2dAlgebras, OuterProductAndIdentifierFormAreEqual) {
   using A = typename TestFixture::Algebra;
   using Rep = math::GenericBasisRepresentation<A>;

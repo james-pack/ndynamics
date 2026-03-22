@@ -183,6 +183,10 @@ class Parser final {
  public:
   Parser() : parser_(create_raw_parser(result_)) {}
 
+  void enable_trace() {
+    peg::enable_tracing(parser_, std::cout);
+  }
+  
   bool parse(const std::string_view line, std::shared_ptr<LineAst>& result) {
     bool success = parser_.parse(line);
     result = result_;

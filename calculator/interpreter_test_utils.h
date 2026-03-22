@@ -2,13 +2,13 @@
 
 #include <memory>
 
+#include "calculator/ast_printer.h"
+#include "calculator/interpreter.h"
+#include "calculator/parser.h"
 #include "glog/logging.h"
 #include "gtest/gtest.h"
 #include "math/generic_basis_representation.h"
 #include "math/multivector_test_utils.h"
-#include "calculator/ast_printer.h"
-#include "calculator/interpreter.h"
-#include "calculator/parser.h"
 
 namespace ndyn::ui {
 
@@ -21,6 +21,7 @@ template <typename Algebra, typename Representation = math::GenericBasisRepresen
   DLOG(INFO) << "interpreter symbol table on startup: " << interpreter.dump_symbol_table();
 
   std::shared_ptr<LineAst> ast{};
+  parser.enable_trace();
   if (!parser.parse(line, ast)) {
     return ::testing::AssertionFailure() << "Could not parse line";
   }
