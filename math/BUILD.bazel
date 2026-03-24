@@ -3,6 +3,7 @@ load("//platforms:hex.bzl", "hex")
 cc_library(
     name = "math",
     hdrs = [
+        "abs.h",
         "algebra.h",
         "basis_representation.h",
         "bit_basis.h",
