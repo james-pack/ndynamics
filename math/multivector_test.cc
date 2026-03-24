@@ -764,18 +764,6 @@ TYPED_TEST(MultivectorTest, FourApplicationsOfDualReturnsOriginal) {
   }
 }
 
-TYPED_TEST(MultivectorTest, DualAndUndualAreInverses) {
-  static constexpr TypeParam v{TypeParam::template e<TypeParam::NUM_ZERO_BASES>() * 2};
-  static constexpr TypeParam d{v.dual()};
-  static constexpr TypeParam u{v.undual()};
-  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
-  static constexpr TypeParam du{v.dual().undual()};
-  static constexpr TypeParam ud{v.undual().dual()};
-
-  EXPECT_EQ(du, v) << "du: " << du << ", v: " << v << ", d: " << d << ", u: " << u << ", I: " << I;
-  EXPECT_EQ(ud, v);
-}
-
 TYPED_TEST(MultivectorTest, DualityRespectsPseudoscalarOfAlgebra) {
   // The dual of the pseudoscalar must be a pure scalar (grade 0), since the
   // pseudoscalar is the top-grade element and its complement is the scalar.
@@ -785,23 +773,19 @@ TYPED_TEST(MultivectorTest, DualityRespectsPseudoscalarOfAlgebra) {
   EXPECT_EQ(dual_I.grade_projection(0), dual_I);
 }
 
-TYPED_TEST(MultivectorTest, ContractionWithReversePseudoscalarYieldsDual) {
-  static constexpr TypeParam e0{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
-  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
+TYPED_TEST(MultivectorTest, ContractionWithReversePseudoscalarYieldsDualUpToSign) {
+  // Note that this invariant is only true for algebras without any degenerate bases.
+  if constexpr (TypeParam::NUM_ZERO_BASES == 0) {
+    static constexpr TypeParam e1{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
+    static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
+    static constexpr TypeParam e1_dual{e1.dual()};
+    static constexpr TypeParam left_contract_expression{e1.left_contraction(I.reverse())};
 
-  EXPECT_EQ(e0.left_contraction(I.reverse()), e0.dual());
-}
+    const bool is_original{left_contract_expression == e1_dual};
+    const bool is_negated{left_contract_expression == -e1_dual};
 
-TYPED_TEST(MultivectorTest, ContractionWithPseudoscalarYieldsUndualUpToSign) {
-  static constexpr TypeParam e0{TypeParam::template e<TypeParam::NUM_ZERO_BASES>()};
-  static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
-
-  static constexpr TypeParam value{e0.left_contraction(I)};
-
-  static constexpr bool is_same(e0.undual() == value);
-  static constexpr bool is_negated(-e0.undual() == value);
-
-  EXPECT_TRUE(is_same || is_negated) << "value: " << value;
+    EXPECT_TRUE(is_original || is_negated);
+  }
 }
 
 //--------------------------------------------------------------------------------------------------

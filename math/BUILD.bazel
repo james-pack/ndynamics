@@ -129,6 +129,15 @@ cc_test(
 )
 
 cc_test(
+    name = "multivector_duality_test",
+    srcs = ["multivector_duality_test.cc"],
+    deps = [
+        ":math",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
     name = "multivector_scalability_test",
     srcs = ["multivector_scalability_test.cc"],
     deps = [
