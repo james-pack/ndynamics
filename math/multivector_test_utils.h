@@ -4,6 +4,7 @@
 #include <string>
 
 #include "gtest/gtest.h"
+#include "math/abs.h"
 #include "math/basis_representation.h"
 #include "math/generic_basis_representation.h"
 #include "math/multivector.h"
@@ -15,7 +16,6 @@ template <typename Algebra,  //
 ::testing::AssertionResult AreNear(const typename Algebra::VectorType& lhs,  //
                                    const typename Algebra::VectorType& rhs,  //
                                    typename Algebra::ScalarType epsilon = 0.0001) {
-  using std::abs;
   using std::to_string;
   const auto difference{lhs - rhs};
   epsilon = abs(epsilon);
