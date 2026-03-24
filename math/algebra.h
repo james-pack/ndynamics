@@ -85,11 +85,22 @@ template <typename T = DefaultScalarType,
           InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
 using Pga = Algebra<T, 3, 0, 1, INNER_PRODUCT>;
 
+// CGA is a 3D vectorspace geometric algebra with two additional dimensions. It can model lines that
+// do not pass through the origin as well as translations.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using Cga = Algebra<T, 4, 1, 0, INNER_PRODUCT>;
+
 // The spacetime algebra is primarily used in relativistic physics applications and research.
 // Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
 // Cl(3, 1).
 template <typename T = DefaultScalarType,
           InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
 using Spacetime = Algebra<T, 1, 3, 0, INNER_PRODUCT>;
+
+// The other expression of the spacetime algebra.
+template <typename T = DefaultScalarType,
+          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+using SpacetimePrime = Algebra<T, 3, 1, 0, INNER_PRODUCT>;
 
 }  // namespace ndyn::math
