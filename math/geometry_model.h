@@ -5,134 +5,247 @@
 namespace ndyn::math {
 
 /**
- * Concept defining the interface for a geometric algebra geometry model.
+ * A GeometryModel encodes the relationship between abstract multivector elements
+ * and geometric primitives for a specific geometric algebra and embedding. It is
+ * intentionally minimal: any operation that can be expressed purely through
+ * multivector algebra belongs on the multivector type itself, not here.
  *
- * A geometry model encodes the conventions for embedding geometric primitives into a specific
- * Clifford algebra. The algebra's metric signature determines which primitives are representable
- * and how versors act on them. For example, points are grade-1 in VGA and CGA but grade-3 in
- * PGA; translations are not representable as versors in VGA at all.
+ * The separation of concerns is as follows:
+ *   - The multivector owns algebraic operations (product, reverse, grade, norm, etc.)
+ *   - The GeometryModel owns geometric interpretation (what a point *is* in this
+ *     geometric model, how lines are constructed, which product is join vs meet, etc.)
  *
- * Implementing types should be final structs or classes with no virtual dispatch overhead.
- * Default implementations for operations that reduce to standard multivector arithmetic
- * (join, meet, motor, apply, apply_unit) may be provided conventionally in each concrete
- * model rather than centrally here.
+ * This boundary means a simulation or CAD environment built on this interface
+ * is portable across GAs — PGA, CGA, STA, and DCGA — by substituting the
+ * concrete GeometryModel without changing any code that operates on geometric
+ * elements.
+ *
+ * Implementing types must expose:
+ *   - Algebra:     the concrete GA type (owns the metric and grade structure)
+ *   - Multivector: the element type on which all computation operates
+ *   - Scalar:      the underlying numeric type (float, double, etc.)
  */
-template <typename ModelT>
+template <typename G>
 concept GeometryModel =
-    requires(const ModelT model, typename ModelT::Scalar s, const typename ModelT::Multivector mv) {
-      // ---------------------------------------------------------------------------
-      // Associated types
-      //
-      // Algebra is the Clifford algebra traits type (e.g. Algebra<double, 3, 0, 1>
-      // for PGA). Scalar and Multivector are derived from it for convenience.
-      // ---------------------------------------------------------------------------
+    requires {
+      typename G::Algebra;
+      typename G::Multivector;
+      typename G::Scalar;
+    } &&
 
-      typename ModelT::Algebra;
-      typename ModelT::Scalar;
-      typename ModelT::Multivector;
+    /**
+     * Embed a Euclidean point into the algebra's representation. The encoding
+     * of a point as a multivector is not universal — in PGA a point is a
+     * trivector (the meet of three planes), while in CGA a point is a null
+     * vector on the hyperboloid. In STA a point carries an implicit timelike
+     * component that must be supplied by the geometry model relative to a
+     * chosen reference frame — the three scalar coordinates are purely spatial.
+     * In DCGA the point is embedded twice into the higher-dimensional space,
+     * and the construction is not a simple grade-1 embedding. The caller must
+     * treat the result as opaque and never assume a particular grade.
+     */
+    requires(const G& g, G::Scalar x, G::Scalar y, G::Scalar z) {
+      { g.make_point(x, y, z) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      // ---------------------------------------------------------------------------
-      // Geometric primitive constructors
-      //
-      // These methods encode the model's embedding conventions. Grade and structure
-      // of the returned multivector are model-dependent and are the primary reason
-      // this concept exists — the same geometric intent maps to different algebraic
-      // representations across models.
-      // ---------------------------------------------------------------------------
+    /**
+     * Test if a given multivector represents a point.
+     */
+    requires(G& g, const G::Multivector& mv) {
+      { g.is_point(mv) } -> std::same_as<bool>;
+    } &&
 
-      /**
-       * Constructs a finite point from Euclidean coordinates (x, y, z). The grade
-       * and homogeneous embedding of the result are model-dependent: grade-1 in VGA
-       * and CGA, grade-3 in PGA.
-       */
-      { model.point(s, s, s) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Test if a given multivector represents a line.
+     */
+    requires(G& g, const G::Multivector& mv) {
+      { g.is_line(mv) } -> std::same_as<bool>;
+    } &&
 
-      /**
-       * Constructs an ideal point (point at infinity) from direction components
-       * (x, y, z). Ideal points represent pure directions with no finite location.
-       * In PGA the homogeneous weight component is zero; in CGA the e_inf component
-       * is nonzero while the e_0 component is zero.
-       */
-      { model.ideal_point(s, s, s) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Test if a given multivector represents a plane. Note that planes are not directly
+     * representable in all algebras. In VGA, a plane must pass through the origin; the multivector
+     * representing the plane is purely the direction of the normal.
+     */
+    requires(G& g, const G::Multivector& mv) {
+      { g.is_plane(mv) } -> std::same_as<bool>;
+    } &&
 
-      /**
-       * Constructs the line passing through two finite points. The grade and
-       * factorization of the result are model-dependent: a bivector in PGA (via
-       * outer product of the two point trivectors), a trivector in CGA.
-       */
-      { model.line(mv, mv) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Compute the join (span) of two geometric elements. The join answers
+     * "what is the smallest element containing both operands" — point+point
+     * gives a line, point+line gives a plane. In PGA the join is the
+     * regressive product (the dual of the outer product), while in CGA it
+     * is the outer product directly. In STA the join produces elements that
+     * may have mixed spacetime character — the result of joining two spatial
+     * points depends on the chosen frame. In DCGA the join operates in the
+     * higher-dimensional space and the result encodes surface geometry beyond
+     * what is expressible in PGA or CGA. Exposing join as a named operation
+     * shields the caller from which product serves this role in each algebra.
+     */
+    requires(const G& g, const G::Multivector& a, const G::Multivector& b) {
+      { g.join(a, b) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      /**
-       * Constructs the plane passing through three finite points. As with line(),
-       * the grade of the result depends on the model's point representation.
-       */
-      { model.plane(mv, mv, mv) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Compute the meet (intersection) of two geometric elements. The meet
+     * answers "what is the largest element contained in both operands" —
+     * plane+plane gives a line, plane+line gives a point. In PGA the meet is
+     * the outer product, while in CGA it is the regressive product — the
+     * inversion of roles between PGA and CGA is precisely why this must be
+     * part of the geometry model. In STA the meet of two hyperplanes yields a
+     * line whose character (spacelike, timelike, or null) depends on the
+     * metric signature and the orientations of the planes. In DCGA the meet
+     * can recover intersection curves of higher-order surfaces, which have no
+     * equivalent in lower-dimensional algebras.
+     */
+    requires(const G& g, const G::Multivector& a, const G::Multivector& b) {
+      { g.meet(a, b) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      // ---------------------------------------------------------------------------
-      // Versor constructors
-      //
-      // Versors are the invertible elements of the algebra that act on geometric
-      // primitives via the sandwich product. Their construction requires knowing the
-      // model's line and translation representations.
-      // ---------------------------------------------------------------------------
+    /**
+     * Construct a rotor representing a rotation about the given axis element
+     * by the given angle in radians. The axis is a line element in the
+     * algebra's representation — not a bare direction vector — because in
+     * PGA rotation is about a line in space rather than a direction through
+     * the origin. In CGA the axis line is a different grade object but the
+     * exponential map structure is preserved. In STA a spatial rotation must
+     * be constructed within a chosen reference frame — the axis line element
+     * must be purely spacelike, and the geometry model is responsible for
+     * enforcing this constraint relative to the frame it encodes. In DCGA
+     * the rotor acts on the doubly-embedded space and must preserve the
+     * double-embedding structure, requiring a construction step that differs
+     * from a naive bivector exponential.
+     */
+    requires(const G& g, const G::Multivector& axis, G::Scalar angle) {
+      { g.make_rotor(axis, angle) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      /**
-       * Constructs a rotor encoding rotation by angle theta (radians) about the
-       * given bivector axis B. B must be a unit bivector under the model's norm
-       * convention. The rotor takes the form R = cos(theta/2) - sin(theta/2) * B
-       * and encodes a rotation about a line through the model's origin.
-       */
-      { model.rotor(mv, s) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Construct a translator representing a displacement by the given
+     * Euclidean vector. In PGA translators are constructed from ideal line
+     * elements (those containing the degenerate basis vector e0) and always
+     * satisfy T * reverse(T) = 1 regardless of magnitude, due to the
+     * degenerate metric. In CGA the construction uses the point at infinity
+     * e_inf. In STA a pure spatial translation is frame-dependent — the
+     * displacement is purely spatial only relative to the reference frame
+     * encoded by the geometry model, and the translator encodes an implicit
+     * timelike component that the model must supply. In DCGA the translator
+     * must preserve the double-embedding, requiring construction in the
+     * higher-dimensional space rather than a direct lift from 3D.
+     */
+    requires(const G& g, G::Scalar dx, G::Scalar dy, G::Scalar dz) {
+      { g.make_translator(dx, dy, dz) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      /**
-       * Constructs a translator encoding a rigid displacement along the direction
-       * and magnitude encoded in t. Only well-defined in models with a degenerate
-       * or null basis (PGA, CGA); models that do not support translation as a versor
-       * (e.g. VGA) should signal an error rather than return a meaningless result.
-       */
-      { model.translator(mv) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Construct a versor representing reflection in the given geometric
+     * element. In PGA and CGA a plane element is itself the reflection versor
+     * and can be used directly in the sandwich product. In STA the reflection
+     * versor for a hyperplane depends on whether the normal is timelike or
+     * spacelike — the true inverse carries a sign that the reverse does not,
+     * and using the plane element directly produces a silently incorrect result
+     * in the timelike case. In DCGA the double embedding means the reflection
+     * versor requires explicit construction from the surface element and cannot
+     * be identified with it — the versor must act consistently on both
+     * embedded copies of the geometry. This method abstracts all of those
+     * distinctions from the caller.
+     */
+    requires(const G& g, const G::Multivector& plane) {
+      { g.make_reflection(plane) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      /**
-       * Constructs a motor (rigid body displacement) from a rotor R and translator
-       * T. A motor encodes a general screw motion — simultaneous rotation and
-       * translation along an axis — and is the composition T * R. Motors are the
-       * most general versors in PGA and CGA rigid body geometry.
-       */
-      { model.motor(mv, mv) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Compute the logarithm of a motor, returning a bivector in the Lie
+     * algebra of the motor group. This is the foundation for both motor
+     * interpolation (ScLERP) and velocity integration. In PGA and CGA the
+     * motor group is isomorphic to SE(3) and its Lie algebra is well-defined
+     * in terms of the even subalgebra. In STA the motor group is a subgroup
+     * of the Lorentz group and the Lie algebra bivectors encode both spatial
+     * rotations and boosts — the logarithm must correctly decompose these,
+     * which requires knowledge of the metric signature. In DCGA the motor
+     * group acts on the doubly-embedded space and the logarithm must respect
+     * that structure, producing a bivector that generates motions consistent
+     * with the double embedding.
+     */
+    requires(const G& g, const G::Multivector& motor) {
+      { g.motor_log(motor) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      // ---------------------------------------------------------------------------
-      // Versor application
-      // ---------------------------------------------------------------------------
+    /**
+     * Compute the exponential of a bivector, returning a motor. This is the
+     * inverse of motor_log and is used to integrate angular and linear
+     * velocities back into a motor representing the resulting rigid body
+     * state. In STA the bivector may encode a boost as well as a spatial
+     * rotation, and the exponential must produce a valid Lorentz motor rather
+     * than a Euclidean one — the geometry model determines which components
+     * of the bivector are interpreted as rotational vs boost generators. In
+     * DCGA the exponential must produce a motor that acts consistently on
+     * both embedded copies of the geometry.
+     */
+    requires(const G& g, const G::Multivector& bivector) {
+      { g.motor_exp(bivector) } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      /**
-       * Applies a unit versor V to multivector X via V * X * ~V. Valid only when
-       * V * ~V = 1; using this on a non-unit versor silently produces incorrect
-       * results.
-       */
-      { model.apply(mv, mv) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Extract Euclidean coordinates from a point element. Normalization of
+     * the homogeneous weight is GA-specific — in PGA the weight is the
+     * coefficient of e123, in CGA the normalization involves the inner product
+     * with the point at infinity. In STA the spatial coordinates must be
+     * extracted relative to the reference frame encoded by the geometry model
+     * — the timelike component is consumed by the extraction and not surfaced
+     * to the caller, as it is frame metadata rather than spatial position. In
+     * DCGA the two embedded copies of the point must agree after
+     * dehomogenization, and the extraction must verify or enforce this
+     * consistency before returning coordinates. The caller must not attempt to
+     * read coordinates directly from the multivector components.
+     */
+    requires {
+      requires requires(G& g, const G::Multivector& point, G::Scalar& out_x, G::Scalar& out_y,
+                        G::Scalar& out_z) { g.extract_point(point, out_x, out_y, out_z); };
+    } &&
 
-      // ---------------------------------------------------------------------------
-      // Join and meet
-      //
-      // While join and meet reduce to the outer and regressive products, their
-      // geometric interpretation — span and intersection of primitives — is only
-      // meaningful in the context of a model's embedding conventions. The default
-      // implementation via outer() and regress() is correct for most models.
-      // ---------------------------------------------------------------------------
+    /**
+     * Extract the direction and moment of a line element as Euclidean vectors.
+     * In PGA these correspond directly to the two three-component parts of the
+     * bivector. In CGA the line is a different grade object and the direction
+     * and moment must be recovered via projection onto the appropriate
+     * subspace. In STA a line has an additional timelike component whose
+     * extraction is frame-dependent — the geometry model consumes the timelike
+     * part and surfaces only the spatial direction and moment relative to its
+     * reference frame. In DCGA the line exists in the doubly-embedded space
+     * and the direction and moment must be recovered from the higher-dimensional
+     * representation, with the double-embedding redundancy resolved before
+     * returning. The caller must not assume any correspondence between
+     * multivector components and the returned direction and moment.
+     */
+    requires {
+      requires requires(G& g, const G::Multivector& line, G::Scalar& out_direction_x,
+                        G::Scalar& out_direction_y, G::Scalar& out_direction_z,
+                        G::Scalar& out_moment_x, G::Scalar& out_moment_y, G::Scalar& out_moment_z) {
+        g.extract_line(line, out_direction_x, out_direction_y, out_direction_z, out_moment_x,
+                       out_moment_y, out_moment_z);
+      };
+    } &&
 
-      /**
-       * Returns the join (projective span) of two geometric primitives. For two
-       * points this is the line through them; for a point and a line this is the
-       * plane containing them. Implemented via the outer product in most models.
-       */
-      { model.join(mv, mv) } -> std::same_as<typename ModelT::Multivector>;
-
-      /**
-       * Returns the meet (intersection) of two geometric primitives. For two planes
-       * this is their line of intersection; for a plane and a line this is their
-       * point of intersection. Implemented via the regressive product in most models.
-       */
-      { model.meet(mv, mv) } -> std::same_as<typename ModelT::Multivector>;
+    /**
+     * Extract the unit normal and signed distance from a plane element. In
+     * PGA a plane is a grade-1 vector and extraction requires normalization of
+     * the homogeneous component. In CGA the extraction formula differs due to
+     * the conformal embedding. In STA a spacelike hyperplane and a timelike
+     * hyperplane have different extraction formulas — the geometry model must
+     * determine the character of the plane from the metric and apply the
+     * correct normalization before surfacing the spatial normal and distance.
+     * In DCGA the plane exists in the doubly-embedded space and the normal and
+     * distance must be recovered from the higher-dimensional representation
+     * with double-embedding redundancy resolved. The caller must not read
+     * multivector components directly.
+     */
+    requires {
+      requires requires(G& g, const G::Multivector& plane, G::Scalar& out_nx, G::Scalar& out_ny,
+                        G::Scalar& out_nz, G::Scalar& out_d) {
+        g.extract_plane(plane, out_nx, out_ny, out_nz, out_d);
+      };
     };
 
 }  // namespace ndyn::math

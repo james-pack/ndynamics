@@ -11,13 +11,15 @@ cc_library(
         "canonical_basis_representation.h",
         "cayley.h",
         "cayley_table_entry.h",
+        "cga_geometry.h",
         "generic_basis_representation.h",
         "geometry_model.h",
         "integrators.h",
         "multivector.h",
+        "pga_geometry.h",
         "state.h",
         "unitary_ops.h",
-        "vga_model.h",
+        "vga_geometry.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -158,6 +160,16 @@ cc_test(
 cc_test(
     name = "integrators_test",
     srcs = ["integrators_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "geometry_model_test",
+    srcs = ["geometry_model_test.cc"],
     deps = [
         ":math",
         ":testing",
