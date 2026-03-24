@@ -6,6 +6,7 @@
 #include <string>
 #include <type_traits>
 
+#include "math/abs.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {
@@ -16,11 +17,16 @@ struct BasisName final {
   Multivector<AlgebraT> basis;
 };
 
+/**
+ * Utility function to be used by implementors of BasisRepresentation. Generates a string of the
+ * value times the basis_name, if the value is nonzero. Centralizing this helps keep output similar
+ * across all algebras and representations.
+ */
 template <typename ScalarType>
 std::string basis_element_to_string(ScalarType s, std::string_view basis_name) {
   using std::to_string;
   std::string result{};
-  if (std::abs(s) > 0.000001) {
+  if (abs(s) > 0.000001) {
     result.append(to_string(s));
     if (!basis_name.empty()) {
       result.append("*");
