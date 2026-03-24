@@ -9,6 +9,7 @@
 
 #include "base/bits.h"
 #include "base/except.h"
+#include "math/abs.h"
 #include "math/algebra.h"
 #include "math/cayley.h"
 #include "math/unitary_ops.h"
@@ -60,18 +61,6 @@ class Multivector final {
   static constexpr bool includes_degenerate_basis(size_t blade_index) {
     return (DEGENERATE_BASIS_MASK & blade_index) != 0;
   }
-
-  // Note: std::abs() is not constexpr until C++23. This wrapper delegates to std::abs() when
-  // using C++23 or later, preserving full IEEE 754 compliance for production use, and falls back
-  // to a simple negation in constexpr contexts where special float values are not a concern.
-  template <typename T>
-  static constexpr T abs(T v) {
-#if defined(__cpp_lib_constexpr_cmath) && __cpp_lib_constexpr_cmath >= 202202L
-    return std::abs(v);
-#else
-    return v < 0 ? -v : v;
-#endif
-  };
 
  public:
   constexpr Multivector() = default;
@@ -135,6 +124,37 @@ class Multivector final {
       }
     }
     return result;
+  }
+
+  /**
+   * A multivector is of a particular grade if none of the coefficients corresponding to other
+   * grades are non-zero. This approach means that the zero multivector is of every grade.
+   */
+  template <size_t GRADE>
+  constexpr bool is_grade() const {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if (bit_count(i) != GRADE) {
+        if (abs(coefficients_[i]) > EPSILON) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * A multivector is of a particular grade if none of the coefficients corresponding to other
+   * grades are non-zero. This approach means that the zero multivector is of every grade.
+   */
+  constexpr bool is_grade(size_t grade) const {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if (bit_count(i) != grade) {
+        if (abs(coefficients_[i]) > EPSILON) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   constexpr Multivector add(const ScalarType& rhs) const {
@@ -614,8 +634,7 @@ class Multivector final {
    * particular conventions in a specific algebra force deviations from the pattern.
    *
    * In general, using these accessors requires a solid understanding of this indexing strategy and
-   * can be error-prone. They should be considered internal implementation details used for testing
-   * only and not part of the API.
+   * can be error-prone.
    *************************************************************************************************/
   constexpr const ScalarType& coefficient(size_t n) const { return coefficients_.at(n); }
   constexpr void set_coefficient(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
