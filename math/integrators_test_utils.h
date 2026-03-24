@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "gtest/gtest.h"
+#include "math/abs.h"
 #include "math/integrators.h"
 #include "math/multivector.h"
 #include "math/multivector_test_utils.h"
@@ -10,7 +11,6 @@
 namespace ndyn::math {
 
 ::testing::AssertionResult AreNear(float lhs, float rhs, float epsilon) {
-  using std::abs;
   if (abs(lhs - rhs) > abs(epsilon)) {
     return ::testing::AssertionFailure()
            << "lhs: " << lhs << ", rhs: " << rhs << ", abs difference: " << abs(lhs - rhs)
