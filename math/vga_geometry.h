@@ -70,6 +70,11 @@ class VgaGeometry final {
   constexpr bool is_line(const Multivector& mv) const { return mv.template is_grade<2>(); }
 
   /**
+   * Circles are not directly representable in a single multivector in VGA.
+   */
+  constexpr bool is_circle(const Multivector& mv) const { return false; }
+
+  /**
    * In VGA a plane through the origin is the dual of a grade-1 vector, which is a
    * grade-2 bivector — the same grade as a line. VGA cannot algebraically distinguish
    * a line from a plane since both are grade-2 in 3D without a homogeneous dimension.

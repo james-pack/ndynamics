@@ -132,6 +132,27 @@ class CgaGeometry final {
   }
 
   /**
+   * Circles and lines are almost the same entities in CGA. A line is just a circle with infinite
+   * radius.
+   */
+  constexpr bool is_circle(const Multivector& mv) const {
+    if (!mv.template is_grade<2>()) {
+      return false;
+    }
+
+    // The null condition L * ~L = 0 distinguishes lines (null) from circles (non-null).
+    const auto self_product{mv.multiply(mv.reverse()).scalar()};
+    const bool is_null{abs(self_product) < Algebra::EPSILON};
+
+    // A line contains e_inf as a factor — its outer product with e_inf is zero. A circle does not
+    // have e_inf as a factor.
+    const bool contains_e_inf{mv.outer(e_inf()).near_equal(Multivector{})};
+
+    return !is_null && !contains_e_inf;
+  }
+
+
+  /**
    * In CGA a plane is a grade-1 null vector that contains e_inf as a factor — it is a
    * degenerate sphere passing through the point at infinity. The null condition X * ~X = 0
    * distinguishes planes from spheres (non-null grade-1 elements). The e_inf containment

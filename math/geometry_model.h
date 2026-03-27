@@ -7,23 +7,13 @@ namespace ndyn::math {
 /**
  * A GeometryModel encodes the relationship between abstract multivector elements
  * and geometric primitives for a specific geometric algebra and embedding. It is
- * intentionally minimal: any operation that can be expressed purely through
- * multivector algebra belongs on the multivector type itself, not here.
+ * intentionally minimal. It only specifies concepts that are at the intersection
+ * of all geometries.
  *
  * The separation of concerns is as follows:
  *   - The multivector owns algebraic operations (product, reverse, grade, norm, etc.)
  *   - The GeometryModel owns geometric interpretation (what a point *is* in this
  *     geometric model, how lines are constructed, which product is join vs meet, etc.)
- *
- * This boundary means a simulation or CAD environment built on this interface
- * is portable across GAs — PGA, CGA, STA, and DCGA — by substituting the
- * concrete GeometryModel without changing any code that operates on geometric
- * elements.
- *
- * Implementing types must expose:
- *   - Algebra:     the concrete GA type (owns the metric and grade structure)
- *   - Multivector: the element type on which all computation operates
- *   - Scalar:      the underlying numeric type (float, double, etc.)
  */
 template <typename G>
 concept GeometryModel =
@@ -60,6 +50,14 @@ concept GeometryModel =
      */
     requires(G& g, const G::Multivector& mv) {
       { g.is_line(mv) } -> std::same_as<bool>;
+    } &&
+
+    /**
+     * Test if a given multivector represents a circle. Note that circles are not directly
+     * representable using a single multivector in all algebras.
+     */
+    requires(G& g, const G::Multivector& mv) {
+      { g.is_circle(mv) } -> std::same_as<bool>;
     } &&
 
     /**
@@ -119,40 +117,6 @@ concept GeometryModel =
      */
     requires(const G& g, const G::Multivector& axis, G::Scalar angle) {
       { g.make_rotor(axis, angle) } -> std::same_as<typename G::Multivector>;
-    } &&
-
-    /**
-     * Construct a translator representing a displacement by the given
-     * Euclidean vector. In PGA translators are constructed from ideal line
-     * elements (those containing the degenerate basis vector e0) and always
-     * satisfy T * reverse(T) = 1 regardless of magnitude, due to the
-     * degenerate metric. In CGA the construction uses the point at infinity
-     * e_inf. In STA a pure spatial translation is frame-dependent — the
-     * displacement is purely spatial only relative to the reference frame
-     * encoded by the geometry model, and the translator encodes an implicit
-     * timelike component that the model must supply. In DCGA the translator
-     * must preserve the double-embedding, requiring construction in the
-     * higher-dimensional space rather than a direct lift from 3D.
-     */
-    requires(const G& g, G::Scalar dx, G::Scalar dy, G::Scalar dz) {
-      { g.make_translator(dx, dy, dz) } -> std::same_as<typename G::Multivector>;
-    } &&
-
-    /**
-     * Construct a versor representing reflection in the given geometric
-     * element. In PGA and CGA a plane element is itself the reflection versor
-     * and can be used directly in the sandwich product. In STA the reflection
-     * versor for a hyperplane depends on whether the normal is timelike or
-     * spacelike — the true inverse carries a sign that the reverse does not,
-     * and using the plane element directly produces a silently incorrect result
-     * in the timelike case. In DCGA the double embedding means the reflection
-     * versor requires explicit construction from the surface element and cannot
-     * be identified with it — the versor must act consistently on both
-     * embedded copies of the geometry. This method abstracts all of those
-     * distinctions from the caller.
-     */
-    requires(const G& g, const G::Multivector& plane) {
-      { g.make_reflection(plane) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
@@ -225,26 +189,6 @@ concept GeometryModel =
                         G::Scalar& out_moment_x, G::Scalar& out_moment_y, G::Scalar& out_moment_z) {
         g.extract_line(line, out_direction_x, out_direction_y, out_direction_z, out_moment_x,
                        out_moment_y, out_moment_z);
-      };
-    } &&
-
-    /**
-     * Extract the unit normal and signed distance from a plane element. In
-     * PGA a plane is a grade-1 vector and extraction requires normalization of
-     * the homogeneous component. In CGA the extraction formula differs due to
-     * the conformal embedding. In STA a spacelike hyperplane and a timelike
-     * hyperplane have different extraction formulas — the geometry model must
-     * determine the character of the plane from the metric and apply the
-     * correct normalization before surfacing the spatial normal and distance.
-     * In DCGA the plane exists in the doubly-embedded space and the normal and
-     * distance must be recovered from the higher-dimensional representation
-     * with double-embedding redundancy resolved. The caller must not read
-     * multivector components directly.
-     */
-    requires {
-      requires requires(G& g, const G::Multivector& plane, G::Scalar& out_nx, G::Scalar& out_ny,
-                        G::Scalar& out_nz, G::Scalar& out_d) {
-        g.extract_plane(plane, out_nx, out_ny, out_nz, out_d);
       };
     };
 

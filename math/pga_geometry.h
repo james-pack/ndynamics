@@ -121,6 +121,11 @@ class PgaGrade1PointGeometry final {
   }
 
   /**
+   * Circles are not directly representable in a single multivector in PGA.
+   */
+  constexpr bool is_circle(const Multivector& mv) const { return false; }
+
+  /**
    * In the grade-1 point convention a plane is a grade-3 trivector with a nonzero
    * e123 component (the homogeneous weight). A grade-3 element with zero e123 is an
    * ideal plane (the plane at infinity) and is not considered a finite plane by this
@@ -476,6 +481,11 @@ class PgaGrade3PointGeometry final {
 
     return has_direction && plucker_satisfied;
   }
+
+  /**
+   * Circles are not directly representable in a single multivector in PGA.
+   */
+  constexpr bool is_circle(const Multivector& mv) const { return false; }
 
   /**
    * In the plane-based PGA convention a finite plane is a grade-1 vector with a nonzero
