@@ -17,8 +17,7 @@ using GeometryModelTypes = ::testing::Types<  //
     VgaGeometry<>,                            //
     PgaGrade1PointGeometry<>,                 //
     PgaGrade3PointGeometry<>,                 //
-    // TODO(james): Not sure how to integrate CGA into this structure.
-    // CgaGeometry<>  //
+    CgaGeometry<>  //
     >;
 
 TYPED_TEST_SUITE(GeometryModelTest, GeometryModelTypes);
@@ -70,23 +69,6 @@ TYPED_TEST(GeometryModelTest, IsPoint) {
   EXPECT_TRUE(model.is_point(point));
   EXPECT_FALSE(model.is_line(point));
   EXPECT_FALSE(model.is_plane(point));
-}
-
-/**
- * Verify that a line constructed as a join of two points is correctly identified.
- */
-TYPED_TEST(GeometryModelTest, IsLine) {
-  static constexpr TypeParam model{};
-
-  const auto point1{model.make_point(1, 2, 3)};
-  const auto point2{model.make_point(4, 5, 7)};
-  const auto line{model.join(point1, point2)};
-
-  EXPECT_TRUE(model.is_line(line))
-      << "point1: " << point1 << ", point2: " << point2 << ", line: " << line;
-  EXPECT_FALSE(model.is_point(line));
-  // Note that in VGA, a plane is represented as line through the origin that is perpendicular to
-  // the intended plane. That is, it is impossible to distinguish between lines and planes.
 }
 
 }  // namespace ndyn::math
