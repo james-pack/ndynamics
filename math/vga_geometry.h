@@ -31,25 +31,39 @@ template <typename T = DefaultScalarType,
           InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
 class VgaGeometry final {
  private:
+  static constexpr size_t scalar_coefficient{0};
   static constexpr size_t e1_coefficient{1};
   static constexpr size_t e2_coefficient{2};
   static constexpr size_t e3_coefficient{4};
   static constexpr size_t e12_coefficient{e1_coefficient | e2_coefficient};
   static constexpr size_t e23_coefficient{e2_coefficient | e3_coefficient};
-  static constexpr size_t e31_coefficient{e3_coefficient | e1_coefficient};
+  static constexpr size_t e13_coefficient{e1_coefficient | e3_coefficient};
+  static constexpr size_t e123_coefficient{e1_coefficient | e2_coefficient | e3_coefficient};
 
  public:
   using Algebra = Vga<T, INNER_PRODUCT>;
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
+  constexpr Scalar scalar(const Multivector& mv) const noexcept { return mv.coefficient(scalar_coefficient); }
+ 
+  constexpr Scalar e1(const Multivector& mv) const noexcept { return mv.coefficient(e1_coefficient); }
+  constexpr Scalar e2(const Multivector& mv) const noexcept { return mv.coefficient(e2_coefficient); }
+  constexpr Scalar e3(const Multivector& mv) const noexcept { return mv.coefficient(e3_coefficient); }
+ 
+  constexpr Scalar e12(const Multivector& mv) const noexcept { return mv.coefficient(e12_coefficient); }
+  constexpr Scalar e13(const Multivector& mv) const noexcept { return mv.coefficient(e13_coefficient); }
+  constexpr Scalar e23(const Multivector& mv) const noexcept { return mv.coefficient(e23_coefficient); }
+ 
+  constexpr Scalar e123(const Multivector& mv) const noexcept { return mv.coefficient(e123_coefficient); }
+  
   /**
    * Embed a Euclidean point as a grade-1 vector. In VGA there is no homogeneous coordinate —
    * a point is simply the position vector from the origin. This means that points and
    * directions are the same grade, which is the fundamental limitation of VGA for rigid body
    * work: there is no algebraic distinction between a bound point and a free vector.
    */
-  constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) const {
+  constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) const noexcept {
     return x * Multivector::template e<0>() +  //
            y * Multivector::template e<1>() +  //
            z * Multivector::template e<2>();
@@ -60,19 +74,19 @@ class VgaGeometry final {
    * condition to check — any nonzero grade-1 element is a valid point. The zero
    * vector is excluded as it represents no geometric location.
    */
-  constexpr bool is_point(const Multivector& mv) const { return mv.template is_grade<1>(); }
+  constexpr bool is_point(const Multivector& mv) const noexcept { return mv.template is_grade<1>(); }
 
   /**
    * In VGA a line through the origin is a grade-2 bivector. There is no notion of
    * a line not through the origin — all lines in VGA pass through the origin, which
    * is the fundamental limitation of VGA for general line geometry.
    */
-  constexpr bool is_line(const Multivector& mv) const { return mv.template is_grade<2>(); }
+  constexpr bool is_line(const Multivector& mv) const noexcept { return mv.template is_grade<2>(); }
 
   /**
    * Circles are not directly representable in a single multivector in VGA.
    */
-  constexpr bool is_circle(const Multivector& mv) const { return false; }
+  constexpr bool is_circle(const Multivector& mv) const noexcept { return false; }
 
   /**
    * In VGA a plane through the origin is the dual of a grade-1 vector, which is a
@@ -81,7 +95,7 @@ class VgaGeometry final {
    * This method checks for a pure grade-2 element, but the caller must understand that
    * the geometric interpretation as a plane vs a line is context-dependent in VGA.
    */
-  constexpr bool is_plane(const Multivector& mv) const {
+  constexpr bool is_plane(const Multivector& mv) const noexcept {
     // In VGA R(3,0,0) the pseudoscalar is grade-3, so a plane is grade-2, the same
     // as a line. The distinction between a line and a plane cannot be made
     // algebraically in VGA without additional context.
@@ -95,7 +109,7 @@ class VgaGeometry final {
    * mechanism to represent lines that do not pass through the origin. The join of a grade-1
    * vector and a grade-2 bivector produces the pseudoscalar if they span the full space.
    */
-  constexpr Multivector join(const Multivector& a, const Multivector& b) const {
+  constexpr Multivector join(const Multivector& a, const Multivector& b) const noexcept {
     return a.outer(b);
   }
 
@@ -105,7 +119,7 @@ class VgaGeometry final {
    * means that parallel subspaces have a degenerate meet — parallel planes meet at zero rather
    * than at an ideal line.
    */
-  constexpr Multivector meet(const Multivector& a, const Multivector& b) const {
+  constexpr Multivector meet(const Multivector& a, const Multivector& b) const noexcept {
     return a.regress(b);
   }
 
@@ -118,7 +132,7 @@ class VgaGeometry final {
    * Note that in VGA, rotation is always about a line through the origin. Rotation about an
    * arbitrary line in space cannot be expressed as a single rotor in VGA.
    */
-  Multivector make_rotor(const Multivector& axis, Scalar angle) const {
+  Multivector make_rotor(const Multivector& axis, Scalar angle) const noexcept {
     using std::cos, std::sin, std::sqrt;
     const Multivector b{axis.grade_projection(2)};
     const Scalar norm{sqrt(b.multiply(b.reverse()).scalar())};
@@ -160,7 +174,7 @@ class VgaGeometry final {
    * This is the one case in VGA where a reflection is geometrically well-defined: the
    * reflecting hyperplane must pass through the origin.
    */
-  constexpr Multivector reflect_in_plane_through_origin(const Multivector& normal) const {
+  constexpr Multivector reflect_in_plane_through_origin(const Multivector& normal) const noexcept {
     return normal.grade_projection(1).normalize();
   }
 
@@ -175,7 +189,7 @@ class VgaGeometry final {
    * of magnitude pi in an arbitrary plane; this implementation throws in that case since
    * the result is not unique.
    */
-  Multivector motor_log(const Multivector& rotor) const {
+  Multivector motor_log(const Multivector& rotor) const noexcept {
     using std::acos, std::sin, std::sqrt;
 
     const Scalar cos_half_angle{rotor.scalar()};
@@ -204,7 +218,7 @@ class VgaGeometry final {
    * B = t*B_unit where B_unit is a unit bivector, the exponential returns cos(t) + sin(t)*B_unit.
    * This is used to integrate angular velocity bivectors into rotor states.
    */
-  Multivector motor_exp(const Multivector& bivector) const {
+  Multivector motor_exp(const Multivector& bivector) const noexcept {
     using std::cos, std::sin, std::sqrt;
 
     const Multivector b{bivector.grade_projection(2)};
@@ -226,7 +240,7 @@ class VgaGeometry final {
    * weight to normalize — the coefficients of e1, e2, e3 are the coordinates directly.
    */
   constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
-                               Scalar& out_z) const {
+                               Scalar& out_z) const noexcept {
     out_x = point.coefficient(e1_coefficient);
     out_y = point.coefficient(e2_coefficient);
     out_z = point.coefficient(e3_coefficient);
@@ -240,11 +254,11 @@ class VgaGeometry final {
    */
   constexpr void extract_line(const Multivector& line, Scalar& out_dx, Scalar& out_dy,
                               Scalar& out_dz, Scalar& out_mx, Scalar& out_my,
-                              Scalar& out_mz) const {
+                              Scalar& out_mz) const noexcept {
     // In VGA, lines are grade-2 bivectors passing through the origin. The direction is recovered
     // via the dual of the bivector, which maps e12->e3, e13->-e2, e23->e1.
     out_dx = line.coefficient(e12_coefficient);   // e12 -> e3 direction
-    out_dy = -line.coefficient(e31_coefficient);  // e31 (=-e13) -> -e2 direction
+    out_dy = -line.coefficient(e13_coefficient);  // e31 (=-e13) -> -e2 direction
     out_dz = line.coefficient(e23_coefficient);   // e23 -> e1 direction
     out_mx = Scalar{0};
     out_my = Scalar{0};
@@ -257,10 +271,10 @@ class VgaGeometry final {
    * the plane bivector spans the full space.
    */
   constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
-                               Scalar& out_nz, Scalar& out_d) const {
+                               Scalar& out_nz, Scalar& out_d) const noexcept {
     // In VGA, planes through the origin are grade-2 bivectors. The normal is the dual.
     out_nx = plane.coefficient(e23_coefficient);
-    out_ny = -plane.coefficient(e31_coefficient);
+    out_ny = -plane.coefficient(e13_coefficient);
     out_nz = plane.coefficient(e12_coefficient);
     out_d = Scalar{0};
   }

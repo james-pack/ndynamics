@@ -34,6 +34,7 @@ class PgaGrade1PointGeometry final {
   using Scalar = T;
 
  private:
+  static constexpr size_t scalar_coefficient{0};
   static constexpr size_t e0_coefficient{0b0001};
   static constexpr size_t e1_coefficient{0b0010};
   static constexpr size_t e2_coefficient{0b0100};
@@ -51,23 +52,44 @@ class PgaGrade1PointGeometry final {
   static constexpr size_t e123_coefficient{e1_coefficient | e2_coefficient | e3_coefficient};
   static constexpr size_t e0123_coefficient{e0_coefficient | e1_coefficient | e2_coefficient |
                                             e3_coefficient};
-  static constexpr Multivector e0{Multivector::template e<0>()};
-  static constexpr Multivector e1{Multivector::template e<1>()};
-  static constexpr Multivector e2{Multivector::template e<2>()};
-  static constexpr Multivector e3{Multivector::template e<3>()};
-  static_assert((e0 * e0).scalar() == 0);
-  static_assert((e1 * e1).scalar() == 1);
-  static_assert((e2 * e2).scalar() == 1);
-  static_assert((e3 * e3).scalar() == 1);
+  static constexpr Multivector e0() { return Multivector::template e<0>(); };
+  static constexpr Multivector e1() { return Multivector::template e<1>(); };
+  static constexpr Multivector e2() { return Multivector::template e<2>(); };
+  static constexpr Multivector e3() { return Multivector::template e<3>(); };
+  static_assert((e0() * e0()).scalar() == 0);
+  static_assert((e1() * e1()).scalar() == 1);
+  static_assert((e2() * e2()).scalar() == 1);
+  static_assert((e3() * e3()).scalar() == 1);
 
  public:
+  constexpr Scalar scalar(const Multivector& mv) const { return mv.coefficient(scalar_coefficient); }
+ 
+  constexpr Scalar e0(const Multivector& mv) const { return mv.coefficient(e0_coefficient); }
+  constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
+  constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
+  constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
+ 
+  constexpr Scalar e01(const Multivector& mv) const { return mv.coefficient(e01_coefficient); }
+  constexpr Scalar e02(const Multivector& mv) const { return mv.coefficient(e02_coefficient); }
+  constexpr Scalar e03(const Multivector& mv) const { return mv.coefficient(e03_coefficient); }
+  constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
+  constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
+  constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
+ 
+  constexpr Scalar e012(const Multivector& mv) const { return mv.coefficient(e012_coefficient); }
+  constexpr Scalar e013(const Multivector& mv) const { return mv.coefficient(e013_coefficient); }
+  constexpr Scalar e023(const Multivector& mv) const { return mv.coefficient(e023_coefficient); }
+  constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
+ 
+  constexpr Scalar e0123(const Multivector& mv) const { return mv.coefficient(e0123_coefficient); }
+ 
   /**
    * Embed a Euclidean point as a grade-1 vector: e0 + x*e1 + y*e2 + z*e3. The e0 component
    * is the homogeneous weight, set to 1 for a finite point. Ideal points (at infinity) have
    * e0 = 0 and are not constructible via this method.
    */
   constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) const {
-    return e0 + x * e1 + y * e2 + z * e3;
+    return e0() + x * e1() + y * e2() + z * e3();
   }
 
   /**
@@ -397,6 +419,7 @@ class PgaGrade3PointGeometry final {
   using Scalar = T;
 
  private:
+  static constexpr size_t scalar_coefficient{0};
   static constexpr size_t e0_coefficient{1};
   static constexpr size_t e1_coefficient{2};
   static constexpr size_t e2_coefficient{4};
@@ -414,16 +437,37 @@ class PgaGrade3PointGeometry final {
   static constexpr size_t e123_coefficient{e1_coefficient | e2_coefficient | e3_coefficient};
   static constexpr size_t e0123_coefficient{e0_coefficient | e1_coefficient | e2_coefficient |
                                             e3_coefficient};
-  static constexpr Multivector e0{Multivector::template e<0>()};
-  static constexpr Multivector e1{Multivector::template e<1>()};
-  static constexpr Multivector e2{Multivector::template e<2>()};
-  static constexpr Multivector e3{Multivector::template e<3>()};
-  static_assert((e0 * e0).scalar() == 0);
-  static_assert((e1 * e1).scalar() == 1);
-  static_assert((e2 * e2).scalar() == 1);
-  static_assert((e3 * e3).scalar() == 1);
+  static constexpr Multivector e0() { return Multivector::template e<0>(); };
+  static constexpr Multivector e1() { return Multivector::template e<1>(); };
+  static constexpr Multivector e2() { return Multivector::template e<2>(); };
+  static constexpr Multivector e3() { return Multivector::template e<3>(); };
+  static_assert((e0() * e0()).scalar() == 0);
+  static_assert((e1() * e1()).scalar() == 1);
+  static_assert((e2() * e2()).scalar() == 1);
+  static_assert((e3() * e3()).scalar() == 1);
 
  public:
+  constexpr Scalar scalar(const Multivector& mv) const { return mv.coefficient(scalar_coefficient); }
+ 
+  constexpr Scalar e0(const Multivector& mv) const { return mv.coefficient(e0_coefficient); }
+  constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
+  constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
+  constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
+ 
+  constexpr Scalar e01(const Multivector& mv) const { return mv.coefficient(e01_coefficient); }
+  constexpr Scalar e02(const Multivector& mv) const { return mv.coefficient(e02_coefficient); }
+  constexpr Scalar e03(const Multivector& mv) const { return mv.coefficient(e03_coefficient); }
+  constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
+  constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
+  constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
+ 
+  constexpr Scalar e012(const Multivector& mv) const { return mv.coefficient(e012_coefficient); }
+  constexpr Scalar e013(const Multivector& mv) const { return mv.coefficient(e013_coefficient); }
+  constexpr Scalar e023(const Multivector& mv) const { return mv.coefficient(e023_coefficient); }
+  constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
+ 
+  constexpr Scalar e0123(const Multivector& mv) const { return mv.coefficient(e0123_coefficient); }
+ 
   /**
    * Embed a Euclidean point as a grade-3 trivector: w*e123 + x*e032 + y*e013 + z*e021.
    * The weight w is set to 1 for a finite point. The sign conventions on the components

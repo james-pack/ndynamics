@@ -44,6 +44,44 @@ class CgaGeometry final {
   using Scalar = T;
 
  private:
+  static constexpr size_t scalar_coefficient{0};
+
+  static constexpr size_t e1_coefficient{1};
+  static constexpr size_t e2_coefficient{2};
+  static constexpr size_t e3_coefficient{4};
+  static constexpr size_t e4_coefficient{8};
+  static constexpr size_t e5_coefficient{16};
+
+  static constexpr size_t e12_coefficient{e1_coefficient | e2_coefficient};
+  static constexpr size_t e13_coefficient{e1_coefficient | e3_coefficient};
+  static constexpr size_t e14_coefficient{e1_coefficient | e4_coefficient};
+  static constexpr size_t e15_coefficient{e1_coefficient | e5_coefficient};
+  static constexpr size_t e23_coefficient{e2_coefficient | e3_coefficient};
+  static constexpr size_t e24_coefficient{e2_coefficient | e4_coefficient};
+  static constexpr size_t e25_coefficient{e2_coefficient | e5_coefficient};
+  static constexpr size_t e34_coefficient{e3_coefficient | e4_coefficient};
+  static constexpr size_t e35_coefficient{e3_coefficient | e5_coefficient};
+  static constexpr size_t e45_coefficient{e4_coefficient | e5_coefficient};
+
+  static constexpr size_t e123_coefficient{e1_coefficient | e2_coefficient | e3_coefficient};
+  static constexpr size_t e124_coefficient{e1_coefficient | e2_coefficient | e4_coefficient};
+  static constexpr size_t e125_coefficient{e1_coefficient | e2_coefficient | e5_coefficient};
+  static constexpr size_t e134_coefficient{e1_coefficient | e3_coefficient | e4_coefficient};
+  static constexpr size_t e135_coefficient{e1_coefficient | e3_coefficient | e5_coefficient};
+  static constexpr size_t e145_coefficient{e1_coefficient | e4_coefficient | e5_coefficient};
+  static constexpr size_t e234_coefficient{e2_coefficient | e3_coefficient | e4_coefficient};
+  static constexpr size_t e235_coefficient{e2_coefficient | e3_coefficient | e5_coefficient};
+  static constexpr size_t e245_coefficient{e2_coefficient | e4_coefficient | e5_coefficient};
+  static constexpr size_t e345_coefficient{e3_coefficient | e4_coefficient | e5_coefficient};
+
+  static constexpr size_t e1234_coefficient{e1_coefficient | e2_coefficient | e3_coefficient | e4_coefficient};
+  static constexpr size_t e1235_coefficient{e1_coefficient | e2_coefficient | e3_coefficient | e5_coefficient};
+  static constexpr size_t e1245_coefficient{e1_coefficient | e2_coefficient | e4_coefficient | e5_coefficient};
+  static constexpr size_t e1345_coefficient{e1_coefficient | e3_coefficient | e4_coefficient | e5_coefficient};
+  static constexpr size_t e2345_coefficient{e2_coefficient | e3_coefficient | e4_coefficient | e5_coefficient};
+
+  static constexpr size_t e12345_coefficient{e1_coefficient | e2_coefficient | e3_coefficient | e4_coefficient | e5_coefficient};
+
   // The null basis vectors e0 and e_inf are the conformal origin and infinity respectively.
   // They are not basis vectors of the algebra directly but are linear combinations of e_plus
   // and e_minus. These helpers keep the construction readable throughout the implementation.
@@ -55,12 +93,10 @@ class CgaGeometry final {
   static_assert(e_minus() * e_minus() == Multivector{-1});
 
   static constexpr Multivector e_origin() {
-    // e0 = (e_minus - e_plus) / 2
     return (e_minus() - e_plus()) * (Scalar{1} / Scalar{2});
   }
 
   static constexpr Multivector e_inf() {
-    // e_inf = e_minus + e_plus
     return e_minus() + e_plus();
   }
 
@@ -69,6 +105,49 @@ class CgaGeometry final {
   }
 
  public:
+  constexpr Scalar scalar(const Multivector& mv) const { return mv.coefficient(scalar_coefficient); }
+
+  constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
+  constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
+  constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
+  constexpr Scalar e4(const Multivector& mv) const { return mv.coefficient(e4_coefficient); }
+  constexpr Scalar e5(const Multivector& mv) const { return mv.coefficient(e5_coefficient); }
+  constexpr Scalar e_origin(const Multivector& mv) const { return mv.coefficient(e4_coefficient); }
+  constexpr Scalar e_inf(const Multivector& mv) const { return mv.coefficient(e5_coefficient); }
+
+  constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
+  constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
+  constexpr Scalar e14(const Multivector& mv) const { return mv.coefficient(e14_coefficient); }
+  constexpr Scalar e15(const Multivector& mv) const { return mv.coefficient(e15_coefficient); }
+  constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
+  constexpr Scalar e24(const Multivector& mv) const { return mv.coefficient(e24_coefficient); }
+  constexpr Scalar e25(const Multivector& mv) const { return mv.coefficient(e25_coefficient); }
+  constexpr Scalar e34(const Multivector& mv) const { return mv.coefficient(e34_coefficient); }
+  constexpr Scalar e35(const Multivector& mv) const { return mv.coefficient(e35_coefficient); }
+  constexpr Scalar e45(const Multivector& mv) const { return mv.coefficient(e45_coefficient); }
+
+  constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
+  constexpr Scalar e124(const Multivector& mv) const { return mv.coefficient(e124_coefficient); }
+  constexpr Scalar e125(const Multivector& mv) const { return mv.coefficient(e125_coefficient); }
+  constexpr Scalar e134(const Multivector& mv) const { return mv.coefficient(e134_coefficient); }
+  constexpr Scalar e135(const Multivector& mv) const { return mv.coefficient(e135_coefficient); }
+  constexpr Scalar e145(const Multivector& mv) const { return mv.coefficient(e145_coefficient); }
+  constexpr Scalar e234(const Multivector& mv) const { return mv.coefficient(e234_coefficient); }
+  constexpr Scalar e235(const Multivector& mv) const { return mv.coefficient(e235_coefficient); }
+  constexpr Scalar e245(const Multivector& mv) const { return mv.coefficient(e245_coefficient); }
+  constexpr Scalar e345(const Multivector& mv) const { return mv.coefficient(e345_coefficient); }
+
+  constexpr Scalar e1234(const Multivector& mv) const { return mv.coefficient(e1234_coefficient); }
+  constexpr Scalar e1235(const Multivector& mv) const { return mv.coefficient(e1235_coefficient); }
+  constexpr Scalar e1245(const Multivector& mv) const { return mv.coefficient(e1245_coefficient); }
+  constexpr Scalar e1345(const Multivector& mv) const { return mv.coefficient(e1345_coefficient); }
+  constexpr Scalar e2345(const Multivector& mv) const { return mv.coefficient(e2345_coefficient); }
+
+  constexpr Scalar e12345(const Multivector& mv) const { return mv.coefficient(e12345_coefficient); }
+
+  constexpr Scalar e_plus(const Multivector& mv) const { return mv.coefficient(e12345_coefficient); }
+  constexpr Scalar e_minus(const Multivector& mv) const { return mv.coefficient(e12345_coefficient); }
+
   /**
    * Embed a Euclidean point as a CGA null vector using standard normalization:
    *   X = e0 + px*e1 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
