@@ -62,27 +62,29 @@ class PgaGrade1PointGeometry final {
   static_assert((e3() * e3()).scalar() == 1);
 
  public:
-  constexpr Scalar scalar(const Multivector& mv) const { return mv.coefficient(scalar_coefficient); }
- 
+  constexpr Scalar scalar(const Multivector& mv) const {
+    return mv.coefficient(scalar_coefficient);
+  }
+
   constexpr Scalar e0(const Multivector& mv) const { return mv.coefficient(e0_coefficient); }
   constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
   constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
   constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
- 
+
   constexpr Scalar e01(const Multivector& mv) const { return mv.coefficient(e01_coefficient); }
   constexpr Scalar e02(const Multivector& mv) const { return mv.coefficient(e02_coefficient); }
   constexpr Scalar e03(const Multivector& mv) const { return mv.coefficient(e03_coefficient); }
   constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
   constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
   constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
- 
+
   constexpr Scalar e012(const Multivector& mv) const { return mv.coefficient(e012_coefficient); }
   constexpr Scalar e013(const Multivector& mv) const { return mv.coefficient(e013_coefficient); }
   constexpr Scalar e023(const Multivector& mv) const { return mv.coefficient(e023_coefficient); }
   constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
- 
+
   constexpr Scalar e0123(const Multivector& mv) const { return mv.coefficient(e0123_coefficient); }
- 
+
   /**
    * Embed a Euclidean point as a grade-1 vector: e0 + x*e1 + y*e2 + z*e3. The e0 component
    * is the homogeneous weight, set to 1 for a finite point. Ideal points (at infinity) have
@@ -447,27 +449,29 @@ class PgaGrade3PointGeometry final {
   static_assert((e3() * e3()).scalar() == 1);
 
  public:
-  constexpr Scalar scalar(const Multivector& mv) const { return mv.coefficient(scalar_coefficient); }
- 
+  constexpr Scalar scalar(const Multivector& mv) const {
+    return mv.coefficient(scalar_coefficient);
+  }
+
   constexpr Scalar e0(const Multivector& mv) const { return mv.coefficient(e0_coefficient); }
   constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
   constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
   constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
- 
+
   constexpr Scalar e01(const Multivector& mv) const { return mv.coefficient(e01_coefficient); }
   constexpr Scalar e02(const Multivector& mv) const { return mv.coefficient(e02_coefficient); }
   constexpr Scalar e03(const Multivector& mv) const { return mv.coefficient(e03_coefficient); }
   constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
   constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
   constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
- 
+
   constexpr Scalar e012(const Multivector& mv) const { return mv.coefficient(e012_coefficient); }
   constexpr Scalar e013(const Multivector& mv) const { return mv.coefficient(e013_coefficient); }
   constexpr Scalar e023(const Multivector& mv) const { return mv.coefficient(e023_coefficient); }
   constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
- 
+
   constexpr Scalar e0123(const Multivector& mv) const { return mv.coefficient(e0123_coefficient); }
- 
+
   /**
    * Embed a Euclidean point as a grade-3 trivector: w*e123 + x*e032 + y*e013 + z*e021.
    * The weight w is set to 1 for a finite point. The sign conventions on the components

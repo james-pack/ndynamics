@@ -45,18 +45,34 @@ class VgaGeometry final {
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
-  constexpr Scalar scalar(const Multivector& mv) const noexcept { return mv.coefficient(scalar_coefficient); }
- 
-  constexpr Scalar e1(const Multivector& mv) const noexcept { return mv.coefficient(e1_coefficient); }
-  constexpr Scalar e2(const Multivector& mv) const noexcept { return mv.coefficient(e2_coefficient); }
-  constexpr Scalar e3(const Multivector& mv) const noexcept { return mv.coefficient(e3_coefficient); }
- 
-  constexpr Scalar e12(const Multivector& mv) const noexcept { return mv.coefficient(e12_coefficient); }
-  constexpr Scalar e13(const Multivector& mv) const noexcept { return mv.coefficient(e13_coefficient); }
-  constexpr Scalar e23(const Multivector& mv) const noexcept { return mv.coefficient(e23_coefficient); }
- 
-  constexpr Scalar e123(const Multivector& mv) const noexcept { return mv.coefficient(e123_coefficient); }
-  
+  constexpr Scalar scalar(const Multivector& mv) const noexcept {
+    return mv.coefficient(scalar_coefficient);
+  }
+
+  constexpr Scalar e1(const Multivector& mv) const noexcept {
+    return mv.coefficient(e1_coefficient);
+  }
+  constexpr Scalar e2(const Multivector& mv) const noexcept {
+    return mv.coefficient(e2_coefficient);
+  }
+  constexpr Scalar e3(const Multivector& mv) const noexcept {
+    return mv.coefficient(e3_coefficient);
+  }
+
+  constexpr Scalar e12(const Multivector& mv) const noexcept {
+    return mv.coefficient(e12_coefficient);
+  }
+  constexpr Scalar e13(const Multivector& mv) const noexcept {
+    return mv.coefficient(e13_coefficient);
+  }
+  constexpr Scalar e23(const Multivector& mv) const noexcept {
+    return mv.coefficient(e23_coefficient);
+  }
+
+  constexpr Scalar e123(const Multivector& mv) const noexcept {
+    return mv.coefficient(e123_coefficient);
+  }
+
   /**
    * Embed a Euclidean point as a grade-1 vector. In VGA there is no homogeneous coordinate —
    * a point is simply the position vector from the origin. This means that points and
@@ -74,7 +90,9 @@ class VgaGeometry final {
    * condition to check — any nonzero grade-1 element is a valid point. The zero
    * vector is excluded as it represents no geometric location.
    */
-  constexpr bool is_point(const Multivector& mv) const noexcept { return mv.template is_grade<1>(); }
+  constexpr bool is_point(const Multivector& mv) const noexcept {
+    return mv.template is_grade<1>();
+  }
 
   /**
    * In VGA a line through the origin is a grade-2 bivector. There is no notion of

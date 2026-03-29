@@ -74,13 +74,19 @@ class CgaGeometry final {
   static constexpr size_t e245_coefficient{e2_coefficient | e4_coefficient | e5_coefficient};
   static constexpr size_t e345_coefficient{e3_coefficient | e4_coefficient | e5_coefficient};
 
-  static constexpr size_t e1234_coefficient{e1_coefficient | e2_coefficient | e3_coefficient | e4_coefficient};
-  static constexpr size_t e1235_coefficient{e1_coefficient | e2_coefficient | e3_coefficient | e5_coefficient};
-  static constexpr size_t e1245_coefficient{e1_coefficient | e2_coefficient | e4_coefficient | e5_coefficient};
-  static constexpr size_t e1345_coefficient{e1_coefficient | e3_coefficient | e4_coefficient | e5_coefficient};
-  static constexpr size_t e2345_coefficient{e2_coefficient | e3_coefficient | e4_coefficient | e5_coefficient};
+  static constexpr size_t e1234_coefficient{e1_coefficient | e2_coefficient | e3_coefficient |
+                                            e4_coefficient};
+  static constexpr size_t e1235_coefficient{e1_coefficient | e2_coefficient | e3_coefficient |
+                                            e5_coefficient};
+  static constexpr size_t e1245_coefficient{e1_coefficient | e2_coefficient | e4_coefficient |
+                                            e5_coefficient};
+  static constexpr size_t e1345_coefficient{e1_coefficient | e3_coefficient | e4_coefficient |
+                                            e5_coefficient};
+  static constexpr size_t e2345_coefficient{e2_coefficient | e3_coefficient | e4_coefficient |
+                                            e5_coefficient};
 
-  static constexpr size_t e12345_coefficient{e1_coefficient | e2_coefficient | e3_coefficient | e4_coefficient | e5_coefficient};
+  static constexpr size_t e12345_coefficient{e1_coefficient | e2_coefficient | e3_coefficient |
+                                             e4_coefficient | e5_coefficient};
 
   // The null basis vectors e0 and e_inf are the conformal origin and infinity respectively.
   // They are not basis vectors of the algebra directly but are linear combinations of e_plus
@@ -96,16 +102,16 @@ class CgaGeometry final {
     return (e_minus() - e_plus()) * (Scalar{1} / Scalar{2});
   }
 
-  static constexpr Multivector e_inf() {
-    return e_minus() + e_plus();
-  }
+  static constexpr Multivector e_inf() { return e_minus() + e_plus(); }
 
   constexpr Scalar weight(const Multivector& mv) const {
     return -(mv.left_contraction(e_inf()).scalar());
   }
 
  public:
-  constexpr Scalar scalar(const Multivector& mv) const { return mv.coefficient(scalar_coefficient); }
+  constexpr Scalar scalar(const Multivector& mv) const {
+    return mv.coefficient(scalar_coefficient);
+  }
 
   constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
   constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
@@ -143,10 +149,16 @@ class CgaGeometry final {
   constexpr Scalar e1345(const Multivector& mv) const { return mv.coefficient(e1345_coefficient); }
   constexpr Scalar e2345(const Multivector& mv) const { return mv.coefficient(e2345_coefficient); }
 
-  constexpr Scalar e12345(const Multivector& mv) const { return mv.coefficient(e12345_coefficient); }
+  constexpr Scalar e12345(const Multivector& mv) const {
+    return mv.coefficient(e12345_coefficient);
+  }
 
-  constexpr Scalar e_plus(const Multivector& mv) const { return mv.coefficient(e12345_coefficient); }
-  constexpr Scalar e_minus(const Multivector& mv) const { return mv.coefficient(e12345_coefficient); }
+  constexpr Scalar e_plus(const Multivector& mv) const {
+    return mv.coefficient(e12345_coefficient);
+  }
+  constexpr Scalar e_minus(const Multivector& mv) const {
+    return mv.coefficient(e12345_coefficient);
+  }
 
   /**
    * Embed a Euclidean point as a CGA null vector using standard normalization:
@@ -229,7 +241,6 @@ class CgaGeometry final {
 
     return !is_null && !contains_e_inf;
   }
-
 
   /**
    * In CGA a plane is a grade-1 null vector that contains e_inf as a factor — it is a
