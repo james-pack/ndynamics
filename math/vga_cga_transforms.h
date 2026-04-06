@@ -5,12 +5,11 @@
 
 namespace ndyn::math {
 
-template <typename Scalar = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+template <typename Scalar = DefaultScalarType>
 class VgaToCga final {
  private:
-  VgaGeometry<Scalar, INNER_PRODUCT> vga_{};
-  CgaGeometry<Scalar, INNER_PRODUCT> cga_{};
+  VgaGeometry<Scalar> vga_{};
+  CgaGeometry<Scalar> cga_{};
 
  public:
   [[nodiscard]] constexpr Multivector<Cga<Scalar>> transform(

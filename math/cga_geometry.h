@@ -35,13 +35,12 @@ namespace ndyn::math {
  *
  * The CGA algebra used here is R(4,1) = Algebra<T, 4, 1, 0>.
  */
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+template <typename T = DefaultScalarType>
 class CgaGeometry final {
  public:
-  using Algebra = ::ndyn::math::Algebra<T, 4, 1, 0, INNER_PRODUCT>;
-  using Multivector = ::ndyn::math::Multivector<Algebra>;
-  using Scalar = T;
+  using Algebra = ::ndyn::math::Algebra<T, 4, 1, 0>;
+  using Multivector = Algebra::VectorType;
+  using Scalar = Algebra::ScalarType;
 
  private:
   static constexpr size_t scalar_coefficient{0};

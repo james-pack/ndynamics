@@ -25,13 +25,12 @@ namespace ndyn::math {
  * The degenerate basis vector e0 is at bit index 1 (the lowest bit) per the algebra's
  * zero-bases-first ordering convention.
  */
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+template <typename T = DefaultScalarType>
 class PgaGrade1PointGeometry final {
  public:
-  using Algebra = Pga<T, INNER_PRODUCT>;
-  using Multivector = ::ndyn::math::Multivector<Algebra>;
-  using Scalar = T;
+  using Algebra = Pga<T>;
+  using Multivector = Algebra::VectorType;
+  using Scalar = Algebra::ScalarType;
 
  private:
   static constexpr size_t scalar_coefficient{0};
@@ -143,11 +142,6 @@ class PgaGrade1PointGeometry final {
 
     return has_direction && plucker_satisfied;
   }
-
-  /**
-   * Circles are not directly representable in a single multivector in PGA.
-   */
-  constexpr bool is_circle(const Multivector& mv) const { return false; }
 
   /**
    * In the grade-1 point convention a plane is a grade-3 trivector with a nonzero
@@ -412,13 +406,12 @@ static_assert(GeometryModel<PgaGrade1PointGeometry<>>);
  * of PgaGrade1PointGeometry. This swap is the defining algebraic signature of the duality
  * between the two PGA point conventions.
  */
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
+template <typename T = DefaultScalarType>
 class PgaGrade3PointGeometry final {
  public:
-  using Algebra = Pga<T, INNER_PRODUCT>;
-  using Multivector = ::ndyn::math::Multivector<Algebra>;
-  using Scalar = T;
+  using Algebra = Pga<T>;
+  using Multivector = Algebra::VectorType;
+  using Scalar = Algebra::ScalarType;
 
  private:
   static constexpr size_t scalar_coefficient{0};

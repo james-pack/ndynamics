@@ -46,30 +46,6 @@ concept GeometryModel =
     } &&
 
     /**
-     * Test if a given multivector represents a line.
-     */
-    requires(G& g, const G::Multivector& mv) {
-      { g.is_line(mv) } -> std::same_as<bool>;
-    } &&
-
-    /**
-     * Test if a given multivector represents a circle. Note that circles are not directly
-     * representable using a single multivector in all algebras.
-     */
-    requires(G& g, const G::Multivector& mv) {
-      { g.is_circle(mv) } -> std::same_as<bool>;
-    } &&
-
-    /**
-     * Test if a given multivector represents a plane. Note that planes are not directly
-     * representable in all algebras. In VGA, a plane must pass through the origin; the multivector
-     * representing the plane is purely the direction of the normal.
-     */
-    requires(G& g, const G::Multivector& mv) {
-      { g.is_plane(mv) } -> std::same_as<bool>;
-    } &&
-
-    /**
      * Compute the join (span) of two geometric elements. The join answers
      * "what is the smallest element containing both operands" — point+point
      * gives a line, point+line gives a plane. In PGA the join is the
@@ -167,29 +143,13 @@ concept GeometryModel =
     requires {
       requires requires(G& g, const G::Multivector& point, G::Scalar& out_x, G::Scalar& out_y,
                         G::Scalar& out_z) { g.extract_point(point, out_x, out_y, out_z); };
-    } &&
+      // } &&
 
-    /**
-     * Extract the direction and moment of a line element as Euclidean vectors.
-     * In PGA these correspond directly to the two three-component parts of the
-     * bivector. In CGA the line is a different grade object and the direction
-     * and moment must be recovered via projection onto the appropriate
-     * subspace. In STA a line has an additional timelike component whose
-     * extraction is frame-dependent — the geometry model consumes the timelike
-     * part and surfaces only the spatial direction and moment relative to its
-     * reference frame. In DCGA the line exists in the doubly-embedded space
-     * and the direction and moment must be recovered from the higher-dimensional
-     * representation, with the double-embedding redundancy resolved before
-     * returning. The caller must not assume any correspondence between
-     * multivector components and the returned direction and moment.
-     */
-    requires {
-      requires requires(G& g, const G::Multivector& line, G::Scalar& out_direction_x,
-                        G::Scalar& out_direction_y, G::Scalar& out_direction_z,
-                        G::Scalar& out_moment_x, G::Scalar& out_moment_y, G::Scalar& out_moment_z) {
-        g.extract_line(line, out_direction_x, out_direction_y, out_direction_z, out_moment_x,
-                       out_moment_y, out_moment_z);
-      };
+      // requires {
+      //   requires requires(G& g, const G::Multivector& point, G::Scalar& out_w, G::Scalar& out_x,
+      //                     G::Scalar& out_y, G::Scalar& out_z) {
+      //     g.extract_orientation(point, out_w, out_x, out_y, out_z);
+      //   };
     };
 
 }  // namespace ndyn::math

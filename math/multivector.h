@@ -29,8 +29,6 @@ class Multivector final {
   static constexpr size_t NUM_NEGATIVE_BASES{AlgebraType::NUM_NEGATIVE_BASES};
   static constexpr size_t NUM_ZERO_BASES{AlgebraType::NUM_ZERO_BASES};
 
-  static constexpr InnerProduct INNER_PRODUCT{AlgebraType::INNER_PRODUCT};
-
   static constexpr size_t NUM_BASIS_VECTORS{AlgebraType::NUM_BASIS_VECTORS};
   static constexpr size_t NUM_BASIS_BLADES{AlgebraType::NUM_BASIS_BLADES};
   static constexpr size_t NUM_GRADES{NUM_BASIS_VECTORS + 1};
@@ -293,36 +291,6 @@ class Multivector final {
       }
     }
     return result;
-  }
-
-  /**
-   * The inner product. Note that the inner product is not uniformly defined across geometric
-   * algebra texts. In some texts, especially those by Leo Dorst, the inner product is defined as
-   * the left_contraction(). The right_contraction() style was used extensively by Lounesto.
-   * Hestenes used a similar operation that was effectively a left contraction when the grade of the
-   * lhs was higher and a right contraction when the rhs grade was higher, but all inner products
-   * with scalars were zero. We add the bidirectional inner product which is essentially Hestenes's
-   * inner product but without the special condition around scalars. All of these approaches are
-   * useful, or at least worth study, so the Multivector includes the style of the inner product as
-   * part of the type. The inner() method below implements selecting the style based on the type
-   * definition. Finally, all three approaches are exposed in the API of this class, so they may be
-   * used explicitly as needed.
-   */
-  constexpr Multivector inner(const Multivector& rhs) const {
-    static_assert(
-        INNER_PRODUCT != InnerProduct::NO_IMPLICIT_DEFINITION,
-        "inner() method not defined since Multivector type has no implicit definition of "
-        "the inner product. Must explicitly use either the left contraction, right "
-        "contraction, or bidirectional inner product operations on this Multivector type.");
-    if constexpr (INNER_PRODUCT == InnerProduct::LEFT_CONTRACTION) {
-      return left_contraction(rhs);
-    } else if constexpr (INNER_PRODUCT == InnerProduct::RIGHT_CONTRACTION) {
-      return right_contraction(rhs);
-    } else if constexpr (INNER_PRODUCT == InnerProduct::BIDIRECTIONAL) {
-      return bidirectional_inner_product(rhs);
-    } else if constexpr (INNER_PRODUCT == InnerProduct::HESTENES) {
-      return hestenes_inner_product(rhs);
-    }
   }
 
   /**
@@ -675,40 +643,31 @@ constexpr Multivector<AlgebraType> operator*(const typename AlgebraType::ScalarT
 }
 
 // Multivector types of common algebras.
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using ScalarMultivector = typename Scalar<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using ScalarMultivector = typename Scalar<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using ComplexMultivector = typename Complex<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using ComplexMultivector = typename Complex<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using DualMultivector = typename Dual<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using DualMultivector = typename Dual<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using SplitComplexMultivector = typename SplitComplex<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using SplitComplexMultivector = typename SplitComplex<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using Vga2dMultivector = typename Vga2d<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using Vga2dMultivector = typename Vga2d<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using VgaMultivector = typename Vga<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using VgaMultivector = typename Vga<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using Pga2dMultivector = typename Pga2d<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using Pga2dMultivector = typename Pga2d<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using PgaMultivector = typename Pga<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using PgaMultivector = typename Pga<T>::VectorType;
 
-template <typename T = DefaultScalarType,
-          InnerProduct INNER_PRODUCT = InnerProduct::LEFT_CONTRACTION>
-using SpacetimeMultivector = typename Spacetime<T, INNER_PRODUCT>::VectorType;
+template <typename T = DefaultScalarType>
+using SpacetimeMultivector = typename Spacetime<T>::VectorType;
 
 }  // namespace ndyn::math

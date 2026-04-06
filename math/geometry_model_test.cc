@@ -17,7 +17,7 @@ using GeometryModelTypes = ::testing::Types<  //
     VgaGeometry<>,                            //
     PgaGrade1PointGeometry<>,                 //
     PgaGrade3PointGeometry<>,                 //
-    CgaGeometry<>  //
+    CgaGeometry<>                             //
     >;
 
 TYPED_TEST_SUITE(GeometryModelTest, GeometryModelTypes);
@@ -67,8 +67,6 @@ TYPED_TEST(GeometryModelTest, IsPoint) {
   const auto point{model.make_point(x, y, z)};
 
   EXPECT_TRUE(model.is_point(point));
-  EXPECT_FALSE(model.is_line(point));
-  EXPECT_FALSE(model.is_plane(point));
 }
 
 }  // namespace ndyn::math
