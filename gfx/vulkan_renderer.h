@@ -105,11 +105,10 @@ class VulkanRenderer final {
   void render_frame();
 
   MeshId add_mesh(const Mesh& mesh);
+  MaterialId add_material(const Material& material);
 
   InstanceId add_instance(Instance instance);
   void update_position(InstanceId id, const Mat4& position);
-
-  MaterialId add_material(const Material& material);
 
   void update_camera(CameraState camera) { camera_ = std::move(camera); }
 
