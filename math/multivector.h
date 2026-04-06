@@ -642,32 +642,4 @@ constexpr Multivector<AlgebraType> operator*(const typename AlgebraType::ScalarT
   return v.multiply(scalar);
 }
 
-// Multivector types of common algebras.
-template <typename T = DefaultScalarType>
-using ScalarMultivector = typename Scalar<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using ComplexMultivector = typename Complex<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using DualMultivector = typename Dual<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using SplitComplexMultivector = typename SplitComplex<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using Vga2dMultivector = typename Vga2d<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using VgaMultivector = typename Vga<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using Pga2dMultivector = typename Pga2d<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using PgaMultivector = typename Pga<T>::VectorType;
-
-template <typename T = DefaultScalarType>
-using SpacetimeMultivector = typename Spacetime<T>::VectorType;
-
 }  // namespace ndyn::math

@@ -38,7 +38,7 @@ namespace ndyn::math {
 template <typename T = DefaultScalarType>
 class CgaGeometry final {
  public:
-  using Algebra = ::ndyn::math::Algebra<T, 4, 1, 0>;
+  using Algebra = Cga<T>;
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 

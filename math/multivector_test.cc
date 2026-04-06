@@ -13,8 +13,8 @@ template <typename MultivectorT>
 class MultivectorTest : public ::testing::Test {};
 
 using MultivectorTypes =
-    ::testing::Types<Vga2dMultivector<float>, VgaMultivector<float>, Pga2dMultivector<float>,
-                     PgaMultivector<float>, SpacetimeMultivector<float>>;
+    ::testing::Types<Vga2d<>::VectorType, Vga<>::VectorType, Pga2d<>::VectorType, Pga<>::VectorType,
+                     Spacetime<>::VectorType>;
 
 TYPED_TEST_SUITE(MultivectorTest, MultivectorTypes);
 
