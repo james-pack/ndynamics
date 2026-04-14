@@ -28,7 +28,7 @@ template <typename Integrator>
 ::testing::AssertionResult CanIntegrateOverConstantVelocity() {
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
@@ -69,7 +69,7 @@ template <typename Integrator>
 
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
@@ -130,7 +130,7 @@ template <typename Integrator>
    */
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
@@ -204,7 +204,7 @@ template <typename Integrator>
    */
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
@@ -275,7 +275,7 @@ template <typename Integrator>
 ::testing::AssertionResult CanUpdateVelocityFromPosition() {
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
@@ -320,7 +320,7 @@ template <typename Integrator>
   using std::sin;
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ScalarType = typename StateType::ScalarType;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
@@ -363,7 +363,7 @@ template <typename Integrator>
 ::testing::AssertionResult CanUpdateJerkFromPosition() {
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
   using ScalarType = typename StateType::ScalarType;
@@ -439,7 +439,7 @@ template <typename Integrator>
   using std::sin;
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ScalarType = typename StateType::ScalarType;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;
@@ -511,7 +511,7 @@ template <typename Integrator>
    */
   using std::sqrt;
 
-  using StateType = typename Integrator::StateType;
+  using StateType = typename Integrator::State;
   using ScalarType = typename StateType::ScalarType;
   using ValueType = typename StateType::ValueType;
   using AlgebraType = typename ValueType::AlgebraType;

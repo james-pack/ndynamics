@@ -6,36 +6,25 @@
 #include "math/canonical_basis_representation.h"
 #include "math/integrators_test_utils.h"
 #include "math/multivector.h"
+#include "math/vga_geometry.h"
 
 namespace ndyn::math {
 
 template <typename IntegratorT>
 class IntegratorTest : public ::testing::Test {};
 
-using IntegratorTypes = ::testing::Types<ForwardEuler<State<Vga2d<>::VectorType, 1>>,  //
-                                         ForwardEuler<State<Vga2d<>::VectorType, 2>>,  //
-                                         ForwardEuler<State<Vga2d<>::VectorType, 3>>,  //
-                                         ForwardEuler<State<Vga2d<>::VectorType, 4>>,  //
-                                         RungeKutta2<State<Vga2d<>::VectorType, 1>>,   //
-                                         RungeKutta2<State<Vga2d<>::VectorType, 2>>,   //
-                                         RungeKutta2<State<Vga2d<>::VectorType, 3>>,   //
-                                         RungeKutta2<State<Vga2d<>::VectorType, 4>>,   //
-                                         RungeKutta4<State<Vga2d<>::VectorType, 1>>,   //
-                                         RungeKutta4<State<Vga2d<>::VectorType, 2>>,   //
-                                         RungeKutta4<State<Vga2d<>::VectorType, 3>>,   //
-                                         RungeKutta4<State<Vga2d<>::VectorType, 4>>,   //
-                                         ForwardEuler<State<Vga<>::VectorType, 1>>,    //
-                                         ForwardEuler<State<Vga<>::VectorType, 2>>,    //
-                                         ForwardEuler<State<Vga<>::VectorType, 3>>,    //
-                                         ForwardEuler<State<Vga<>::VectorType, 4>>,    //
-                                         RungeKutta2<State<Vga<>::VectorType, 1>>,     //
-                                         RungeKutta2<State<Vga<>::VectorType, 2>>,     //
-                                         RungeKutta2<State<Vga<>::VectorType, 3>>,     //
-                                         RungeKutta2<State<Vga<>::VectorType, 4>>,     //
-                                         RungeKutta4<State<Vga<>::VectorType, 1>>,     //
-                                         RungeKutta4<State<Vga<>::VectorType, 2>>,     //
-                                         RungeKutta4<State<Vga<>::VectorType, 3>>,     //
-                                         RungeKutta4<State<Vga<>::VectorType, 4>>>;
+using IntegratorTypes = ::testing::Types<ForwardEuler<State<VgaGeometry<>, 1>>,  //
+                                         ForwardEuler<State<VgaGeometry<>, 2>>,  //
+                                         ForwardEuler<State<VgaGeometry<>, 3>>,  //
+                                         ForwardEuler<State<VgaGeometry<>, 4>>,  //
+                                         RungeKutta2<State<VgaGeometry<>, 1>>,   //
+                                         RungeKutta2<State<VgaGeometry<>, 2>>,   //
+                                         RungeKutta2<State<VgaGeometry<>, 3>>,   //
+                                         RungeKutta2<State<VgaGeometry<>, 4>>,   //
+                                         RungeKutta4<State<VgaGeometry<>, 1>>,   //
+                                         RungeKutta4<State<VgaGeometry<>, 2>>,   //
+                                         RungeKutta4<State<VgaGeometry<>, 3>>,   //
+                                         RungeKutta4<State<VgaGeometry<>, 4>>>;
 TYPED_TEST_SUITE(IntegratorTest, IntegratorTypes);
 
 TYPED_TEST(IntegratorTest, CanIntegrateOverConstantVelocity) {

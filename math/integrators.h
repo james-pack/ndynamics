@@ -7,8 +7,8 @@
 
 namespace ndyn::math {
 
-template <typename StateType>
-using ComputePartials = std::function<StateType(const StateType&)>;
+template <typename State>
+using ComputePartials = std::function<State(const State&)>;
 
 /**
  * Implementation of the forward Euler algorithm for integrating the state of a system according to
@@ -19,23 +19,20 @@ using ComputePartials = std::function<StateType(const StateType&)>;
 template <typename StateT>
 class ForwardEuler final {
  public:
-  using StateType = StateT;
-  using ScalarType = typename StateType::ScalarType;
+  using State = StateT;
+  using Vector = typename State::VectorType;
+  using Scalar = typename State::ScalarType;
 
  private:
-  ComputePartials<StateType> compute_partials_{};
+  ComputePartials<State> compute_partials_{};
 
  public:
-  ForwardEuler(const ComputePartials<StateType>& compute_partials)
+  ForwardEuler(const ComputePartials<State>& compute_partials)
       : compute_partials_(compute_partials) {}
 
-  StateType operator()(ScalarType interval, const StateType& s1) {
+  State operator()(Scalar interval, const State& s1) {
     const auto f1{compute_partials_(s1)};
-
-    StateType result{};
-    for (size_t i = 0; i < StateType::depth(); ++i) {
-      result.set_element(i, s1.element(i) + interval * f1.element(i));
-    }
+    State result = s1.advance(f1, interval);
 
     VLOG(6) << "interval: " << interval;
     VLOG(6) << "s1: " << s1;
@@ -55,29 +52,29 @@ class ForwardEuler final {
 template <typename StateT>
 class RungeKutta2 final {
  public:
-  using StateType = StateT;
-  using ScalarType = typename StateType::ScalarType;
+  using State = StateT;
+  using Vector = typename State::VectorType;
+  using Scalar = typename State::ScalarType;
 
  private:
-  ComputePartials<StateType> compute_partials_{};
+  ComputePartials<State> compute_partials_{};
 
  public:
-  RungeKutta2(const ComputePartials<StateType>& compute_partials)
+  RungeKutta2(const ComputePartials<State>& compute_partials)
       : compute_partials_(compute_partials) {}
 
-  StateType operator()(ScalarType interval, const StateType& s1) {
+  State operator()(Scalar interval, const State& s1) {
+    static constexpr Scalar TWO{static_cast<Scalar>(2)};
+    const Scalar half_interval = interval / TWO;
+
+    // Stage 1
     const auto f1{compute_partials_(s1)};
 
-    StateType s2{};
-    for (size_t i = 0; i < StateType::depth(); ++i) {
-      s2.set_element(i, s1.element(i) + interval / 2 * f1.element(i));
-    }
+    // Stage 2
+    State s2 = s1.advance(f1, half_interval);
     const auto f2{compute_partials_(s2)};
 
-    StateType result{};
-    for (size_t i = 0; i < StateType::depth(); ++i) {
-      result.set_element(i, s1.element(i) + interval * f2.element(i));
-    }
+    State result = s1.advance(f2, interval);
 
     VLOG(6) << "interval: " << interval;
     VLOG(6) << "s1: " << s1;
@@ -99,44 +96,45 @@ class RungeKutta2 final {
 template <typename StateT>
 class RungeKutta4 final {
  public:
-  using StateType = StateT;
-  using ScalarType = typename StateType::ScalarType;
+  using State = StateT;
+  using Vector = typename State::VectorType;
+  using Scalar = typename State::ScalarType;
 
  private:
-  ComputePartials<StateType> compute_partials_{};
+  ComputePartials<State> compute_partials_{};
 
  public:
-  RungeKutta4(const ComputePartials<StateType>& compute_partials)
+  RungeKutta4(const ComputePartials<State>& compute_partials)
       : compute_partials_(compute_partials) {}
 
-  StateType operator()(ScalarType interval, const StateType& s1) {
-    const auto f1{compute_partials_(s1)};
+  State operator()(Scalar interval, const State& s1) const noexcept {
+    static constexpr Scalar TWO{static_cast<Scalar>(2)};
+    static constexpr Scalar SIX{static_cast<Scalar>(6)};
+    const Scalar half_interval = interval / TWO;
 
-    StateType s2{};
-    for (size_t i = 0; i < StateType::depth(); ++i) {
-      s2.set_element(i, s1.element(i) + interval / 2 * f1.element(i));
-    }
-    const auto f2{compute_partials_(s2)};
+    // Stage 1
+    const State f1 = compute_partials_(s1);
 
-    StateType s3{};
-    for (size_t i = 0; i < StateType::depth(); ++i) {
-      s3.set_element(i, s1.element(i) + interval / 2 * f2.element(i));
-    }
-    const auto f3{compute_partials_(s3)};
+    // Stage 2
+    const State s2 = s1.advance(f1, half_interval);
+    const State f2 = compute_partials_(s2);
 
-    StateType s4{};
-    for (size_t i = 0; i < StateType::depth(); ++i) {
-      s4.set_element(i, s1.element(i) + interval * f3.element(i));
-    }
-    const auto f4{compute_partials_(s4)};
+    // Stage 3
+    const State s3 = s1.advance(f2, half_interval);
+    const State f3 = compute_partials_(s3);
 
-    static constexpr ScalarType TWO{2};
-    StateType result{};
-    for (size_t i = 0; i < StateType::depth(); ++i) {
-      result.set_element(i, s1.element(i) + interval / 6 *
-                                                (f1.element(i) + TWO * f2.element(i) +
-                                                 TWO * f3.element(i) + f4.element(i)));
+    // Stage 4
+    const State s4 = s1.advance(f3, interval);
+    const State f4 = compute_partials_(s4);
+
+    State blended_delta{};
+
+    for (size_t i = 0; i < State::depth(); ++i) {
+      blended_delta.set_element(
+          i, (f1.element(i) + TWO * f2.element(i) + TWO * f3.element(i) + f4.element(i)) / SIX);
     }
+
+    State result{s1.advance(blended_delta, interval)};
 
     VLOG(6) << "interval: " << interval;
     VLOG(6) << "s1: " << s1;
