@@ -13,4 +13,9 @@ struct Mesh final {
 };
 using MeshId = uint32_t;
 
+/**
+ * Id for a null Mesh.
+ */
+static constexpr MeshId NO_MESH{std::numeric_limits<MeshId>::max()};
+
 }  // namespace ndyn::gfx

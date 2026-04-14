@@ -11,11 +11,10 @@ namespace ndyn::gfx {
 
 struct alignas(16) Instance final {
   Mat4 position{Mat4::identity()};
-  MeshId mesh;
+  MeshId mesh{NO_MESH};
   MaterialId material{0};
 };
 using InstanceId = uint32_t;
-static constexpr InstanceId NO_MESH{std::numeric_limits<InstanceId>::max()};
 
 template <>
 inline constexpr bool SsboLayoutCheck<Instance>::is_valid() {
