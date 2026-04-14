@@ -61,35 +61,35 @@ class PgaGrade1PointGeometry final {
   static_assert((e3() * e3()).scalar() == 1);
 
  public:
-  constexpr Scalar scalar(const Multivector& mv) const {
+  static constexpr Scalar scalar(const Multivector& mv) {
     return mv.coefficient(scalar_coefficient);
   }
 
-  constexpr Scalar e0(const Multivector& mv) const { return mv.coefficient(e0_coefficient); }
-  constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
-  constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
-  constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
+  static constexpr Scalar e0(const Multivector& mv) { return mv.coefficient(e0_coefficient); }
+  static constexpr Scalar e1(const Multivector& mv) { return mv.coefficient(e1_coefficient); }
+  static constexpr Scalar e2(const Multivector& mv) { return mv.coefficient(e2_coefficient); }
+  static constexpr Scalar e3(const Multivector& mv) { return mv.coefficient(e3_coefficient); }
 
-  constexpr Scalar e01(const Multivector& mv) const { return mv.coefficient(e01_coefficient); }
-  constexpr Scalar e02(const Multivector& mv) const { return mv.coefficient(e02_coefficient); }
-  constexpr Scalar e03(const Multivector& mv) const { return mv.coefficient(e03_coefficient); }
-  constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
-  constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
-  constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
+  static constexpr Scalar e01(const Multivector& mv) { return mv.coefficient(e01_coefficient); }
+  static constexpr Scalar e02(const Multivector& mv) { return mv.coefficient(e02_coefficient); }
+  static constexpr Scalar e03(const Multivector& mv) { return mv.coefficient(e03_coefficient); }
+  static constexpr Scalar e12(const Multivector& mv) { return mv.coefficient(e12_coefficient); }
+  static constexpr Scalar e13(const Multivector& mv) { return mv.coefficient(e13_coefficient); }
+  static constexpr Scalar e23(const Multivector& mv) { return mv.coefficient(e23_coefficient); }
 
-  constexpr Scalar e012(const Multivector& mv) const { return mv.coefficient(e012_coefficient); }
-  constexpr Scalar e013(const Multivector& mv) const { return mv.coefficient(e013_coefficient); }
-  constexpr Scalar e023(const Multivector& mv) const { return mv.coefficient(e023_coefficient); }
-  constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
+  static constexpr Scalar e012(const Multivector& mv) { return mv.coefficient(e012_coefficient); }
+  static constexpr Scalar e013(const Multivector& mv) { return mv.coefficient(e013_coefficient); }
+  static constexpr Scalar e023(const Multivector& mv) { return mv.coefficient(e023_coefficient); }
+  static constexpr Scalar e123(const Multivector& mv) { return mv.coefficient(e123_coefficient); }
 
-  constexpr Scalar e0123(const Multivector& mv) const { return mv.coefficient(e0123_coefficient); }
+  static constexpr Scalar e0123(const Multivector& mv) { return mv.coefficient(e0123_coefficient); }
 
   /**
    * Embed a Euclidean point as a grade-1 vector: e0 + x*e1 + y*e2 + z*e3. The e0 component
    * is the homogeneous weight, set to 1 for a finite point. Ideal points (at infinity) have
    * e0 = 0 and are not constructible via this method.
    */
-  constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) const {
+  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) {
     return e0() + x * e1() + y * e2() + z * e3();
   }
 
@@ -101,7 +101,7 @@ class PgaGrade1PointGeometry final {
    * any grade-1 element in PGA due to the degenerate metric and need not be checked
    * separately.
    */
-  constexpr bool is_point(const Multivector& mv) const {
+  static constexpr bool is_point(const Multivector& mv) {
     const bool is_grade_1{mv.template is_grade<1>()};
     const bool has_weight{abs(mv.coefficient(e0_coefficient)) > Algebra::EPSILON};
     return is_grade_1 && has_weight;
@@ -114,7 +114,7 @@ class PgaGrade1PointGeometry final {
    * moment). A grade-2 element that fails the Plücker condition does not correspond
    * to a real line in space.
    */
-  constexpr bool is_line(const Multivector& mv) const {
+  static constexpr bool is_line(const Multivector& mv) {
     if (!mv.template is_grade<2>()) {
       return false;
     }
@@ -149,7 +149,7 @@ class PgaGrade1PointGeometry final {
    * ideal plane (the plane at infinity) and is not considered a finite plane by this
    * check.
    */
-  constexpr bool is_plane(const Multivector& mv) const {
+  static constexpr bool is_plane(const Multivector& mv) {
     const bool is_grade_3{mv.template is_grade<3>()};
     // e123 is the homogeneous weight of a finite plane.
     const bool has_weight{abs(mv.coefficient(e123_coefficient)) > Algebra::EPSILON};
@@ -163,7 +163,7 @@ class PgaGrade1PointGeometry final {
    * characteristic that distinguishes this convention from the plane-based convention, where
    * the regressive product serves as join.
    */
-  constexpr Multivector join(const Multivector& a, const Multivector& b) const {
+  static constexpr Multivector join(const Multivector& a, const Multivector& b) {
     return a.outer(b);
   }
 
@@ -174,7 +174,7 @@ class PgaGrade1PointGeometry final {
    * that join and meet swap their product implementations relative to the plane-based
    * convention — this is the algebraic signature of the duality between the two conventions.
    */
-  constexpr Multivector meet(const Multivector& a, const Multivector& b) const {
+  static constexpr Multivector meet(const Multivector& a, const Multivector& b) {
     return a.regress(b);
   }
 
@@ -188,7 +188,7 @@ class PgaGrade1PointGeometry final {
    * component and must be zero for a pure rotation. A non-zero ideal part in the axis
    * indicates a screw motion rather than a pure rotation.
    */
-  Multivector make_rotor(const Multivector& axis, Scalar angle) const {
+  static Multivector make_rotor(const Multivector& axis, Scalar angle) {
     using std::cos, std::sin, std::sqrt;
     const Multivector b{axis.grade_projection(2)};
 
@@ -214,7 +214,7 @@ class PgaGrade1PointGeometry final {
    * The translator always satisfies T * reverse(T) = 1 regardless of the displacement
    * magnitude, a consequence of the degenerate metric on e0.
    */
-  constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) const {
+  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
     const Scalar half{Scalar{1} / Scalar{2}};
     Multivector result{};
     result.set_scalar(Scalar{1});
@@ -230,7 +230,7 @@ class PgaGrade1PointGeometry final {
    * versor — no additional construction is needed. The versor formula V * x * involute(V)^{-1}
    * performs the reflection. The plane must be normalized before use as a versor.
    */
-  constexpr Multivector make_reflection(const Multivector& plane) const {
+  static constexpr Multivector make_reflection(const Multivector& plane) {
     return plane.grade_projection(3).normalize();
   }
 
@@ -243,7 +243,7 @@ class PgaGrade1PointGeometry final {
    *   - Pure translation (scalar part = 1, no rotation): log = ideal part of motor
    *   - General screw motion: log via the standard PGA motor logarithm formula
    */
-  Multivector motor_log(const Multivector& motor) const {
+  static Multivector motor_log(const Multivector& motor) {
     using std::acos, std::sin, std::sqrt;
 
     const Scalar scalar_part{motor.scalar()};
@@ -292,7 +292,7 @@ class PgaGrade1PointGeometry final {
    *   - Pure translation (zero Euclidean part): exp = 1 + ideal part
    *   - General screw: exp via the standard PGA bivector exponential
    */
-  Multivector motor_exp(const Multivector& bivector) const {
+  static Multivector motor_exp(const Multivector& bivector) {
     using std::cos, std::sin, std::sqrt;
 
     const Scalar b23{bivector.coefficient(e12_coefficient)};
@@ -336,8 +336,8 @@ class PgaGrade1PointGeometry final {
    * weight w. Finite points have w != 0, and the Euclidean coordinates are recovered by dividing
    * the e1, e2, e3 coefficients by w.
    */
-  constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
-                               Scalar& out_z) const {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
+                                      Scalar& out_z) {
     const Scalar w{point.coefficient(e0_coefficient)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract coordinates from an ideal point (w = 0).");
@@ -353,9 +353,9 @@ class PgaGrade1PointGeometry final {
    * bivector components (e01, e02, e03) encode the moment (the translational offset of the
    * line from the origin).
    */
-  constexpr void extract_line(const Multivector& line, Scalar& out_dx, Scalar& out_dy,
-                              Scalar& out_dz, Scalar& out_mx, Scalar& out_my,
-                              Scalar& out_mz) const {
+  static constexpr void extract_line(const Multivector& line, Scalar& out_dx, Scalar& out_dy,
+                                     Scalar& out_dz, Scalar& out_mx, Scalar& out_my,
+                                     Scalar& out_mz) {
     out_dx = line.coefficient(e23_coefficient);
     out_dy = line.coefficient(e13_coefficient);
     out_dz = line.coefficient(e12_coefficient);
@@ -371,8 +371,8 @@ class PgaGrade1PointGeometry final {
    * the e123 weight. The signed distance from the origin is the e0123 component divided by
    * the e123 weight.
    */
-  constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
-                               Scalar& out_nz, Scalar& out_d) const {
+  static constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
+                                      Scalar& out_nz, Scalar& out_d) {
     const Scalar w{plane.coefficient(e123_coefficient)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract plane parameters from a degenerate plane.");
@@ -442,28 +442,28 @@ class PgaGrade3PointGeometry final {
   static_assert((e3() * e3()).scalar() == 1);
 
  public:
-  constexpr Scalar scalar(const Multivector& mv) const {
+  static constexpr Scalar scalar(const Multivector& mv) {
     return mv.coefficient(scalar_coefficient);
   }
 
-  constexpr Scalar e0(const Multivector& mv) const { return mv.coefficient(e0_coefficient); }
-  constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
-  constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
-  constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
+  static constexpr Scalar e0(const Multivector& mv) { return mv.coefficient(e0_coefficient); }
+  static constexpr Scalar e1(const Multivector& mv) { return mv.coefficient(e1_coefficient); }
+  static constexpr Scalar e2(const Multivector& mv) { return mv.coefficient(e2_coefficient); }
+  static constexpr Scalar e3(const Multivector& mv) { return mv.coefficient(e3_coefficient); }
 
-  constexpr Scalar e01(const Multivector& mv) const { return mv.coefficient(e01_coefficient); }
-  constexpr Scalar e02(const Multivector& mv) const { return mv.coefficient(e02_coefficient); }
-  constexpr Scalar e03(const Multivector& mv) const { return mv.coefficient(e03_coefficient); }
-  constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
-  constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
-  constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
+  static constexpr Scalar e01(const Multivector& mv) { return mv.coefficient(e01_coefficient); }
+  static constexpr Scalar e02(const Multivector& mv) { return mv.coefficient(e02_coefficient); }
+  static constexpr Scalar e03(const Multivector& mv) { return mv.coefficient(e03_coefficient); }
+  static constexpr Scalar e12(const Multivector& mv) { return mv.coefficient(e12_coefficient); }
+  static constexpr Scalar e13(const Multivector& mv) { return mv.coefficient(e13_coefficient); }
+  static constexpr Scalar e23(const Multivector& mv) { return mv.coefficient(e23_coefficient); }
 
-  constexpr Scalar e012(const Multivector& mv) const { return mv.coefficient(e012_coefficient); }
-  constexpr Scalar e013(const Multivector& mv) const { return mv.coefficient(e013_coefficient); }
-  constexpr Scalar e023(const Multivector& mv) const { return mv.coefficient(e023_coefficient); }
-  constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
+  static constexpr Scalar e012(const Multivector& mv) { return mv.coefficient(e012_coefficient); }
+  static constexpr Scalar e013(const Multivector& mv) { return mv.coefficient(e013_coefficient); }
+  static constexpr Scalar e023(const Multivector& mv) { return mv.coefficient(e023_coefficient); }
+  static constexpr Scalar e123(const Multivector& mv) { return mv.coefficient(e123_coefficient); }
 
-  constexpr Scalar e0123(const Multivector& mv) const { return mv.coefficient(e0123_coefficient); }
+  static constexpr Scalar e0123(const Multivector& mv) { return mv.coefficient(e0123_coefficient); }
 
   /**
    * Embed a Euclidean point as a grade-3 trivector: w*e123 + x*e032 + y*e013 + z*e021.
@@ -471,7 +471,7 @@ class PgaGrade3PointGeometry final {
    * follow from the standard plane-based PGA embedding where the point (x,y,z) satisfies
    * the three planes x=const, y=const, z=const.
    */
-  constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) const {
+  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) {
     Multivector result{};
     result.set_coefficient(e123_coefficient, Scalar{1});  // w*e123
     result.set_coefficient(e023_coefficient, x);          // x*e032
@@ -485,7 +485,7 @@ class PgaGrade3PointGeometry final {
    * nonzero e123 component (the homogeneous weight). A grade-3 element with zero e123
    * is an ideal point and is not a finite point.
    */
-  constexpr bool is_point(const Multivector& mv) const {
+  static constexpr bool is_point(const Multivector& mv) {
     const bool is_grade_3{mv.template is_grade<3>()};
     // e123 is the homogeneous weight of a finite point in this convention.
     const bool has_weight{abs(mv.coefficient(e123_coefficient)) > Algebra::EPSILON};
@@ -498,7 +498,7 @@ class PgaGrade3PointGeometry final {
    * relative to the grade-1 point convention, but the Plücker condition d · m = 0
    * is the same algebraic constraint on the same six bivector coefficients.
    */
-  constexpr bool is_line(const Multivector& mv) const {
+  static constexpr bool is_line(const Multivector& mv) {
     if (!mv.template is_grade<2>()) {
       return false;
     }
@@ -526,7 +526,7 @@ class PgaGrade3PointGeometry final {
   /**
    * Circles are not directly representable in a single multivector in PGA.
    */
-  constexpr bool is_circle(const Multivector& mv) const { return false; }
+  static constexpr bool is_circle(const Multivector& mv) { return false; }
 
   /**
    * In the plane-based PGA convention a finite plane is a grade-1 vector with a nonzero
@@ -534,7 +534,7 @@ class PgaGrade3PointGeometry final {
    * infinity and is not a finite plane. The e0 component encodes the signed distance from
    * the origin and may be zero for planes passing through the origin.
    */
-  constexpr bool is_plane(const Multivector& mv) const {
+  static constexpr bool is_plane(const Multivector& mv) {
     if (!mv.template is_grade<1>()) {
       return false;
     }
@@ -553,7 +553,7 @@ class PgaGrade3PointGeometry final {
    * here because the pseudoscalar complement of a grade-3 element is grade-1, matching the
    * structure of the outer product in the dual convention.
    */
-  constexpr Multivector join(const Multivector& a, const Multivector& b) const {
+  static constexpr Multivector join(const Multivector& a, const Multivector& b) {
     return a.regress(b);
   }
 
@@ -564,7 +564,7 @@ class PgaGrade3PointGeometry final {
    * product serves as meet here for the same duality reason that it serves as join in the
    * grade-1 point convention.
    */
-  constexpr Multivector meet(const Multivector& a, const Multivector& b) const {
+  static constexpr Multivector meet(const Multivector& a, const Multivector& b) {
     return a.outer(b);
   }
 
@@ -575,7 +575,7 @@ class PgaGrade3PointGeometry final {
    * point convention — the rotor lives in the even subalgebra and is independent of the
    * point grade convention.
    */
-  Multivector make_rotor(const Multivector& axis, Scalar angle) const {
+  static Multivector make_rotor(const Multivector& axis, Scalar angle) {
     using std::cos, std::sin, std::sqrt;
     const Multivector b{axis.grade_projection(2)};
 
@@ -596,7 +596,7 @@ class PgaGrade3PointGeometry final {
    * and are not affected by the choice of point grade convention.
    *   T = 1 + (1/2)(dx*e01 + dy*e02 + dz*e03)
    */
-  constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) const {
+  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
     const Scalar half{Scalar{1} / Scalar{2}};
     Multivector result{};
     result.set_scalar(Scalar{1});
@@ -612,7 +612,7 @@ class PgaGrade3PointGeometry final {
    * the most direct case: the plane vector can be used immediately in the sandwich product
    * V * x * involute(V)^{-1} to reflect any element. The plane must be normalized.
    */
-  constexpr Multivector make_reflection(const Multivector& plane) const {
+  static constexpr Multivector make_reflection(const Multivector& plane) {
     return plane.grade_projection(1).normalize();
   }
 
@@ -621,7 +621,7 @@ class PgaGrade3PointGeometry final {
    * since motors live in the even subalgebra, which is independent of the point grade
    * convention. See PgaGrade1PointGeometry::motor_log for the full derivation.
    */
-  Multivector motor_log(const Multivector& motor) const {
+  static Multivector motor_log(const Multivector& motor) {
     using std::acos, std::sin, std::sqrt;
 
     const Scalar scalar_part{motor.scalar()};
@@ -659,7 +659,7 @@ class PgaGrade3PointGeometry final {
    * of the point grade convention. See PgaGrade1PointGeometry::motor_exp for the full
    * derivation.
    */
-  Multivector motor_exp(const Multivector& bivector) const {
+  static Multivector motor_exp(const Multivector& bivector) {
     using std::cos, std::sin, std::sqrt;
 
     const Scalar b12{bivector.coefficient(e12_coefficient)};
@@ -697,8 +697,8 @@ class PgaGrade3PointGeometry final {
    * the homogeneous weight w. The spatial coordinates are in e032, e013, e021, normalized
    * by w. Ideal points have w = 0 and have no finite Euclidean coordinates.
    */
-  constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
-                               Scalar& out_z) const {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
+                                      Scalar& out_z) {
     const Scalar w{point.coefficient(e123_coefficient)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract coordinates from an ideal point (w = 0).");
@@ -714,9 +714,9 @@ class PgaGrade3PointGeometry final {
    * point grade convention. The Euclidean components encode direction; the ideal components
    * encode moment.
    */
-  constexpr void extract_line(const Multivector& line, Scalar& out_dx, Scalar& out_dy,
-                              Scalar& out_dz, Scalar& out_mx, Scalar& out_my,
-                              Scalar& out_mz) const {
+  static constexpr void extract_line(const Multivector& line, Scalar& out_dx, Scalar& out_dy,
+                                     Scalar& out_dz, Scalar& out_mx, Scalar& out_my,
+                                     Scalar& out_mz) {
     out_dx = line.coefficient(e23_coefficient);
     out_dy = line.coefficient(e13_coefficient);
     out_dz = line.coefficient(e12_coefficient);
@@ -731,8 +731,8 @@ class PgaGrade3PointGeometry final {
    * signed distance from the origin (the homogeneous offset). The e1, e2, e3 coefficients
    * are the normal direction, normalized by the norm of (e1, e2, e3).
    */
-  constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
-                               Scalar& out_nz, Scalar& out_d) const {
+  static constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
+                                      Scalar& out_nz, Scalar& out_d) {
     using std::sqrt;
     const Scalar nx{plane.coefficient(e1_coefficient)};
     const Scalar ny{plane.coefficient(e2_coefficient)};

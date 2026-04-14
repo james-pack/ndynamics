@@ -44,31 +44,31 @@ class VgaGeometry final {
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
-  constexpr Scalar scalar(const Multivector& mv) const noexcept {
+  static constexpr Scalar scalar(const Multivector& mv) noexcept {
     return mv.coefficient(scalar_coefficient);
   }
 
-  constexpr Scalar e1(const Multivector& mv) const noexcept {
+  static constexpr Scalar e1(const Multivector& mv) noexcept {
     return mv.coefficient(e1_coefficient);
   }
-  constexpr Scalar e2(const Multivector& mv) const noexcept {
+  static constexpr Scalar e2(const Multivector& mv) noexcept {
     return mv.coefficient(e2_coefficient);
   }
-  constexpr Scalar e3(const Multivector& mv) const noexcept {
+  static constexpr Scalar e3(const Multivector& mv) noexcept {
     return mv.coefficient(e3_coefficient);
   }
 
-  constexpr Scalar e12(const Multivector& mv) const noexcept {
+  static constexpr Scalar e12(const Multivector& mv) noexcept {
     return mv.coefficient(e12_coefficient);
   }
-  constexpr Scalar e13(const Multivector& mv) const noexcept {
+  static constexpr Scalar e13(const Multivector& mv) noexcept {
     return mv.coefficient(e13_coefficient);
   }
-  constexpr Scalar e23(const Multivector& mv) const noexcept {
+  static constexpr Scalar e23(const Multivector& mv) noexcept {
     return mv.coefficient(e23_coefficient);
   }
 
-  constexpr Scalar e123(const Multivector& mv) const noexcept {
+  static constexpr Scalar e123(const Multivector& mv) noexcept {
     return mv.coefficient(e123_coefficient);
   }
 
@@ -78,7 +78,7 @@ class VgaGeometry final {
    * directions are the same grade, which is the fundamental limitation of VGA for rigid body
    * work: there is no algebraic distinction between a bound point and a free vector.
    */
-  constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) const noexcept {
+  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) noexcept {
     return x * Multivector::template e<0>() +  //
            y * Multivector::template e<1>() +  //
            z * Multivector::template e<2>();
@@ -89,7 +89,7 @@ class VgaGeometry final {
    * condition to check — any nonzero grade-1 element is a valid point. The zero
    * vector is excluded as it represents no geometric location.
    */
-  constexpr bool is_point(const Multivector& mv) const noexcept {
+  static constexpr bool is_point(const Multivector& mv) noexcept {
     return mv.template is_grade<1>();
   }
 
@@ -100,7 +100,7 @@ class VgaGeometry final {
    * mechanism to represent lines that do not pass through the origin. The join of a grade-1
    * vector and a grade-2 bivector produces the pseudoscalar if they span the full space.
    */
-  constexpr Multivector join(const Multivector& a, const Multivector& b) const noexcept {
+  static constexpr Multivector join(const Multivector& a, const Multivector& b) noexcept {
     return a.outer(b);
   }
 
@@ -110,7 +110,7 @@ class VgaGeometry final {
    * means that parallel subspaces have a degenerate meet — parallel planes meet at zero rather
    * than at an ideal line.
    */
-  constexpr Multivector meet(const Multivector& a, const Multivector& b) const noexcept {
+  static constexpr Multivector meet(const Multivector& a, const Multivector& b) noexcept {
     return a.regress(b);
   }
 
@@ -123,7 +123,7 @@ class VgaGeometry final {
    * Note that in VGA, rotation is always about a line through the origin. Rotation about an
    * arbitrary line in space cannot be expressed as a single rotor in VGA.
    */
-  Multivector make_rotor(const Multivector& axis, Scalar angle) const noexcept {
+  static Multivector make_rotor(const Multivector& axis, Scalar angle) noexcept {
     using std::cos, std::sin, std::sqrt;
     const Multivector b{axis.grade_projection(2)};
     const Scalar norm{sqrt(b.multiply(b.reverse()).scalar())};
@@ -143,7 +143,7 @@ class VgaGeometry final {
    * of magnitude pi in an arbitrary plane; this implementation throws in that case since
    * the result is not unique.
    */
-  Multivector motor_log(const Multivector& rotor) const noexcept {
+  static Multivector motor_log(const Multivector& rotor) noexcept {
     using std::acos, std::sin, std::sqrt;
 
     const Scalar cos_half_angle{rotor.scalar()};
@@ -172,7 +172,7 @@ class VgaGeometry final {
    * B = t*B_unit where B_unit is a unit bivector, the exponential returns cos(t) + sin(t)*B_unit.
    * This is used to integrate angular velocity bivectors into rotor states.
    */
-  Multivector motor_exp(const Multivector& bivector) const noexcept {
+  static Multivector motor_exp(const Multivector& bivector) noexcept {
     using std::cos, std::sin, std::sqrt;
 
     const Multivector b{bivector.grade_projection(2)};
@@ -193,8 +193,8 @@ class VgaGeometry final {
    * Extract Euclidean coordinates from a multivector. In VGA there is no homogeneous
    * weight to normalize — the coefficients of e1, e2, e3 are the coordinates directly.
    */
-  constexpr void extract_point(const Multivector& mv, Scalar& out_x, Scalar& out_y,
-                               Scalar& out_z) const noexcept {
+  static constexpr void extract_point(const Multivector& mv, Scalar& out_x, Scalar& out_y,
+                                      Scalar& out_z) noexcept {
     out_x = mv.coefficient(e1_coefficient);
     out_y = mv.coefficient(e2_coefficient);
     out_z = mv.coefficient(e3_coefficient);
@@ -203,8 +203,8 @@ class VgaGeometry final {
   /**
    * Extract Euclidean orientation from a multivector.
    */
-  constexpr void extract_orientation(const Multivector& mv, Scalar& out_w, Scalar& out_x,
-                                     Scalar& out_y, Scalar& out_z) const noexcept {
+  static constexpr void extract_orientation(const Multivector& mv, Scalar& out_w, Scalar& out_x,
+                                            Scalar& out_y, Scalar& out_z) noexcept {
     const auto norm{std::sqrt(mv.square_magnitude())};
     out_w = mv.coefficient(scalar_coefficient) / norm;
     out_x = mv.coefficient(e1_coefficient) / norm;

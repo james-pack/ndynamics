@@ -103,59 +103,59 @@ class CgaGeometry final {
 
   static constexpr Multivector e_inf() { return e_minus() + e_plus(); }
 
-  constexpr Scalar weight(const Multivector& mv) const {
+  static constexpr Scalar weight(const Multivector& mv) {
     return -(mv.left_contraction(e_inf()).scalar());
   }
 
  public:
-  constexpr Scalar scalar(const Multivector& mv) const {
+  static constexpr Scalar scalar(const Multivector& mv) {
     return mv.coefficient(scalar_coefficient);
   }
 
-  constexpr Scalar e1(const Multivector& mv) const { return mv.coefficient(e1_coefficient); }
-  constexpr Scalar e2(const Multivector& mv) const { return mv.coefficient(e2_coefficient); }
-  constexpr Scalar e3(const Multivector& mv) const { return mv.coefficient(e3_coefficient); }
-  constexpr Scalar e4(const Multivector& mv) const { return mv.coefficient(e4_coefficient); }
-  constexpr Scalar e5(const Multivector& mv) const { return mv.coefficient(e5_coefficient); }
-  constexpr Scalar e_origin(const Multivector& mv) const { return mv.coefficient(e4_coefficient); }
-  constexpr Scalar e_inf(const Multivector& mv) const { return mv.coefficient(e5_coefficient); }
+  static constexpr Scalar e1(const Multivector& mv) { return mv.coefficient(e1_coefficient); }
+  static constexpr Scalar e2(const Multivector& mv) { return mv.coefficient(e2_coefficient); }
+  static constexpr Scalar e3(const Multivector& mv) { return mv.coefficient(e3_coefficient); }
+  static constexpr Scalar e4(const Multivector& mv) { return mv.coefficient(e4_coefficient); }
+  static constexpr Scalar e5(const Multivector& mv) { return mv.coefficient(e5_coefficient); }
+  static constexpr Scalar e_origin(const Multivector& mv) { return mv.coefficient(e4_coefficient); }
+  static constexpr Scalar e_inf(const Multivector& mv) { return mv.coefficient(e5_coefficient); }
 
-  constexpr Scalar e12(const Multivector& mv) const { return mv.coefficient(e12_coefficient); }
-  constexpr Scalar e13(const Multivector& mv) const { return mv.coefficient(e13_coefficient); }
-  constexpr Scalar e14(const Multivector& mv) const { return mv.coefficient(e14_coefficient); }
-  constexpr Scalar e15(const Multivector& mv) const { return mv.coefficient(e15_coefficient); }
-  constexpr Scalar e23(const Multivector& mv) const { return mv.coefficient(e23_coefficient); }
-  constexpr Scalar e24(const Multivector& mv) const { return mv.coefficient(e24_coefficient); }
-  constexpr Scalar e25(const Multivector& mv) const { return mv.coefficient(e25_coefficient); }
-  constexpr Scalar e34(const Multivector& mv) const { return mv.coefficient(e34_coefficient); }
-  constexpr Scalar e35(const Multivector& mv) const { return mv.coefficient(e35_coefficient); }
-  constexpr Scalar e45(const Multivector& mv) const { return mv.coefficient(e45_coefficient); }
+  static constexpr Scalar e12(const Multivector& mv) { return mv.coefficient(e12_coefficient); }
+  static constexpr Scalar e13(const Multivector& mv) { return mv.coefficient(e13_coefficient); }
+  static constexpr Scalar e14(const Multivector& mv) { return mv.coefficient(e14_coefficient); }
+  static constexpr Scalar e15(const Multivector& mv) { return mv.coefficient(e15_coefficient); }
+  static constexpr Scalar e23(const Multivector& mv) { return mv.coefficient(e23_coefficient); }
+  static constexpr Scalar e24(const Multivector& mv) { return mv.coefficient(e24_coefficient); }
+  static constexpr Scalar e25(const Multivector& mv) { return mv.coefficient(e25_coefficient); }
+  static constexpr Scalar e34(const Multivector& mv) { return mv.coefficient(e34_coefficient); }
+  static constexpr Scalar e35(const Multivector& mv) { return mv.coefficient(e35_coefficient); }
+  static constexpr Scalar e45(const Multivector& mv) { return mv.coefficient(e45_coefficient); }
 
-  constexpr Scalar e123(const Multivector& mv) const { return mv.coefficient(e123_coefficient); }
-  constexpr Scalar e124(const Multivector& mv) const { return mv.coefficient(e124_coefficient); }
-  constexpr Scalar e125(const Multivector& mv) const { return mv.coefficient(e125_coefficient); }
-  constexpr Scalar e134(const Multivector& mv) const { return mv.coefficient(e134_coefficient); }
-  constexpr Scalar e135(const Multivector& mv) const { return mv.coefficient(e135_coefficient); }
-  constexpr Scalar e145(const Multivector& mv) const { return mv.coefficient(e145_coefficient); }
-  constexpr Scalar e234(const Multivector& mv) const { return mv.coefficient(e234_coefficient); }
-  constexpr Scalar e235(const Multivector& mv) const { return mv.coefficient(e235_coefficient); }
-  constexpr Scalar e245(const Multivector& mv) const { return mv.coefficient(e245_coefficient); }
-  constexpr Scalar e345(const Multivector& mv) const { return mv.coefficient(e345_coefficient); }
+  static constexpr Scalar e123(const Multivector& mv) { return mv.coefficient(e123_coefficient); }
+  static constexpr Scalar e124(const Multivector& mv) { return mv.coefficient(e124_coefficient); }
+  static constexpr Scalar e125(const Multivector& mv) { return mv.coefficient(e125_coefficient); }
+  static constexpr Scalar e134(const Multivector& mv) { return mv.coefficient(e134_coefficient); }
+  static constexpr Scalar e135(const Multivector& mv) { return mv.coefficient(e135_coefficient); }
+  static constexpr Scalar e145(const Multivector& mv) { return mv.coefficient(e145_coefficient); }
+  static constexpr Scalar e234(const Multivector& mv) { return mv.coefficient(e234_coefficient); }
+  static constexpr Scalar e235(const Multivector& mv) { return mv.coefficient(e235_coefficient); }
+  static constexpr Scalar e245(const Multivector& mv) { return mv.coefficient(e245_coefficient); }
+  static constexpr Scalar e345(const Multivector& mv) { return mv.coefficient(e345_coefficient); }
 
-  constexpr Scalar e1234(const Multivector& mv) const { return mv.coefficient(e1234_coefficient); }
-  constexpr Scalar e1235(const Multivector& mv) const { return mv.coefficient(e1235_coefficient); }
-  constexpr Scalar e1245(const Multivector& mv) const { return mv.coefficient(e1245_coefficient); }
-  constexpr Scalar e1345(const Multivector& mv) const { return mv.coefficient(e1345_coefficient); }
-  constexpr Scalar e2345(const Multivector& mv) const { return mv.coefficient(e2345_coefficient); }
+  static constexpr Scalar e1234(const Multivector& mv) { return mv.coefficient(e1234_coefficient); }
+  static constexpr Scalar e1235(const Multivector& mv) { return mv.coefficient(e1235_coefficient); }
+  static constexpr Scalar e1245(const Multivector& mv) { return mv.coefficient(e1245_coefficient); }
+  static constexpr Scalar e1345(const Multivector& mv) { return mv.coefficient(e1345_coefficient); }
+  static constexpr Scalar e2345(const Multivector& mv) { return mv.coefficient(e2345_coefficient); }
 
-  constexpr Scalar e12345(const Multivector& mv) const {
+  static constexpr Scalar e12345(const Multivector& mv) {
     return mv.coefficient(e12345_coefficient);
   }
 
-  constexpr Scalar e_plus(const Multivector& mv) const {
+  static constexpr Scalar e_plus(const Multivector& mv) {
     return mv.coefficient(e12345_coefficient);
   }
-  constexpr Scalar e_minus(const Multivector& mv) const {
+  static constexpr Scalar e_minus(const Multivector& mv) {
     return mv.coefficient(e12345_coefficient);
   }
 
@@ -169,7 +169,7 @@ class CgaGeometry final {
    * division by the e0 coefficient. The caller must not scale the result of this method
    * without accounting for the effect on extract_point.
    */
-  constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) const {
+  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) {
     const Scalar half_norm_sq{(x * x + y * y + z * z) / Scalar{2}};
     return e_origin() + x * Multivector::template e<0>() + y * Multivector::template e<1>() +
            z * Multivector::template e<2>() + half_norm_sq * e_inf();
@@ -181,7 +181,7 @@ class CgaGeometry final {
    * points from general grade-1 elements such as spheres (which are non-null). A point
    * at infinity has zero inner product with e_inf and is excluded by the weight check.
    */
-  constexpr bool is_point(const Multivector& mv) const {
+  static constexpr bool is_point(const Multivector& mv) {
     if (!mv.template is_grade<1>()) {
       return false;
     }
@@ -203,7 +203,7 @@ class CgaGeometry final {
    * through the point at infinity). The null condition distinguishes lines from circles,
    * which are also grade-3 but non-null.
    */
-  /*constexpr*/ bool is_line(const Multivector& mv) const {
+  static /*constexpr*/ bool is_line(const Multivector& mv) {
     if (!mv.template is_grade<2>()) {
       LOG(INFO) << "CgaGeometryModel::is_line() -- not grade 2.";
       return false;
@@ -225,7 +225,7 @@ class CgaGeometry final {
    * Circles and lines are almost the same entities in CGA. A line is just a circle with infinite
    * radius.
    */
-  constexpr bool is_circle(const Multivector& mv) const {
+  static constexpr bool is_circle(const Multivector& mv) {
     if (!mv.template is_grade<2>()) {
       return false;
     }
@@ -248,7 +248,7 @@ class CgaGeometry final {
    * condition distinguishes planes from finite points, which are also null grade-1 elements
    * but do not contain e_inf.
    */
-  constexpr bool is_plane(const Multivector& mv) const {
+  static constexpr bool is_plane(const Multivector& mv) {
     if (!mv.template is_grade<1>()) {
       return false;
     }
@@ -272,7 +272,7 @@ class CgaGeometry final {
    * approach as in PGA with points as grade-1 multivectors. This reflects the conformal
    * embedding's structural similarity to projective geometry at the level of the outer product.
    */
-  constexpr Multivector join(const Multivector& a, const Multivector& b) const {
+  static constexpr Multivector join(const Multivector& a, const Multivector& b) {
     return a.outer(b);
   }
 
@@ -282,7 +282,7 @@ class CgaGeometry final {
    * intersection of a sphere and a plane is a circle, and so on. The regressive product
    * serves as meet in CGA for the same structural reason as in PGA with grade-1 points.
    */
-  constexpr Multivector meet(const Multivector& a, const Multivector& b) const {
+  static constexpr Multivector meet(const Multivector& a, const Multivector& b) {
     return a.regress(b);
   }
 
@@ -293,7 +293,7 @@ class CgaGeometry final {
    * in the larger 5D space — the additional conformal dimensions are unaffected by a pure
    * spatial rotation.
    */
-  Multivector make_rotor(const Multivector& axis, Scalar angle) const {
+  static Multivector make_rotor(const Multivector& axis, Scalar angle) {
     using std::cos, std::sin, std::sqrt;
 
     // Extract the Euclidean bivector from the axis — the spatial rotation plane.
@@ -316,7 +316,7 @@ class CgaGeometry final {
    * The sign convention follows from the CGA rotor exponential where the translation
    * generator is -(1/2) * t * e_inf for displacement t.
    */
-  constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) const {
+  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
     const Scalar half{Scalar{1} / Scalar{2}};
     const Multivector t{dx * Multivector::template e<0>() + dy * Multivector::template e<1>() +
                         dz * Multivector::template e<2>()};
@@ -332,7 +332,7 @@ class CgaGeometry final {
    * directly, CGA elements may require normalization to ensure V * reverse(V) = ±1 before
    * use in the sandwich product.
    */
-  Multivector make_reflection(const Multivector& element) const {
+  static Multivector make_reflection(const Multivector& element) {
     const Scalar scale{element.multiply(element.reverse()).scalar()};
     if (scale < Algebra::EPSILON && scale > -Algebra::EPSILON) {
       except<std::domain_error>("Cannot construct reflection versor from a null element.");
@@ -347,7 +347,7 @@ class CgaGeometry final {
    * operates in the 5D conformal space — the Euclidean bivector components are those not
    * involving e_plus or e_minus, and the translational components involve e_inf.
    */
-  Multivector motor_log(const Multivector& motor) const {
+  static Multivector motor_log(const Multivector& motor) {
     using std::acos, std::sin, std::sqrt;
 
     const Scalar scalar_part{motor.scalar()};
@@ -385,7 +385,7 @@ class CgaGeometry final {
    * conformal embedding — the translational generator uses e_inf rather than the ideal
    * line elements of PGA.
    */
-  Multivector motor_exp(const Multivector& bivector) const {
+  static Multivector motor_exp(const Multivector& bivector) {
     using std::cos, std::sin, std::sqrt;
 
     const Scalar b01{bivector.coefficient(0b00011)};
@@ -425,8 +425,8 @@ class CgaGeometry final {
    * The e0 null vector is (e_minus - e_plus)/2. Its coefficient in a CGA multivector is
    * recovered via the inner product with e_inf, since e0 * e_inf = -1 under the CGA metric.
    */
-  constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
-                               Scalar& out_z) const {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
+                                      Scalar& out_z) {
     // The weight under standard normalization is -point * e_inf (scalar part of inner product).
     const Scalar w{-(point.left_contraction(e_inf())).scalar()};
     if (w < Algebra::EPSILON && w > -Algebra::EPSILON) {
@@ -446,7 +446,7 @@ class CgaGeometry final {
    * of the direction part.
    */
   void extract_line(const Multivector& line, Scalar& out_dx, Scalar& out_dy, Scalar& out_dz,
-                    Scalar& out_mx, Scalar& out_my, Scalar& out_mz) const {
+                    Scalar& out_mx, Scalar& out_my, Scalar& out_mz) {
     using std::sqrt;
 
     // In CGA a line is grade-3. The direction lives in the e_inf ^ e_i ^ e_j components
@@ -472,8 +472,8 @@ class CgaGeometry final {
    * The normal is recovered from the e1, e2, e3 components and the distance from the e0
    * component, after normalizing by the magnitude of the normal part.
    */
-  constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
-                               Scalar& out_nz, Scalar& out_d) const {
+  static constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
+                                      Scalar& out_nz, Scalar& out_d) {
     using std::sqrt;
     const Scalar nx{plane.coefficient(0b00001)};
     const Scalar ny{plane.coefficient(0b00010)};

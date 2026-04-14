@@ -34,15 +34,15 @@ concept GeometryModel =
      * and the construction is not a simple grade-1 embedding. The caller must
      * treat the result as opaque and never assume a particular grade.
      */
-    requires(const G& g, G::Scalar x, G::Scalar y, G::Scalar z) {
-      { g.make_point(x, y, z) } -> std::same_as<typename G::Multivector>;
+    requires(G::Scalar x, G::Scalar y, G::Scalar z) {
+      { G::make_point(x, y, z) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
      * Test if a given multivector represents a point.
      */
-    requires(G& g, const G::Multivector& mv) {
-      { g.is_point(mv) } -> std::same_as<bool>;
+    requires(const G::Multivector& mv) {
+      { G::is_point(mv) } -> std::same_as<bool>;
     } &&
 
     /**
@@ -57,8 +57,8 @@ concept GeometryModel =
      * what is expressible in PGA or CGA. Exposing join as a named operation
      * shields the caller from which product serves this role in each algebra.
      */
-    requires(const G& g, const G::Multivector& a, const G::Multivector& b) {
-      { g.join(a, b) } -> std::same_as<typename G::Multivector>;
+    requires(const G::Multivector& a, const G::Multivector& b) {
+      { G::join(a, b) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
@@ -73,8 +73,8 @@ concept GeometryModel =
      * can recover intersection curves of higher-order surfaces, which have no
      * equivalent in lower-dimensional algebras.
      */
-    requires(const G& g, const G::Multivector& a, const G::Multivector& b) {
-      { g.meet(a, b) } -> std::same_as<typename G::Multivector>;
+    requires(const G::Multivector& a, const G::Multivector& b) {
+      { G::meet(a, b) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
@@ -91,8 +91,8 @@ concept GeometryModel =
      * double-embedding structure, requiring a construction step that differs
      * from a naive bivector exponential.
      */
-    requires(const G& g, const G::Multivector& axis, G::Scalar angle) {
-      { g.make_rotor(axis, angle) } -> std::same_as<typename G::Multivector>;
+    requires(const G::Multivector& axis, G::Scalar angle) {
+      { G::make_rotor(axis, angle) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
@@ -108,8 +108,8 @@ concept GeometryModel =
      * that structure, producing a bivector that generates motions consistent
      * with the double embedding.
      */
-    requires(const G& g, const G::Multivector& motor) {
-      { g.motor_log(motor) } -> std::same_as<typename G::Multivector>;
+    requires(const G::Multivector& motor) {
+      { G::motor_log(motor) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
@@ -123,8 +123,8 @@ concept GeometryModel =
      * DCGA the exponential must produce a motor that acts consistently on
      * both embedded copies of the geometry.
      */
-    requires(const G& g, const G::Multivector& bivector) {
-      { g.motor_exp(bivector) } -> std::same_as<typename G::Multivector>;
+    requires(const G::Multivector& bivector) {
+      { G::motor_exp(bivector) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
@@ -141,8 +141,8 @@ concept GeometryModel =
      * read coordinates directly from the multivector components.
      */
     requires {
-      requires requires(G& g, const G::Multivector& point, G::Scalar& out_x, G::Scalar& out_y,
-                        G::Scalar& out_z) { g.extract_point(point, out_x, out_y, out_z); };
+      requires requires(const G::Multivector& point, G::Scalar& out_x, G::Scalar& out_y,
+                        G::Scalar& out_z) { G::extract_point(point, out_x, out_y, out_z); };
       // } &&
 
       // requires {
