@@ -70,6 +70,12 @@ using Pga = Algebra<T, 3, 0, 1>;
 template <typename T = DefaultScalarType>
 using Cga = Algebra<T, 4, 1, 0>;
 
+// TCGA, time-extended CGA, is a 4D vectorspace (presumably, time plus 3 spatial dimensions)
+// geometric algebra with two additional dimensions. It can model lines that do not pass through the
+// origin as well as translations.
+template <typename T = DefaultScalarType>
+using Tcga = Algebra<T, 5, 1, 0>;
+
 // The spacetime algebra is primarily used in relativistic physics applications and research.
 // Note that we assume Cl(1, 3) as the spacetime algebra here, rather than
 // Cl(3, 1).
@@ -79,5 +85,10 @@ using Spacetime = Algebra<T, 1, 3, 0>;
 // The other expression of the spacetime algebra.
 template <typename T = DefaultScalarType>
 using SpacetimePrime = Algebra<T, 3, 1, 0>;
+
+// The conformal spacetime algebra is a conformal form of STA. It includes the two conformal
+// dimensions to model rotations and translations in the STA.
+template <typename T = DefaultScalarType>
+using Csta = Algebra<T, 2, 4, 0>;
 
 }  // namespace ndyn::math
