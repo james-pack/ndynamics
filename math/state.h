@@ -227,7 +227,7 @@ class StateBuilder final {
     const Multivector translator =
         Geometry::make_translator(time_origin_, position_x_, position_y_, position_z_);
 
-    out_state.set_element<0>(translator * rotor);
+    out_state.template set_element<0>(translator * rotor);
 
     if constexpr (N > 1) {
       // 2. Construct the Kinematic Bivector: K = Ω + V + A
@@ -248,7 +248,7 @@ class StateBuilder final {
       kinematic += acceleration_y_ * (Geometry::e2() * (Geometry::e_plus() - Geometry::e_minus()));
       kinematic += acceleration_z_ * (Geometry::e3() * (Geometry::e_plus() - Geometry::e_minus()));
 
-      out_state.set_element<1>(kinematic);
+      out_state.template set_element<1>(kinematic);
     }
   }
 };
