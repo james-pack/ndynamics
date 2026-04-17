@@ -5,15 +5,14 @@
 namespace ndyn::math {
 
 /**
- * A GeometryModel encodes the relationship between abstract multivector elements
- * and geometric primitives for a specific geometric algebra and embedding. It is
- * intentionally minimal. It only specifies concepts that are at the intersection
- * of all geometries.
+ * GeometryModel details which operators and geometric primitives are available in all geometries.
  *
- * The separation of concerns is as follows:
- *   - The multivector owns algebraic operations (product, reverse, grade, norm, etc.)
- *   - The GeometryModel owns geometric interpretation (what a point *is* in this
- *     geometric model, how lines are constructed, which product is join vs meet, etc.)
+ * General separation of concerns:
+ *   - The Multivector owns algebraic operations (product, reverse, grade, norm, etc.) and exists as
+ * part of an algebra.
+ *   - The geometry class owns geometric interpretation of the Multivector and specifies how
+ * operations and geometric primitives are modelled in Multivectors.
+ *   - These GeometryModels provide contracts to make it easier to swap between geometries.
  */
 template <typename G>
 concept GeometryModel =
@@ -24,37 +23,11 @@ concept GeometryModel =
     } &&
 
     /**
-     * Embed a Euclidean point into the algebra's representation. The encoding
-     * of a point as a multivector is not universal — in PGA a point is a
-     * trivector (the meet of three planes), while in CGA a point is a null
-     * vector on the hyperboloid. In STA a point carries an implicit timelike
-     * component that must be supplied by the geometry model relative to a
-     * chosen reference frame — the three scalar coordinates are purely spatial.
-     * In DCGA the point is embedded twice into the higher-dimensional space,
-     * and the construction is not a simple grade-1 embedding. The caller must
-     * treat the result as opaque and never assume a particular grade.
-     */
-    requires(G::Scalar x, G::Scalar y, G::Scalar z) {
-      { G::make_point(x, y, z) } -> std::same_as<typename G::Multivector>;
-    } &&
-
-    /**
-     * Test if a given multivector represents a point.
-     */
-    requires(const G::Multivector& mv) {
-      { G::is_point(mv) } -> std::same_as<bool>;
-    } &&
-
-    /**
      * Compute the join (span) of two geometric elements. The join answers
      * "what is the smallest element containing both operands" — point+point
      * gives a line, point+line gives a plane. In PGA the join is the
      * regressive product (the dual of the outer product), while in CGA it
-     * is the outer product directly. In STA the join produces elements that
-     * may have mixed spacetime character — the result of joining two spatial
-     * points depends on the chosen frame. In DCGA the join operates in the
-     * higher-dimensional space and the result encodes surface geometry beyond
-     * what is expressible in PGA or CGA. Exposing join as a named operation
+     * is the outer product directly. Exposing join as a named operation
      * shields the caller from which product serves this role in each algebra.
      */
     requires(const G::Multivector& a, const G::Multivector& b) {
@@ -66,12 +39,7 @@ concept GeometryModel =
      * answers "what is the largest element contained in both operands" —
      * plane+plane gives a line, plane+line gives a point. In PGA the meet is
      * the outer product, while in CGA it is the regressive product — the
-     * inversion of roles between PGA and CGA is precisely why this must be
-     * part of the geometry model. In STA the meet of two hyperplanes yields a
-     * line whose character (spacelike, timelike, or null) depends on the
-     * metric signature and the orientations of the planes. In DCGA the meet
-     * can recover intersection curves of higher-order surfaces, which have no
-     * equivalent in lower-dimensional algebras.
+     * inversion of roles between PGA and CGA.
      */
     requires(const G::Multivector& a, const G::Multivector& b) {
       { G::meet(a, b) } -> std::same_as<typename G::Multivector>;
@@ -80,33 +48,16 @@ concept GeometryModel =
     /**
      * Construct a rotor representing a rotation about the given axis element
      * by the given angle in radians. The axis is a line element in the
-     * algebra's representation — not a bare direction vector — because in
-     * PGA rotation is about a line in space rather than a direction through
-     * the origin. In CGA the axis line is a different grade object but the
-     * exponential map structure is preserved. In STA a spatial rotation must
-     * be constructed within a chosen reference frame — the axis line element
-     * must be purely spacelike, and the geometry model is responsible for
-     * enforcing this constraint relative to the frame it encodes. In DCGA
-     * the rotor acts on the doubly-embedded space and must preserve the
-     * double-embedding structure, requiring a construction step that differs
-     * from a naive bivector exponential.
+     * geometry's representation.
      */
-    requires(const G::Multivector& axis, G::Scalar angle) {
-      { G::make_rotor(axis, angle) } -> std::same_as<typename G::Multivector>;
+    requires(G::Scalar nx, G::Scalar ny, G::Scalar nz, G::Scalar angle) {
+      { G::make_rotor(nx, ny, nz, angle) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
      * Compute the logarithm of a motor, returning a bivector in the Lie
      * algebra of the motor group. This is the foundation for both motor
-     * interpolation (ScLERP) and velocity integration. In PGA and CGA the
-     * motor group is isomorphic to SE(3) and its Lie algebra is well-defined
-     * in terms of the even subalgebra. In STA the motor group is a subgroup
-     * of the Lorentz group and the Lie algebra bivectors encode both spatial
-     * rotations and boosts — the logarithm must correctly decompose these,
-     * which requires knowledge of the metric signature. In DCGA the motor
-     * group acts on the doubly-embedded space and the logarithm must respect
-     * that structure, producing a bivector that generates motions consistent
-     * with the double embedding.
+     * interpolation (ScLERP) and velocity integration.
      */
     requires(const G::Multivector& motor) {
       { G::motor_log(motor) } -> std::same_as<typename G::Multivector>;
@@ -116,40 +67,157 @@ concept GeometryModel =
      * Compute the exponential of a bivector, returning a motor. This is the
      * inverse of motor_log and is used to integrate angular and linear
      * velocities back into a motor representing the resulting rigid body
-     * state. In STA the bivector may encode a boost as well as a spatial
-     * rotation, and the exponential must produce a valid Lorentz motor rather
-     * than a Euclidean one — the geometry model determines which components
-     * of the bivector are interpreted as rotational vs boost generators. In
-     * DCGA the exponential must produce a motor that acts consistently on
-     * both embedded copies of the geometry.
+     * state.
      */
     requires(const G::Multivector& bivector) {
       { G::motor_exp(bivector) } -> std::same_as<typename G::Multivector>;
     } &&
 
     /**
-     * Extract Euclidean coordinates from a point element. Normalization of
-     * the homogeneous weight is GA-specific — in PGA the weight is the
-     * coefficient of e123, in CGA the normalization involves the inner product
-     * with the point at infinity. In STA the spatial coordinates must be
-     * extracted relative to the reference frame encoded by the geometry model
-     * — the timelike component is consumed by the extraction and not surfaced
-     * to the caller, as it is frame metadata rather than spatial position. In
-     * DCGA the two embedded copies of the point must agree after
-     * dehomogenization, and the extraction must verify or enforce this
-     * consistency before returning coordinates. The caller must not attempt to
-     * read coordinates directly from the multivector components.
+     * Embed a Euclidean point into the algebra's representation. Primarily, this method should be
+     * used to bridge a user's mental model to the geometry.
+     */
+    requires(G::Scalar x, G::Scalar y, G::Scalar z) {
+      { G::make_point(x, y, z) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    /**
+     * Extract Euclidean coordinates from a point element. This is the inverse of the make_point()
+     * method.
+     */
+    requires(const G::Multivector& point, G::Scalar& out_x, G::Scalar& out_y, G::Scalar& out_z) {
+      G::extract_point(point, out_x, out_y, out_z);
+    } &&
+
+    /**
+     * Test if a given multivector represents a point in the geometry.
+     */
+    requires(const G::Multivector& mv) {
+      { G::is_point(mv) } -> std::same_as<bool>;
+    };
+
+template <typename G>
+concept GeometryWithTime =
+    GeometryModel<G> &&
+
+    requires(G::Scalar t, G::Scalar x, G::Scalar y, G::Scalar z) {
+      { G::make_point(t, x, y, z) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(const G::Multivector& point, G::Scalar& out_t, G::Scalar& out_x, G::Scalar& out_y,
+             G::Scalar& out_z) { G::extract_point(point, out_t, out_x, out_y, out_z); };
+
+template <typename G>
+concept EuclideanGeometry =  //
+    GeometryModel<G> &&
+
+    /**
+     * Factory methods to create Multivectors representing the Euclidean basis vectors.
      */
     requires {
-      requires requires(const G::Multivector& point, G::Scalar& out_x, G::Scalar& out_y,
-                        G::Scalar& out_z) { G::extract_point(point, out_x, out_y, out_z); };
-      // } &&
+      { G::x() } -> std::same_as<typename G::Multivector>;
+    } &&
 
-      // requires {
-      //   requires requires(G& g, const G::Multivector& point, G::Scalar& out_w, G::Scalar& out_x,
-      //                     G::Scalar& out_y, G::Scalar& out_z) {
-      //     g.extract_orientation(point, out_w, out_x, out_y, out_z);
-      //   };
+    requires {
+      { G::y() } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires {
+      { G::z() } -> std::same_as<typename G::Multivector>;
+    };
+
+template <typename G>
+concept EuclideanGeometryWithTime =  //
+    EuclideanGeometry<G> &&          //
+    GeometryWithTime<G> &&           //
+
+    requires {
+      { G::t() } -> std::same_as<typename G::Multivector>;
+    };
+
+template <typename G>
+concept SpatialConformalGeometryModel =  //
+    GeometryModel<G> &&                  //
+
+    /**
+     * Factory methods to create Multivectors representing general 3-space basis vectors. Note that
+     * these bases use the terminology of relativity, even though the standard algebra used in
+     * relativity (STA) cannot be used to build a conformal geometry. (Note that you can use the
+     * CSTA (Conformal Spacetime Algebra) if you need a conformal geometry with STA.)
+     *
+     * Traditionally, gamma0 is time (see ConformalGeometryWithTime below), and gammas 1,2,3
+     * represent spatial dimensions.
+     */
+    requires {
+      { G::gamma1() } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires {
+      { G::gamma2() } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires {
+      { G::gamma3() } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(G::Scalar nx, G::Scalar ny, G::Scalar nz, G::Scalar px, G::Scalar py, G::Scalar pz) {
+      { G::make_reflector(nx, ny, nz, px, py, pz) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(G::Scalar cx, G::Scalar cy, G::Scalar cz, G::Scalar scale) {
+      { G::make_dilator(cx, cy, cz, scale) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(G::Scalar px, G::Scalar py, G::Scalar pz) {
+      { G::make_translator(px, py, pz) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(G::Scalar nx, G::Scalar ny, G::Scalar nz, G::Scalar px, G::Scalar py, G::Scalar pz) {
+      { G::make_plane(nx, ny, nz, px, py, pz) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(const G::Multivector& v) {
+      { G::is_plane(v) } -> std::same_as<bool>;
+    } &&
+
+    requires(G::Scalar px1, G::Scalar py1, G::Scalar pz1, G::Scalar px2, G::Scalar py2,
+             G::Scalar pz2) {
+      { G::make_line(px1, py1, pz1, px2, py2, pz2) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(const G::Multivector& v) {
+      { G::is_line(v) } -> std::same_as<bool>;
+    } &&
+
+    requires(G::Scalar cx, G::Scalar cy, G::Scalar cz, G::Scalar nx, G::Scalar ny, G::Scalar nz,
+             G::Scalar radius) {
+      { G::make_circle(cx, cy, cz, nx, ny, nz, radius) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(const G::Multivector& v) {
+      { G::is_circle(v) } -> std::same_as<bool>;
+    } &&
+
+    true;
+
+template <typename G>
+concept ConformalGeometryModel =         //
+    SpatialConformalGeometryModel<G> &&  //
+    GeometryWithTime<G> &&               //
+
+    requires {
+      { G::gamma0() } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(G::Scalar ct, G::Scalar cx, G::Scalar cy, G::Scalar cz, G::Scalar scale) {
+      { G::make_dilator(ct, cx, cy, cz, scale) } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    requires(G::Scalar nt, G::Scalar nx, G::Scalar ny, G::Scalar nz, G::Scalar pt, G::Scalar px,
+             G::Scalar py, G::Scalar pz) {
+      {
+        G::make_reflector(nt, nx, ny, nz, pt, px, py, pz)
+      } -> std::same_as<typename G::Multivector>;
     };
 
 }  // namespace ndyn::math

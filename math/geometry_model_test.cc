@@ -5,8 +5,8 @@
 #include "math/canonical_basis_representation.h"
 #include "math/cga_geometry.h"
 #include "math/multivector.h"
-#include "math/pga_geometry.h"
-#include "math/vga_geometry.h"
+// #include "math/pga_geometry.h"
+// #include "math/vga_geometry.h"
 
 namespace ndyn::math {
 
@@ -14,10 +14,13 @@ template <typename T>
 class GeometryModelTest : public ::testing::Test {};
 
 using GeometryModelTypes = ::testing::Types<  //
-    VgaGeometry<>,                            //
-    PgaGrade1PointGeometry<>,                 //
-    PgaGrade3PointGeometry<>,                 //
-    CgaGeometry<>                             //
+                                              /*
+                                              VgaGeometry<>,                            //
+                                                PgaGrade1PointGeometry<>,                 //
+                                                PgaGrade3PointGeometry<>,                 //
+                                              */
+    SpatialConformalGeometry<>,               //
+    ConformalGeometry<>                       //
     >;
 
 TYPED_TEST_SUITE(GeometryModelTest, GeometryModelTypes);

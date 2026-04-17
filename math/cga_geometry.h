@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "glog/logging.h"
 #include "math/abs.h"
 #include "math/algebra.h"
@@ -9,96 +11,101 @@
 namespace ndyn::math {
 
 /**
- * GeometryModel implementation for CGA (Conformal Geometric Algebra, R(4,1)).
+ * A GeometryModel implementation on a conformal geometric algebra.
  *
- * CGA embeds 3D Euclidean geometry into a 5D space with signature R(4,1) by adding two
+ * Base CGA embeds 3D Euclidean geometry into a 5D space with signature Cl(4,1) by adding two
  * basis vectors beyond the three Euclidean ones:
- *   e_plus  (e<3>, e_plus^2 = +1): the conformal basis vector
- *   e_minus (e<4>, e_minus^2 = -1): the conformal basis vector
+ *   e_plus  (e_plus^2 = +1)
+ *   e_minus (e_minus^2 = -1)
  *
- * These are typically recombined into the null basis:
- *   e0 = (e_minus - e_plus) / 2  — the point at the origin (e<4> - e<3>) / 2
- *   e_inf = e_minus + e_plus     — the point at infinity  (e<4> + e<3>)
+ * These are typically recombined as:
+ *   e_orig = (e_minus - e_plus) / 2  — the point at the origin
+ *   e_inf = e_minus + e_plus     — the point at infinity
  *
+ * When extended with a time basis, the algebra is Cl(5,1) known here as Time-extended CGA (TCGA).
+
  * Point embedding (standard normalization):
- *   X = e0 + p + (1/2)|p|^2 * e_inf
- *   where p = px*e1 + py*e2 + pz*e3
+ *   X = e_orig + p + (1/2)|p|^2 * e_inf
+ *   where p = pt * e0 + px * e1 + py * e2 + pz * e3
  *
- * This null vector representation satisfies X * X = 0 for any finite Euclidean point p.
- * The e0 coefficient is fixed at 1 under standard normalization, allowing recovery of
- * Euclidean coordinates by dividing the e1, e2, e3 coefficients by the e0 coefficient.
+ * This vector representation satisfies X * X = 0 for any finite Euclidean point p.
+ * The e_orig coefficient is fixed at 1 under standard normalization, allowing recovery of
+ * Euclidean coordinates by dividing the e0, e1, e2, e3 coefficients by the e_orig coefficient.
  *
- * Basis convention (5 basis vectors):
- *   e<0> = e1 (x), e<1> = e2 (y), e<2> = e3 (z)
- *   e<3> = e_plus  (e_plus^2  = +1)
- *   e<4> = e_minus (e_minus^2 = -1)
+ * Basis convention (non-time-extended):
+ *   e<0> = x, e<1> = y, e<2> = z
+ *   e<3> = e_plus
+ *   e<4> = e_minus
  *
- * The CGA algebra used here is R(4,1) = Algebra<T, 4, 1, 0>.
+ * Basis convention (time-extended):
+ *   e<0> = t, e<1> = x, e<2> = y, e<3> = z
+ *   e<4> = e_plus
+ *   e<5> = e_minus
  */
-template <typename T = DefaultScalarType>
-class CgaGeometry final {
+template <bool TIME_EXTENDED, typename T = DefaultScalarType>
+class ConformalGeometryType final {
  public:
-  using Algebra = Cga<T>;
+  static constexpr size_t NUM_EUCLIDEAN_DIMENSIONS{TIME_EXTENDED ? 4 : 3};
+
+  using Algebra = math::Algebra<T, NUM_EUCLIDEAN_DIMENSIONS + 1, 1, 0>;
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
  private:
-  static constexpr size_t scalar_coefficient{0};
+  static constexpr size_t TIME_VECTOR_INDEX{TIME_EXTENDED ? 0 : std::numeric_limits<size_t>::max()};
+  static constexpr size_t X_VECTOR_INDEX{TIME_EXTENDED ? 1 : 0};
+  static constexpr size_t Y_VECTOR_INDEX{X_VECTOR_INDEX + 1};
+  static constexpr size_t Z_VECTOR_INDEX{Y_VECTOR_INDEX + 1};
 
-  static constexpr size_t e1_coefficient{1};
-  static constexpr size_t e2_coefficient{2};
-  static constexpr size_t e3_coefficient{4};
-  static constexpr size_t e4_coefficient{8};
-  static constexpr size_t e5_coefficient{16};
+  static constexpr size_t TIME_BASIS_COEFFICIENT{1UL << TIME_VECTOR_INDEX};
+  static constexpr size_t X_BASIS_COEFFICIENT{1UL << X_VECTOR_INDEX};
+  static constexpr size_t Y_BASIS_COEFFICIENT{1UL << Y_VECTOR_INDEX};
+  static constexpr size_t Z_BASIS_COEFFICIENT{1UL << Z_VECTOR_INDEX};
 
-  static constexpr size_t e12_coefficient{e1_coefficient | e2_coefficient};
-  static constexpr size_t e13_coefficient{e1_coefficient | e3_coefficient};
-  static constexpr size_t e14_coefficient{e1_coefficient | e4_coefficient};
-  static constexpr size_t e15_coefficient{e1_coefficient | e5_coefficient};
-  static constexpr size_t e23_coefficient{e2_coefficient | e3_coefficient};
-  static constexpr size_t e24_coefficient{e2_coefficient | e4_coefficient};
-  static constexpr size_t e25_coefficient{e2_coefficient | e5_coefficient};
-  static constexpr size_t e34_coefficient{e3_coefficient | e4_coefficient};
-  static constexpr size_t e35_coefficient{e3_coefficient | e5_coefficient};
-  static constexpr size_t e45_coefficient{e4_coefficient | e5_coefficient};
+  static constexpr Scalar get_t(const Multivector& mv) {
+    return mv.template coefficient<TIME_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_x(const Multivector& mv) {
+    return mv.template coefficient<X_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_y(const Multivector& mv) {
+    return mv.template coefficient<Y_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_z(const Multivector& mv) {
+    return mv.template coefficient<Z_BASIS_COEFFICIENT>();
+  }
 
-  static constexpr size_t e123_coefficient{e1_coefficient | e2_coefficient | e3_coefficient};
-  static constexpr size_t e124_coefficient{e1_coefficient | e2_coefficient | e4_coefficient};
-  static constexpr size_t e125_coefficient{e1_coefficient | e2_coefficient | e5_coefficient};
-  static constexpr size_t e134_coefficient{e1_coefficient | e3_coefficient | e4_coefficient};
-  static constexpr size_t e135_coefficient{e1_coefficient | e3_coefficient | e5_coefficient};
-  static constexpr size_t e145_coefficient{e1_coefficient | e4_coefficient | e5_coefficient};
-  static constexpr size_t e234_coefficient{e2_coefficient | e3_coefficient | e4_coefficient};
-  static constexpr size_t e235_coefficient{e2_coefficient | e3_coefficient | e5_coefficient};
-  static constexpr size_t e245_coefficient{e2_coefficient | e4_coefficient | e5_coefficient};
-  static constexpr size_t e345_coefficient{e3_coefficient | e4_coefficient | e5_coefficient};
-
-  static constexpr size_t e1234_coefficient{e1_coefficient | e2_coefficient | e3_coefficient |
-                                            e4_coefficient};
-  static constexpr size_t e1235_coefficient{e1_coefficient | e2_coefficient | e3_coefficient |
-                                            e5_coefficient};
-  static constexpr size_t e1245_coefficient{e1_coefficient | e2_coefficient | e4_coefficient |
-                                            e5_coefficient};
-  static constexpr size_t e1345_coefficient{e1_coefficient | e3_coefficient | e4_coefficient |
-                                            e5_coefficient};
-  static constexpr size_t e2345_coefficient{e2_coefficient | e3_coefficient | e4_coefficient |
-                                            e5_coefficient};
-
-  static constexpr size_t e12345_coefficient{e1_coefficient | e2_coefficient | e3_coefficient |
-                                             e4_coefficient | e5_coefficient};
+  static constexpr Scalar get_tx(const Multivector& mv) {
+    return mv.template coefficient<TIME_BASIS_COEFFICIENT | X_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_ty(const Multivector& mv) {
+    return mv.template coefficient<TIME_BASIS_COEFFICIENT | Y_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_tz(const Multivector& mv) {
+    return mv.template coefficient<TIME_BASIS_COEFFICIENT | Z_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_xy(const Multivector& mv) {
+    return mv.template coefficient<X_BASIS_COEFFICIENT | Y_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_xz(const Multivector& mv) {
+    return mv.template coefficient<X_BASIS_COEFFICIENT | Z_BASIS_COEFFICIENT>();
+  }
+  static constexpr Scalar get_yz(const Multivector& mv) {
+    return mv.template coefficient<Y_BASIS_COEFFICIENT | Z_BASIS_COEFFICIENT>();
+  }
 
   // The null basis vectors e0 and e_inf are the conformal origin and infinity respectively.
   // They are not basis vectors of the algebra directly but are linear combinations of e_plus
   // and e_minus. These helpers keep the construction readable throughout the implementation.
-  static constexpr Multivector e_plus() { return Multivector::template e<3>(); }
-  static constexpr Multivector e_minus() { return Multivector::template e<4>(); }
+  static constexpr Multivector e_plus() { return Multivector::template e<Z_VECTOR_INDEX + 1>(); }
+  static constexpr Multivector e_minus() { return Multivector::template e<Z_VECTOR_INDEX + 2>(); }
 
   // Assert that the order of the bases is as expected.
   static_assert(e_plus() * e_plus() == Multivector{1});
   static_assert(e_minus() * e_minus() == Multivector{-1});
 
   static constexpr Multivector e_origin() {
-    return (e_minus() - e_plus()) * (Scalar{1} / Scalar{2});
+    return (Scalar{1} / Scalar{2}) * (e_minus() - e_plus());
   }
 
   static constexpr Multivector e_inf() { return e_minus() + e_plus(); }
@@ -108,55 +115,195 @@ class CgaGeometry final {
   }
 
  public:
-  static constexpr Scalar scalar(const Multivector& mv) {
-    return mv.coefficient(scalar_coefficient);
+  // Factory methods for basis vectors.
+  static constexpr Multivector gamma0()
+    requires TIME_EXTENDED
+  {
+    return Multivector::template e<TIME_VECTOR_INDEX>();
+  }
+  static constexpr Multivector gamma1() { return Multivector::template e<X_VECTOR_INDEX>(); }
+  static constexpr Multivector gamma2() { return Multivector::template e<Y_VECTOR_INDEX>(); }
+  static constexpr Multivector gamma3() { return Multivector::template e<Z_VECTOR_INDEX>(); }
+
+  // Factory methods for basis bivectors.
+  static constexpr Multivector gamma01()
+    requires TIME_EXTENDED
+  {
+    return gamma0() * gamma1();
+  }
+  static constexpr Multivector gamma02()
+    requires TIME_EXTENDED
+  {
+    return gamma0() * gamma2();
+  }
+  static constexpr Multivector gamma03()
+    requires TIME_EXTENDED
+  {
+    return gamma0() * gamma3();
+  }
+  static constexpr Multivector gamma12() { return gamma1() * gamma2(); }
+  static constexpr Multivector gamma13() { return gamma1() * gamma3(); }
+  static constexpr Multivector gamma23() { return gamma2() * gamma3(); }
+
+  /**
+   * Compute the join via the outer product. In CGA the outer product of two null point
+   * vectors produces the line through them (grade-2 in the conformal sense), and the outer
+   * product of three points produces the circle or plane through them. This is the same
+   * approach as in PGA with points as grade-1 multivectors. This reflects the conformal
+   * embedding's structural similarity to projective geometry at the level of the outer product.
+   */
+  static constexpr Multivector join(const Multivector& a, const Multivector& b) noexcept {
+    return a.outer(b);
   }
 
-  static constexpr Scalar e1(const Multivector& mv) { return mv.coefficient(e1_coefficient); }
-  static constexpr Scalar e2(const Multivector& mv) { return mv.coefficient(e2_coefficient); }
-  static constexpr Scalar e3(const Multivector& mv) { return mv.coefficient(e3_coefficient); }
-  static constexpr Scalar e4(const Multivector& mv) { return mv.coefficient(e4_coefficient); }
-  static constexpr Scalar e5(const Multivector& mv) { return mv.coefficient(e5_coefficient); }
-  static constexpr Scalar e_origin(const Multivector& mv) { return mv.coefficient(e4_coefficient); }
-  static constexpr Scalar e_inf(const Multivector& mv) { return mv.coefficient(e5_coefficient); }
-
-  static constexpr Scalar e12(const Multivector& mv) { return mv.coefficient(e12_coefficient); }
-  static constexpr Scalar e13(const Multivector& mv) { return mv.coefficient(e13_coefficient); }
-  static constexpr Scalar e14(const Multivector& mv) { return mv.coefficient(e14_coefficient); }
-  static constexpr Scalar e15(const Multivector& mv) { return mv.coefficient(e15_coefficient); }
-  static constexpr Scalar e23(const Multivector& mv) { return mv.coefficient(e23_coefficient); }
-  static constexpr Scalar e24(const Multivector& mv) { return mv.coefficient(e24_coefficient); }
-  static constexpr Scalar e25(const Multivector& mv) { return mv.coefficient(e25_coefficient); }
-  static constexpr Scalar e34(const Multivector& mv) { return mv.coefficient(e34_coefficient); }
-  static constexpr Scalar e35(const Multivector& mv) { return mv.coefficient(e35_coefficient); }
-  static constexpr Scalar e45(const Multivector& mv) { return mv.coefficient(e45_coefficient); }
-
-  static constexpr Scalar e123(const Multivector& mv) { return mv.coefficient(e123_coefficient); }
-  static constexpr Scalar e124(const Multivector& mv) { return mv.coefficient(e124_coefficient); }
-  static constexpr Scalar e125(const Multivector& mv) { return mv.coefficient(e125_coefficient); }
-  static constexpr Scalar e134(const Multivector& mv) { return mv.coefficient(e134_coefficient); }
-  static constexpr Scalar e135(const Multivector& mv) { return mv.coefficient(e135_coefficient); }
-  static constexpr Scalar e145(const Multivector& mv) { return mv.coefficient(e145_coefficient); }
-  static constexpr Scalar e234(const Multivector& mv) { return mv.coefficient(e234_coefficient); }
-  static constexpr Scalar e235(const Multivector& mv) { return mv.coefficient(e235_coefficient); }
-  static constexpr Scalar e245(const Multivector& mv) { return mv.coefficient(e245_coefficient); }
-  static constexpr Scalar e345(const Multivector& mv) { return mv.coefficient(e345_coefficient); }
-
-  static constexpr Scalar e1234(const Multivector& mv) { return mv.coefficient(e1234_coefficient); }
-  static constexpr Scalar e1235(const Multivector& mv) { return mv.coefficient(e1235_coefficient); }
-  static constexpr Scalar e1245(const Multivector& mv) { return mv.coefficient(e1245_coefficient); }
-  static constexpr Scalar e1345(const Multivector& mv) { return mv.coefficient(e1345_coefficient); }
-  static constexpr Scalar e2345(const Multivector& mv) { return mv.coefficient(e2345_coefficient); }
-
-  static constexpr Scalar e12345(const Multivector& mv) {
-    return mv.coefficient(e12345_coefficient);
+  /**
+   * Compute the meet via the regressive product. In CGA the regressive product recovers
+   * the intersection of two elements — the intersection of two spheres is a circle, the
+   * intersection of a sphere and a plane is a circle, and so on. The regressive product
+   * serves as meet in CGA for the same structural reason as in PGA with grade-1 points.
+   */
+  static constexpr Multivector meet(const Multivector& a, const Multivector& b) noexcept {
+    return a.regress(b);
   }
 
-  static constexpr Scalar e_plus(const Multivector& mv) {
-    return mv.coefficient(e12345_coefficient);
+  static constexpr Multivector make_reflector(Scalar nx, Scalar ny, Scalar nz, Scalar px, Scalar py,
+                                              Scalar pz) noexcept {
+    const Scalar norm{hypot(nx, ny, nz)};
+    // Normalized components.
+    const Scalar ux = nx / norm;
+    const Scalar uy = ny / norm;
+    const Scalar uz = nz / norm;
+    // Distance of point to plane through the origin. Or, displacement of the plane through the
+    // origin to make it contain the given point.
+    const Scalar dist{px * ux + py * uy + pz * uz};
+
+    return {ux * gamma1() + uy * gamma2() + uz * gamma3() + dist * e_inf()};
   }
-  static constexpr Scalar e_minus(const Multivector& mv) {
-    return mv.coefficient(e12345_coefficient);
+
+  static constexpr Multivector make_reflector(Scalar nt, Scalar nx, Scalar ny, Scalar nz, Scalar pt,
+                                              Scalar px, Scalar py, Scalar pz) noexcept
+    requires TIME_EXTENDED
+  {
+    const Scalar norm{hypot(nt, nx, ny, nz)};
+    // Normalized components.
+    const Scalar ut = nt / norm;
+    const Scalar ux = nx / norm;
+    const Scalar uy = ny / norm;
+    const Scalar uz = nz / norm;
+    // Distance of point to plane through the origin. Or, displacement of the plane through the
+    // origin to make it contain the given point.
+    const Scalar dist{pt * ut + px * ux + py * uy + pz * uz};
+
+    return {ut * gamma0() + ux * gamma1() + uy * gamma2() + uz * gamma3() + dist * e_inf()};
+  }
+
+  /**
+   * Construct a CGA rotor in the given plane to rotate by angle radians. The plane of rotation is
+   * given by its normal.
+   */
+  static Multivector make_rotor(Scalar nx, Scalar ny, Scalar nz, Scalar angle) {
+    using std::cos, std::sin;
+
+    const Scalar norm{hypot(nx, ny, nz)};
+    if (norm < Algebra::EPSILON) {
+      except<std::domain_error>("Degenerate axis: cannot construct rotor from a null axis.");
+    }
+
+    const Scalar half_angle{angle / Scalar{2}};
+    const Multivector rotation_plane{nx / norm * gamma23()    //
+                                     - ny / norm * gamma13()  //
+                                     + nz / norm * gamma12()};
+    return {cos(half_angle) - sin(half_angle) * rotation_plane};
+  }
+
+  static Multivector make_rotor(const Multivector& rotation_plane, Scalar angle) {
+    if (!rotation_plane.is_grade(2)) {
+      except<std::invalid_argument>(
+          "In all geometric algebras, versors, such as rotors, should be bivectors.");
+    }
+
+    using std::cos, std::sin, std::sqrt;
+
+    const Scalar norm{sqrt(abs(rotation_plane.square_magnitude()))};
+    if (norm < Algebra::EPSILON) {
+      except<std::domain_error>(
+          "Degenerate plane: cannot construct rotor from a null rotation plane.");
+    }
+
+    const Scalar half_angle{angle / Scalar{2}};
+    return {cos(half_angle) - sin(half_angle) / norm * rotation_plane};
+  }
+
+  /**
+   * Construct a CGA translator for displacement (dx, dy, dz). In CGA translators use e_inf:
+   *   T = 1 - (1/2)(dx*e1 + dy*e2 + dz*e3) * e_inf
+   *
+   * The e_inf factor ensures T * reverse(T) = 1, mirroring the PGA translator's use of e0.
+   * The sign convention follows from the CGA rotor exponential where the translation
+   * generator is -(1/2) * t * e_inf for displacement t.
+   */
+  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
+    const Multivector displacement{dx * gamma1() + dy * gamma2() + dz * gamma3()};
+    Multivector result{Scalar{1} - (displacement * e_inf() / Scalar{2})};
+    return result;
+  }
+
+  static constexpr Multivector make_translator(Scalar dt, Scalar dx, Scalar dy, Scalar dz)
+    requires TIME_EXTENDED
+  {
+    const Multivector displacement{dt * gamma0() + dx * gamma1() + dy * gamma2() + dz * gamma3()};
+    Multivector result{Scalar{1} - (displacement * e_inf() / Scalar{2})};
+    return result;
+  }
+
+  /**
+   * Constructs a dilator (scaling versor) centered at a given point.
+   * A dilator scales space by the given factor relative to the center (cx, cy, cz).
+   */
+  static Multivector make_dilator(Scalar cx, Scalar cy, Scalar cz, Scalar scale) {
+    using std::log, std::cosh, std::sinh;
+
+    if (scale <= Scalar{0}) {
+      except<std::domain_error>("Scale factor must be positive.");
+    }
+
+    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_origin.
+    // In our basis, E = e_inf ^ e_origin() has the property E^2 = 1.
+    const Multivector E = e_inf() ^ e_origin();
+
+    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
+    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
+    const Scalar phi = log(scale) / Scalar{2};
+    const Multivector origin_dilator = cosh(phi) + (E * sinh(phi));
+
+    // Translate the origin-centered dilator to the target center point.
+    const Multivector translate = make_translator(cx, cy, cz);
+
+    return translate * origin_dilator * ~translate;
+  }
+
+  static Multivector make_dilator(Scalar ct, Scalar cx, Scalar cy, Scalar cz, Scalar scale)
+    requires TIME_EXTENDED
+  {
+    using std::log, std::cosh, std::sinh;
+
+    if (scale <= Scalar{0}) {
+      except<std::domain_error>("Scale factor must be positive.");
+    }
+
+    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_origin.
+    // In our basis, E = e_inf ^ e_origin() has the property E^2 = 1.
+    const Multivector E = e_inf() ^ e_origin();
+
+    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
+    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
+    const Scalar phi = log(scale) / Scalar{2};
+    const Multivector origin_dilator = cosh(phi) + (E * sinh(phi));
+
+    // Translate the origin-centered dilator to the target center point.
+    const Multivector translate = make_translator(ct, cx, cy, cz);
+
+    return translate * origin_dilator * ~translate;
   }
 
   /**
@@ -171,8 +318,45 @@ class CgaGeometry final {
    */
   static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) {
     const Scalar half_norm_sq{(x * x + y * y + z * z) / Scalar{2}};
-    return e_origin() + x * Multivector::template e<0>() + y * Multivector::template e<1>() +
-           z * Multivector::template e<2>() + half_norm_sq * e_inf();
+    return e_origin() + x * gamma1() + y * gamma2() + z * gamma3() + half_norm_sq * e_inf();
+  }
+
+  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y, Scalar z)
+    requires TIME_EXTENDED
+  {
+    const Scalar half_norm_sq{(t * t + x * x + y * y + z * z) / Scalar{2}};
+    return e_origin() + t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
+           half_norm_sq * e_inf();
+  }
+
+  /**
+   * Extract Euclidean coordinates from a CGA null point vector under standard normalization.
+   */
+  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
+                                      Scalar& out_z) {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_x = get_x(point) / w;
+    out_y = get_y(point) / w;
+    out_z = get_z(point) / w;
+  }
+
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
+                                      Scalar& out_y, Scalar& out_z)
+    requires TIME_EXTENDED
+  {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_t = get_t(point) / w;
+    out_x = get_x(point) / w;
+    out_y = get_y(point) / w;
+    out_z = get_z(point) / w;
   }
 
   /**
@@ -180,6 +364,8 @@ class CgaGeometry final {
    * product with e_inf (nonzero homogeneous weight). The null condition distinguishes
    * points from general grade-1 elements such as spheres (which are non-null). A point
    * at infinity has zero inner product with e_inf and is excluded by the weight check.
+   *
+   * Note that this approach works in both time-extended and purely spatial geometries.
    */
   static constexpr bool is_point(const Multivector& mv) {
     if (!mv.template is_grade<1>()) {
@@ -190,35 +376,110 @@ class CgaGeometry final {
     const auto self_product{mv.multiply(mv.reverse()).scalar()};
     const bool is_null{abs(self_product) < Algebra::EPSILON};
 
-    // A finite point has nonzero inner product with e_inf — this is the homogeneous
-    // weight and is exactly -1 under standard normalization.
+    // A finite point has nonzero weight — should be exactly -1 under perfect normalization.
     const bool has_weight{abs(weight(mv)) > Algebra::EPSILON};
 
     return is_null && has_weight;
   }
+  static_assert(is_point(make_point(1, 1, 1)),
+                "Check that the definitions of is_point() and make_point() agree.");
 
   /**
-   * In CGA a line is a grade-3 element that is null (L * ~L = 0) and contains e_inf
-   * as a factor (it is the outer product of two points and e_inf, or equivalently passes
-   * through the point at infinity). The null condition distinguishes lines from circles,
-   * which are also grade-3 but non-null.
+   * Constructs a grade-4 multivector representing a plane.
+   *
+   * This bridges Euclidean intuition (normal-defined planes) into a grade-4
+   * multivector.
    */
-  static /*constexpr*/ bool is_line(const Multivector& mv) {
-    if (!mv.template is_grade<2>()) {
-      LOG(INFO) << "CgaGeometryModel::is_line() -- not grade 2.";
+  static constexpr Multivector make_plane(Scalar nx, Scalar ny, Scalar nz, Scalar px, Scalar py,
+                                          Scalar pz) {
+    const Scalar norm{hypot(nx, ny, nz)};
+    if (norm < Algebra::EPSILON) {
+      except<std::domain_error>("Degenerate normal: cannot construct plane from null vector.");
+    }
+
+    // Normalize direction components
+    const Scalar ux = nx / norm;
+    const Scalar uy = ny / norm;
+    const Scalar uz = nz / norm;
+
+    // The 3D spatial bivector representing the orientation of the plane.
+    // This is the dual of the normal vector within the 3D Euclidean subspace.
+    const Multivector spatial_bivector{ux * gamma23() - uy * gamma13() + uz * gamma12()};
+
+    const Multivector p{make_point(px, py, pz)};
+
+    // A Plane in OPNS is the wedge of a point, the direction bivectors, and infinity.
+    // Resulting Grade: 1 (point) + 2 (bivector) + 1 (e_inf) = 4.
+    return join(join(p, spatial_bivector), e_inf());
+  }
+
+  static constexpr bool is_plane(const Multivector& mv) noexcept {
+    if (!mv.template is_grade<4>()) {
       return false;
     }
 
     // The null condition L * ~L = 0 distinguishes lines (null) from circles (non-null).
-    const auto self_product{mv.multiply(mv.reverse()).scalar()};
+    const auto self_product{(mv * ~mv).scalar()};
     const bool is_null{abs(self_product) < Algebra::EPSILON};
-    LOG(INFO) << "CgaGeometryModel::is_line() -- is_null: " << is_null;
 
     // A line contains e_inf as a factor — its outer product with e_inf is zero.
-    const bool contains_e_inf{mv.outer(e_inf()).near_equal(Multivector{})};
-    LOG(INFO) << "CgaGeometryModel::is_line() -- contains_e_inf: " << contains_e_inf;
+    const bool contains_e_inf{(mv ^ e_inf()).near_equal(Multivector{})};
 
-    return is_null && contains_e_inf;
+    return is_null and contains_e_inf;
+  }
+
+  /**
+   * Constructs a 3-blade line passing through two 3D Euclidean points.
+   * In conformal geometries, a flat line is the wedge of two conformal points and the point at
+   * infinity.
+   */
+  static constexpr Multivector make_line(Scalar px1, Scalar py1, Scalar pz1, Scalar px2, Scalar py2,
+                                         Scalar pz2) {
+    const Multivector p1{make_point(px1, py1, pz1)};
+    const Multivector p2{make_point(px2, py2, pz2)};
+
+    return join(join(p1, p2), e_inf());
+  }
+
+  /**
+   * In conformal geometric algebras, a line is a grade-3 element that is null (L * ~L = 0) and
+   * contains e_inf as a factor (it is the outer product of two points and e_inf, or equivalently
+   * passes through the point at infinity). The null condition distinguishes lines from circles,
+   * which are also grade-3 but non-null and without conformal basis blades.
+   */
+  static constexpr bool is_line(const Multivector& mv) noexcept {
+    if (!mv.template is_grade<3>()) {
+      return false;
+    }
+
+    // The null condition L * ~L = 0 distinguishes lines (null) from circles (non-null).
+    const auto self_product{(mv * ~mv).scalar()};
+    const bool is_null{abs(self_product) < Algebra::EPSILON};
+
+    // A line contains e_inf as a factor — its outer product with e_inf is zero.
+    const bool contains_e_inf{(mv ^ e_inf()).near_equal(Multivector{})};
+
+    return is_null and contains_e_inf;
+  }
+
+  /**
+   * Constructs a 3-blade circle from a center point, a normal vector defining the
+   * plane of the circle, and a radius.
+   *
+   * This is implemented by intersecting a sphere with a plane.
+   */
+  static constexpr Multivector make_circle(Scalar cx, Scalar cy, Scalar cz, Scalar nx, Scalar ny,
+                                           Scalar nz, Scalar radius) {
+    const Multivector center{make_point(cx, cy, cz)};
+
+    // Create the dual sphere: P - r^2 / 2 * e_inf
+    const Multivector sphere{center - radius * radius / Scalar{2} * e_inf()};
+
+    // Create the dual plane passing through the center with the given normal.
+    const Multivector plane{make_plane(nx, ny, nz, cx, cy, cz)};
+
+    // The intersection of a dual sphere and a dual plane is the dual circle.
+    return meet(sphere, plane);
   }
 
   /**
@@ -226,7 +487,7 @@ class CgaGeometry final {
    * radius.
    */
   static constexpr bool is_circle(const Multivector& mv) {
-    if (!mv.template is_grade<2>()) {
+    if (!mv.template is_grade<3>()) {
       return false;
     }
 
@@ -242,106 +503,6 @@ class CgaGeometry final {
   }
 
   /**
-   * In CGA a plane is a grade-1 null vector that contains e_inf as a factor — it is a
-   * degenerate sphere passing through the point at infinity. The null condition X * ~X = 0
-   * distinguishes planes from spheres (non-null grade-1 elements). The e_inf containment
-   * condition distinguishes planes from finite points, which are also null grade-1 elements
-   * but do not contain e_inf.
-   */
-  static constexpr bool is_plane(const Multivector& mv) {
-    if (!mv.template is_grade<1>()) {
-      return false;
-    }
-
-    // The null condition distinguishes planes from spheres.
-    const auto self_product{mv.multiply(mv.reverse()).scalar()};
-    const bool is_null{abs(self_product) < Algebra::EPSILON};
-
-    // A plane contains e_inf as a factor — its outer product with e_inf is zero.
-    // This distinguishes a plane (passing through infinity) from a finite point
-    // (which is also null but does not contain e_inf).
-    const bool contains_e_inf{mv.outer(e_inf()).grade_projection(2).near_equal(Multivector{})};
-
-    return is_null && contains_e_inf;
-  }
-
-  /**
-   * Compute the join via the outer product. In CGA the outer product of two null point
-   * vectors produces the line through them (grade-2 in the conformal sense), and the outer
-   * product of three points produces the circle or plane through them. This is the same
-   * approach as in PGA with points as grade-1 multivectors. This reflects the conformal
-   * embedding's structural similarity to projective geometry at the level of the outer product.
-   */
-  static constexpr Multivector join(const Multivector& a, const Multivector& b) {
-    return a.outer(b);
-  }
-
-  /**
-   * Compute the meet via the regressive product. In CGA the regressive product recovers
-   * the intersection of two elements — the intersection of two spheres is a circle, the
-   * intersection of a sphere and a plane is a circle, and so on. The regressive product
-   * serves as meet in CGA for the same structural reason as in PGA with grade-1 points.
-   */
-  static constexpr Multivector meet(const Multivector& a, const Multivector& b) {
-    return a.regress(b);
-  }
-
-  /**
-   * Construct a CGA rotor for rotation about the given axis line by angle radians. The axis
-   * is a CGA line element (grade-3 in CGA, encoding both direction and moment via the
-   * conformal embedding). The rotor has the same exponential form as in PGA but operates
-   * in the larger 5D space — the additional conformal dimensions are unaffected by a pure
-   * spatial rotation.
-   */
-  static Multivector make_rotor(const Multivector& axis, Scalar angle) {
-    using std::cos, std::sin, std::sqrt;
-
-    // Extract the Euclidean bivector from the axis — the spatial rotation plane.
-    const Multivector b{axis.grade_projection(2)};
-    const Scalar norm_sq{-(b.multiply(b)).scalar()};
-    if (norm_sq < Algebra::EPSILON) {
-      except<std::domain_error>("Degenerate axis: cannot construct rotor from a null axis.");
-    }
-    const Scalar norm{sqrt(norm_sq)};
-    const Multivector b_normalized{b / norm};
-    const Scalar half{angle / Scalar{2}};
-    return Multivector{}.add(cos(half)) - b_normalized.multiply(sin(half));
-  }
-
-  /**
-   * Construct a CGA translator for displacement (dx, dy, dz). In CGA translators use e_inf:
-   *   T = 1 - (1/2)(dx*e1 + dy*e2 + dz*e3) * e_inf
-   *
-   * The e_inf factor ensures T * reverse(T) = 1, mirroring the PGA translator's use of e0.
-   * The sign convention follows from the CGA rotor exponential where the translation
-   * generator is -(1/2) * t * e_inf for displacement t.
-   */
-  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
-    const Scalar half{Scalar{1} / Scalar{2}};
-    const Multivector t{dx * Multivector::template e<0>() + dy * Multivector::template e<1>() +
-                        dz * Multivector::template e<2>()};
-    Multivector result{Multivector{}.add(Scalar{1}) - (t * e_inf() * half)};
-    return result;
-  }
-
-  /**
-   * Construct a reflection versor from a geometric element. In CGA a sphere, plane, or
-   * other grade-1 element is the reflection versor for inversion in that element. A plane
-   * is a specific degenerate sphere (one passing through e_inf), and its reflection versor
-   * is the plane element itself normalized. Unlike PGA, where the plane is always the versor
-   * directly, CGA elements may require normalization to ensure V * reverse(V) = ±1 before
-   * use in the sandwich product.
-   */
-  static Multivector make_reflection(const Multivector& element) {
-    const Scalar scale{element.multiply(element.reverse()).scalar()};
-    if (scale < Algebra::EPSILON && scale > -Algebra::EPSILON) {
-      except<std::domain_error>("Cannot construct reflection versor from a null element.");
-    }
-    using std::sqrt;
-    return element / sqrt(scale < Scalar{0} ? -scale : scale);
-  }
-
-  /**
    * Compute the logarithm of a CGA motor. CGA motors represent rigid body motions and
    * live in the even subalgebra of R(4,1). The logarithm formula is analogous to PGA but
    * operates in the 5D conformal space — the Euclidean bivector components are those not
@@ -352,13 +513,10 @@ class CgaGeometry final {
 
     const Scalar scalar_part{motor.scalar()};
 
-    // In CGA with basis ordering e1,e2,e3,e_plus,e_minus, the Euclidean rotation
-    // bivectors are e12, e13, e23 — those not involving e_plus (index 3) or e_minus (index 4).
-    // Bit indices (5 basis vectors): e<0>=bit0, e<1>=bit1, e<2>=bit2, e<3>=bit3, e<4>=bit4
-    const Scalar b01{motor.coefficient(0b00011)};  // e12
-    const Scalar b02{motor.coefficient(0b00101)};  // e13
-    const Scalar b12{motor.coefficient(0b00110)};  // e23
-    const Scalar euclidean_norm_sq{b01 * b01 + b02 * b02 + b12 * b12};
+    const Scalar e01{motor.coefficient(0b00011)};
+    const Scalar e02{motor.coefficient(0b00101)};
+    const Scalar e12{motor.coefficient(0b00110)};
+    const Scalar euclidean_norm_sq{e01 * e01 + e02 * e02 + e12 * e12};
 
     if (euclidean_norm_sq < Algebra::EPSILON) {
       return motor.grade_projection(2) - Multivector{}.add(Scalar{1});
@@ -369,12 +527,12 @@ class CgaGeometry final {
     const Scalar s{sin(angle / Scalar{2})};
 
     const Multivector euclidean_biv{
-        b01 * (Multivector::template e<0>() * Multivector::template e<1>()) +
-        b02 * (Multivector::template e<0>() * Multivector::template e<2>()) +
-        b12 * (Multivector::template e<1>() * Multivector::template e<2>())};
+        e01 * (Multivector::template e<0>() * Multivector::template e<1>()) +
+        e02 * (Multivector::template e<0>() * Multivector::template e<2>()) +
+        e12 * (Multivector::template e<1>() * Multivector::template e<2>())};
 
     // The translational component of the motor lives in the bivectors involving e_inf.
-    const Multivector translation_biv{motor.grade_projection(2) - euclidean_biv};
+    const Multivector translation_biv{motor.template grade_projection<2>() - euclidean_biv};
 
     return (angle / euclidean_norm) * euclidean_biv + (Scalar{1} / s) * translation_biv;
   }
@@ -388,10 +546,10 @@ class CgaGeometry final {
   static Multivector motor_exp(const Multivector& bivector) {
     using std::cos, std::sin, std::sqrt;
 
-    const Scalar b01{bivector.coefficient(0b00011)};
-    const Scalar b02{bivector.coefficient(0b00101)};
-    const Scalar b12{bivector.coefficient(0b00110)};
-    const Scalar euclidean_norm_sq{b01 * b01 + b02 * b02 + b12 * b12};
+    const Scalar e01{bivector.coefficient(0b0011)};
+    const Scalar e02{bivector.coefficient(0b0101)};
+    const Scalar e12{bivector.coefficient(0b0110)};
+    const Scalar euclidean_norm_sq{e01 * e01 + e02 * e02 + e12 * e12};
 
     if (euclidean_norm_sq < Algebra::EPSILON) {
       Multivector result{bivector};
@@ -403,98 +561,19 @@ class CgaGeometry final {
     const Scalar c{cos(euclidean_norm)};
     const Scalar s{sin(euclidean_norm) / euclidean_norm};
 
-    const Multivector euclidean_biv{
-        b01 * (Multivector::template e<0>() * Multivector::template e<1>()) +
-        b02 * (Multivector::template e<0>() * Multivector::template e<2>()) +
-        b12 * (Multivector::template e<1>() * Multivector::template e<2>())};
-    const Multivector translation_biv{bivector.grade_projection(2) - euclidean_biv};
-
-    Multivector result{s * euclidean_biv + s * translation_biv};
-    result.set_scalar(c);
+    Multivector result{s * bivector.template grade_projection<2>() + c};
     return result;
-  }
-
-  /**
-   * Extract Euclidean coordinates from a CGA null point vector under standard normalization.
-   * The e0 coefficient encodes the homogeneous weight — under standard normalization this
-   * is 1, but after arithmetic operations it may drift. The e1, e2, e3 coefficients are
-   * divided by the e0 weight to recover Euclidean coordinates. The e_inf coefficient is
-   * discarded — it encodes the norm-squared of the point and is redundant given the
-   * coordinates.
-   *
-   * The e0 null vector is (e_minus - e_plus)/2. Its coefficient in a CGA multivector is
-   * recovered via the inner product with e_inf, since e0 * e_inf = -1 under the CGA metric.
-   */
-  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
-                                      Scalar& out_z) {
-    // The weight under standard normalization is -point * e_inf (scalar part of inner product).
-    const Scalar w{-(point.left_contraction(e_inf())).scalar()};
-    if (w < Algebra::EPSILON && w > -Algebra::EPSILON) {
-      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
-    }
-    // Bit indices for grade-1 basis vectors in R(4,1): e<0>=0b00001, e<1>=0b00010, e<2>=0b00100
-    out_x = point.coefficient(0b00001) / w;
-    out_y = point.coefficient(0b00010) / w;
-    out_z = point.coefficient(0b00100) / w;
-  }
-
-  /**
-   * Extract direction and moment from a CGA line element. A CGA line is a grade-3 element
-   * (the outer product of two CGA points and e_inf, or equivalently the outer product of
-   * three collinear points). The direction is recovered from the components not involving
-   * e_inf, and the moment from the cross-terms. The extraction normalizes by the magnitude
-   * of the direction part.
-   */
-  void extract_line(const Multivector& line, Scalar& out_dx, Scalar& out_dy, Scalar& out_dz,
-                    Scalar& out_mx, Scalar& out_my, Scalar& out_mz) {
-    using std::sqrt;
-
-    // In CGA a line is grade-3. The direction lives in the e_inf ^ e_i ^ e_j components
-    // and the moment in the e_i ^ e_j ^ e_k components not involving e_inf.
-    // Bit indices (5 basis vectors, e_inf = e<3>+e<4> direction):
-    // The Euclidean bivector of the direction: e12, e13, e23 combined with e_inf.
-    // For extraction we use the dual approach: L* = L.dual() gives a grade-2 element
-    // whose Euclidean part is the direction and ideal part is the moment.
-    const Multivector line_dual{line.dual()};
-
-    out_dx = line_dual.coefficient(0b00110);  // e12 component of dual
-    out_dy = line_dual.coefficient(0b01010);  // e13 component of dual
-    out_dz = line_dual.coefficient(0b01100);  // e23 component of dual
-
-    out_mx = line_dual.coefficient(0b10001);  // e1 ^ e_inf component
-    out_my = line_dual.coefficient(0b10010);  // e2 ^ e_inf component
-    out_mz = line_dual.coefficient(0b10100);  // e3 ^ e_inf component
-  }
-
-  /**
-   * Extract normal and distance from a CGA plane element. In CGA a plane is a null vector
-   * at grade-1 that contains e_inf — it is a degenerate sphere passing through infinity.
-   * The normal is recovered from the e1, e2, e3 components and the distance from the e0
-   * component, after normalizing by the magnitude of the normal part.
-   */
-  static constexpr void extract_plane(const Multivector& plane, Scalar& out_nx, Scalar& out_ny,
-                                      Scalar& out_nz, Scalar& out_d) {
-    using std::sqrt;
-    const Scalar nx{plane.coefficient(0b00001)};
-    const Scalar ny{plane.coefficient(0b00010)};
-    const Scalar nz{plane.coefficient(0b00100)};
-    const Scalar norm{sqrt(nx * nx + ny * ny + nz * nz)};
-    if (norm < Algebra::EPSILON) {
-      except<std::domain_error>("Cannot extract normal from a degenerate plane.");
-    }
-    out_nx = nx / norm;
-    out_ny = ny / norm;
-    out_nz = nz / norm;
-    // The distance from the origin is encoded in the e0 component of the plane.
-    // e0 = (e_minus - e_plus)/2, so its coefficient is recovered from the e_plus/e_minus parts.
-    const Scalar e_plus_coeff{plane.coefficient(0b01000)};   // e<3>
-    const Scalar e_minus_coeff{plane.coefficient(0b10000)};  // e<4>
-    out_d = (e_minus_coeff - e_plus_coeff) / (Scalar{2} * norm);
   }
 };
 
-// CGA uses R(4,1), not the Pga alias — the static_assert instantiates CgaGeometry with
-// default template parameters to confirm concept satisfaction.
-static_assert(GeometryModel<CgaGeometry<>>);
+template <typename Scalar = DefaultScalarType>
+using SpatialConformalGeometry = ConformalGeometryType</* Not time-extended */ false, Scalar>;
+
+template <typename Scalar = DefaultScalarType>
+using ConformalGeometry = ConformalGeometryType</* Time-extended */ true, Scalar>;
+
+static_assert(GeometryModel<SpatialConformalGeometry<>>);
+static_assert(SpatialConformalGeometryModel<SpatialConformalGeometry<>>);
+static_assert(ConformalGeometryModel<ConformalGeometry<>>);
 
 }  // namespace ndyn::math
