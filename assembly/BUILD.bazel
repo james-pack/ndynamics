@@ -1,0 +1,30 @@
+load("//platforms:hex.bzl", "hex")
+
+cc_library(
+    name = "assembly",
+    hdrs = [
+        "assembly.h",
+        "connection.h",
+        "field.h",
+        "manifold.h",
+        "particle.h",
+        "worldline.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//base",
+        "//math",
+    ],
+)
+
+cc_test(
+    name = "manifold_test",
+    srcs = [
+        "manifold_test.cc",
+    ],
+    deps = [
+        ":assembly",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
