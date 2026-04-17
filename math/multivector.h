@@ -495,8 +495,7 @@ class Multivector final {
 
   constexpr bool near_equal(const Multivector& rhs, const ScalarType tolerance = EPSILON) const {
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
-      const ScalarType diff{coefficients_[i] - rhs.coefficients_[i]};
-      const ScalarType abs_diff{diff < ScalarType{0} ? -diff : diff};
+      const ScalarType abs_diff{abs(coefficients_[i] - rhs.coefficients_[i])};
       if (abs_diff > tolerance) {
         return false;
       }
@@ -575,22 +574,13 @@ class Multivector final {
   // any Multivector. See the tests for examples.
   template <size_t N>
   static constexpr Multivector e() {
-    if constexpr (N >= NUM_BASIS_VECTORS) {
-      // Note: we use a static_assert here to generate an error message for the user. We could
-      // have used a template parameter to restrict which basis creation functions are generated
-      // by the compiler, but that approach resulted in a much more cryptic error message from the
-      // compiler. For completeness, here is the function signature with the template restriction:
-      //   template <size_t N, std::enable_if_t<(N < NUM_BASIS_VECTORS), bool> = true>
-      //   static constexpr Multivector e();
-      static_assert(
-          N < NUM_BASIS_VECTORS,
-          "Template parameter to basis creation function is out of range of the number of "
-          "vectors (grade 1 bases). Template parameter must be less than the NUM_BASIS_VECTORS.");
-    } else {
-      Multivector result{};
-      result.coefficients_[1UL << N] = 1;
-      return result;
-    }
+    static_assert(
+        N < NUM_BASIS_VECTORS,
+        "Template parameter to basis creation function is out of range of the number of "
+        "vectors (grade 1 bases). Template parameter must be less than the NUM_BASIS_VECTORS.");
+    Multivector result{};
+    result.coefficients_[1UL << N] = 1;
+    return result;
   }
 
   // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
@@ -612,6 +602,22 @@ class Multivector final {
    * In general, using these accessors requires a solid understanding of this indexing strategy
    * and can be error-prone.
    *************************************************************************************************/
+  template <size_t N>
+  constexpr const ScalarType& coefficient() const {
+    static_assert(N < NUM_BASIS_BLADES,
+                  "Template parameter to coefficient accessor is out of range of the number of "
+                  "blades. Template parameter must be less than the NUM_BASIS_BLADES.");
+    return coefficients_[N];
+  }
+
+  template <size_t N>
+  constexpr void set_coefficient(const ScalarType& v) {
+    static_assert(N < NUM_BASIS_BLADES,
+                  "Template parameter to coefficient setter is out of range of the number of "
+                  "blades. Template parameter must be less than the NUM_BASIS_BLADES.");
+    coefficients_[N] = v;
+  }
+
   constexpr const ScalarType& coefficient(size_t n) const { return coefficients_.at(n); }
   constexpr void set_coefficient(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
 };
