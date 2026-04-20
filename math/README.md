@@ -2,49 +2,51 @@
 
 **Abstract**
 
-This paper develops the geometry underlying three principal instantiations of Clifford algebra — Vector-space Geometric Algebra (VGA), Projective Geometric Algebra (PGA), and Conformal Geometric Algebra (CGA) — and examines how each framework determines the class of geometric objects it can represent, the operations that act on those objects, and the invariants that are preserved under those operations. We begin with the foundational theory of Clifford algebras and their graded structure, proceed through the coordinate-free paradigm and its consequences for the representation of geometric primitives, and then develop in detail the OPNS and IPNS duality frameworks within each algebra. The paper concludes with an account of extensions to higher-dimensional algebras including Galilean spacetime models and conformal spacetime algebra. Throughout, the emphasis is on the internal geometric logic of each algebraic world-space rather than on its computational implementation.
+This paper develops a model of geometry underlying three principal representations of Clifford algebra — vector-space geometric algebras, projective GA, and conformal GA. It examines how each representation determines the class of geometric objects it can represent, the operations that act on those objects, and the invariants that are preserved under those operations. We begin with an overview of Clifford algebras and their graded structure, proceed through the coordinate-free paradigm and its consequences for the representation of geometric primitives, and then develop different models, the Outer Product Null Space (OPNS) and Inner Product Null Space (IPNS), for expressing geometric primitives and operators. The paper concludes with an account of extensions to higher-dimensional algebras including Galilean spacetime models and conformal spacetime algebra. Throughout, the emphasis is on the modelling of lay geometric intuition within each algebra rather than on computational implementation.
 
 ---
 
 ## 1. Introduction: The Coordinate-Free Paradigm
 
-Classical analytic geometry describes geometric objects externally. A sphere is a set of triples $(x, y, z)$ satisfying a polynomial constraint; a plane is the zero-set of a linear form; a rotation is a matrix applied to coordinate vectors. In this tradition, the geometry is always extrinsic to the algebra: points are bare lists of numbers, and the geometric relationships between them must be reconstructed by the analyst from those numbers.
+Classical analytic geometry describes geometric objects externally. A sphere is a set of triples $(x, y, z)$ satisfying a polynomial constraint; a plane is the zero-set of a linear form; a rotation is a matrix applied to coordinate vectors. In this tradition, the geometry is always extrinsic to the algebra. Points are bare lists of numbers. Vectors are represented using the same lists of numbers. And the act of translation is again the same list of numbers. The geometric meaning of these lists of numbers must be reconstructed external to their representation. 
 
-Clifford algebra inverts this relationship. Within any Clifford algebra $Cl(p, q, r)$, geometric objects — lines, planes, spheres, rigid motions — are first-class algebraic elements, and the operations that act on them are defined by the metric structure of the algebra rather than by coordinate manipulations. A plane is not a constraint equation imposed on triples; it is a blade, an element of a specific grade in the algebra, and its relationship to every other geometric object is encoded in the algebraic operations that act on it. This is what it means to work in a coordinate-free way: the geometry is internal to the algebra.
+Clifford algebra inverts this relationship. Within any Clifford algebra $Cl(p, q, r)$, geometric objects — lines, planes, spheres, rigid motions — are first-class algebraic elements. Operations that act on them are defined by the metric structure of the algebra rather than by coordinate manipulations. A plane is not a constraint equation imposed on triples; it is a blade, an element of a specific grade in the algebra, and its relationship to every other geometric object is encoded in the algebraic operations that act on it. This is what it means to work in a coordinate-free way: the geometry can be modelled to be internal to the algebra.
 
 This internality has a profound consequence for the architecture of any geometric theory. When we choose a specific algebra — $Cl(3,0,0)$, or $Cl(3,0,1)$, or $Cl(3,1,1)$, or $Cl(n+1,1,0)$ — we are not merely choosing a computational tool. We are choosing a **geometric world-space**: a universe with specific primitive objects, specific operations that transform them, and specific invariants that those operations preserve. The choice of metric signature and dimension determines, completely and in advance, what geometry is expressible within that algebra and what is not. A sphere cannot be represented as a single blade in VGA; a curved intersection cannot be represented in PGA. These are not limitations of any particular technique; they are theorems about the geometry of the algebra itself.
 
-The goal of this paper is to make the geometry of these world-spaces explicit and precise. We develop each principal algebra — VGA, PGA, and CGA — in terms of what it represents geometrically, how its primitives are defined through the outer and inner product null spaces, and what transformations preserve the structure of those primitives. We also examine the extensions of these algebras to higher dimensions and to spacetime settings.
+Moreover, within the world-space of the geometry, it is possible to choose a model that encodes the primitives and operators of that geometry directly as single objects known as multivectors. These multivectors can be combined in well-defined ways to effect geometric changes. Rotations, reflections, translations, and other operators can be represented as individual multivectors. Points, lines, planes, circles, and spheres also have representations as individual multivectors. And the application of operators on primitives follows well-defined patterns.
+
+The goal of this paper is to make the geometry of these representations explicit. We develop each principal representation — vector space, projective, and conformal — in terms of what it represents geometrically, how its primitives are defined through the outer and inner product null spaces, and what transformations preserve the structure of those primitives. We also examine the extensions of these algebras to higher dimensions, including spacetime settings.
 
 ---
 
 ## 2. Clifford Algebras: Structure and Grading
 
-### 2.1 Definition and Metric Signature
+### 2.1 Metric Signature of the Algebras
 
 Let $V$ be a real vector space of dimension $n$ equipped with a quadratic form $Q: V \to \mathbb{R}$. The **Clifford algebra** $Cl(V, Q)$ is the associative algebra over $\mathbb{R}$ generated by $V$ subject to the fundamental relation
 
 $$vv = Q(v) \cdot 1 \quad \text{for all } v \in V.$$
 
-For any orthonormal basis $\{e_1, \ldots, e_n\}$ of $V$ with respect to $Q$, this relation reduces to
+For any orthonormal basis $\{e_1, \ldots, e_n\}$ of $V$ with respect to $Q$, we restrict this relation to
 
 $$e_i e_i = \epsilon_i$$
 
-where $\epsilon_i \in \{-1, 0, +1\}$. The **metric signature** $(p, q, r)$ of the algebra records the number of basis vectors squaring to $+1$, $-1$, and $0$ respectively, with $p + q + r = n$. The standard shorthand $Cl(p, q, r)$ refers to the algebra with this signature.
+where $\epsilon_i \in \{-1, 0, +1\}$. The **metric signature** $(p, q, r)$ of the algebra records the number of basis vectors squaring to $+1$, $-1$, and $0$ respectively, with $n = p + q + r$. The standard shorthand $Cl(p, q, r)$ refers to the algebra with this signature.
 
-The geometric product of two distinct basis vectors anticommutes:
+The geometric product of basis vectors anticommutes:
 
 $$e_i e_j = -e_j e_i \quad \text{for } i \neq j,$$
 
 which follows directly from expanding $(e_i + e_j)(e_i + e_j)$ using the fundamental relation and bilinearity.
 
-### 2.2 The Graded Structure
+### 2.2 The Grade Structure
 
 Every Clifford algebra $Cl(p, q, r)$ of total dimension $n = p + q + r$ decomposes as a vector space into a direct sum of **grade subspaces**:
 
 $$Cl(p,q,r) = \bigoplus_{k=0}^{n} \langle Cl(p,q,r) \rangle_k$$
 
-where $\langle \cdot \rangle_k$ denotes the grade-$k$ projection. The basis of the grade-$k$ subspace consists of all ordered products of $k$ distinct basis vectors $e_{i_1} e_{i_2} \cdots e_{i_k}$ with $i_1 < i_2 < \cdots < i_k$. The dimension of the grade-$k$ subspace is $\binom{n}{k}$, so the total dimension of $Cl(p,q,r)$ as a vector space is $2^n$.
+where $\langle \cdot \rangle_k$ denotes the grade-$k$ projection. The basis of the grade-$k$ subspace consists of all ordered products of $k$ distinct basis vectors $e_{i_1} e_{i_2} \cdots e_{i_k}$ with $i_1 < i_2 < \cdots < i_k$, for a total of $n+1$ distinct grades. The dimension of the grade-$k$ subspace is $\binom{n}{k}$, so the total dimension of $Cl(p,q,r)$ as a vector space is $2^n$.
 
 A **blade** of grade $k$ (a **$k$-blade**) is a multivector that can be written as a geometric product of $k$ mutually anticommuting vectors:
 
@@ -58,23 +60,11 @@ Blades are geometrically the most fundamental elements: they represent flat, ori
 
 The **pseudoscalar** $I_n = e_1 e_2 \cdots e_n$ is the grade-$n$ blade formed by the product of all basis vectors in a fixed order. It plays the role of an oriented volume element and mediates the duality operation.
 
-### 2.3 The Principal Products
+### 2.3 The Principal Structure
 
-Three products derived from the geometric product are central to the geometric interpretation of the algebra.
+**Meet** and **join** are the two fundamental ways of combining geometric primitives into new ones. The join of two objects is the smallest subspace that contains both of them — the span, in geometric terms. If you have two points, their join is the line through them. If you have a point and a line, their join is the plane containing both. The meet is the opposite: the largest subspace common to both objects, their geometric intersection. Two planes meet in a line, three planes meet in a point. Intuitively, the meet is a form of intersection operation, and the join can be regarded as a union.
 
-**The outer product** (wedge product) $A \wedge B$ of a $j$-blade and a $k$-blade is the grade-$(j+k)$ part of their geometric product:
-
-$$A \wedge B = \langle AB \rangle_{j+k}.$$
-
-Geometrically, $A \wedge B$ is nonzero precisely when $A$ and $B$ span a $(j+k)$-dimensional subspace; if they share any direction, $A \wedge B = 0$. The outer product thus tests for and constructs higher-dimensional subspaces from lower-dimensional ones.
-
-**The inner product** (symmetric inner product, or scalar product) $A \cdot B$ of a $j$-blade and a $k$-blade is the grade-$|k-j|$ part of their geometric product:
-
-$$A \cdot B = \langle AB \rangle_{|k-j|}.$$
-
-The inner product contracts subspaces: it tests the extent to which one subspace is contained in, or perpendicular to, another.
-
-**The meet and join** operations, derived from the outer product and its dual, construct the intersection and span of subspaces respectively. These depend on the choice of duality, which is fixed by the pseudoscalar.
+Together, meet and join give GA the structure of a **lattice** on geometric primitives, where the two operations are dual to one another in a precise sense. This duality is not merely formal — it reflects a deep symmetry in the geometry itself, and in GA it is mediated by the pseudoscalar of the ambient space. The meet and join are in this sense more fundamental than any particular algebraic formula used to compute them, which is why different representations — OPNS and IPNS — can compute the same geometric meet and join by different algebraic operations.
 
 **Duality** is mediated by right-multiplication by the pseudoscalar inverse:
 
@@ -82,35 +72,35 @@ $$A^* = A I_n^{-1}.$$
 
 The dual of a $k$-blade is an $(n-k)$-blade representing the orthogonal complement of the original subspace (in a non-degenerate metric).
 
-### 2.4 Spinors and Rotors
+### 2.4 Versors and Rotors
 
 An element $R$ of a Clifford algebra is called a **versor** if it is a product of invertible vectors. It acts on any multivector $M$ via the **sandwich product**:
 
 $$M \mapsto R M R^{-1} \quad \text{(for versors of odd grade)} \quad \text{or} \quad M \mapsto R M \tilde{R}$$
 
-where $\tilde{R}$ is the **reverse** of $R$, obtained by reversing the order of all basis vector products in $R$. When $R$ is a product of an even number of unit vectors, it is called a **rotor** (or spinor), and it encodes an orientation-preserving isometry of the algebra.
+where $\tilde{R}$ is the **reverse** of $R$, obtained by reversing the order of all basis vector products in $R$. When $R$ is a product of an even number of unit vectors, it is called a **rotor**, and it encodes an orientation-preserving isometry of the algebra.
 
-The rotor $R = \cos(\theta/2) + \sin(\theta/2) B$, where $B$ is a normalized unit bivector representing a plane of rotation, encodes a rotation by angle $\theta$ in the plane $B$. This generalizes directly to all dimensions and all signatures, which is one of the central advantages of the Clifford algebraic approach.
+The rotor $R = \cos(\theta/2) + B \sin(\theta/2)$, where $B$ is a normalized unit bivector representing a plane of rotation, encodes a rotation by angle $\theta$ in the plane $B$. This generalizes directly to all dimensions and all signatures, which is one of the central advantages of the Clifford algebraic approach.
+
+As a side note, $B^2 = -1$. It has the same role in $\cos(\theta/2) + B \sin(\theta/2)$ as the complex number $i$ in $\cos(\theta/2) + i \sin(\theta/2)$.
 
 ---
 
-## 3. Vector-Space Geometric Algebra (VGA)
+## 3. Vector-Space Geometric Algebras
 
-### 3.1 The Setting
+### 3.1 Overview
 
-**VGA** is the Clifford algebra $Cl(p, q) = Cl(p, q, 0)$ with no degenerate dimensions. In the three-dimensional Euclidean case, this is $Cl(3, 0, 0)$, generated by three basis vectors $\{e_1, e_2, e_3\}$ with $e_i^2 = +1$.
+Vector space geometric algebra refers to any geometric algebra constructed directly over the vector space of interest, without embedding that space into a higher-dimensional one. The graded structure of the algebra then represents geometric primitives as subspaces of the ambient vector space: blades of each grade represent flat, oriented subspaces of increasing dimension, and operators such as rotors and reflections act on them via the sandwich product.
 
-The algebra has dimension $2^3 = 8$ as a vector space, with grade structure:
-- Grade 0: scalars (dimension 1)
-- Grade 1: vectors (dimension 3) — represent directions in $\mathbb{R}^3$
-- Grade 2: bivectors (dimension 3) — represent oriented planes through the origin
-- Grade 3: trivectors / pseudoscalar (dimension 1) — represent oriented volumes
+This is the most direct instantiation of the GA framework — the geometry lives in the same space as the algebra describing it. A particular and commonly encountered instance is $Cl(3,0)$, the algebra over three-dimensional Euclidean space, sometimes referred to specifically as teh Vectorspace Geometric Algebra (VGA). The distinction is important: vector space geometric algebra is a general approach, while Cl(3,0) is one specific algebra within that approach, suited to three-dimensional Euclidean geometry.
 
-The unit pseudoscalar is $I_3 = e_1 e_2 e_3$, which satisfies $I_3^2 = -1$ in the Euclidean case.
+The limitation of vector space geometric algebra becomes apparent when attempting to represent Euclidean geometry in full generality. Because all subspaces of a vector space pass through the origin, there is no mechanism within the algebra to represent translated primitives. A single multivector cannot represent a line unless it passes through the origin. A single multivector cannot respresent a point at an arbitrary location. Vector space geometric algebras naturally handle rotations, but translations cannot be absorbed into the rotor framework. This breaks the algebraic uniformity that is otherwise one of GA's principal strengths.
+
+In this sense, vector space geometric algebra is incomplete as a model of Euclidean geometry. Projective and conformal geometric algebras each address this limitation by embedding the geometry of interest into a higher-dimensional space, recovering the missing expressiveness at the cost of working in an algebra of greater dimension.
 
 ### 3.2 Geometric Interpretation of Grades
 
-The graded structure of VGA has a direct geometric interpretation in terms of **oriented subspaces passing through the origin**.
+The graded structure of vector space geometric algebra has a direct geometric interpretation in terms of **oriented subspaces passing through the origin**. For specificity, we restrict ourselves to VGA for the rest of this section, but similar approaches can be applied to other vector space geometric algebras.
 
 A grade-1 element $v = v_1 e_1 + v_2 e_2 + v_3 e_3$ represents a **directed line through the origin** — a ray, or a direction in 3-space.
 
@@ -118,7 +108,7 @@ A grade-2 element $B = B_{12} e_1 e_2 + B_{23} e_2 e_3 + B_{13} e_1 e_3$ represe
 
 The grade-3 element, the pseudoscalar $I_3$, represents the full oriented 3-dimensional volume.
 
-The critical constraint of VGA is this: **all subspaces represented in VGA pass through the origin.** A plane at distance $d$ from the origin, or a line not through the origin, cannot be represented as a blade in $Cl(3,0)$. This is the geometric reason why PGA and CGA were developed: they remove this constraint by altering the underlying space.
+The critical constraint of VGA is this: **all subspaces represented in VGA pass through the origin.** A plane at distance $d$ from the origin, or a line not through the origin, cannot be represented as a blade in $Cl(3,0)$. This is the geometric reason why projective and conformal geometric algebras were developed: they remove this constraint by altering the underlying space.
 
 ### 3.3 The Outer Product Null Space (OPNS) in VGA
 
@@ -127,6 +117,8 @@ The **Outer Product Null Space** (OPNS) of a blade $B$ is the set of vectors $x$
 $$\text{OPNS}(B) = \{x \in V \mid x \wedge B = 0\}.$$
 
 The condition $x \wedge B = 0$ means that $x$ is linearly dependent on the vectors that span $B$ — geometrically, it means that $x$ lies in the subspace represented by $B$.
+
+In the OPNS representation, a geometric object is represented by the blade whose outer product with any point on that object vanishes. The join of two objects is computed via the outer product, constructing the smallest subspace containing both. The meet is computed via the regressive product (the dual of the outer product), extracting the largest common subspace. Intuitively, the outer product builds up geometry by spanning, matching the notion of joining two primitives. The regressive product reduces geometry to a form of intersection, matching the notion of the meet.
 
 In VGA OPNS representation:
 
@@ -143,6 +135,8 @@ The **Inner Product Null Space** (IPNS) of a blade $B$ is the set of vectors $x$
 $$\text{IPNS}(B) = \{x \in V \mid x \cdot B = 0\}.$$
 
 The condition $x \cdot B = 0$ means that $x$ is orthogonal to the complement of the subspace encoded in $B$ — geometrically, $x$ lies in the subspace orthogonal to the "normal" of $B$.
+
+In the IPNS representation, a geometric object is represented by the blade whose inner product with any point on the object vanishes — the object is defined implicitly as a null space under the inner product. The meet of two objects is computed via the outer product of their IPNS blades, corresponding to the intersection of their *null spaces*, rather than the subspaces of the blades themselves. The regressive product gives join operation the structure of the dual of the meet.
 
 In VGA IPNS representation:
 
@@ -172,7 +166,7 @@ where $R = \cos(\theta/2) - \sin(\theta/2) B$ is the rotor and $\tilde{R} = \cos
 
 Importantly, rotors act on **all grades simultaneously** via the sandwich product. A rotor that rotates vectors also rotates bivectors (planes) consistently, without any separate matrix formula for each grade. This uniformity is a fundamental property of the Clifford algebraic framework.
 
-### 3.6 VGA in Physics: The Spacetime Algebra
+### 3.6 Vector Space Geometric Algebra in Physics: The Spacetime Algebra
 
 The most important application of VGA in physics arises in the Spacetime Algebra (STA), $Cl(1,3)$ or $Cl(3,1)$, depending on the sign convention.
 
@@ -194,7 +188,7 @@ where $\nabla = \gamma^\mu \partial_\mu$ is the spacetime vector derivative and 
 
 ---
 
-## 4. Projective Geometric Algebra (PGA)
+## 4. Projective Geometric Algebra
 
 ### 4.1 The Degenerate Dimension and Its Geometry
 
@@ -258,7 +252,7 @@ $$P^* = x e_{23} + y e_{31} + z e_{12} + e_{0123}^*$$
 
 where the notation is the dual of the trivector IPNS form. In this convention, a grade-1 vector in the OPNS represents a point.
 
-**Lines (Grade 2):** A line through two OPNS points $P_1$ and $P_2$ is the outer product (join):
+**Lines (Grade 2):** A line through two OPNS points $P_1$ and $P_2$ is the join operator:
 
 $$L^* = P_1 \wedge P_2.$$
 
@@ -397,6 +391,7 @@ For two IPNS spheres $S_1$ and $S_2$ with centers $c_1, c_2$ and radii $\rho_1, 
 $$\delta(S_1, S_2) = \frac{S_1 \cdot S_2}{|S_1||S_2|} = \frac{|c_1 - c_2|^2 - \rho_1^2 - \rho_2^2}{2\rho_1 \rho_2}$$
 
 is the inversive distance. Its geometric interpretation:
+
 - $\delta = 0$: the spheres are orthogonal (their intersection is a great circle)
 - $|\delta| = 1$: the spheres are tangent (internally or externally)
 - $|\delta| > 1$: the spheres do not intersect
@@ -561,11 +556,11 @@ The three principal algebras — VGA, PGA, and CGA — are not independent const
 
 The three principal algebras form a clear hierarchy of geometric expressive power, ordered by the class of primitives they can represent as single blades:
 
-| Algebra | Can represent as a single blade |
-|---|---|
-| VGA $Cl(3,0)$ | Directions, planar directions (through origin only) |
-| PGA $Cl(3,0,1)$ | Points, lines, planes (all Euclidean, flat only) |
-| CGA $Cl(4,1)$ | Points, lines, planes, circles, spheres (flat and round) |
+| Algebra         | Can represent as a single blade                          |
+| --------------- | -------------------------------------------------------- |
+| VGA $Cl(3,0)$   | Directions, planar directions (through origin only)      |
+| PGA $Cl(3,0,1)$ | Points, lines, planes (all Euclidean, flat only)         |
+| CGA $Cl(4,1)$   | Points, lines, planes, circles, spheres (flat and round) |
 
 This hierarchy is not merely a difference in convenience; it reflects a genuine difference in the **symmetry groups** of the algebras. VGA is symmetric under the orthogonal group $O(3)$; PGA under the Euclidean group $SE(3)$; CGA under the conformal group $O(4,1) \cong \text{Möb}(3)$. Each group is a proper extension of its predecessor, and the richer symmetry group corresponds to a richer class of representable objects.
 
@@ -651,6 +646,6 @@ The mathematical foundations of Clifford algebras and their geometric interpreta
 
 **Projective and Grassmannian Geometry:** The connection between Clifford algebras and the Grassmannian is treated in Chevalley (1954). The Klein quadric and the correspondence between lines and points on the quadric are classical results; see Semple and Kneebone (1952) for the projective-geometric treatment.
 
-**Topology and Spinors:** Bott periodicity and its relationship to Clifford algebras is treated in detail in Lawson and Michelsohn, *Spin Geometry* (1989). The topological aspects of the conformal compactification of Minkowski space and their relation to twistor theory are developed in Penrose and Rindler, *Spinors and Space-Time* (1984, 1986).
+**Topology and Spinors:** Bott periodicity and its relationship to Clifford algebras is treated in detail in Lawson and Michelsohn, _Spin Geometry_ (1989). The topological aspects of the conformal compactification of Minkowski space and their relation to twistor theory are developed in Penrose and Rindler, _Spinors and Space-Time_ (1984, 1986).
 
 **Conformal Spacetime Algebra:** The CSTA and its relationship to twistor theory are developed in Lasenby, Doran, and Gull (1993) and in the papers of Hestenes on conformal maps and physics. The AdS/CFT connection is discussed in the context of $Cl(4,2)$ geometry in several recent mathematical physics papers.
