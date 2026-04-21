@@ -208,16 +208,51 @@ concept ProjectiveGeometry =                            //
     (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>);
 
 template <typename G>
-concept ConformalGeometry =                                  //
-    GeometryModel<G> &&                                      //
-    HasPoint<G> &&                                           //
-    HasPointPair<G> &&                                       //
-    HasDirection<G> &&                                       //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&        //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&       //
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&  //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&      //
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasSphere<G>) &&      //
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>);
+concept ConformalGeometry =                                   //
+    GeometryModel<G> &&                                       //
+    HasPoint<G> &&                                            //
+    HasPointPair<G> &&                                        //
+    HasDirection<G> &&                                        //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&         //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&        //
+    (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&   //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&       //
+    (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasSphere<G>) &&       //
+    (G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) &&  //
+
+    // Basis vector factory methods for physical dimensions.
+    requires {
+      { G::gamma0() } -> std::same_as<typename G::Multivector>;
+    } &&
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
+     requires {
+       { G::gamma1() } -> std::same_as<typename G::Multivector>;
+     }) &&
+    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
+     requires {
+       { G::gamma2() } -> std::same_as<typename G::Multivector>;
+     }) &&
+    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
+     requires {
+       { G::gamma3() } -> std::same_as<typename G::Multivector>;
+     }) &&
+
+    // Conformal basis vector factory methods.
+    requires {
+      { G::e_inf() } -> std::same_as<typename G::Multivector>;
+      { G::e_orig() } -> std::same_as<typename G::Multivector>;
+    } &&
+
+    // Basis bivector factory methods for physical dimensions.
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 || requires {
+      { G::gamma01() } -> std::same_as<typename G::Multivector>;
+    }) && (G::NUM_PHYSICAL_DIMENSIONS < 3 || requires {
+      { G::gamma02() } -> std::same_as<typename G::Multivector>;
+      { G::gamma12() } -> std::same_as<typename G::Multivector>;
+    }) && (G::NUM_PHYSICAL_DIMENSIONS < 4 || requires {
+      { G::gamma03() } -> std::same_as<typename G::Multivector>;
+      { G::gamma13() } -> std::same_as<typename G::Multivector>;
+      { G::gamma23() } -> std::same_as<typename G::Multivector>;
+    });
 
 }  // namespace ndyn::math
