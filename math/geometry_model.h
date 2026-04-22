@@ -452,7 +452,7 @@ concept ConformalGeometryModel =  //
 
     // Fundamental operations.
     HasRotor<G> &&  //
-    // HasTranslator<G> &&  //
+    HasTranslator<G> &&  //
     // HasScaler<G> &&      //
 
     // Basis vector factory methods for physical dimensions.

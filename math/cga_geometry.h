@@ -5,6 +5,7 @@
 #include "glog/logging.h"
 #include "math/abs.h"
 #include "math/algebra.h"
+#include "math/canonical_basis_representation.h"
 #include "math/geometry_model.h"
 #include "math/multivector.h"
 
@@ -119,25 +120,29 @@ class CgaGeometryType final {
     return mv.template coefficient<1UL << 3>();
   }
 
-  // Factory methods for basis vectors using names more specific to conformal geometry.
+  // Factory methods for physical basis vectors using names more specific to conformal geometry.
   static constexpr Multivector gamma0()
     requires(NUM_PHYSICAL_DIMENSIONS >= 1)
   {
+    static_assert((e1() * e1()).scalar() == Scalar{1});
     return e1();
   }
   static constexpr Multivector gamma1()
     requires(NUM_PHYSICAL_DIMENSIONS >= 2)
   {
+    static_assert((e2() * e2()).scalar() == Scalar{1});
     return e2();
   }
   static constexpr Multivector gamma2()
     requires(NUM_PHYSICAL_DIMENSIONS >= 3)
   {
+    static_assert((e3() * e3()).scalar() == Scalar{1});
     return e3();
   }
   static constexpr Multivector gamma3()
     requires(NUM_PHYSICAL_DIMENSIONS >= 4)
   {
+    static_assert((e4() * e4()).scalar() == Scalar{1});
     return e4();
   }
 
@@ -202,72 +207,72 @@ class CgaGeometryType final {
    * division by the e0 coefficient. The caller must not scale the result of this method
    * without accounting for the effect on extract_point.
    */
-  static constexpr Multivector make_point(Scalar x) {
-    const Scalar half_norm_sq{(x * x) / Scalar{2}};
-    return e_orig() + x * gamma0() + half_norm_sq * e_inf();
+  static constexpr Multivector make_point(Scalar t) {
+    const Scalar half_norm_sq{(t * t) / Scalar{2}};
+    return e_orig() + t * gamma0() + half_norm_sq * e_inf();
   }
 
-  static constexpr Multivector make_point(Scalar x, Scalar y) {
-    const Scalar half_norm_sq{(x * x + y * y) / Scalar{2}};
-    return e_orig() + x * gamma0() + y * gamma1() + half_norm_sq * e_inf();
+  static constexpr Multivector make_point(Scalar t, Scalar x) {
+    const Scalar half_norm_sq{(t * t + x * x) / Scalar{2}};
+    return e_orig() + t * gamma0() + x * gamma1() + half_norm_sq * e_inf();
   }
 
-  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) {
-    const Scalar half_norm_sq{(x * x + y * y + z * z) / Scalar{2}};
-    return e_orig() + x * gamma0() + y * gamma1() + z * gamma2() + half_norm_sq * e_inf();
+  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y) {
+    const Scalar half_norm_sq{(t * t + x * x + y * y) / Scalar{2}};
+    return e_orig() + t * gamma0() + x * gamma1() + y * gamma2() + half_norm_sq * e_inf();
   }
 
-  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z, Scalar t) {
-    const Scalar half_norm_sq{(x * x + y * y + z * z + t * t) / Scalar{2}};
-    return e_orig() + x * gamma0() + y * gamma1() + z * gamma2() + t * gamma3() +
+  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y, Scalar z) {
+    const Scalar half_norm_sq{(t * t + x * x + y * y + z * z) / Scalar{2}};
+    return e_orig() + t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
            half_norm_sq * e_inf();
   }
 
   /**
    * Extract Euclidean coordinates from a CGA null point vector under standard normalization.
    */
-  static constexpr void extract_point(const Multivector& point, Scalar& out_x) {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t) {
     const Scalar w{weight(point)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_x = get_gamma0(point) / w;
+    out_t = get_gamma0(point) / w;
   }
 
-  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y) {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x) {
     const Scalar w{weight(point)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_x = get_gamma0(point) / w;
-    out_y = get_gamma1(point) / w;
+    out_t = get_gamma0(point) / w;
+    out_x = get_gamma1(point) / w;
   }
 
-  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
-                                      Scalar& out_z) {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
+                                      Scalar& out_y) {
     const Scalar w{weight(point)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_x = get_gamma0(point) / w;
-    out_y = get_gamma1(point) / w;
-    out_z = get_gamma2(point) / w;
+    out_t = get_gamma0(point) / w;
+    out_x = get_gamma1(point) / w;
+    out_y = get_gamma2(point) / w;
   }
 
-  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
-                                      Scalar& out_z, Scalar& out_t) {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
+                                      Scalar& out_y, Scalar& out_z) {
     const Scalar w{weight(point)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_x = get_gamma0(point) / w;
-    out_y = get_gamma1(point) / w;
-    out_z = get_gamma2(point) / w;
-    out_t = get_gamma3(point) / w;
+    out_t = get_gamma0(point) / w;
+    out_x = get_gamma1(point) / w;
+    out_y = get_gamma2(point) / w;
+    out_z = get_gamma3(point) / w;
   }
 
   /**
@@ -307,14 +312,6 @@ class CgaGeometryType final {
     return cos(half_angle) - sin(half_angle) * rotation_plane;
   }
 
-  static void extract_rotor(const Multivector& mv, Scalar& angle)
-    requires(NUM_PHYSICAL_DIMENSIONS == 2)
-  {
-    using std::acos;
-
-    angle = Scalar{2} * acos(mv.scalar());
-  }
-
   /**
    * Construct a rotor around an axis. Note that this is only meaningful with three
    * physical dimensions. In higher dimensions, a single axis does not uniquely determine a
@@ -331,14 +328,36 @@ class CgaGeometryType final {
     }
 
     const Scalar half_angle{angle / Scalar{2}};
-    const Multivector rotation_plane{nx / norm * gamma23() - ny / norm * gamma13() +
-                                     nz / norm * gamma12()};
+    const Multivector rotation_plane{nx / norm * gamma12() - ny / norm * gamma02() +
+                                     nz / norm * gamma01()};
     return cos(half_angle) - sin(half_angle) * rotation_plane;
+  }
+
+  /**
+   * Construct a CGA rotor in the given plane to rotate by angle radians. The plane of rotation is
+   * given by its normal.
+   */
+  static Multivector make_rotor(const Multivector& rotation_plane, Scalar angle) {
+    if (!rotation_plane.is_grade(2)) {
+      except<std::invalid_argument>(
+          "In all geometric algebras, versors, such as rotors, should be bivectors.");
+    }
+
+    using std::cos, std::sin;
+
+    const Scalar half_angle{angle / Scalar{2}};
+    return cos(half_angle) - sin(half_angle) * rotation_plane.normalize();
+  }
+
+  static void extract_rotor(const Multivector& mv, Scalar& angle) {
+    using std::acos;
+
+    angle = Scalar{2} * acos(mv.scalar());
   }
 
   static void extract_rotor(const Multivector& mv, Scalar& nx, Scalar& ny, Scalar& nz,
                             Scalar& angle)
-    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
   {
     using std::acos, std::sin;
     // A normalized rotor has the form R = cos(θ/2) - sin(θ/2)(nx e01 + ny e02 + nz e12).
@@ -364,22 +383,6 @@ class CgaGeometryType final {
     }
   }
 
-  /**
-   * Construct a CGA rotor in the given plane to rotate by angle radians. The plane of rotation is
-   * given by its normal.
-   */
-  static Multivector make_rotor(const Multivector& rotation_plane, Scalar angle) {
-    if (!rotation_plane.is_grade(2)) {
-      except<std::invalid_argument>(
-          "In all geometric algebras, versors, such as rotors, should be bivectors.");
-    }
-
-    using std::cos, std::sin;
-
-    const Scalar half_angle{angle / Scalar{2}};
-    return cos(half_angle) - sin(half_angle) * rotation_plane.normalize();
-  }
-
   static bool is_rotor(const Multivector& mv) {
     // A normalized rotor has the form R = cos(θ/2) - sin(θ/2) * rotation_plane. The scalar part is
     // cos(θ/2) and the rotation_plane (a bivector) has magnitude sin(θ/2). For this method, we
@@ -400,21 +403,74 @@ class CgaGeometryType final {
   }
 
   /**
-   * Construct a CGA translator for displacement (dx, dy, dz). In CGA translators use e_inf:
-   *   T = 1 - (1/2)(dx*e1 + dy*e2 + dz*e3) * e_inf
+   * Construct a CGA translator for a displacement (dt, dx, dy, dz). In CGA translators use
+   * e_inf: T = 1 - (1/2)(dt*gamma0 + dx*gamma1 + dy*gamma2 + dz*gamma3) * e_inf
    *
    * The e_inf factor ensures T * reverse(T) = 1, mirroring the PGA translator's use of e0.
    * The sign convention follows from the CGA rotor exponential where the translation
    * generator is -(1/2) * t * e_inf for displacement t.
    */
-  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
-    const Multivector displacement{dx * gamma1() + dy * gamma2() + dz * gamma3()};
-    return Scalar{1} - displacement * e_inf() / Scalar{2};
-  }
-
   static constexpr Multivector make_translator(Scalar dt, Scalar dx, Scalar dy, Scalar dz) {
     const Multivector displacement{dt * gamma0() + dx * gamma1() + dy * gamma2() + dz * gamma3()};
     return Scalar{1} - displacement * e_inf() / Scalar{2};
+  }
+
+  static constexpr Multivector make_translator(Scalar dt, Scalar dx, Scalar dy) {
+    const Multivector displacement{dt * gamma0() + dx * gamma1() + dy * gamma2()};
+    return Scalar{1} - displacement * e_inf() / Scalar{2};
+  }
+
+  static constexpr Multivector make_translator(Scalar dt, Scalar dx) {
+    const Multivector displacement{dt * gamma0() + dx * gamma1()};
+    return Scalar{1} - displacement * e_inf() / Scalar{2};
+  }
+
+  static constexpr Multivector make_translator(Scalar dt) {
+    const Multivector displacement{dt * gamma0()};
+    return Scalar{1} - displacement * e_inf() / Scalar{2};
+  }
+
+  static constexpr Multivector make_translator(const Multivector& direction, Scalar dt) {
+    const Multivector displacement{dt * direction};
+    return Scalar{1} - displacement * e_inf() / Scalar{2};
+  }
+
+  static constexpr void extract_translator(const Multivector& mv, Scalar& dt, Scalar& dx,
+                                           Scalar& dy, Scalar& dz) {
+    dt = get_gamm0_e_minus(mv);
+    dx = get_gamm1_e_minus(mv);
+    dy = get_gamm2_e_minus(mv);
+    dz = get_gamm3_e_minus(mv);
+  }
+
+  static constexpr void extract_translator(const Multivector& mv, Scalar& dt, Scalar& dx,
+                                           Scalar& dy) {
+    dt = get_gamm0_e_minus(mv);
+    dx = get_gamm1_e_minus(mv);
+    dy = get_gamm2_e_minus(mv);
+  }
+
+  static constexpr void extract_translator(const Multivector& mv, Scalar& dt, Scalar& dx) {
+    dt = get_gamm0_e_minus(mv);
+    dx = get_gamm1_e_minus(mv);
+  }
+
+  static constexpr void extract_translator(const Multivector& mv, Scalar& dt) {
+    dt = get_gamm0_e_minus(mv);
+  }
+
+  static constexpr bool is_translator(const Multivector& mv) {
+    const Scalar scalar_value{mv.scalar()};
+    if (abs(scalar_value - Scalar{1}) > EPSILON) {
+      return false;
+    }
+
+    const Multivector bivector{mv.template grade_projection<2>()};
+    if (!bivector.is_near(mv - scalar_value)) {
+      return false;
+    }
+
+    return (bivector * e_orig).template is_grade<1>();
   }
 
   /**
