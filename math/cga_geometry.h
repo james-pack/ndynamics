@@ -42,105 +42,131 @@ namespace ndyn::math {
  *   e<4> = e_plus
  *   e<5> = e_minus
  */
-template <bool TIME_EXTENDED, typename T = DefaultScalarType>
-class ConformalGeometryType final {
+template <size_t NUM_PHYSICAL_DIMENSIONS_VALUE, typename T = DefaultScalarType>
+class CgaGeometryType final {
  public:
-  static constexpr size_t NUM_EUCLIDEAN_DIMENSIONS{TIME_EXTENDED ? 4 : 3};
-
-  using Algebra = math::Algebra<T, NUM_EUCLIDEAN_DIMENSIONS + 1, 1, 0>;
+  static constexpr size_t NUM_PHYSICAL_DIMENSIONS{NUM_PHYSICAL_DIMENSIONS_VALUE};
+  using Algebra = math::Algebra<T, NUM_PHYSICAL_DIMENSIONS + 1, 1, 0>;
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
+  static constexpr Scalar EPSILON{Algebra::EPSILON};
 
  private:
-  static constexpr size_t TIME_VECTOR_INDEX{TIME_EXTENDED ? 0 : std::numeric_limits<size_t>::max()};
-  static constexpr size_t X_VECTOR_INDEX{TIME_EXTENDED ? 1 : 0};
-  static constexpr size_t Y_VECTOR_INDEX{X_VECTOR_INDEX + 1};
-  static constexpr size_t Z_VECTOR_INDEX{Y_VECTOR_INDEX + 1};
-
-  static constexpr size_t TIME_BASIS_COEFFICIENT{1UL << TIME_VECTOR_INDEX};
-  static constexpr size_t X_BASIS_COEFFICIENT{1UL << X_VECTOR_INDEX};
-  static constexpr size_t Y_BASIS_COEFFICIENT{1UL << Y_VECTOR_INDEX};
-  static constexpr size_t Z_BASIS_COEFFICIENT{1UL << Z_VECTOR_INDEX};
-
-  static constexpr Scalar get_t(const Multivector& mv) {
-    return mv.template coefficient<TIME_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_x(const Multivector& mv) {
-    return mv.template coefficient<X_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_y(const Multivector& mv) {
-    return mv.template coefficient<Y_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_z(const Multivector& mv) {
-    return mv.template coefficient<Z_BASIS_COEFFICIENT>();
-  }
-
-  static constexpr Scalar get_tx(const Multivector& mv) {
-    return mv.template coefficient<TIME_BASIS_COEFFICIENT | X_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_ty(const Multivector& mv) {
-    return mv.template coefficient<TIME_BASIS_COEFFICIENT | Y_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_tz(const Multivector& mv) {
-    return mv.template coefficient<TIME_BASIS_COEFFICIENT | Z_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_xy(const Multivector& mv) {
-    return mv.template coefficient<X_BASIS_COEFFICIENT | Y_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_xz(const Multivector& mv) {
-    return mv.template coefficient<X_BASIS_COEFFICIENT | Z_BASIS_COEFFICIENT>();
-  }
-  static constexpr Scalar get_yz(const Multivector& mv) {
-    return mv.template coefficient<Y_BASIS_COEFFICIENT | Z_BASIS_COEFFICIENT>();
-  }
-
   // The null basis vectors e0 and e_inf are the conformal origin and infinity respectively.
   // They are not basis vectors of the algebra directly but are linear combinations of e_plus
   // and e_minus. These helpers keep the construction readable throughout the implementation.
-  static constexpr Multivector e_plus() { return Multivector::template e<Z_VECTOR_INDEX + 1>(); }
-  static constexpr Multivector e_minus() { return Multivector::template e<Z_VECTOR_INDEX + 2>(); }
-
-  // Assert that the order of the bases is as expected.
-  static_assert(e_plus() * e_plus() == Multivector{1});
-  static_assert(e_minus() * e_minus() == Multivector{-1});
-
-  static constexpr Multivector e_origin() {
-    return (Scalar{1} / Scalar{2}) * (e_minus() - e_plus());
+  static constexpr Multivector e_plus() {
+    return Multivector::template e<NUM_PHYSICAL_DIMENSIONS>();
+  }
+  static constexpr Multivector e_minus() {
+    return Multivector::template e<NUM_PHYSICAL_DIMENSIONS + 1>();
   }
 
-  static constexpr Multivector e_inf() { return e_minus() + e_plus(); }
+  // Assert that the order of the bases is as expected.
+  static_assert((e_plus() * e_plus()).scalar() == Scalar{1});
+  static_assert((e_minus() * e_minus()).scalar() == Scalar{-1});
 
   static constexpr Scalar weight(const Multivector& mv) {
     return -(mv.left_contraction(e_inf()).scalar());
   }
 
  public:
-  // Factory methods for basis vectors.
-  static constexpr Multivector gamma0()
-    requires TIME_EXTENDED
+  static constexpr Multivector e_orig() { return (Scalar{1} / Scalar{2}) * (e_minus() - e_plus()); }
+
+  static constexpr Multivector e_inf() { return e_minus() + e_plus(); }
+
+  // Factory methods for basis vectors under the generic names.
+  static constexpr Multivector e1()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 1)
   {
-    return Multivector::template e<TIME_VECTOR_INDEX>();
+    return Multivector::template e<0>();
   }
-  static constexpr Multivector gamma1() { return Multivector::template e<X_VECTOR_INDEX>(); }
-  static constexpr Multivector gamma2() { return Multivector::template e<Y_VECTOR_INDEX>(); }
-  static constexpr Multivector gamma3() { return Multivector::template e<Z_VECTOR_INDEX>(); }
+  static constexpr Multivector e2()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 2)
+  {
+    return Multivector::template e<1>();
+  }
+  static constexpr Multivector e3()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
+  {
+    return Multivector::template e<2>();
+  }
+  static constexpr Multivector e4()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 4)
+  {
+    return Multivector::template e<3>();
+  }
+
+  // Getters for the coefficients of the basis vectors under the generic names.
+  static constexpr Scalar get_e1(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 1)
+  {
+    return mv.template coefficient<1UL << 0>();
+  }
+  static constexpr Scalar get_e2(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 2)
+  {
+    return mv.template coefficient<1UL << 1>();
+  }
+  static constexpr Scalar get_e3(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
+  {
+    return mv.template coefficient<1UL << 2>();
+  }
+  static constexpr Scalar get_e4(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 4)
+  {
+    return mv.template coefficient<1UL << 3>();
+  }
+
+  // Factory methods for basis vectors using names more specific to conformal geometry.
+  static constexpr Multivector gamma0()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 1)
+  {
+    return e1();
+  }
+  static constexpr Multivector gamma1()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 2)
+  {
+    return e2();
+  }
+  static constexpr Multivector gamma2()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
+  {
+    return e3();
+  }
+  static constexpr Multivector gamma3()
+    requires(NUM_PHYSICAL_DIMENSIONS >= 4)
+  {
+    return e4();
+  }
+
+  // Getters for the coefficients of the basis vectors under the generic names.
+  static constexpr Scalar get_gamma0(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 1)
+  {
+    return get_e1(mv);
+  }
+  static constexpr Scalar get_gamma1(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 2)
+  {
+    return get_e2(mv);
+  }
+  static constexpr Scalar get_gamma2(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
+  {
+    return get_e3(mv);
+  }
+  static constexpr Scalar get_gamma3(const Multivector& mv)
+    requires(NUM_PHYSICAL_DIMENSIONS >= 4)
+  {
+    return get_e4(mv);
+  }
 
   // Factory methods for basis bivectors.
-  static constexpr Multivector gamma01()
-    requires TIME_EXTENDED
-  {
-    return gamma0() * gamma1();
-  }
-  static constexpr Multivector gamma02()
-    requires TIME_EXTENDED
-  {
-    return gamma0() * gamma2();
-  }
-  static constexpr Multivector gamma03()
-    requires TIME_EXTENDED
-  {
-    return gamma0() * gamma3();
-  }
+  static constexpr Multivector gamma01() { return gamma0() * gamma1(); }
+  static constexpr Multivector gamma02() { return gamma0() * gamma2(); }
+  static constexpr Multivector gamma03() { return gamma0() * gamma3(); }
   static constexpr Multivector gamma12() { return gamma1() * gamma2(); }
   static constexpr Multivector gamma13() { return gamma1() * gamma3(); }
   static constexpr Multivector gamma23() { return gamma2() * gamma3(); }
@@ -166,146 +192,6 @@ class ConformalGeometryType final {
     return a.regress(b);
   }
 
-  static constexpr Multivector make_reflector(Scalar nx, Scalar ny, Scalar nz, Scalar px, Scalar py,
-                                              Scalar pz) noexcept {
-    const Scalar norm{hypot(nx, ny, nz)};
-    // Normalized components.
-    const Scalar ux = nx / norm;
-    const Scalar uy = ny / norm;
-    const Scalar uz = nz / norm;
-    // Distance of point to plane through the origin. Or, displacement of the plane through the
-    // origin to make it contain the given point.
-    const Scalar dist{px * ux + py * uy + pz * uz};
-
-    return {ux * gamma1() + uy * gamma2() + uz * gamma3() + dist * e_inf()};
-  }
-
-  static constexpr Multivector make_reflector(Scalar nt, Scalar nx, Scalar ny, Scalar nz, Scalar pt,
-                                              Scalar px, Scalar py, Scalar pz) noexcept
-    requires TIME_EXTENDED
-  {
-    const Scalar norm{hypot(nt, nx, ny, nz)};
-    // Normalized components.
-    const Scalar ut = nt / norm;
-    const Scalar ux = nx / norm;
-    const Scalar uy = ny / norm;
-    const Scalar uz = nz / norm;
-    // Distance of point to plane through the origin. Or, displacement of the plane through the
-    // origin to make it contain the given point.
-    const Scalar dist{pt * ut + px * ux + py * uy + pz * uz};
-
-    return {ut * gamma0() + ux * gamma1() + uy * gamma2() + uz * gamma3() + dist * e_inf()};
-  }
-
-  /**
-   * Construct a CGA rotor in the given plane to rotate by angle radians. The plane of rotation is
-   * given by its normal.
-   */
-  static Multivector make_rotor(Scalar nx, Scalar ny, Scalar nz, Scalar angle) {
-    using std::cos, std::sin;
-
-    const Scalar norm{hypot(nx, ny, nz)};
-    if (norm < Algebra::EPSILON) {
-      except<std::domain_error>("Degenerate axis: cannot construct rotor from a null axis.");
-    }
-
-    const Scalar half_angle{angle / Scalar{2}};
-    const Multivector rotation_plane{nx / norm * gamma23()    //
-                                     - ny / norm * gamma13()  //
-                                     + nz / norm * gamma12()};
-    return {cos(half_angle) - sin(half_angle) * rotation_plane};
-  }
-
-  static Multivector make_rotor(const Multivector& rotation_plane, Scalar angle) {
-    if (!rotation_plane.is_grade(2)) {
-      except<std::invalid_argument>(
-          "In all geometric algebras, versors, such as rotors, should be bivectors.");
-    }
-
-    using std::cos, std::sin, std::sqrt;
-
-    const Scalar norm{sqrt(abs(rotation_plane.square_magnitude()))};
-    if (norm < Algebra::EPSILON) {
-      except<std::domain_error>(
-          "Degenerate plane: cannot construct rotor from a null rotation plane.");
-    }
-
-    const Scalar half_angle{angle / Scalar{2}};
-    return {cos(half_angle) - sin(half_angle) / norm * rotation_plane};
-  }
-
-  /**
-   * Construct a CGA translator for displacement (dx, dy, dz). In CGA translators use e_inf:
-   *   T = 1 - (1/2)(dx*e1 + dy*e2 + dz*e3) * e_inf
-   *
-   * The e_inf factor ensures T * reverse(T) = 1, mirroring the PGA translator's use of e0.
-   * The sign convention follows from the CGA rotor exponential where the translation
-   * generator is -(1/2) * t * e_inf for displacement t.
-   */
-  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
-    const Multivector displacement{dx * gamma1() + dy * gamma2() + dz * gamma3()};
-    Multivector result{Scalar{1} - (displacement * e_inf() / Scalar{2})};
-    return result;
-  }
-
-  static constexpr Multivector make_translator(Scalar dt, Scalar dx, Scalar dy, Scalar dz)
-    requires TIME_EXTENDED
-  {
-    const Multivector displacement{dt * gamma0() + dx * gamma1() + dy * gamma2() + dz * gamma3()};
-    Multivector result{Scalar{1} - (displacement * e_inf() / Scalar{2})};
-    return result;
-  }
-
-  /**
-   * Constructs a dilator (scaling versor) centered at a given point.
-   * A dilator scales space by the given factor relative to the center (cx, cy, cz).
-   */
-  static Multivector make_dilator(Scalar cx, Scalar cy, Scalar cz, Scalar scale) {
-    using std::log, std::cosh, std::sinh;
-
-    if (scale <= Scalar{0}) {
-      except<std::domain_error>("Scale factor must be positive.");
-    }
-
-    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_origin.
-    // In our basis, E = e_inf ^ e_origin() has the property E^2 = 1.
-    const Multivector E = e_inf() ^ e_origin();
-
-    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
-    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
-    const Scalar phi = log(scale) / Scalar{2};
-    const Multivector origin_dilator = cosh(phi) + (E * sinh(phi));
-
-    // Translate the origin-centered dilator to the target center point.
-    const Multivector translate = make_translator(cx, cy, cz);
-
-    return translate * origin_dilator * ~translate;
-  }
-
-  static Multivector make_dilator(Scalar ct, Scalar cx, Scalar cy, Scalar cz, Scalar scale)
-    requires TIME_EXTENDED
-  {
-    using std::log, std::cosh, std::sinh;
-
-    if (scale <= Scalar{0}) {
-      except<std::domain_error>("Scale factor must be positive.");
-    }
-
-    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_origin.
-    // In our basis, E = e_inf ^ e_origin() has the property E^2 = 1.
-    const Multivector E = e_inf() ^ e_origin();
-
-    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
-    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
-    const Scalar phi = log(scale) / Scalar{2};
-    const Multivector origin_dilator = cosh(phi) + (E * sinh(phi));
-
-    // Translate the origin-centered dilator to the target center point.
-    const Multivector translate = make_translator(ct, cx, cy, cz);
-
-    return translate * origin_dilator * ~translate;
-  }
-
   /**
    * Embed a Euclidean point as a CGA null vector using standard normalization:
    *   X = e0 + px*e1 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
@@ -316,22 +202,49 @@ class ConformalGeometryType final {
    * division by the e0 coefficient. The caller must not scale the result of this method
    * without accounting for the effect on extract_point.
    */
-  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) {
-    const Scalar half_norm_sq{(x * x + y * y + z * z) / Scalar{2}};
-    return e_origin() + x * gamma1() + y * gamma2() + z * gamma3() + half_norm_sq * e_inf();
+  static constexpr Multivector make_point(Scalar x) {
+    const Scalar half_norm_sq{(x * x) / Scalar{2}};
+    return e_orig() + x * gamma0() + half_norm_sq * e_inf();
   }
 
-  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y, Scalar z)
-    requires TIME_EXTENDED
-  {
-    const Scalar half_norm_sq{(t * t + x * x + y * y + z * z) / Scalar{2}};
-    return e_origin() + t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
+  static constexpr Multivector make_point(Scalar x, Scalar y) {
+    const Scalar half_norm_sq{(x * x + y * y) / Scalar{2}};
+    return e_orig() + x * gamma0() + y * gamma1() + half_norm_sq * e_inf();
+  }
+
+  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z) {
+    const Scalar half_norm_sq{(x * x + y * y + z * z) / Scalar{2}};
+    return e_orig() + x * gamma0() + y * gamma1() + z * gamma2() + half_norm_sq * e_inf();
+  }
+
+  static constexpr Multivector make_point(Scalar x, Scalar y, Scalar z, Scalar t) {
+    const Scalar half_norm_sq{(x * x + y * y + z * z + t * t) / Scalar{2}};
+    return e_orig() + x * gamma0() + y * gamma1() + z * gamma2() + t * gamma3() +
            half_norm_sq * e_inf();
   }
 
   /**
    * Extract Euclidean coordinates from a CGA null point vector under standard normalization.
    */
+  static constexpr void extract_point(const Multivector& point, Scalar& out_x) {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_x = get_gamma0(point) / w;
+  }
+
+  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y) {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_x = get_gamma0(point) / w;
+    out_y = get_gamma1(point) / w;
+  }
+
   static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
                                       Scalar& out_z) {
     const Scalar w{weight(point)};
@@ -339,24 +252,22 @@ class ConformalGeometryType final {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_x = get_x(point) / w;
-    out_y = get_y(point) / w;
-    out_z = get_z(point) / w;
+    out_x = get_gamma0(point) / w;
+    out_y = get_gamma1(point) / w;
+    out_z = get_gamma2(point) / w;
   }
 
-  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
-                                      Scalar& out_y, Scalar& out_z)
-    requires TIME_EXTENDED
-  {
+  static constexpr void extract_point(const Multivector& point, Scalar& out_x, Scalar& out_y,
+                                      Scalar& out_z, Scalar& out_t) {
     const Scalar w{weight(point)};
     if (abs(w) < Algebra::EPSILON) {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_t = get_t(point) / w;
-    out_x = get_x(point) / w;
-    out_y = get_y(point) / w;
-    out_z = get_z(point) / w;
+    out_x = get_gamma0(point) / w;
+    out_y = get_gamma1(point) / w;
+    out_z = get_gamma2(point) / w;
+    out_t = get_gamma3(point) / w;
   }
 
   /**
@@ -381,14 +292,185 @@ class ConformalGeometryType final {
 
     return is_null && has_weight;
   }
-  static_assert(is_point(make_point(1, 1, 1)),
-                "Check that the definitions of is_point() and make_point() agree.");
 
   /**
-   * Constructs a grade-4 multivector representing a plane.
+   * Construct a rotor around the origin of the plane. Note that this is only meaningful with two
+   * physical dimensions.
+   */
+  static Multivector make_rotor(Scalar angle)
+    requires(NUM_PHYSICAL_DIMENSIONS == 2)
+  {
+    using std::cos, std::sin;
+
+    const Scalar half_angle{angle / Scalar{2}};
+    static constexpr const Multivector rotation_plane{gamma01()};
+    return cos(half_angle) - sin(half_angle) * rotation_plane;
+  }
+
+  static void extract_rotor(const Multivector& mv, Scalar& angle)
+    requires(NUM_PHYSICAL_DIMENSIONS == 2)
+  {
+    using std::acos;
+
+    angle = Scalar{2} * acos(mv.scalar());
+  }
+
+  /**
+   * Construct a rotor around an axis. Note that this is only meaningful with three
+   * physical dimensions. In higher dimensions, a single axis does not uniquely determine a
+   * rotation.
+   */
+  static Multivector make_rotor(Scalar nx, Scalar ny, Scalar nz, Scalar angle)
+    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  {
+    using std::cos, std::sin;
+
+    const Scalar norm{hypot(nx, ny, nz)};
+    if (norm < Algebra::EPSILON) {
+      except<std::domain_error>("Degenerate axis: cannot construct rotor from a null axis.");
+    }
+
+    const Scalar half_angle{angle / Scalar{2}};
+    const Multivector rotation_plane{nx / norm * gamma23() - ny / norm * gamma13() +
+                                     nz / norm * gamma12()};
+    return cos(half_angle) - sin(half_angle) * rotation_plane;
+  }
+
+  static void extract_rotor(const Multivector& mv, Scalar& nx, Scalar& ny, Scalar& nz,
+                            Scalar& angle)
+    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  {
+    using std::acos, std::sin;
+    // A normalized rotor has the form R = cos(θ/2) - sin(θ/2)(nx e01 + ny e02 + nz e12).
+    // The scalar part is cos(θ/2) and the bivector part has magnitude sin(θ/2).
+    // Recover the full rotation angle from the scalar component.
+    const Scalar half_angle = acos(mv.scalar());
+    angle = half_angle * 2;
+
+    // sin(θ/2) is the magnitude of the bivector part. If it is zero the rotor
+    // is the identity and the axis is undefined; return a canonical axis.
+    const Scalar sin_half_angle = sin(half_angle);
+    if (sin_half_angle == Scalar{0}) {
+      nx = Scalar{0};
+      ny = Scalar{0};
+      nz = Scalar{1};
+    } else {
+      // Extract the axis by dividing out sin(θ/2) from each bivector component.
+      // The sign convention matches make_rotor(): R = cos(θ/2) - sin(θ/2)(n * B).
+      const Scalar inv_sin = Scalar{1} / sin_half_angle;
+      nx = -get_gamma01(mv) * inv_sin;
+      ny = -get_gamma02(mv) * inv_sin;
+      nz = -get_gamma12(mv) * inv_sin;
+    }
+  }
+
+  /**
+   * Construct a CGA rotor in the given plane to rotate by angle radians. The plane of rotation is
+   * given by its normal.
+   */
+  static Multivector make_rotor(const Multivector& rotation_plane, Scalar angle) {
+    if (!rotation_plane.is_grade(2)) {
+      except<std::invalid_argument>(
+          "In all geometric algebras, versors, such as rotors, should be bivectors.");
+    }
+
+    using std::cos, std::sin;
+
+    const Scalar half_angle{angle / Scalar{2}};
+    return cos(half_angle) - sin(half_angle) * rotation_plane.normalize();
+  }
+
+  static bool is_rotor(const Multivector& mv) {
+    // A normalized rotor has the form R = cos(θ/2) - sin(θ/2) * rotation_plane. The scalar part is
+    // cos(θ/2) and the rotation_plane (a bivector) has magnitude sin(θ/2). For this method, we
+    // check the value of the scalar is in the range of the cos() function. We check that the
+    // multivector is in the form of a bivector plus a scalar. We verify that the square magnitude
+    // of the bivector plus the square of the scalar is one.
+    const Scalar scalar_value{mv.scalar()};
+    if (abs(scalar_value) - Scalar{1} > EPSILON) {
+      return false;
+    }
+
+    const Multivector bivector{mv.template grade_projection<2>()};
+    if (!mv.is_near(bivector + scalar_value)) {
+      return false;
+    }
+
+    return abs(bivector.square_magnitude() + scalar_value * scalar_value - Scalar{1}) < EPSILON;
+  }
+
+  /**
+   * Construct a CGA translator for displacement (dx, dy, dz). In CGA translators use e_inf:
+   *   T = 1 - (1/2)(dx*e1 + dy*e2 + dz*e3) * e_inf
    *
-   * This bridges Euclidean intuition (normal-defined planes) into a grade-4
-   * multivector.
+   * The e_inf factor ensures T * reverse(T) = 1, mirroring the PGA translator's use of e0.
+   * The sign convention follows from the CGA rotor exponential where the translation
+   * generator is -(1/2) * t * e_inf for displacement t.
+   */
+  static constexpr Multivector make_translator(Scalar dx, Scalar dy, Scalar dz) {
+    const Multivector displacement{dx * gamma1() + dy * gamma2() + dz * gamma3()};
+    return Scalar{1} - displacement * e_inf() / Scalar{2};
+  }
+
+  static constexpr Multivector make_translator(Scalar dt, Scalar dx, Scalar dy, Scalar dz) {
+    const Multivector displacement{dt * gamma0() + dx * gamma1() + dy * gamma2() + dz * gamma3()};
+    return Scalar{1} - displacement * e_inf() / Scalar{2};
+  }
+
+  /**
+   * Constructs a dilator (scaling versor) centered at a given point.
+   * A dilator scales space by the given factor relative to the center (cx, cy, cz).
+   */
+  static Multivector make_dilator(Scalar cx, Scalar cy, Scalar cz, Scalar scale) {
+    using std::log, std::cosh, std::sinh;
+
+    if (scale <= Scalar{0}) {
+      except<std::domain_error>("Scale factor must be positive.");
+    }
+
+    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_orig.
+    // In our basis, E = e_inf ^ e_orig() has the property E^2 = 1.
+    const Multivector E = e_inf() ^ e_orig();
+
+    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
+    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
+    const Scalar phi = log(scale) / Scalar{2};
+    const Multivector origin_dilator = cosh(phi) + E * sinh(phi);
+
+    // Translate the origin-centered dilator to the target center point.
+    const Multivector translate = make_translator(cx, cy, cz);
+
+    return translate * origin_dilator * ~translate;
+  }
+
+  static Multivector make_dilator(Scalar ct, Scalar cx, Scalar cy, Scalar cz, Scalar scale) {
+    using std::log, std::cosh, std::sinh;
+
+    if (scale <= Scalar{0}) {
+      except<std::domain_error>("Scale factor must be positive.");
+    }
+
+    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_orig.
+    // In our basis, E = e_inf ^ e_orig() has the property E^2 = 1.
+    const Multivector E = e_inf() ^ e_orig();
+
+    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
+    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
+    const Scalar phi = log(scale) / Scalar{2};
+    const Multivector origin_dilator = cosh(phi) + E * sinh(phi);
+
+    // Translate the origin-centered dilator to the target center point.
+    const Multivector translate = make_translator(ct, cx, cy, cz);
+
+    return translate * origin_dilator * ~translate;
+  }
+
+  /**
+   * Constructs a multivector representing a plane in a conformal space.
+   *
+   * This bridges Euclidean coordinate-based intuition (normal and point) into the algebraic
+   * framework of Conformal Geometric Algebra (CGA). This construction is appropriate in any
+   * conformal geometry provided the underlying algebra provides enough physical dimensions.
    */
   static constexpr Multivector make_plane(Scalar nx, Scalar ny, Scalar nz, Scalar px, Scalar py,
                                           Scalar pz) {
@@ -408,15 +490,40 @@ class ConformalGeometryType final {
 
     const Multivector p{make_point(px, py, pz)};
 
-    // A Plane in OPNS is the wedge of a point, the direction bivectors, and infinity.
-    // Resulting Grade: 1 (point) + 2 (bivector) + 1 (e_inf) = 4.
     return join(join(p, spatial_bivector), e_inf());
   }
 
-  static constexpr bool is_plane(const Multivector& mv) noexcept {
-    if (!mv.template is_grade<4>()) {
-      return false;
+  /**
+   * Constructs a multivector representing a hyperplane in a time-extended conformal space.
+   *
+   * This bridges higher-dimensional coordinate-based intuition into the algebraic framework
+   * of Conformal Geometric Algebra (CGA). This construction is appropriate in any conformal
+   * geometry provided the underlying algebra provides enough physical dimensions.
+   */
+  static constexpr Multivector make_plane(Scalar nt, Scalar nx, Scalar ny, Scalar nz, Scalar pt,
+                                          Scalar px, Scalar py, Scalar pz)
+    requires TIME_EXTENDED
+  {
+    const Scalar norm{hypot(nt, nx, ny, nz)};
+    if (norm < Algebra::EPSILON) {
+      except<std::domain_error>("Degenerate normal: cannot construct plane from null vector.");
     }
+
+    const Scalar ut = nt / norm;
+    const Scalar ux = nx / norm;
+    const Scalar uy = ny / norm;
+    const Scalar uz = nz / norm;
+
+    const Multivector spatial_trivector{ut * (gamma12() * gamma3()) - ux * (gamma02() * gamma3()) +
+                                        uy * (gamma01() * gamma3()) - uz * (gamma01() * gamma2())};
+
+    const Multivector p{make_point(pt, px, py, pz)};
+
+    return join(join(p, spatial_trivector), e_inf());
+  }
+
+  static constexpr bool is_plane(const Multivector& mv) noexcept {
+    if (!mv.template is_grade<5>()) return false;
 
     // The null condition L * ~L = 0 distinguishes lines (null) from circles (non-null).
     const auto self_product{(mv * ~mv).scalar()};
@@ -437,6 +544,14 @@ class ConformalGeometryType final {
                                          Scalar pz2) {
     const Multivector p1{make_point(px1, py1, pz1)};
     const Multivector p2{make_point(px2, py2, pz2)};
+
+    return join(join(p1, p2), e_inf());
+  }
+
+  static constexpr Multivector make_line(Scalar pt1, Scalar px1, Scalar py1, Scalar pz1, Scalar pt2,
+                                         Scalar px2, Scalar py2, Scalar pz2) {
+    const Multivector p1{make_point(pt1, px1, py1, pz1)};
+    const Multivector p2{make_point(pt2, px2, py2, pz2)};
 
     return join(join(p1, p2), e_inf());
   }
@@ -482,6 +597,22 @@ class ConformalGeometryType final {
     return meet(sphere, plane);
   }
 
+  static constexpr Multivector make_circle(Scalar ct, Scalar cx, Scalar cy, Scalar cz, Scalar nt,
+                                           Scalar nx, Scalar ny, Scalar nz, Scalar radius)
+    requires TIME_EXTENDED
+  {
+    const Multivector center{make_point(ct, cx, cy, cz)};
+
+    // Create the dual sphere.
+    const Multivector sphere{center - radius * radius / Scalar{2} * e_inf()};
+
+    // Create the dual hyperplane passing through the center with the given normal.
+    const Multivector plane{make_plane(nt, nx, ny, nz, ct, cx, cy, cz)};
+
+    // The intersection of a dual sphere and a dual hyperplane is the dual circle.
+    return meet(sphere, plane);
+  }
+
   /**
    * Circles and lines are almost the same entities in CGA. A line is just a circle with infinite
    * radius.
@@ -513,28 +644,26 @@ class ConformalGeometryType final {
 
     const Scalar scalar_part{motor.scalar()};
 
-    const Scalar e01{motor.coefficient(0b00011)};
-    const Scalar e02{motor.coefficient(0b00101)};
-    const Scalar e12{motor.coefficient(0b00110)};
-    const Scalar euclidean_norm_sq{e01 * e01 + e02 * e02 + e12 * e12};
+    const Scalar exy{get_xy(motor)};
+    const Scalar exz{get_xz(motor)};
+    const Scalar eyz{get_yz(motor)};
+    const Scalar euclidean_norm_sq{exy * exy + exz * exz + eyz * eyz};
 
     if (euclidean_norm_sq < Algebra::EPSILON) {
-      return motor.grade_projection(2) - Multivector{}.add(Scalar{1});
+      // For pure translations, the log is simply the bivector part.
+      return motor.template grade_projection<2>();
     }
 
     const Scalar euclidean_norm{sqrt(euclidean_norm_sq)};
     const Scalar angle{Scalar{2} * acos(scalar_part)};
     const Scalar s{sin(angle / Scalar{2})};
 
-    const Multivector euclidean_biv{
-        e01 * (Multivector::template e<0>() * Multivector::template e<1>()) +
-        e02 * (Multivector::template e<0>() * Multivector::template e<2>()) +
-        e12 * (Multivector::template e<1>() * Multivector::template e<2>())};
+    const Multivector euclidean_biv{exy * gamma12() + exz * gamma13() + eyz * gamma23()};
 
     // The translational component of the motor lives in the bivectors involving e_inf.
     const Multivector translation_biv{motor.template grade_projection<2>() - euclidean_biv};
 
-    return (angle / euclidean_norm) * euclidean_biv + (Scalar{1} / s) * translation_biv;
+    return angle / euclidean_norm * euclidean_biv + Scalar{1} / s * translation_biv;
   }
 
   /**
@@ -546,13 +675,13 @@ class ConformalGeometryType final {
   static Multivector motor_exp(const Multivector& bivector) {
     using std::cos, std::sin, std::sqrt;
 
-    const Scalar e01{bivector.coefficient(0b0011)};
-    const Scalar e02{bivector.coefficient(0b0101)};
-    const Scalar e12{bivector.coefficient(0b0110)};
-    const Scalar euclidean_norm_sq{e01 * e01 + e02 * e02 + e12 * e12};
+    const Scalar exy{get_xy(bivector)};
+    const Scalar exz{get_xz(bivector)};
+    const Scalar eyz{get_yz(bivector)};
+    const Scalar euclidean_norm_sq{exy * exy + exz * exz + eyz * eyz};
 
     if (euclidean_norm_sq < Algebra::EPSILON) {
-      Multivector result{bivector};
+      Multivector result{bivector.template grade_projection<2>()};
       result.set_scalar(Scalar{1});
       return result;
     }
@@ -561,19 +690,24 @@ class ConformalGeometryType final {
     const Scalar c{cos(euclidean_norm)};
     const Scalar s{sin(euclidean_norm) / euclidean_norm};
 
-    Multivector result{s * bivector.template grade_projection<2>() + c};
-    return result;
+    return s * bivector.template grade_projection<2>() + c;
   }
 };
 
 template <typename Scalar = DefaultScalarType>
-using SpatialConformalGeometry = ConformalGeometryType</* Not time-extended */ false, Scalar>;
+using Cga2dGeometry = CgaGeometryType<2, Scalar>;
 
 template <typename Scalar = DefaultScalarType>
-using ConformalGeometry = ConformalGeometryType</* Time-extended */ true, Scalar>;
+using Cga3dGeometry = CgaGeometryType<3, Scalar>;
 
-static_assert(GeometryModel<SpatialConformalGeometry<>>);
-static_assert(SpatialConformalGeometryModel<SpatialConformalGeometry<>>);
-static_assert(ConformalGeometryModel<ConformalGeometry<>>);
+template <typename Scalar = DefaultScalarType>
+using Cga4dGeometry = CgaGeometryType<4, Scalar>;
+
+static_assert(GeometryModel<Cga2dGeometry<>>);
+static_assert(GeometryModel<Cga3dGeometry<>>);
+static_assert(GeometryModel<Cga4dGeometry<>>);
+static_assert(ConformalGeometryModel<Cga2dGeometry<>>);
+static_assert(ConformalGeometryModel<Cga3dGeometry<>>);
+static_assert(ConformalGeometryModel<Cga4dGeometry<>>);
 
 }  // namespace ndyn::math
