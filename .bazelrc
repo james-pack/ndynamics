@@ -2,12 +2,11 @@
 build --enable_platform_specific_config
 build --config=c++20
 build --config=platform_build
+build --config=large_multivectors
 
 build:linux --platforms=//platforms:linux_x86_64_general
 
-# Allows significantly larger multivectors at the cost of much longer compile
-# and link times. The code requiring this setting is immature and probably
-# doesn't work well enough to be practical.
+# Allows significantly larger multivectors and other structures to be computed at compile-time.
 build:large_multivectors --cxxopt -fconstexpr-ops-limit=10000000000
 
 build:save_assembly --save_temps
