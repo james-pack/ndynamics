@@ -91,7 +91,7 @@ class Multivector final {
   // that dialect.
   Multivector normalize() const {
     using std::sqrt;
-    return divide(sqrt(square_magnitude()));
+    return divide(sqrt(abs(square_magnitude())));
   }
 
   constexpr const ScalarType& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
