@@ -16,10 +16,8 @@ cc_library(
         "geometry_model.h",
         "integrators.h",
         "multivector.h",
-        "pga_geometry.h",
         "state.h",
         "unitary_ops.h",
-        "vga_geometry.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -47,6 +45,7 @@ cc_library(
         "integrators_test_utils.h",
         "multivector_test_utils.h",
         "state_test_utils.h",
+        "geometry_model_test_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -168,8 +167,8 @@ cc_test(
 )
 
 cc_test(
-    name = "geometry_model_test",
-    srcs = ["geometry_model_test.cc"],
+    name = "cga_geometry_test",
+    srcs = ["cga_geometry_test.cc"],
     deps = [
         ":math",
         ":testing",
