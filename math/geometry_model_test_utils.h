@@ -4,6 +4,7 @@
 
 #include "gtest/gtest.h"
 #include "math/abs.h"
+#include "math/canonical_basis_representation.h"
 #include "math/geometry_model.h"
 
 namespace ndyn::math {
@@ -49,7 +50,233 @@ class GeometryConceptsTest : public ::testing::Test {
 
   // Signed distance from origin for planes and hyperplanes.
   static constexpr typename G::Scalar offset{10};
+
+  // Random angle value.
+  static constexpr typename G::Scalar angle{2};
+
+  // Random value for scaling.
+  static constexpr typename G::Scalar scale{11};
 };
+
+enum class Primitives {
+  POINT,
+  POINT_PAIR,
+  DIRECTION,
+  LINE,
+  PLANE,
+  CIRCLE,
+  SPHERE,
+  HYPERPLANE,
+  HYPERSPHERE,
+};
+
+enum class Operators {
+  ROTOR,
+  TRANSLATOR,
+  SCALER,
+};
+
+template <typename G, Primitives P>
+typename G::Multivector make_primitive() {
+  if constexpr (P == Primitives::POINT) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS >= 4) {
+      return G::make_point(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                           GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::w);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
+      return G::make_point(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                           GeometryConceptsTest<G>::z);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 2) {
+      return G::make_point(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y);
+    } else {
+      return G::make_point(GeometryConceptsTest<G>::x);
+    }
+  } else if constexpr (P == Primitives::POINT_PAIR) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS >= 4) {
+      return G::make_point_pair(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                                GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::w,
+                                GeometryConceptsTest<G>::dx, GeometryConceptsTest<G>::dy,
+                                GeometryConceptsTest<G>::dz, GeometryConceptsTest<G>::dw);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
+      return G::make_point_pair(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                                GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::dx,
+                                GeometryConceptsTest<G>::dy, GeometryConceptsTest<G>::dz);
+    } else {
+      return G::make_point_pair(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                                GeometryConceptsTest<G>::dx, GeometryConceptsTest<G>::dy);
+    }
+  } else if constexpr (P == Primitives::LINE) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS >= 4) {
+      return G::make_line(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                          GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::w,
+                          GeometryConceptsTest<G>::dx, GeometryConceptsTest<G>::dy,
+                          GeometryConceptsTest<G>::dz, GeometryConceptsTest<G>::dw);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
+      return G::make_line(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                          GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::dx,
+                          GeometryConceptsTest<G>::dy, GeometryConceptsTest<G>::dz);
+    } else {
+      return G::make_line(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                          GeometryConceptsTest<G>::dx, GeometryConceptsTest<G>::dy);
+    }
+  } else if constexpr (P == Primitives::PLANE) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS >= 4) {
+      return G::make_plane(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                           GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::w,
+                           GeometryConceptsTest<G>::offset);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
+      return G::make_plane(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                           GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::offset);
+    } else {
+      return G::make_plane(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                           GeometryConceptsTest<G>::offset);
+    }
+  } else if constexpr (P == Primitives::CIRCLE) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS >= 4) {
+      return G::make_circle(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                            GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::w,
+                            GeometryConceptsTest<G>::radius);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
+      return G::make_circle(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                            GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::radius);
+    } else {
+      return G::make_circle(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                            GeometryConceptsTest<G>::radius);
+    }
+  } else if constexpr (P == Primitives::SPHERE) {
+    return G::make_sphere(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                          GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::radius);
+  } else if constexpr (P == Primitives::HYPERPLANE) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS >= 4) {
+      return G::make_hyperplane(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                                GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::w,
+                                GeometryConceptsTest<G>::offset);
+    } else {
+      return G::make_hyperplane(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                                GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::offset);
+    }
+  } else if constexpr (P == Primitives::HYPERSPHERE) {
+    return G::make_hypersphere(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                               GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::w,
+                               GeometryConceptsTest<G>::radius);
+  }
+}
+
+template <typename G, Operators Op>
+typename G::Multivector make_operator() {
+  if constexpr (Op == Operators::ROTOR) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 2) {
+      return G::make_rotor(GeometryConceptsTest<G>::angle);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
+      return G::make_rotor(GeometryConceptsTest<G>::x, GeometryConceptsTest<G>::y,
+                           GeometryConceptsTest<G>::z, GeometryConceptsTest<G>::angle);
+    } else {
+      // 3D and above: use bivector multivector + angle.
+      // Construct a unit bivector from gamma01 as the plane of rotation.
+      return G::make_rotor(G::gamma01(), GeometryConceptsTest<G>::angle);
+    }
+  } else if constexpr (Op == Operators::TRANSLATOR) {
+    if constexpr (G::NUM_PHYSICAL_DIMENSIONS >= 4) {
+      return G::make_translator(GeometryConceptsTest<G>::dx, GeometryConceptsTest<G>::dy,
+                                GeometryConceptsTest<G>::dz, GeometryConceptsTest<G>::dw);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
+      return G::make_translator(GeometryConceptsTest<G>::dx, GeometryConceptsTest<G>::dy,
+                                GeometryConceptsTest<G>::dz);
+    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 2) {
+      return G::make_translator(GeometryConceptsTest<G>::dx, GeometryConceptsTest<G>::dy);
+    } else {
+      return G::make_translator(GeometryConceptsTest<G>::dx);
+    }
+  } else if constexpr (Op == Operators::SCALER) {
+    return G::make_scaler(GeometryConceptsTest<G>::scale);
+  }
+}
+
+template <typename G, Primitives P>
+bool check_is_primitive(const typename G::Multivector& mv) {
+  if constexpr (P == Primitives::POINT) {
+    return G::is_point(mv);
+  } else if constexpr (P == Primitives::POINT_PAIR) {
+    return G::is_point_pair(mv);
+  } else if constexpr (P == Primitives::LINE) {
+    return G::is_line(mv);
+  } else if constexpr (P == Primitives::PLANE) {
+    return G::is_plane(mv);
+  } else if constexpr (P == Primitives::CIRCLE) {
+    return G::is_circle(mv);
+  } else if constexpr (P == Primitives::SPHERE) {
+    return G::is_sphere(mv);
+  } else if constexpr (P == Primitives::HYPERPLANE) {
+    return G::is_hyperplane(mv);
+  } else if constexpr (P == Primitives::HYPERSPHERE) {
+    return G::is_hypersphere(mv);
+  } else {
+    return false;
+  }
+}
+
+template <typename G, Primitives P>
+constexpr bool geometry_has_primitive() {
+  if constexpr (P == Primitives::POINT) {
+    return HasPoint<G>;
+  } else if constexpr (P == Primitives::POINT_PAIR) {
+    return HasPointPair<G>;
+  } else if constexpr (P == Primitives::LINE) {
+    return HasLine<G>;
+  } else if constexpr (P == Primitives::PLANE) {
+    return HasPlane<G>;
+  } else if constexpr (P == Primitives::CIRCLE) {
+    return HasCircle<G>;
+  } else if constexpr (P == Primitives::SPHERE) {
+    return HasSphere<G>;
+  } else if constexpr (P == Primitives::HYPERPLANE) {
+    return HasHyperplane<G>;
+  } else if constexpr (P == Primitives::HYPERSPHERE) {
+    return HasHypersphere<G>;
+  } else {
+    return false;
+  }
+}
+
+template <typename G, Operators Op>
+constexpr bool geometry_has_operator() {
+  if constexpr (Op == Operators::ROTOR) {
+    return HasRotor<G>;
+  } else if constexpr (Op == Operators::TRANSLATOR) {
+    return HasTranslator<G>;
+  } else if constexpr (Op == Operators::SCALER) {
+    return HasScaler<G>;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Verifies that a primitive acted on by an operator is closed under that operation. That is, a
+ * translated point is still a point.
+ */
+template <typename G, Primitives P, Operators Op>
+::testing::AssertionResult verify_closure() {
+  if constexpr (geometry_has_primitive<G, P>() && geometry_has_operator<G, Op>()) {
+    const auto primitive = make_primitive<G, P>();
+    const auto op = make_operator<G, Op>();
+    const auto result = op * primitive * op.reverse();
+
+    if (check_is_primitive<G, P>(result)) {
+      return ::testing::AssertionSuccess();
+    } else {
+      LOG(INFO) << "primitive: " << primitive;
+      LOG(INFO) << "op: " << op;
+      LOG(INFO) << "result: " << result;
+      return ::testing::AssertionFailure()
+             << "Closure failed: primitive " << static_cast<int>(P) << " acted on by operator "
+             << static_cast<int>(Op)
+             << " did not produce the same primitive type. (NUM_PHYSICAL_DIMENSIONS: "
+             << G::NUM_PHYSICAL_DIMENSIONS << ")";
+    }
+  } else {
+    return ::testing::AssertionSuccess();
+  }
+}
 
 TYPED_TEST_SUITE_P(GeometryConceptsTest);
 
@@ -392,22 +619,71 @@ TYPED_TEST_P(GeometryConceptsTest, HypersphereRoundtrip) {
   }
 }
 
-REGISTER_TYPED_TEST_SUITE_P(GeometryConceptsTest,
-                            // Point tests.
-                            PointRoundtrip1D, PointRoundtrip2D, PointRoundtrip3D, PointRoundtrip4D,
-                            // Point pair tests.
-                            PointPairRoundtrip2D, PointPairRoundtrip3D, PointPairRoundtrip4D,
-                            // Line tests.
-                            LineRoundtrip2D, LineRoundtrip3D, LineRoundtrip4D,
-                            // Plane tests.
-                            PlaneRoundtrip2D, PlaneRoundtrip3D, PlaneRoundtrip4D,
-                            // Circle tests.
-                            CircleRoundtrip2D, CircleRoundtrip3D, CircleRoundtrip4D,
-                            // Sphere tests.
-                            SphereRoundtrip2D, SphereRoundtrip3D, SphereRoundtrip4D,
-                            // Hyperplane tests.
-                            HyperplaneRoundtrip3D, HyperplaneRoundtrip4D,
-                            // Hypersphere tests.
-                            HypersphereRoundtrip);
+TYPED_TEST_P(GeometryConceptsTest, PointClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT, Operators::SCALER>()));
+}
+
+TYPED_TEST_P(GeometryConceptsTest, PointPairClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT_PAIR, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT_PAIR, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT_PAIR, Operators::SCALER>()));
+}
+
+TYPED_TEST_P(GeometryConceptsTest, LineClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::LINE, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::LINE, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::LINE, Operators::SCALER>()));
+}
+
+TYPED_TEST_P(GeometryConceptsTest, PlaneClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::PLANE, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::PLANE, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::PLANE, Operators::SCALER>()));
+}
+
+TYPED_TEST_P(GeometryConceptsTest, CircleClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::CIRCLE, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::CIRCLE, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::CIRCLE, Operators::SCALER>()));
+}
+
+TYPED_TEST_P(GeometryConceptsTest, SphereClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::SPHERE, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::SPHERE, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::SPHERE, Operators::SCALER>()));
+}
+
+TYPED_TEST_P(GeometryConceptsTest, HyperplaneClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERPLANE, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERPLANE, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERPLANE, Operators::SCALER>()));
+}
+
+TYPED_TEST_P(GeometryConceptsTest, HypersphereClosure) {
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERSPHERE, Operators::ROTOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERSPHERE, Operators::TRANSLATOR>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERSPHERE, Operators::SCALER>()));
+}
+
+REGISTER_TYPED_TEST_SUITE_P(  //
+    GeometryConceptsTest,
+    // Point tests.
+    PointRoundtrip1D, PointRoundtrip2D, PointRoundtrip3D, PointRoundtrip4D, PointClosure,
+    //  Point pair tests.
+    PointPairRoundtrip2D, PointPairRoundtrip3D, PointPairRoundtrip4D, PointPairClosure,
+    // Line tests.
+    LineRoundtrip2D, LineRoundtrip3D, LineRoundtrip4D, LineClosure,
+    // Plane tests.
+    PlaneRoundtrip2D, PlaneRoundtrip3D, PlaneRoundtrip4D, PlaneClosure,
+    // Circle tests.
+    CircleRoundtrip2D, CircleRoundtrip3D, CircleRoundtrip4D, CircleClosure,
+    // Sphere tests.
+    SphereRoundtrip2D, SphereRoundtrip3D, SphereRoundtrip4D, SphereClosure,
+    // Hyperplane tests.
+    HyperplaneRoundtrip3D, HyperplaneRoundtrip4D, HyperplaneClosure,
+    // Hypersphere tests.
+    HypersphereRoundtrip, HypersphereClosure);
 
 }  // namespace ndyn::math
