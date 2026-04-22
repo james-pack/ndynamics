@@ -322,7 +322,7 @@ static_assert(BasisRepresentation<CanonicalBasisRepresentation<Pga<>>>);
 template <typename AlgebraT>
 class CanonicalBasisRepresentation<AlgebraT,
                                    std::enable_if_t<AlgebraT::NUM_POSITIVE_BASES >= 2 &&  //
-                                                    AlgebraT::NUM_POSITIVE_BASES <= 4 &&  //
+                                                    AlgebraT::NUM_POSITIVE_BASES <= 5 &&  //
                                                     AlgebraT::NUM_NEGATIVE_BASES == 1 &&  //
                                                     AlgebraT::NUM_ZERO_BASES == 0>>
     final {
