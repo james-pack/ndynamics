@@ -53,13 +53,6 @@ class Multivector final {
     return mask;
   }();
 
-  /**
-   * Determine if a particular blade includes a basis vector that has a degenerate metric.
-   */
-  static constexpr bool includes_degenerate_basis(size_t blade_index) {
-    return (DEGENERATE_BASIS_MASK & blade_index) != 0;
-  }
-
  public:
   constexpr Multivector() = default;
 
@@ -77,6 +70,9 @@ class Multivector final {
   constexpr Multivector& operator=(const Multivector& rhs) = default;
   constexpr Multivector& operator=(Multivector&& rhs) = default;
 
+  /**
+   * Computes X * ~X for this multivector, returning the scalar part.
+   */
   constexpr ScalarType square_magnitude() const {
     ScalarType result{};
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
@@ -92,6 +88,87 @@ class Multivector final {
   Multivector normalize() const {
     using std::sqrt;
     return divide(sqrt(abs(square_magnitude())));
+  }
+
+  /**
+   * Create a copy of this multivector but with certain basis vectors, and the blades that include
+   * them, removed.
+   */
+  template <size_t BASIS_INDEX>
+  constexpr Multivector mask_bases() const {
+    constexpr size_t BASIS_MASK{~(1UL << BASIS_INDEX)};
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if ((i & BASIS_MASK) == i) {
+        result.coefficients_[i] = coefficients_[i];
+      }
+    }
+    return result;
+  }
+
+  /**
+   * As above, but remove two basis vectors. Improves efficiency if multiple basis vectors need to
+   * be masked out.
+   */
+  template <size_t BASIS_INDEX1, size_t BASIS_INDEX2>
+  constexpr Multivector mask_bases() const {
+    constexpr size_t BASIS_MASK{~((1UL << BASIS_INDEX1) | (1UL << BASIS_INDEX2))};
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if ((i & BASIS_MASK) == i) {
+        result.coefficients_[i] = coefficients_[i];
+      }
+    }
+    return result;
+  }
+
+  /**
+   * As above, but remove three basis vectors. Improves efficiency if multiple basis vectors need to
+   * be masked out.
+   */
+  template <size_t BASIS_INDEX1, size_t BASIS_INDEX2, size_t BASIS_INDEX3>
+  constexpr Multivector mask_bases() const {
+    constexpr size_t BASIS_MASK{
+        ~((1UL << BASIS_INDEX1) | (1UL << BASIS_INDEX2) | (1UL << BASIS_INDEX3))};
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if ((i & BASIS_MASK) == i) {
+        result.coefficients_[i] = coefficients_[i];
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Create a copy of this multivector keeping only certain basis vectors, and the blades that
+   * include them.
+   */
+  template <size_t BASIS_INDEX>
+  constexpr Multivector select_bases() const {
+    constexpr size_t BASIS_MASK{~(1UL << BASIS_INDEX)};
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if ((i & BASIS_MASK) != i) {
+        result.coefficients_[i] = coefficients_[i];
+      }
+    }
+    return result;
+  }
+
+  /**
+   * As above, but remove two basis vectors. Improves efficiency if multiple basis vectors need to
+   * be selected.
+   */
+  template <size_t BASIS_INDEX1, size_t BASIS_INDEX2>
+  constexpr Multivector select_bases() const {
+    constexpr size_t BASIS_MASK{~((1UL << BASIS_INDEX1) | (1UL << BASIS_INDEX2))};
+    Multivector result{};
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if ((i & BASIS_MASK) != i) {
+        result.coefficients_[i] = coefficients_[i];
+      }
+    }
+    return result;
   }
 
   constexpr const ScalarType& scalar() const { return coefficients_[SCALAR_BASIS_INDEX]; }
@@ -497,6 +574,15 @@ class Multivector final {
     for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
       const ScalarType abs_diff{abs(coefficients_[i] - rhs.coefficients_[i])};
       if (abs_diff > tolerance) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  constexpr bool near_zero(const ScalarType tolerance = EPSILON) const {
+    for (size_t i = 0; i < NUM_BASIS_BLADES; ++i) {
+      if (abs(coefficients_[i]) > tolerance) {
         return false;
       }
     }
