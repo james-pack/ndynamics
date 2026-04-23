@@ -67,8 +67,36 @@ class CgaGeometryType final {
   static_assert((e_plus() * e_plus()).scalar() == Scalar{1});
   static_assert((e_minus() * e_minus()).scalar() == Scalar{-1});
 
+  static constexpr Multivector mask_conformal_bases(const Multivector& mv) {
+    return mv.template mask_bases<NUM_PHYSICAL_DIMENSIONS, NUM_PHYSICAL_DIMENSIONS + 1>();
+  }
+
+  /**
+   * Standard weight calculation.
+   * The weight is a measure of the scale of the space.
+   *
+   * Direct mathematical calculation would yield:
+   * -(mv.left_contraction(e_inf()).scalar());
+   *
+   * But we use an equivalent calculation based on the coefficients of e_plus and e_minus.
+   */
   static constexpr Scalar weight(const Multivector& mv) {
-    return -(mv.left_contraction(e_inf()).scalar());
+    return mv.template coefficient<1UL << (NUM_PHYSICAL_DIMENSIONS + 1)>() -
+           mv.template coefficient<1UL << NUM_PHYSICAL_DIMENSIONS>();
+  }
+
+  /**
+   * Weight of the origin conformal basis.
+   *
+   * Direct mathematical calculation would yield:
+   * -(mv.left_contraction(e_orig()).scalar());
+   *
+   * But we use an equivalent calculation based on the coefficients of e_plus and e_minus.
+   */
+  static constexpr Scalar weight_origin(const Multivector& mv) {
+    return (mv.template coefficient<1UL << (NUM_PHYSICAL_DIMENSIONS + 1)>() +
+            mv.template coefficient<1UL << NUM_PHYSICAL_DIMENSIONS>()) /
+           Scalar{2};
   }
 
  public:
@@ -199,33 +227,44 @@ class CgaGeometryType final {
 
   /**
    * Embed a Euclidean point as a CGA null vector using standard normalization:
-   *   X = e0 + px*e1 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
+   *   X = e_orig + px*e1 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
    *
-   * The result satisfies X * X = 0. The e0 coefficient is 1 under this normalization,
+   * The result satisfies X * ~X = 0. The weight is 1 under this normalization,
    * which is what allows extract_point to recover coordinates by simple division. Under
    * a different normalization the coordinates are recoverable but require an additional
-   * division by the e0 coefficient. The caller must not scale the result of this method
-   * without accounting for the effect on extract_point.
+   * division by the weight.
+   *
+   * Note that we recombine the e_orig and e_inf terms into a form that is more numerically stable
+   * based directly on e_plus and e_minus:
+   *
+   *   (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+   *   (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus()
+   *
    */
   static constexpr Multivector make_point(Scalar t) {
     const Scalar half_norm_sq{(t * t) / Scalar{2}};
-    return e_orig() + t * gamma0() + half_norm_sq * e_inf();
+    return t * gamma0() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
   static constexpr Multivector make_point(Scalar t, Scalar x) {
     const Scalar half_norm_sq{(t * t + x * x) / Scalar{2}};
-    return e_orig() + t * gamma0() + x * gamma1() + half_norm_sq * e_inf();
+    return t * gamma0() + x * gamma1() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
   static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y) {
     const Scalar half_norm_sq{(t * t + x * x + y * y) / Scalar{2}};
-    return e_orig() + t * gamma0() + x * gamma1() + y * gamma2() + half_norm_sq * e_inf();
+    return t * gamma0() + x * gamma1() + y * gamma2() +
+           (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
   static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y, Scalar z) {
     const Scalar half_norm_sq{(t * t + x * x + y * y + z * z) / Scalar{2}};
-    return e_orig() + t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
-           half_norm_sq * e_inf();
+    return t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
+           (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
   /**
@@ -276,12 +315,10 @@ class CgaGeometryType final {
   }
 
   /**
-   * In CGA a finite point is a null vector (X * ~X = 0) at grade-1 with a nonzero inner
+   * In CGA a finite point is a null vector (X * ~X = 0) at grade-1 that has a nonzero inner
    * product with e_inf (nonzero homogeneous weight). The null condition distinguishes
    * points from general grade-1 elements such as spheres (which are non-null). A point
-   * at infinity has zero inner product with e_inf and is excluded by the weight check.
-   *
-   * Note that this approach works in both time-extended and purely spatial geometries.
+   * at infinity has a zero weight and is excluded by the weight check.
    */
   static constexpr bool is_point(const Multivector& mv) {
     if (!mv.template is_grade<1>()) {
@@ -289,13 +326,49 @@ class CgaGeometryType final {
     }
 
     // The null condition X * ~X = 0 distinguishes points from spheres.
-    const auto self_product{mv.multiply(mv.reverse()).scalar()};
-    const bool is_null{abs(self_product) < Algebra::EPSILON};
+    // The square_magnitude() method calculates this value, but gives numerically unstable results.
+    // In this approach, calculate the square magnitude of the physical bases and conformal bases
+    // separately. The condition above is equivalent to the physical and conformal square magnitudes
+    // being equal.
+    // physical_mag = conformal_mag
+    // where physical_mag is the square magnitude of the physical bases and conformal magnitude is
+    // twice the weight of the infinity basis times the weight of the origin basis.
+    // For numerical stability, we compare the ratio of these two magnitudes to one.
 
-    // A finite point has nonzero weight — should be exactly -1 under perfect normalization.
-    const bool has_weight{abs(weight(mv)) > Algebra::EPSILON};
+    // Compute the square magnitude of the physical dimensions.
+    const Multivector physical_aspect{mask_conformal_bases(mv)};
+    const Scalar physical_mag{physical_aspect.square_magnitude()};
 
+    // Compute the magnitude of the conformal bases.
+    const Scalar w_inf{weight(mv)};
+    const Scalar conformal_mag{Scalar{2} * w_inf * weight_origin(mv)};
+
+    const Scalar ratio{physical_mag > EPSILON ? conformal_mag / physical_mag : Scalar{1}};
+    const bool is_null{(physical_mag > EPSILON) ? (abs(ratio - Scalar{1}) < EPSILON)
+                                                : (abs(conformal_mag) < EPSILON)};
+
+    // A finite point has nonzero weight — should be exactly 1 under perfect normalization.
+    const bool has_weight{w_inf > Algebra::EPSILON};
+
+    DLOG(INFO) << "is_point() -- mv: " << mv << ", physical_aspect: " << physical_aspect
+               << ", ratio:" << ratio << ", physical_mag: " << physical_mag
+               << ", conformal_mag: " << conformal_mag << ", is_null: " << is_null
+               << ", has_weight: " << has_weight;
     return is_null && has_weight;
+  }
+
+  /**
+   * Verifies that a point is normalized, which conceptually aligns the multivector
+   * with a "Standard Observer" where the local scale of space and time is unity.
+   * In the conformal manifold, a normalized weight of 1 ensures the point sits
+   * at the "vertex" of its spacetime hyperbola, effectively setting the gauge
+   * so that coordinate time matches proper time. From a Euclidean perspective,
+   * this normalization factor acts as the homogeneous divisor that maps the
+   * higher-dimensional conformal representation back to a unique, measurable
+   * coordinate in flat 3D space. See the division by the weight in extract_point() methods.
+   */
+  static constexpr bool is_normalized_point(const Multivector& mv) {
+    return is_point(mv) && (abs(weight(mv) - Scalar{1}) < Algebra::EPSILON);
   }
 
   /**
@@ -403,6 +476,48 @@ class CgaGeometryType final {
   }
 
   /**
+   * Constructs a dilator (scaling versor) centered at the origin.
+   * A dilator scales space by the given factor.
+   */
+  static Multivector make_dilator(Scalar scale) {
+    using std::log, std::cosh, std::sinh;
+
+    if (scale <= Scalar{0}) {
+      except<std::domain_error>("Scale factor must be positive.");
+    }
+
+    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_orig.
+    // In our basis, E = e_inf ^ e_orig() has the property E^2 = 1.
+    static constexpr const Multivector E{e_inf() ^ e_orig()};
+    static_assert(abs((E * E).scalar() - Scalar{1}) < EPSILON);
+
+    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
+    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
+    const Scalar phi{log(scale) / Scalar{2}};
+    const Multivector dilator{cosh(phi) + sinh(phi) * E};
+    return dilator;
+  }
+
+  static void extract_dilator(const Multivector& mv, Scalar& scale) {
+    // Transform the 'origin' and see how its weight changes.
+    // In CGA, D * e_orig * ~D = (1/scale) * e_orig, where D is a dilator.
+    const Multivector transformed_null_basis{mv * e_orig() * mv.reverse()};
+
+    // The scale is the inverse of the resulting e_inf coefficient.
+    scale = Scalar{1} / weight(transformed_null_basis);
+  }
+
+  static bool is_dilator(const Multivector& mv) {
+    // Transform the 'origin' and see how its weight changes.
+    // In CGA, D * e_orig * ~D = (1/scale) * e_orig, where D is a dilator.
+    const Multivector transformed_null_basis{mv * e_orig() * mv.reverse()};
+
+    // The scale factor is effectively the inverse of the weight of this transformed basis. A weight
+    // of 1 means no scaling.
+    return abs(weight(transformed_null_basis) - Scalar{1}) > EPSILON;
+  }
+
+  /**
    * Construct a CGA translator for a displacement (dt, dx, dy, dz). In CGA translators use
    * e_inf: T = 1 - (1/2)(dt*gamma0 + dx*gamma1 + dy*gamma2 + dz*gamma3) * e_inf
    *
@@ -471,54 +586,6 @@ class CgaGeometryType final {
     }
 
     return (bivector * e_orig).template is_grade<1>();
-  }
-
-  /**
-   * Constructs a dilator (scaling versor) centered at a given point.
-   * A dilator scales space by the given factor relative to the center (cx, cy, cz).
-   */
-  static Multivector make_dilator(Scalar cx, Scalar cy, Scalar cz, Scalar scale) {
-    using std::log, std::cosh, std::sinh;
-
-    if (scale <= Scalar{0}) {
-      except<std::domain_error>("Scale factor must be positive.");
-    }
-
-    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_orig.
-    // In our basis, E = e_inf ^ e_orig() has the property E^2 = 1.
-    const Multivector E = e_inf() ^ e_orig();
-
-    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
-    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
-    const Scalar phi = log(scale) / Scalar{2};
-    const Multivector origin_dilator = cosh(phi) + E * sinh(phi);
-
-    // Translate the origin-centered dilator to the target center point.
-    const Multivector translate = make_translator(cx, cy, cz);
-
-    return translate * origin_dilator * ~translate;
-  }
-
-  static Multivector make_dilator(Scalar ct, Scalar cx, Scalar cy, Scalar cz, Scalar scale) {
-    using std::log, std::cosh, std::sinh;
-
-    if (scale <= Scalar{0}) {
-      except<std::domain_error>("Scale factor must be positive.");
-    }
-
-    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_orig.
-    // In our basis, E = e_inf ^ e_orig() has the property E^2 = 1.
-    const Multivector E = e_inf() ^ e_orig();
-
-    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
-    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
-    const Scalar phi = log(scale) / Scalar{2};
-    const Multivector origin_dilator = cosh(phi) + E * sinh(phi);
-
-    // Translate the origin-centered dilator to the target center point.
-    const Multivector translate = make_translator(ct, cx, cy, cz);
-
-    return translate * origin_dilator * ~translate;
   }
 
   /**
