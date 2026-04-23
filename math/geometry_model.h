@@ -53,6 +53,7 @@ concept HasPoint =
       { G::make_point(x) } -> std::same_as<typename G::Multivector>;
       { G::extract_point(m, out) } -> std::same_as<void>;
       { G::is_point(m) } -> std::same_as<bool>;
+      { G::is_normalized_point(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
@@ -308,25 +309,13 @@ concept HasTranslator =
        { G::extract_translator(m, out, out, out, out) } -> std::same_as<void>;
      });
 
-/**
- * Uniform scaling about the origin.
- *
- * A scaler is a multivector whose scalar component is sqrt(scale), producing
- * a uniform scaling by exactly scale when applied via the sandwich product
- * X -> M X M~. The center of scaling is always the origin.
- *
- * The scale parameter represents the full Euclidean scaling factor applied to
- * distances. The implementation is responsible for any internal adjustment of
- * this parameter required by the algebra, such as taking the square root before
- * storing it as the scalar component.
- */
 template <typename G>
-concept HasScaler =
+concept HasDilator =
     GeometryModel<G> &&  //
     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_scaler(x) } -> std::same_as<typename G::Multivector>;
-      { G::extract_scaler(m, out) } -> std::same_as<void>;
-      { G::is_scaler(m) } -> std::same_as<bool>;
+      { G::make_dilator(x) } -> std::same_as<typename G::Multivector>;
+      { G::extract_dilator(m, out) } -> std::same_as<void>;
+      { G::is_dilator(m) } -> std::same_as<bool>;
     };
 
 template <typename G>
@@ -338,8 +327,7 @@ concept VectorspaceGeometryModel =  //
     HasDirection<G> &&  //
 
     // Fundamental operations.
-    HasRotor<G> &&   //
-    HasScaler<G> &&  //
+    HasRotor<G> &&  //
 
     // Basis vector factory methods for physical dimensions.
     requires {
@@ -432,7 +420,6 @@ concept ProjectiveGeometryModel =  //
     // Fundamental operations.
     HasRotor<G> &&       //
     HasTranslator<G> &&  //
-    HasScaler<G> &&      //
     true;
 
 template <typename G>
@@ -451,9 +438,9 @@ concept ConformalGeometryModel =  //
     //(G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) &&  //
 
     // Fundamental operations.
-    HasRotor<G> &&  //
+    HasRotor<G> &&       //
+    HasDilator<G> &&     //
     HasTranslator<G> &&  //
-    // HasScaler<G> &&      //
 
     // Basis vector factory methods for physical dimensions.
     requires(typename G::Multivector const& a) {

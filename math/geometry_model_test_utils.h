@@ -73,7 +73,7 @@ enum class Primitives {
 enum class Operators {
   ROTOR,
   TRANSLATOR,
-  SCALER,
+  DILATOR,
 };
 
 template <typename G, Primitives P>
@@ -186,8 +186,8 @@ typename G::Multivector make_operator() {
     } else {
       return G::make_translator(GeometryConceptsTest<G>::dx);
     }
-  } else if constexpr (Op == Operators::SCALER) {
-    return G::make_scaler(GeometryConceptsTest<G>::scale);
+  } else if constexpr (Op == Operators::DILATOR) {
+    return G::make_dilator(GeometryConceptsTest<G>::scale);
   }
 }
 
@@ -243,8 +243,8 @@ constexpr bool geometry_has_operator() {
     return HasRotor<G>;
   } else if constexpr (Op == Operators::TRANSLATOR) {
     return HasTranslator<G>;
-  } else if constexpr (Op == Operators::SCALER) {
-    return HasScaler<G>;
+  } else if constexpr (Op == Operators::DILATOR) {
+    return HasDilator<G>;
   } else {
     return false;
   }
@@ -622,49 +622,49 @@ TYPED_TEST_P(GeometryConceptsTest, HypersphereRoundtrip) {
 TYPED_TEST_P(GeometryConceptsTest, PointClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT, Operators::DILATOR>()));
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PointPairClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT_PAIR, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT_PAIR, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT_PAIR, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::POINT_PAIR, Operators::DILATOR>()));
 }
 
 TYPED_TEST_P(GeometryConceptsTest, LineClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::LINE, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::LINE, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::LINE, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::LINE, Operators::DILATOR>()));
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PlaneClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::PLANE, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::PLANE, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::PLANE, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::PLANE, Operators::DILATOR>()));
 }
 
 TYPED_TEST_P(GeometryConceptsTest, CircleClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::CIRCLE, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::CIRCLE, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::CIRCLE, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::CIRCLE, Operators::DILATOR>()));
 }
 
 TYPED_TEST_P(GeometryConceptsTest, SphereClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::SPHERE, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::SPHERE, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::SPHERE, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::SPHERE, Operators::DILATOR>()));
 }
 
 TYPED_TEST_P(GeometryConceptsTest, HyperplaneClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERPLANE, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERPLANE, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERPLANE, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERPLANE, Operators::DILATOR>()));
 }
 
 TYPED_TEST_P(GeometryConceptsTest, HypersphereClosure) {
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERSPHERE, Operators::ROTOR>()));
   EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERSPHERE, Operators::TRANSLATOR>()));
-  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERSPHERE, Operators::SCALER>()));
+  EXPECT_TRUE((verify_closure<TypeParam, Primitives::HYPERSPHERE, Operators::DILATOR>()));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(  //
