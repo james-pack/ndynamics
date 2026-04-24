@@ -226,152 +226,6 @@ class CgaGeometryType final {
   }
 
   /**
-   * Embed a Euclidean point as a CGA null vector using standard normalization:
-   *   X = e_orig + px*e1 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
-   *
-   * The result satisfies X * ~X = 0. The weight is 1 under this normalization,
-   * which is what allows extract_point to recover coordinates by simple division. Under
-   * a different normalization the coordinates are recoverable but require an additional
-   * division by the weight.
-   *
-   * Note that we recombine the e_orig and e_inf terms into a form that is more numerically stable
-   * based directly on e_plus and e_minus:
-   *
-   *   (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
-   *   (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus()
-   *
-   */
-  static constexpr Multivector make_point(Scalar t) {
-    const Scalar half_norm_sq{(t * t) / Scalar{2}};
-    return t * gamma0() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
-           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
-  }
-
-  static constexpr Multivector make_point(Scalar t, Scalar x) {
-    const Scalar half_norm_sq{(t * t + x * x) / Scalar{2}};
-    return t * gamma0() + x * gamma1() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
-           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
-  }
-
-  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y) {
-    const Scalar half_norm_sq{(t * t + x * x + y * y) / Scalar{2}};
-    return t * gamma0() + x * gamma1() + y * gamma2() +
-           (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
-           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
-  }
-
-  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y, Scalar z) {
-    const Scalar half_norm_sq{(t * t + x * x + y * y + z * z) / Scalar{2}};
-    return t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
-           (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
-           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
-  }
-
-  /**
-   * Extract Euclidean coordinates from a CGA null point vector under standard normalization.
-   */
-  static constexpr void extract_point(const Multivector& point, Scalar& out_t) {
-    const Scalar w{weight(point)};
-    if (abs(w) < Algebra::EPSILON) {
-      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
-    }
-
-    out_t = get_gamma0(point) / w;
-  }
-
-  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x) {
-    const Scalar w{weight(point)};
-    if (abs(w) < Algebra::EPSILON) {
-      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
-    }
-
-    out_t = get_gamma0(point) / w;
-    out_x = get_gamma1(point) / w;
-  }
-
-  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
-                                      Scalar& out_y) {
-    const Scalar w{weight(point)};
-    if (abs(w) < Algebra::EPSILON) {
-      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
-    }
-
-    out_t = get_gamma0(point) / w;
-    out_x = get_gamma1(point) / w;
-    out_y = get_gamma2(point) / w;
-  }
-
-  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
-                                      Scalar& out_y, Scalar& out_z) {
-    const Scalar w{weight(point)};
-    if (abs(w) < Algebra::EPSILON) {
-      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
-    }
-
-    out_t = get_gamma0(point) / w;
-    out_x = get_gamma1(point) / w;
-    out_y = get_gamma2(point) / w;
-    out_z = get_gamma3(point) / w;
-  }
-
-  /**
-   * In CGA a finite point is a null vector (X * ~X = 0) at grade-1 that has a nonzero inner
-   * product with e_inf (nonzero homogeneous weight). The null condition distinguishes
-   * points from general grade-1 elements such as spheres (which are non-null). A point
-   * at infinity has a zero weight and is excluded by the weight check.
-   */
-  static constexpr bool is_point(const Multivector& mv) {
-    if (!mv.template is_grade<1>()) {
-      return false;
-    }
-
-    // The null condition X * ~X = 0 distinguishes points from spheres.
-    // The square_magnitude() method calculates this value, but gives numerically unstable results.
-    // In this approach, calculate the square magnitude of the physical bases and conformal bases
-    // separately. The condition above is equivalent to the physical and conformal square magnitudes
-    // being equal.
-    // physical_mag = conformal_mag
-    // where physical_mag is the square magnitude of the physical bases and conformal magnitude is
-    // twice the weight of the infinity basis times the weight of the origin basis.
-    // For numerical stability, we compare the ratio of these two magnitudes to one.
-
-    // Compute the square magnitude of the physical dimensions.
-    const Multivector physical_aspect{mask_conformal_bases(mv)};
-    const Scalar physical_mag{physical_aspect.square_magnitude()};
-
-    // Compute the magnitude of the conformal bases.
-    const Scalar w_inf{weight(mv)};
-    const Scalar conformal_mag{Scalar{2} * w_inf * weight_origin(mv)};
-
-    const Scalar ratio{physical_mag > EPSILON ? conformal_mag / physical_mag : Scalar{1}};
-    const bool is_null{(physical_mag > EPSILON) ? (abs(ratio - Scalar{1}) < EPSILON)
-                                                : (abs(conformal_mag) < EPSILON)};
-
-    // A finite point has nonzero weight — should be exactly 1 under perfect normalization.
-    const bool has_weight{w_inf > Algebra::EPSILON};
-
-    DLOG(INFO) << "is_point() -- mv: " << mv << ", physical_aspect: " << physical_aspect
-               << ", ratio:" << ratio << ", physical_mag: " << physical_mag
-               << ", conformal_mag: " << conformal_mag << ", is_null: " << is_null
-               << ", has_weight: " << has_weight;
-    return is_null && has_weight;
-  }
-
-  /**
-   * Verifies that a point is normalized, which conceptually aligns the multivector
-   * with a "Standard Observer" where the local scale of space and time is unity.
-   * In the conformal manifold, a normalized weight of 1 ensures the point sits
-   * at the "vertex" of its spacetime hyperbola, effectively setting the gauge
-   * so that coordinate time matches proper time. From a Euclidean perspective,
-   * this normalization factor acts as the homogeneous divisor that maps the
-   * higher-dimensional conformal representation back to a unique, measurable
-   * coordinate in flat 3D space. See the division by the weight in extract_point() methods.
-   */
-  static constexpr bool is_normalized_point(const Multivector& mv) {
-    return is_point(mv) && (abs(weight(mv) - Scalar{1}) < Algebra::EPSILON);
-  }
-
-  /**
    * Construct a rotor around the origin of the plane. Note that this is only meaningful with two
    * physical dimensions.
    */
@@ -586,6 +440,152 @@ class CgaGeometryType final {
     }
 
     return (bivector * e_orig).template is_grade<1>();
+  }
+
+  /**
+   * Embed a Euclidean point as a CGA null vector using standard normalization:
+   *   X = e_orig + px*e1 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
+   *
+   * The result satisfies X * ~X = 0. The weight is 1 under this normalization,
+   * which is what allows extract_point to recover coordinates by simple division. Under
+   * a different normalization the coordinates are recoverable but require an additional
+   * division by the weight.
+   *
+   * Note that we recombine the e_orig and e_inf terms into a form that is more numerically stable
+   * based directly on e_plus and e_minus:
+   *
+   *   (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+   *   (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus()
+   *
+   */
+  static constexpr Multivector make_point(Scalar t) {
+    const Scalar half_norm_sq{(t * t) / Scalar{2}};
+    return t * gamma0() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
+  }
+
+  static constexpr Multivector make_point(Scalar t, Scalar x) {
+    const Scalar half_norm_sq{(t * t + x * x) / Scalar{2}};
+    return t * gamma0() + x * gamma1() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
+  }
+
+  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y) {
+    const Scalar half_norm_sq{(t * t + x * x + y * y) / Scalar{2}};
+    return t * gamma0() + x * gamma1() + y * gamma2() +
+           (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
+  }
+
+  static constexpr Multivector make_point(Scalar t, Scalar x, Scalar y, Scalar z) {
+    const Scalar half_norm_sq{(t * t + x * x + y * y + z * z) / Scalar{2}};
+    return t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
+           (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+           (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
+  }
+
+  /**
+   * Extract Euclidean coordinates from a CGA null point vector under standard normalization.
+   */
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t) {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_t = get_gamma0(point) / w;
+  }
+
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x) {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_t = get_gamma0(point) / w;
+    out_x = get_gamma1(point) / w;
+  }
+
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
+                                      Scalar& out_y) {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_t = get_gamma0(point) / w;
+    out_x = get_gamma1(point) / w;
+    out_y = get_gamma2(point) / w;
+  }
+
+  static constexpr void extract_point(const Multivector& point, Scalar& out_t, Scalar& out_x,
+                                      Scalar& out_y, Scalar& out_z) {
+    const Scalar w{weight(point)};
+    if (abs(w) < Algebra::EPSILON) {
+      except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
+    }
+
+    out_t = get_gamma0(point) / w;
+    out_x = get_gamma1(point) / w;
+    out_y = get_gamma2(point) / w;
+    out_z = get_gamma3(point) / w;
+  }
+
+  /**
+   * In CGA a finite point is a null vector (X * ~X = 0) at grade-1 that has a nonzero inner
+   * product with e_inf (nonzero homogeneous weight). The null condition distinguishes
+   * points from general grade-1 elements such as spheres (which are non-null). A point
+   * at infinity has a zero weight and is excluded by the weight check.
+   */
+  static constexpr bool is_point(const Multivector& mv) {
+    if (!mv.template is_grade<1>()) {
+      return false;
+    }
+
+    // The null condition X * ~X = 0 distinguishes points from spheres.
+    // The square_magnitude() method calculates this value, but gives numerically unstable results.
+    // In this approach, calculate the square magnitude of the physical bases and conformal bases
+    // separately. The condition above is equivalent to the physical and conformal square magnitudes
+    // being equal.
+    // physical_mag = conformal_mag
+    // where physical_mag is the square magnitude of the physical bases and conformal magnitude is
+    // twice the weight of the infinity basis times the weight of the origin basis.
+    // For numerical stability, we compare the ratio of these two magnitudes to one.
+
+    // Compute the square magnitude of the physical dimensions.
+    const Multivector physical_aspect{mask_conformal_bases(mv)};
+    const Scalar physical_mag{physical_aspect.square_magnitude()};
+
+    // Compute the magnitude of the conformal bases.
+    const Scalar w_inf{weight(mv)};
+    const Scalar conformal_mag{Scalar{2} * w_inf * weight_origin(mv)};
+
+    const Scalar ratio{physical_mag > EPSILON ? conformal_mag / physical_mag : Scalar{1}};
+    const bool is_null{(physical_mag > EPSILON) ? (abs(ratio - Scalar{1}) < EPSILON)
+                                                : (abs(conformal_mag) < EPSILON)};
+
+    // A finite point has nonzero weight — should be exactly 1 under perfect normalization.
+    const bool has_weight{w_inf > Algebra::EPSILON};
+
+    DLOG(INFO) << "is_point() -- mv: " << mv << ", physical_aspect: " << physical_aspect
+               << ", ratio:" << ratio << ", physical_mag: " << physical_mag
+               << ", conformal_mag: " << conformal_mag << ", is_null: " << is_null
+               << ", has_weight: " << has_weight;
+    return is_null && has_weight;
+  }
+
+  /**
+   * Verifies that a point is normalized, which conceptually aligns the multivector
+   * with a "Standard Observer" where the local scale of space and time is unity.
+   * In the conformal manifold, a normalized weight of 1 ensures the point sits
+   * at the "vertex" of its spacetime hyperbola, effectively setting the gauge
+   * so that coordinate time matches proper time. From a Euclidean perspective,
+   * this normalization factor acts as the homogeneous divisor that maps the
+   * higher-dimensional conformal representation back to a unique, measurable
+   * coordinate in flat 3D space. See the division by the weight in extract_point() methods.
+   */
+  static constexpr bool is_normalized_point(const Multivector& mv) {
+    return is_point(mv) && (abs(weight(mv) - Scalar{1}) < Algebra::EPSILON);
   }
 
   /**
