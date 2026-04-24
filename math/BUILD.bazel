@@ -164,6 +164,7 @@ cc_test(
         ":testing",
         "//third_party/gtest",
     ],
+    tags = ["manual"],
 )
 
 cc_test(

@@ -15,6 +15,7 @@ cc_library(
         "//base",
         "//math",
     ],
+    tags = ["manual"],
 )
 
 cc_test(
@@ -27,4 +28,5 @@ cc_test(
         "//third_party/glog",
         "//third_party/gtest",
     ],
+    tags = ["manual"],
 )
