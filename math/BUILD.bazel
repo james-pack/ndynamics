@@ -176,3 +176,13 @@ cc_test(
         "//third_party/gtest",
     ],
 )
+
+cc_test(
+    name = "cga_geometry_focused_test",
+    srcs = ["cga_geometry_focused_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
