@@ -265,14 +265,10 @@ template <typename G, Primitives P, Operators Op>
     if (check_is_primitive<G, P>(result)) {
       return ::testing::AssertionSuccess();
     } else {
-      LOG(INFO) << "primitive: " << primitive;
-      LOG(INFO) << "op: " << op;
-      LOG(INFO) << "result: " << result;
       return ::testing::AssertionFailure()
-             << "Closure failed: primitive " << static_cast<int>(P) << " acted on by operator "
-             << static_cast<int>(Op)
-             << " did not produce the same primitive type. (NUM_PHYSICAL_DIMENSIONS: "
-             << G::NUM_PHYSICAL_DIMENSIONS << ")";
+             << "P: " << static_cast<int>(P) << ", Op: " << static_cast<int>(Op)
+             << " (NUM_PHYSICAL_DIMENSIONS: " << G::NUM_PHYSICAL_DIMENSIONS << ")"
+             << ", primitive: " << primitive << ", op: " << op << ", result: " << result;
     }
   } else {
     return ::testing::AssertionSuccess();
@@ -281,8 +277,14 @@ template <typename G, Primitives P, Operators Op>
 
 TYPED_TEST_SUITE_P(GeometryConceptsTest);
 
-TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip1D) {
+TYPED_TEST_P(GeometryConceptsTest, OriginIsPoint) {
   if constexpr (HasPoint<TypeParam>) {
+    EXPECT_TRUE(TypeParam::is_point(TypeParam::origin()));
+  }
+}
+
+TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip1D) {
+  if constexpr (HasPoint<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 1) {
     const auto mv = TypeParam::make_point(TestFixture::x);
     EXPECT_TRUE(TypeParam::is_point(mv));
 
@@ -293,7 +295,7 @@ TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip1D) {
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip2D) {
-  if constexpr (HasPoint<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 2) {
+  if constexpr (HasPoint<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 2) {
     const auto mv = TypeParam::make_point(TestFixture::x, TestFixture::y);
     EXPECT_TRUE(TypeParam::is_point(mv));
 
@@ -305,7 +307,7 @@ TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip2D) {
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip3D) {
-  if constexpr (HasPoint<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 3) {
+  if constexpr (HasPoint<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 3) {
     const auto mv = TypeParam::make_point(TestFixture::x, TestFixture::y, TestFixture::z);
     EXPECT_TRUE(TypeParam::is_point(mv));
 
@@ -318,7 +320,7 @@ TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip3D) {
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip4D) {
-  if constexpr (HasPoint<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 4) {
+  if constexpr (HasPoint<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 4) {
     const auto mv =
         TypeParam::make_point(TestFixture::x, TestFixture::y, TestFixture::z, TestFixture::w);
     EXPECT_TRUE(TypeParam::is_point(mv));
@@ -676,7 +678,8 @@ TYPED_TEST_P(GeometryConceptsTest, HypersphereClosure) {
 REGISTER_TYPED_TEST_SUITE_P(  //
     GeometryConceptsTest,
     // Point tests.
-    PointRoundtrip1D, PointRoundtrip2D, PointRoundtrip3D, PointRoundtrip4D, PointClosure,
+    OriginIsPoint, PointRoundtrip1D, PointRoundtrip2D, PointRoundtrip3D, PointRoundtrip4D,
+    PointClosure,
     //  Point pair tests.
     PointPairRoundtrip2D, PointPairRoundtrip3D, PointPairRoundtrip4D, PointPairClosure,
     // Line tests.
