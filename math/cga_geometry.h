@@ -624,20 +624,34 @@ class CgaGeometryType final {
    * Negative squares represent rotations/circles; zero represents tangents.
    */
   static constexpr bool is_point_pair(const Multivector& mv) noexcept {
-    const bool is_grade_2{mv.template is_grade<2>()};
-    const auto self_wedge{mv.outer(mv)};
-    const bool plucker{self_wedge.near_zero()};
-    const auto square{mv * mv};
+    const auto normalized{mv / mv.square_magnitude()};
+    const bool is_grade_2{normalized.template is_grade<2>()};
+    const auto square{normalized * normalized};
     const bool square_is_grade_0{square.template is_grade<0>()};
-    const bool square_scalar_is_positive{square.scalar() > EPSILON};
-
-    DLOG(INFO) << "is_point_pair() -- mv: " << mv << ", is_grade_2: " << is_grade_2
-               << ", self_wedge: " << self_wedge << ", plucker: " << plucker
-               << ", square: " << square << ", square_is_grade_0: " << square_is_grade_0
+    const bool square_scalar_is_positive{[&square, &mv]() {
+      if (square.scalar() > EPSILON) {
+        return true;
+      } else {
+        const auto unnormalized_square{mv * mv};
+        return unnormalized_square.scalar() > EPSILON;
+      }
+    }()};
+    const bool square_is_nearly_grade_0{[&square, square_is_grade_0]() {
+      if (!square_is_grade_0) {
+        const auto adjusted_square{square / square.scalar()};
+        return adjusted_square.template is_grade<0>();
+      } else {
+        return true;
+      }
+    }()};
+    DLOG(INFO) << "is_point_pair() -- mv: " << mv << ", normalized: " << normalized
+               << ", is_grade_2: " << is_grade_2 << ", square: " << square
+               << ", square_is_grade_0: " << square_is_grade_0
+               << ", square_is_nearly_grade_0: " << square_is_nearly_grade_0
                << ", square.scalar(): " << square.scalar()
                << ", square_scalar_is_positive: " << square_scalar_is_positive;
 
-    return is_grade_2 and plucker and square_is_grade_0 and square_scalar_is_positive;
+    return is_grade_2 and square_is_nearly_grade_0 and square_scalar_is_positive;
   }
 
   static constexpr Multivector make_point_pair(const Multivector& p1,
