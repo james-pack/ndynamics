@@ -49,7 +49,9 @@ template <typename G>
 concept HasPoint =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out,
+             size_t count, typename G::Scalar* values) {
+      { G::make_point(count, values) } -> std::same_as<typename G::Multivector>;
       { G::make_point(x) } -> std::same_as<typename G::Multivector>;
       { G::extract_point(m, out) } -> std::same_as<void>;
       { G::is_point(m) } -> std::same_as<bool>;
@@ -100,17 +102,22 @@ template <typename G>
 concept HasPointPair =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_point_pair(x, x, x, x) } -> std::same_as<typename G::Multivector>;
-      { G::extract_point_pair(m, out, out, out, out) } -> std::same_as<void>;
+    requires(typename G::Multivector const& m, typename G::Multivector& out) {
+      { G::make_point_pair(m, m) } -> std::same_as<typename G::Multivector>;
       { G::is_point_pair(m) } -> std::same_as<bool>;
+      { G::extract_point_pair(m, out, out) } -> std::same_as<void>;
     } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
+    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
+     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+       { G::make_point_pair(x, x, x, x) } -> std::same_as<typename G::Multivector>;
+       { G::extract_point_pair(m, out, out, out, out) } -> std::same_as<void>;
+     }) &&
+    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point_pair(x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point_pair(m, out, out, out, out, out, out) } -> std::same_as<void>;
      }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
+    (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point_pair(x, x, x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point_pair(m, out, out, out, out, out, out, out, out) } -> std::same_as<void>;
@@ -121,16 +128,20 @@ concept HasLine =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_line(x, x, x, x) } -> std::same_as<typename G::Multivector>;
-      { G::extract_line(m, out, out, out, out) } -> std::same_as<void>;
+      { G::make_line(m, m) } -> std::same_as<typename G::Multivector>;
       { G::is_line(m) } -> std::same_as<bool>;
     } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
+    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
+     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+       { G::make_line(x, x, x, x) } -> std::same_as<typename G::Multivector>;
+       { G::extract_line(m, out, out, out, out) } -> std::same_as<void>;
+     }) &&
+    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_line(x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_line(m, out, out, out, out, out, out) } -> std::same_as<void>;
      }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
+    (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_line(x, x, x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_line(m, out, out, out, out, out, out, out, out) } -> std::same_as<void>;
@@ -427,10 +438,10 @@ concept ConformalGeometryModel =  //
     GeometryModel<G> &&           //
 
     // Geometric primitives.
-    HasPoint<G> &&  //
-    // HasPointPair<G> &&                                        //
+    HasPoint<G> &&      //
+    HasPointPair<G> &&  //
     // HasDirection<G> &&                                        //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&         //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&  //
     //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&        //
     //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&   //
     //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&       //
