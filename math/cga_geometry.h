@@ -24,9 +24,9 @@ namespace ndyn::math {
  *   e_orig = (e_minus - e_plus) / 2  — the point at the origin
  *   e_inf = e_minus + e_plus     — the point at infinity
  *
- * When extended with a time basis, the algebra is Cl(5,1) known here as Time-extended CGA (TCGA).
+ * When extended with a time basis, the algebra is Cl(5,1).
 
- * Point embedding (standard normalization):
+ * Point embedding:
  *   X = e_orig + p + (1/2)|p|^2 * e_inf
  *   where p = pt * e0 + px * e1 + py * e2 + pz * e3
  *
@@ -96,9 +96,12 @@ class CgaGeometryType final {
            Scalar{2};
   }
 
-  static constexpr Multivector e_orig() { return (Scalar{1} / Scalar{2}) * (e_minus() - e_plus()); }
+  static constexpr Multivector e_inf() noexcept { return e_minus() + e_plus(); }
+  static constexpr Multivector e_orig() noexcept {
+    return (Scalar{1} / Scalar{2}) * (e_minus() - e_plus());
+  }
 
-  static constexpr Multivector e_inf() { return e_minus() + e_plus(); }
+  static constexpr Multivector origin() noexcept { return e_orig(); }
 
   // Factory methods for basis vectors under the generic names.
   static constexpr Multivector e1()
@@ -236,8 +239,8 @@ class CgaGeometryType final {
   }
 
   /**
-   * Construct a rotor around an axis. Note that this is only meaningful with three
-   * physical dimensions. In higher dimensions, a single axis does not uniquely determine a
+   * Construct a rotor around an axis through the origin. Note that this is only meaningful with
+   * three physical dimensions. In higher dimensions, a single axis does not uniquely determine a
    * rotation.
    */
   static Multivector make_rotor(Scalar nx, Scalar ny, Scalar nz, Scalar angle)
@@ -578,21 +581,21 @@ class CgaGeometryType final {
       // TODO(james): Fix the numeric instability and remove the multiple of the acceptable
       // inaccuracy.
       is_null = abs(ratio - Scalar{1}) < 100 * EPSILON;
-      LOG(INFO) << "primary -- is_null: " << is_null << ", ratio: " << ratio
-                << ", ratio - Scalar{1}: " << (ratio - Scalar{1});
+      DLOG(INFO) << "primary -- is_null: " << is_null << ", ratio: " << ratio
+                 << ", ratio - Scalar{1}: " << (ratio - Scalar{1});
     } else {
       is_null = abs(conformal_mag) < EPSILON;
-      LOG(INFO) << "secondary -- is_null: " << is_null;
+      DLOG(INFO) << "secondary -- is_null: " << is_null;
     }
 
     // A finite point has nonzero weight — should be exactly 1 under perfect normalization.
     const bool has_weight{abs(w_inf) > Algebra::EPSILON};
 
-    LOG(INFO) << "is_point() -- mv: " << mv << ", physical_aspect: " << physical_aspect
-              << ", ratio:" << ratio << ", physical_mag: " << physical_mag
-              << ", conformal_mag: " << conformal_mag << ", w_inf: " << w_inf
-              << ", w_orig: " << w_orig << ", is_null: " << is_null
-              << ", has_weight: " << has_weight;
+    DLOG(INFO) << "is_point() -- mv: " << mv << ", physical_aspect: " << physical_aspect
+               << ", ratio:" << ratio << ", physical_mag: " << physical_mag
+               << ", conformal_mag: " << conformal_mag << ", w_inf: " << w_inf
+               << ", w_orig: " << w_orig << ", is_null: " << is_null
+               << ", has_weight: " << has_weight;
     return is_null && has_weight;
   }
 
