@@ -10,10 +10,12 @@ DECLARE_string(algebra);
 namespace ndyn::ui {
 
 enum class Algebras {
+  Scalar,
+  Complex,
   Euclid2d,
   Euclid3d,
-  Complex,
-  Scalar,
+  Conformal2d,
+  Conformal3d,
 };
 
 std::string_view algebra_to_string(Algebras algebra);

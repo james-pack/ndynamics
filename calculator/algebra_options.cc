@@ -24,6 +24,8 @@ static constexpr std::array ALGEBRA_NAMES{
     AlgebraName{"complex", Algebras::Complex},
     AlgebraName{"euclid2d", Algebras::Euclid2d},
     AlgebraName{"euclid3d", Algebras::Euclid3d},
+    AlgebraName{"conformal2d", Algebras::Conformal2d},
+    AlgebraName{"conformal3d", Algebras::Conformal3d},
 };
 
 std::string_view algebra_to_string(Algebras algebra) {

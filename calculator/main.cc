@@ -1,10 +1,11 @@
 #include "base/initializer.h"
+#include "calculator/algebra_options.h"
+#include "calculator/repl.h"
 #include "glog/logging.h"
 #include "math/algebra.h"
 #include "math/basis_representation.h"
 #include "math/canonical_basis_representation.h"
-#include "calculator/algebra_options.h"
-#include "calculator/repl.h"
+#include "math/cga_geometry.h"
 
 using namespace ndyn::ui;
 
@@ -32,6 +33,16 @@ int main(int argc, char* argv[]) {
   } else if (algebra == Algebras::Euclid3d) {
     using Algebra = Vga<>;
     std::cout << "3D Euclidean algebra\n";
+    Repl<Algebra, CanonicalBasisRepresentation<Algebra>> repl{};
+    repl.loop();
+  } else if (algebra == Algebras::Conformal2d) {
+    using Algebra = Cga2dGeometry<>::Algebra;
+    std::cout << "Conformal 2D Euclidean algebra\n";
+    Repl<Algebra, CanonicalBasisRepresentation<Algebra>> repl{};
+    repl.loop();
+  } else if (algebra == Algebras::Conformal3d) {
+    using Algebra = Cga3dGeometry<>::Algebra;
+    std::cout << "Conformal 3D Euclidean algebra\n";
     Repl<Algebra, CanonicalBasisRepresentation<Algebra>> repl{};
     repl.loop();
   }
