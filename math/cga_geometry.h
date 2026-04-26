@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <limits>
 
 #include "glog/logging.h"
@@ -33,15 +34,10 @@ namespace ndyn::math {
  * The e_orig coefficient is fixed at 1 under standard normalization, allowing recovery of
  * Euclidean coordinates by dividing the e0, e1, e2, e3 coefficients by the e_orig coefficient.
  *
- * Basis convention (non-time-extended):
+ * Basis convention for three physical dimensions:
  *   e<0> = x, e<1> = y, e<2> = z
  *   e<3> = e_plus
  *   e<4> = e_minus
- *
- * Basis convention (time-extended):
- *   e<0> = t, e<1> = x, e<2> = y, e<3> = z
- *   e<4> = e_plus
- *   e<5> = e_minus
  */
 template <size_t NUM_PHYSICAL_DIMENSIONS_VALUE, typename T = DefaultScalarType>
 class CgaGeometryType final {
@@ -71,6 +67,7 @@ class CgaGeometryType final {
     return mv.template mask_bases<NUM_PHYSICAL_DIMENSIONS, NUM_PHYSICAL_DIMENSIONS + 1>();
   }
 
+ public:
   /**
    * Standard weight calculation.
    * The weight is a measure of the scale of the space.
@@ -99,7 +96,6 @@ class CgaGeometryType final {
            Scalar{2};
   }
 
- public:
   static constexpr Multivector e_orig() { return (Scalar{1} / Scalar{2}) * (e_minus() - e_plus()); }
 
   static constexpr Multivector e_inf() { return e_minus() + e_plus(); }
@@ -484,6 +480,18 @@ class CgaGeometryType final {
            (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
+  static constexpr Multivector make_point(size_t count, Scalar* values) {
+    Multivector result{};
+    Scalar norm_sq{};
+    for (size_t i = 0; i < count and i < NUM_PHYSICAL_DIMENSIONS; ++i) {
+      norm_sq += values[i] * values[i];
+      result += values[i] * Multivector::e(i);
+    }
+
+    result += ((norm_sq - Scalar{1}) * e_plus() + (norm_sq + Scalar{1}) * e_minus()) / Scalar{2};
+    return result;
+  }
+
   /**
    * Extract Euclidean coordinates from a CGA null point vector under standard normalization.
    */
@@ -537,7 +545,7 @@ class CgaGeometryType final {
    * points from general grade-1 elements such as spheres (which are non-null). A point
    * at infinity has a zero weight and is excluded by the weight check.
    */
-  static constexpr bool is_point(const Multivector& mv) {
+  static bool is_point(const Multivector& mv) {
     if (!mv.template is_grade<1>()) {
       return false;
     }
@@ -558,19 +566,33 @@ class CgaGeometryType final {
 
     // Compute the magnitude of the conformal bases.
     const Scalar w_inf{weight(mv)};
-    const Scalar conformal_mag{Scalar{2} * w_inf * weight_origin(mv)};
+    const Scalar w_orig{weight_origin(mv)};
+    const Scalar conformal_mag{Scalar{2} * w_inf * w_orig};
 
     const Scalar ratio{physical_mag > EPSILON ? conformal_mag / physical_mag : Scalar{1}};
-    const bool is_null{(physical_mag > EPSILON) ? (abs(ratio - Scalar{1}) < EPSILON)
-                                                : (abs(conformal_mag) < EPSILON)};
+    // const bool is_null{(physical_mag > EPSILON) ? (abs(ratio - Scalar{1}) < EPSILON)
+    //                                             : (abs(conformal_mag) < EPSILON)};
+    bool is_null;
+
+    if (physical_mag > EPSILON) {
+      // TODO(james): Fix the numeric instability and remove the multiple of the acceptable
+      // inaccuracy.
+      is_null = abs(ratio - Scalar{1}) < 100 * EPSILON;
+      LOG(INFO) << "primary -- is_null: " << is_null << ", ratio: " << ratio
+                << ", ratio - Scalar{1}: " << (ratio - Scalar{1});
+    } else {
+      is_null = abs(conformal_mag) < EPSILON;
+      LOG(INFO) << "secondary -- is_null: " << is_null;
+    }
 
     // A finite point has nonzero weight — should be exactly 1 under perfect normalization.
-    const bool has_weight{w_inf > Algebra::EPSILON};
+    const bool has_weight{abs(w_inf) > Algebra::EPSILON};
 
-    DLOG(INFO) << "is_point() -- mv: " << mv << ", physical_aspect: " << physical_aspect
-               << ", ratio:" << ratio << ", physical_mag: " << physical_mag
-               << ", conformal_mag: " << conformal_mag << ", is_null: " << is_null
-               << ", has_weight: " << has_weight;
+    LOG(INFO) << "is_point() -- mv: " << mv << ", physical_aspect: " << physical_aspect
+              << ", ratio:" << ratio << ", physical_mag: " << physical_mag
+              << ", conformal_mag: " << conformal_mag << ", w_inf: " << w_inf
+              << ", w_orig: " << w_orig << ", is_null: " << is_null
+              << ", has_weight: " << has_weight;
     return is_null && has_weight;
   }
 
@@ -584,8 +606,408 @@ class CgaGeometryType final {
    * higher-dimensional conformal representation back to a unique, measurable
    * coordinate in flat 3D space. See the division by the weight in extract_point() methods.
    */
-  static constexpr bool is_normalized_point(const Multivector& mv) {
+  static constexpr bool is_normalized_point(const Multivector& mv) noexcept {
     return is_point(mv) && (abs(weight(mv) - Scalar{1}) < Algebra::EPSILON);
+  }
+
+  /**
+   * In OPNS, a point pair is a pure grade-2 object.
+   *
+   * A bivector B can only be a blade if B ^ B = 0. This is the Plücker Relation.
+   *
+   * A bivector is a simple blade (and thus a geometric primitive) only if its square is a positive
+   * scalar.
+   * Real point pairs in CGA square to a positive value.
+   * Negative squares represent rotations/circles; zero represents tangents.
+   */
+  static constexpr bool is_point_pair(const Multivector& mv) noexcept {
+    const bool is_grade_2{mv.template is_grade<2>()};
+    const auto self_wedge{mv.outer(mv)};
+    const bool plucker{self_wedge.near_zero()};
+    const auto square{mv * mv};
+    const bool square_is_grade_0{square.template is_grade<0>()};
+    const bool square_scalar_is_positive{square.scalar() > EPSILON};
+
+    DLOG(INFO) << "is_point_pair() -- mv: " << mv << ", is_grade_2: " << is_grade_2
+               << ", self_wedge: " << self_wedge << ", plucker: " << plucker
+               << ", square: " << square << ", square_is_grade_0: " << square_is_grade_0
+               << ", square.scalar(): " << square.scalar()
+               << ", square_scalar_is_positive: " << square_scalar_is_positive;
+
+    return is_grade_2 and plucker and square_is_grade_0 and square_scalar_is_positive;
+  }
+
+  static constexpr Multivector make_point_pair(const Multivector& p1,
+                                               const Multivector& p2) noexcept {
+    return join(p1, p2);
+  }
+
+  static constexpr Multivector make_point_pair(Scalar t1, Scalar x1, Scalar t2, Scalar x2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 2)
+  {
+    const auto p1{make_point(t1, x1)};
+    const auto p2{make_point(t2, x2)};
+    return make_point_pair(p1, p2);
+  }
+
+  static constexpr Multivector make_point_pair(Scalar t1, Scalar x1, Scalar y1, Scalar t2,
+                                               Scalar x2, Scalar y2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  {
+    const auto p1{make_point(t1, x1, y1)};
+    const auto p2{make_point(t2, x2, y2)};
+    return make_point_pair(p1, p2);
+  }
+
+  static constexpr Multivector make_point_pair(Scalar t1, Scalar x1, Scalar y1, Scalar z1,
+                                               Scalar t2, Scalar x2, Scalar y2, Scalar z2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 4)
+  {
+    const auto p1{make_point(t1, x1, y1, z1)};
+    const auto p2{make_point(t2, x2, y2, z2)};
+    return make_point_pair(p1, p2);
+  }
+
+  static constexpr void extract_point_pair(const Multivector& point_pair, Multivector& p1,
+                                           Multivector& p2) noexcept {
+    using std::sqrt;
+
+    const Scalar magnitude{sqrt(abs(point_pair.square_magnitude()))};
+
+    const Multivector dir{e_inf().left_contraction(point_pair)};
+    const Scalar dir_magnitude{dir.square_magnitude()};
+    DLOG(INFO) << "extract_point_pair() -- point_pair: " << point_pair
+               << ", dir_magnitude: " << dir_magnitude << ", magnitude: " << magnitude
+               << ", dir: " << dir;
+    if (abs(dir_magnitude) > EPSILON) {
+      p1 = (point_pair + magnitude) * dir;
+      p2 = (point_pair - magnitude) * dir;
+
+      // Scale the points so that they align to the null cone (e_inf . P = -1)
+      // This step also suppresses some numeric instabilities whereby some non-zero coefficients
+      // leak to some basis blades of other grades. Without this normalization, these points are
+      // likely to have coefficients in higher grade bases and appear to not be points.
+      DLOG(INFO) << "extract_point_pair() -- weight(p1): " << weight(p1);
+      DLOG(INFO) << "extract_point_pair() -- weight(p2): " << weight(p2);
+      p1 = -p1 / weight(p1);
+      p2 = -p2 / weight(p2);
+    } else {
+      // One point is e_inf, the other is derived from the remaining gradient.
+      // For a line dual, the 'finite' part is found by contracting
+      // out the Minkowski plane component.
+      p1 = (point_pair.dual()).left_contraction(e_orig());
+
+      // Normalize if it's a finite point
+      const Scalar w{weight(p1)};
+      if (abs(w) > EPSILON) {
+        p1 = p1 / w;
+      }
+
+      p2 = e_inf();
+    }
+  }
+
+  static constexpr void extract_point_pair(const Multivector& pair, Scalar& pt1, Scalar& px1,
+                                           Scalar& pt2, Scalar& px2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 2)
+  {
+    Multivector p1{};
+    Multivector p2{};
+    extract_point_pair(pair, p1, p2);
+    extract_point(p1, pt1, px1);
+    extract_point(p2, pt2, px2);
+  }
+
+  static constexpr void extract_point_pair(const Multivector& pair, Scalar& pt1, Scalar& px1,
+                                           Scalar& py1, Scalar& pt2, Scalar& px2,
+                                           Scalar& py2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  {
+    Multivector p1{};
+    Multivector p2{};
+    extract_point_pair(pair, p1, p2);
+    extract_point(p1, pt1, px1, py1);
+    extract_point(p2, pt2, px2, py2);
+  }
+
+  static constexpr void extract_point_pair(const Multivector& pair, Scalar& pt1, Scalar& px1,
+                                           Scalar& py1, Scalar& pz1, Scalar& pt2, Scalar& px2,
+                                           Scalar& py2, Scalar& pz2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 4)
+  {
+    Multivector p1{};
+    Multivector p2{};
+    extract_point_pair(pair, p1, p2);
+    extract_point(p1, pt1, px1, py1, pz1);
+    extract_point(p2, pt2, px2, py2, pz2);
+  }
+
+  static constexpr Multivector make_circle(const Multivector& p1, const Multivector& p2,
+                                           const Multivector& p3) noexcept {
+    return join(join(p1, p2), p3);
+  }
+
+  static constexpr Multivector make_sphere(const Multivector& p1, const Multivector& p2,
+                                           const Multivector& p3, const Multivector& p4) noexcept {
+    return join(join(join(p1, p2), p3), p4);
+  }
+
+  static constexpr Multivector make_hypersphere(const Multivector& p1, const Multivector& p2,
+                                                const Multivector& p3, const Multivector& p4,
+                                                const Multivector& p5) noexcept {
+    return join(join(join(join(p1, p2), p3), p4), p5);
+  }
+
+  static constexpr Multivector make_circle(Scalar c1, Scalar c2, Scalar radius) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 2)
+  {
+    const auto p1{make_point(c1 + radius, c2)};
+    const auto p2{make_point(c1, c2 + radius)};
+    const auto p3{make_point(c1 - radius, c2)};
+    return make_circle(p1, p2, p3);
+  }
+
+  static constexpr Multivector make_sphere(Scalar c1, Scalar c2, Scalar c3, Scalar radius) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  {
+    const auto p1{make_point(c1 + radius, c2, c3)};
+    const auto p2{make_point(c1, c2 + radius, c3)};
+    const auto p3{make_point(c1 - radius, c2, c3)};
+    const auto p4{make_point(c1, c2, c3 + radius)};
+    return make_sphere(p1, p2, p3, p4);
+  }
+
+  static constexpr Multivector make_hypersphere(Scalar c1, Scalar c2, Scalar c3, Scalar c4,
+                                                Scalar radius) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 4)
+  {
+    const auto p1{make_point(c1 + radius, c2, c3, c4)};
+    const auto p2{make_point(c1, c2 + radius, c3, c4)};
+    const auto p3{make_point(c1 - radius, c2, c3, c4)};
+    const auto p4{make_point(c1, c2, c3 + radius, c4)};
+    const auto p5{make_point(c1, c2, c3, c4 + radius)};
+    return make_hypersphere(p1, p2, p3, p4, p5);
+  }
+
+  /**
+   * Constructs a line passing through two Euclidean points.
+   * In conformal geometries, a flat line is the wedge of two conformal points and the point at
+   * infinity.
+   */
+  static constexpr Multivector make_line(const Multivector& p1, const Multivector& p2) {
+    return join(join(p1, p2), e_inf());
+  }
+
+  static constexpr Multivector make_line(Scalar pt1, Scalar px1, Scalar pt2, Scalar px2) {
+    const Multivector p1{make_point(pt1, px1)};
+    const Multivector p2{make_point(pt2, px2)};
+
+    return make_line(p1, p2);
+  }
+
+  static constexpr Multivector make_line(Scalar pt1, Scalar px1, Scalar py1, Scalar pt2, Scalar px2,
+                                         Scalar py2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  {
+    const Multivector p1{make_point(pt1, px1, py1)};
+    const Multivector p2{make_point(pt2, px2, py2)};
+
+    return make_line(p1, p2);
+  }
+
+  static constexpr Multivector make_line(Scalar pt1, Scalar px1, Scalar py1, Scalar pz1, Scalar pt2,
+                                         Scalar px2, Scalar py2, Scalar pz2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 4)
+  {
+    const Multivector p1{make_point(pt1, px1, py1, pz1)};
+    const Multivector p2{make_point(pt2, px2, py2, pz2)};
+
+    return make_line(p1, p2);
+  }
+
+  static constexpr void extract_line(const Multivector& line, Scalar& pt1, Scalar& px1, Scalar& pt2,
+                                     Scalar& px2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 2)
+  {
+    using std::clamp;
+
+    constexpr Scalar WEIGHT_THRESHOLD{1};
+    Scalar first_weight{};
+    Multivector first_point{};
+    Scalar second_weight{};
+    Multivector second_point{};
+    Scalar radius{1};
+    while (radius < std::numeric_limits<Scalar>::max() and abs(second_weight) < WEIGHT_THRESHOLD) {
+      const auto circle{make_circle(Scalar{0}, Scalar{0}, radius)};
+      const auto intersection{meet(line, circle)};
+      Multivector intersection_point_1{};
+      Multivector intersection_point_2{};
+      extract_point_pair(intersection, intersection_point_1, intersection_point_2);
+      for (const auto& p : {intersection_point_1, intersection_point_2}) {
+        const auto w{weight(p)};
+        if (abs(w) > abs(first_weight)) {
+          second_weight = first_weight;
+          second_point = first_point;
+          first_weight = w;
+          first_point = p;
+        } else if (abs(w) > abs(second_weight)) {
+          second_weight = w;
+          second_point = p;
+        }
+      }
+
+      radius *= Scalar{2};
+    }
+
+    if (abs(first_weight) > EPSILON) {
+      pt1 = get_gamma0(first_point) / first_weight;
+      px1 = get_gamma1(first_point) / first_weight;
+    } else {
+      DLOG(INFO) << "extract_line() -- No first point found.";
+      pt1 = std::numeric_limits<Scalar>::max();
+      px1 = std::numeric_limits<Scalar>::max();
+    }
+    if (abs(second_weight) > EPSILON) {
+      pt2 = get_gamma0(second_point) / second_weight;
+      px2 = get_gamma1(second_point) / second_weight;
+    } else {
+      DLOG(INFO) << "extract_line() -- No second point found.";
+      pt2 = std::numeric_limits<Scalar>::max();
+      px2 = std::numeric_limits<Scalar>::max();
+    }
+  }
+
+  static constexpr void extract_line(const Multivector& line, Scalar& pt1, Scalar& px1, Scalar& py1,
+                                     Scalar& pt2, Scalar& px2, Scalar& py2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  {
+    using std::clamp;
+
+    constexpr Scalar WEIGHT_THRESHOLD{1};
+    Scalar first_weight{};
+    Multivector first_point{};
+    Scalar second_weight{};
+    Multivector second_point{};
+    Scalar radius{1};
+    while (radius < std::numeric_limits<Scalar>::max() and abs(second_weight) < WEIGHT_THRESHOLD) {
+      const auto sphere{make_sphere(Scalar{0}, Scalar{0}, Scalar{0}, radius)};
+      const auto intersection{meet(line, sphere)};
+      Multivector intersection_point_1{};
+      Multivector intersection_point_2{};
+      extract_point_pair(intersection, intersection_point_1, intersection_point_2);
+      for (const auto& p : {intersection_point_1, intersection_point_2}) {
+        const auto w{weight(p)};
+        if (abs(w) > abs(first_weight)) {
+          second_weight = first_weight;
+          second_point = first_point;
+          first_weight = w;
+          first_point = p;
+        } else if (abs(w) > abs(second_weight)) {
+          second_weight = w;
+          second_point = p;
+        }
+      }
+
+      radius *= Scalar{2};
+    }
+
+    if (abs(first_weight) > EPSILON) {
+      pt1 = get_gamma0(first_point) / first_weight;
+      px1 = get_gamma1(first_point) / first_weight;
+      py1 = get_gamma2(first_point) / first_weight;
+    } else {
+      DLOG(INFO) << "extract_line() -- No first point found.";
+      pt1 = std::numeric_limits<Scalar>::max();
+      px1 = std::numeric_limits<Scalar>::max();
+      py1 = std::numeric_limits<Scalar>::max();
+    }
+    if (abs(second_weight) > EPSILON) {
+      pt2 = get_gamma0(second_point) / second_weight;
+      px2 = get_gamma1(second_point) / second_weight;
+      py2 = get_gamma2(second_point) / second_weight;
+    } else {
+      DLOG(INFO) << "extract_line() -- No second point found.";
+      pt2 = std::numeric_limits<Scalar>::max();
+      px2 = std::numeric_limits<Scalar>::max();
+      py2 = std::numeric_limits<Scalar>::max();
+    }
+  }
+
+  static constexpr void extract_line(const Multivector& line, Scalar& pt1, Scalar& px1, Scalar& py1,
+                                     Scalar& pz1, Scalar& pt2, Scalar& px2, Scalar& py2,
+                                     Scalar& pz2) noexcept
+    requires(NUM_PHYSICAL_DIMENSIONS == 4)
+  {
+    using std::clamp;
+
+    constexpr Scalar WEIGHT_THRESHOLD{1};
+    Scalar first_weight{};
+    Multivector first_point{};
+    Scalar second_weight{};
+    Multivector second_point{};
+    Scalar radius{1};
+    while (radius < std::numeric_limits<Scalar>::max() and abs(second_weight) < WEIGHT_THRESHOLD) {
+      const auto hypersphere{make_hypersphere(Scalar{0}, Scalar{0}, Scalar{0}, Scalar{0}, radius)};
+      const auto intersection{meet(line, hypersphere)};
+      Multivector intersection_point_1{};
+      Multivector intersection_point_2{};
+      extract_point_pair(intersection, intersection_point_1, intersection_point_2);
+      for (const auto& p : {intersection_point_1, intersection_point_2}) {
+        const auto w{weight(p)};
+        if (abs(w) > abs(first_weight)) {
+          second_weight = first_weight;
+          second_point = first_point;
+          first_weight = w;
+          first_point = p;
+        } else if (abs(w) > abs(second_weight)) {
+          second_weight = w;
+          second_point = p;
+        }
+      }
+
+      radius *= Scalar{2};
+    }
+
+    if (abs(first_weight) > EPSILON) {
+      pt1 = get_gamma0(first_point) / first_weight;
+      px1 = get_gamma1(first_point) / first_weight;
+      py1 = get_gamma2(first_point) / first_weight;
+      pz1 = get_gamma3(first_point) / first_weight;
+    } else {
+      DLOG(INFO) << "extract_line() -- No first point found.";
+      pt1 = std::numeric_limits<Scalar>::max();
+      px1 = std::numeric_limits<Scalar>::max();
+      py1 = std::numeric_limits<Scalar>::max();
+      pz1 = std::numeric_limits<Scalar>::max();
+    }
+    if (abs(second_weight) > EPSILON) {
+      pt2 = get_gamma0(second_point) / second_weight;
+      px2 = get_gamma1(second_point) / second_weight;
+      py2 = get_gamma2(second_point) / second_weight;
+      pz2 = get_gamma3(second_point) / second_weight;
+    } else {
+      DLOG(INFO) << "extract_line() -- No second point found.";
+      pt2 = std::numeric_limits<Scalar>::max();
+      px2 = std::numeric_limits<Scalar>::max();
+      py2 = std::numeric_limits<Scalar>::max();
+      pz2 = std::numeric_limits<Scalar>::max();
+    }
+  }
+
+  /**
+   * In conformal geometric algebras, a line is a grade-3 element that is null (L * ~L = 0) and
+   * contains e_inf as a factor (it is the outer product of two points and e_inf, or
+   * equivalently passes through the point at infinity). The null condition distinguishes lines
+   * from circles, which are also grade-3 but non-null and without conformal basis blades.
+   */
+  static constexpr bool is_line(const Multivector& mv) noexcept {
+    const bool is_grade_3{mv.template is_grade<3>()};
+    const bool is_nonzero{!mv.near_zero()};
+    const bool contains_e_inf{mv.outer(e_inf()).near_zero()};
+
+    DLOG(INFO) << "is_line() -- mv: " << mv << ", is_grade_3: " << is_grade_3
+               << ", is_nonzero: " << is_nonzero << ", contains_e_inf: " << contains_e_inf;
+    return is_grade_3 and is_nonzero and contains_e_inf;
   }
 
   /**
@@ -659,48 +1081,6 @@ class CgaGeometryType final {
   }
 
   /**
-   * Constructs a 3-blade line passing through two 3D Euclidean points.
-   * In conformal geometries, a flat line is the wedge of two conformal points and the point at
-   * infinity.
-   */
-  static constexpr Multivector make_line(Scalar px1, Scalar py1, Scalar pz1, Scalar px2, Scalar py2,
-                                         Scalar pz2) {
-    const Multivector p1{make_point(px1, py1, pz1)};
-    const Multivector p2{make_point(px2, py2, pz2)};
-
-    return join(join(p1, p2), e_inf());
-  }
-
-  static constexpr Multivector make_line(Scalar pt1, Scalar px1, Scalar py1, Scalar pz1, Scalar pt2,
-                                         Scalar px2, Scalar py2, Scalar pz2) {
-    const Multivector p1{make_point(pt1, px1, py1, pz1)};
-    const Multivector p2{make_point(pt2, px2, py2, pz2)};
-
-    return join(join(p1, p2), e_inf());
-  }
-
-  /**
-   * In conformal geometric algebras, a line is a grade-3 element that is null (L * ~L = 0) and
-   * contains e_inf as a factor (it is the outer product of two points and e_inf, or equivalently
-   * passes through the point at infinity). The null condition distinguishes lines from circles,
-   * which are also grade-3 but non-null and without conformal basis blades.
-   */
-  static constexpr bool is_line(const Multivector& mv) noexcept {
-    if (!mv.template is_grade<3>()) {
-      return false;
-    }
-
-    // The null condition L * ~L = 0 distinguishes lines (null) from circles (non-null).
-    const auto self_product{(mv * ~mv).scalar()};
-    const bool is_null{abs(self_product) < Algebra::EPSILON};
-
-    // A line contains e_inf as a factor — its outer product with e_inf is zero.
-    const bool contains_e_inf{(mv ^ e_inf()).near_equal(Multivector{})};
-
-    return is_null and contains_e_inf;
-  }
-
-  /**
    * Constructs a 3-blade circle from a center point, a normal vector defining the
    * plane of the circle, and a radius.
    *
@@ -737,8 +1117,8 @@ class CgaGeometryType final {
   }
 
   /**
-   * Circles and lines are almost the same entities in CGA. A line is just a circle with infinite
-   * radius.
+   * Circles and lines are almost the same entities in CGA. A line is just a circle with
+   * infinite radius.
    */
   static constexpr bool is_circle(const Multivector& mv) {
     if (!mv.template is_grade<3>()) {
@@ -749,8 +1129,8 @@ class CgaGeometryType final {
     const auto self_product{mv.multiply(mv.reverse()).scalar()};
     const bool is_null{abs(self_product) < Algebra::EPSILON};
 
-    // A line contains e_inf as a factor — its outer product with e_inf is zero. A circle does not
-    // have e_inf as a factor.
+    // A line contains e_inf as a factor — its outer product with e_inf is zero. A circle does
+    // not have e_inf as a factor.
     const bool contains_e_inf{mv.outer(e_inf()).near_equal(Multivector{})};
 
     return !is_null && !contains_e_inf;
@@ -826,9 +1206,6 @@ using Cga3dGeometry = CgaGeometryType<3, Scalar>;
 template <typename Scalar = DefaultScalarType>
 using Cga4dGeometry = CgaGeometryType<4, Scalar>;
 
-static_assert(GeometryModel<Cga2dGeometry<>>);
-static_assert(GeometryModel<Cga3dGeometry<>>);
-static_assert(GeometryModel<Cga4dGeometry<>>);
 static_assert(ConformalGeometryModel<Cga2dGeometry<>>);
 static_assert(ConformalGeometryModel<Cga3dGeometry<>>);
 static_assert(ConformalGeometryModel<Cga4dGeometry<>>);
