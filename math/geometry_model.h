@@ -24,10 +24,11 @@ concept GeometryModel =
     // Basis vector factory methods for physical dimensions. These are the generic names. Specific
     // geometries may include names tied more directly to particular uses, but these should always
     // be available.
-    requires(typename G::Multivector const& a) {
-      { G::e1() } -> std::same_as<typename G::Multivector>;
-      { G::get_e1(a) } -> std::same_as<typename G::Scalar>;
-    } &&  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 1 ||
+     requires(typename G::Multivector const& a) {
+       { G::e1() } -> std::same_as<typename G::Multivector>;
+       { G::get_e1(a) } -> std::same_as<typename G::Scalar>;
+     }) &&  //
     (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
      requires(typename G::Multivector const& a) {
        { G::e2() } -> std::same_as<typename G::Multivector>;
@@ -51,23 +52,27 @@ concept HasPoint =
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out,
              size_t count, typename G::Scalar* values) {
+      { G::origin() } -> std::same_as<typename G::Multivector>;
       { G::make_point(count, values) } -> std::same_as<typename G::Multivector>;
-      { G::make_point(x) } -> std::same_as<typename G::Multivector>;
-      { G::extract_point(m, out) } -> std::same_as<void>;
       { G::is_point(m) } -> std::same_as<bool>;
       { G::is_normalized_point(m) } -> std::same_as<bool>;
     } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
+    (G::NUM_PHYSICAL_DIMENSIONS != 1 ||
+     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+       { G::make_point(x) } -> std::same_as<typename G::Multivector>;
+       { G::extract_point(m, out) } -> std::same_as<void>;
+     }) &&
+    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point(x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point(m, out, out) } -> std::same_as<void>;
      }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
+    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point(x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point(m, out, out, out) } -> std::same_as<void>;
      }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
+    (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point(x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point(m, out, out, out, out) } -> std::same_as<void>;
@@ -78,10 +83,14 @@ concept HasDirection =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_direction(x) } -> std::same_as<typename G::Multivector>;
-      { G::extract_direction(m, out) } -> std::same_as<void>;
+      { G::make_direction(m) } -> std::same_as<typename G::Multivector>;
       { G::is_direction(m) } -> std::same_as<bool>;
     } &&
+    (G::NUM_PHYSICAL_DIMENSIONS < 1 ||
+     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+       { G::make_direction(x) } -> std::same_as<typename G::Multivector>;
+       { G::extract_direction(m, out) } -> std::same_as<void>;
+     }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_direction(x, x) } -> std::same_as<typename G::Multivector>;
@@ -101,12 +110,17 @@ concept HasDirection =
 template <typename G>
 concept HasPointPair =
     GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
+    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
     requires(typename G::Multivector const& m, typename G::Multivector& out) {
       { G::make_point_pair(m, m) } -> std::same_as<typename G::Multivector>;
       { G::is_point_pair(m) } -> std::same_as<bool>;
       { G::extract_point_pair(m, out, out) } -> std::same_as<void>;
     } &&
+    (G::NUM_PHYSICAL_DIMENSIONS != 1 ||
+     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+       { G::make_point_pair(x, x) } -> std::same_as<typename G::Multivector>;
+       { G::extract_point_pair(m, out, out) } -> std::same_as<void>;
+     }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
      requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point_pair(x, x, x, x) } -> std::same_as<typename G::Multivector>;
@@ -434,24 +448,8 @@ concept ProjectiveGeometryModel =  //
     true;
 
 template <typename G>
-concept ConformalGeometryModel =  //
-    GeometryModel<G> &&           //
-
-    // Geometric primitives.
-    HasPoint<G> &&      //
-    HasPointPair<G> &&  //
-    // HasDirection<G> &&                                        //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&  //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&        //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&   //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&       //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasSphere<G>) &&       //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) &&  //
-
-    // Fundamental operations.
-    HasRotor<G> &&       //
-    HasDilator<G> &&     //
-    HasTranslator<G> &&  //
+concept HasConformalBases =  //
+    GeometryModel<G> &&      //
 
     // Basis vector factory methods for physical dimensions.
     requires(typename G::Multivector const& a) {
@@ -496,6 +494,28 @@ concept ConformalGeometryModel =  //
        { G::gamma13() } -> std::same_as<typename G::Multivector>;
        { G::gamma23() } -> std::same_as<typename G::Multivector>;
      }) &&  //
+    true;
+
+template <typename G>
+concept ConformalGeometryModel =  //
+    GeometryModel<G> &&           //
+    HasConformalBases<G> &&       //
+
+    // Geometric primitives.
+    HasPoint<G> &&      //
+    HasPointPair<G> &&  //
+    // HasDirection<G> &&                                        //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&  //
+    //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&        //
+    //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&   //
+    //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&       //
+    //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasSphere<G>) &&       //
+    //(G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) &&  //
+
+    // Fundamental operations.
+    HasRotor<G> &&       //
+    HasDilator<G> &&     //
+    HasTranslator<G> &&  //
     true;
 
 }  // namespace ndyn::math
