@@ -6,6 +6,7 @@
 #include "math/abs.h"
 #include "math/canonical_basis_representation.h"
 #include "math/geometry_model.h"
+#include "math/multivector_test_utils.h"
 
 namespace ndyn::math {
 
@@ -332,111 +333,116 @@ TYPED_TEST_P(GeometryConceptsTest, PointRoundtrip4D) {
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PointPairRoundtrip2D) {
-  if constexpr (HasPointPair<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 2) {
-    const auto mv = TypeParam::make_point_pair(TestFixture::x, TestFixture::y, TestFixture::dx,
-                                               TestFixture::dy);
-    EXPECT_TRUE(TypeParam::is_point_pair(mv));
+  if constexpr (HasPointPair<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 2) {
+    const auto initial{TypeParam::make_point_pair(TestFixture::x, TestFixture::y, TestFixture::dx,
+                                                  TestFixture::dy)};
+    ASSERT_TRUE(TypeParam::is_point_pair(initial));
 
-    typename TypeParam::Scalar out_x1{}, out_y1{}, out_x2{}, out_y2{};
-    TypeParam::extract_point_pair(mv, out_x1, out_y1, out_x2, out_y2);
-    EXPECT_TRUE(TestFixture::near(out_x1, TestFixture::x));
-    EXPECT_TRUE(TestFixture::near(out_y1, TestFixture::y));
-    EXPECT_TRUE(TestFixture::near(out_x2, TestFixture::dx));
-    EXPECT_TRUE(TestFixture::near(out_y2, TestFixture::dy));
+    typename TypeParam::Scalar initial_x1{}, initial_y1{}, initial_x2{}, initial_y2{};
+    TypeParam::extract_point_pair(initial, initial_x1, initial_y1, initial_x2, initial_y2);
+
+    const auto second{TypeParam::make_point_pair(initial_x1, initial_y1, initial_x2, initial_y2)};
+    ASSERT_TRUE(TypeParam::is_point_pair(second));
+
+    EXPECT_TRUE(AreScaled<typename TypeParam::Algebra>(initial, second));
   }
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PointPairRoundtrip3D) {
-  if constexpr (HasPointPair<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 3) {
-    const auto mv = TypeParam::make_point_pair(TestFixture::x, TestFixture::y, TestFixture::z,
-                                               TestFixture::dx, TestFixture::dy, TestFixture::dz);
-    EXPECT_TRUE(TypeParam::is_point_pair(mv));
+  if constexpr (HasPointPair<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 3) {
+    const auto initial{TypeParam::make_point_pair(TestFixture::x, TestFixture::y, TestFixture::z,
+                                                  TestFixture::dx, TestFixture::dy,
+                                                  TestFixture::dz)};
+    ASSERT_TRUE(TypeParam::is_point_pair(initial));
 
-    typename TypeParam::Scalar out_x1{}, out_y1{}, out_z1{};
-    typename TypeParam::Scalar out_x2{}, out_y2{}, out_z2{};
-    TypeParam::extract_point_pair(mv, out_x1, out_y1, out_z1, out_x2, out_y2, out_z2);
-    EXPECT_TRUE(TestFixture::near(out_x1, TestFixture::x));
-    EXPECT_TRUE(TestFixture::near(out_y1, TestFixture::y));
-    EXPECT_TRUE(TestFixture::near(out_z1, TestFixture::z));
-    EXPECT_TRUE(TestFixture::near(out_x2, TestFixture::dx));
-    EXPECT_TRUE(TestFixture::near(out_y2, TestFixture::dy));
-    EXPECT_TRUE(TestFixture::near(out_z2, TestFixture::dz));
+    typename TypeParam::Scalar initial_x1{}, initial_y1{}, initial_z1{}, initial_x2{}, initial_y2{},
+        initial_z2{};
+    TypeParam::extract_point_pair(initial, initial_x1, initial_y1, initial_z1, initial_x2,
+                                  initial_y2, initial_z2);
+
+    const auto second{TypeParam::make_point_pair(initial_x1, initial_y1, initial_z1, initial_x2,
+                                                 initial_y2, initial_z2)};
+    ASSERT_TRUE(TypeParam::is_point_pair(second));
+
+    EXPECT_TRUE(AreScaled<typename TypeParam::Algebra>(initial, second));
   }
 }
 
 TYPED_TEST_P(GeometryConceptsTest, PointPairRoundtrip4D) {
-  if constexpr (HasPointPair<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 4) {
-    const auto mv = TypeParam::make_point_pair(TestFixture::x, TestFixture::y, TestFixture::z,
-                                               TestFixture::w, TestFixture::dx, TestFixture::dy,
-                                               TestFixture::dz, TestFixture::dw);
-    EXPECT_TRUE(TypeParam::is_point_pair(mv));
+  if constexpr (HasPointPair<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 4) {
+    const auto initial{TypeParam::make_point_pair(TestFixture::x, TestFixture::y, TestFixture::z,
+                                                  TestFixture::w, TestFixture::dx, TestFixture::dy,
+                                                  TestFixture::dz, TestFixture::dw)};
+    ASSERT_TRUE(TypeParam::is_point_pair(initial));
 
-    typename TypeParam::Scalar out_x1{}, out_y1{}, out_z1{}, out_w1{};
-    typename TypeParam::Scalar out_x2{}, out_y2{}, out_z2{}, out_w2{};
-    TypeParam::extract_point_pair(mv, out_x1, out_y1, out_z1, out_w1, out_x2, out_y2, out_z2,
-                                  out_w2);
-    EXPECT_TRUE(TestFixture::near(out_x1, TestFixture::x));
-    EXPECT_TRUE(TestFixture::near(out_y1, TestFixture::y));
-    EXPECT_TRUE(TestFixture::near(out_z1, TestFixture::z));
-    EXPECT_TRUE(TestFixture::near(out_w1, TestFixture::w));
-    EXPECT_TRUE(TestFixture::near(out_x2, TestFixture::dx));
-    EXPECT_TRUE(TestFixture::near(out_y2, TestFixture::dy));
-    EXPECT_TRUE(TestFixture::near(out_z2, TestFixture::dz));
-    EXPECT_TRUE(TestFixture::near(out_w2, TestFixture::dw));
+    typename TypeParam::Scalar initial_x1{}, initial_y1{}, initial_z1{}, initial_w1{}, initial_x2{},
+        initial_y2{}, initial_z2{}, initial_w2{};
+    TypeParam::extract_point_pair(initial, initial_x1, initial_y1, initial_z1, initial_w1,
+                                  initial_x2, initial_y2, initial_z2, initial_w2);
+
+    const auto second{TypeParam::make_point_pair(initial_x1, initial_y1, initial_z1, initial_w1,
+                                                 initial_x2, initial_y2, initial_z2, initial_w2)};
+    ASSERT_TRUE(TypeParam::is_point_pair(second));
+
+    EXPECT_TRUE(AreScaled<typename TypeParam::Algebra>(initial, second));
   }
 }
 
 TYPED_TEST_P(GeometryConceptsTest, LineRoundtrip2D) {
-  if constexpr (HasLine<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 2) {
-    const auto mv =
-        TypeParam::make_line(TestFixture::x, TestFixture::y, TestFixture::dx, TestFixture::dy);
-    EXPECT_TRUE(TypeParam::is_line(mv));
+  if constexpr (HasLine<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 2) {
+    const auto initial_line{
+        TypeParam::make_line(TestFixture::x, TestFixture::y, TestFixture::dx, TestFixture::dy)};
+    ASSERT_TRUE(TypeParam::is_line(initial_line));
 
-    typename TypeParam::Scalar out_px{}, out_py{}, out_dx{}, out_dy{};
-    TypeParam::extract_line(mv, out_px, out_py, out_dx, out_dy);
-    EXPECT_TRUE(TestFixture::near(out_px, TestFixture::x));
-    EXPECT_TRUE(TestFixture::near(out_py, TestFixture::y));
-    EXPECT_TRUE(TestFixture::near(out_dx, TestFixture::dx));
-    EXPECT_TRUE(TestFixture::near(out_dy, TestFixture::dy));
+    typename TypeParam::Scalar initial_px{}, initial_py{};
+    typename TypeParam::Scalar initial_dx{}, initial_dy{};
+    TypeParam::extract_line(initial_line, initial_px, initial_py, initial_dx, initial_dy);
+
+    const auto second_line{TypeParam::make_line(initial_px, initial_py, initial_dx, initial_dy)};
+    ASSERT_TRUE(TypeParam::is_line(second_line))
+        << "initial_line: " << initial_line << "second_line: " << second_line;
+
+    EXPECT_TRUE(AreScaled<typename TypeParam::Algebra>(initial_line, second_line));
   }
 }
 
 TYPED_TEST_P(GeometryConceptsTest, LineRoundtrip3D) {
-  if constexpr (HasLine<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 3) {
-    const auto mv = TypeParam::make_line(TestFixture::x, TestFixture::y, TestFixture::z,
-                                         TestFixture::dx, TestFixture::dy, TestFixture::dz);
-    EXPECT_TRUE(TypeParam::is_line(mv));
+  if constexpr (HasLine<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 3) {
+    const auto initial_line{TypeParam::make_line(TestFixture::x, TestFixture::y, TestFixture::z,
+                                                 TestFixture::dx, TestFixture::dy,
+                                                 TestFixture::dz)};
+    ASSERT_TRUE(TypeParam::is_line(initial_line));
 
-    typename TypeParam::Scalar out_px{}, out_py{}, out_pz{};
-    typename TypeParam::Scalar out_dx{}, out_dy{}, out_dz{};
-    TypeParam::extract_line(mv, out_px, out_py, out_pz, out_dx, out_dy, out_dz);
-    EXPECT_TRUE(TestFixture::near(out_px, TestFixture::x));
-    EXPECT_TRUE(TestFixture::near(out_py, TestFixture::y));
-    EXPECT_TRUE(TestFixture::near(out_pz, TestFixture::z));
-    EXPECT_TRUE(TestFixture::near(out_dx, TestFixture::dx));
-    EXPECT_TRUE(TestFixture::near(out_dy, TestFixture::dy));
-    EXPECT_TRUE(TestFixture::near(out_dz, TestFixture::dz));
+    typename TypeParam::Scalar initial_px{}, initial_py{}, initial_pz{};
+    typename TypeParam::Scalar initial_dx{}, initial_dy{}, initial_dz{};
+    TypeParam::extract_line(initial_line, initial_px, initial_py, initial_pz, initial_dx,
+                            initial_dy, initial_dz);
+
+    const auto second_line{TypeParam::make_line(initial_px, initial_py, initial_pz, initial_dx,
+                                                initial_dy, initial_dz)};
+    ASSERT_TRUE(TypeParam::is_line(second_line));
+
+    EXPECT_TRUE(AreScaled<typename TypeParam::Algebra>(initial_line, second_line));
   }
 }
 
 TYPED_TEST_P(GeometryConceptsTest, LineRoundtrip4D) {
-  if constexpr (HasLine<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS >= 4) {
-    const auto mv =
-        TypeParam::make_line(TestFixture::x, TestFixture::y, TestFixture::z, TestFixture::w,
-                             TestFixture::dx, TestFixture::dy, TestFixture::dz, TestFixture::dw);
-    EXPECT_TRUE(TypeParam::is_line(mv));
+  if constexpr (HasLine<TypeParam> && TypeParam::NUM_PHYSICAL_DIMENSIONS == 4) {
+    const auto initial_line{TypeParam::make_line(TestFixture::x, TestFixture::y, TestFixture::z,
+                                                 TestFixture::w, TestFixture::dx, TestFixture::dy,
+                                                 TestFixture::dz, TestFixture::dw)};
+    ASSERT_TRUE(TypeParam::is_line(initial_line));
 
-    typename TypeParam::Scalar out_px{}, out_py{}, out_pz{}, out_pw{};
-    typename TypeParam::Scalar out_dx{}, out_dy{}, out_dz{}, out_dw{};
-    TypeParam::extract_line(mv, out_px, out_py, out_pz, out_pw, out_dx, out_dy, out_dz, out_dw);
-    EXPECT_TRUE(TestFixture::near(out_px, TestFixture::x));
-    EXPECT_TRUE(TestFixture::near(out_py, TestFixture::y));
-    EXPECT_TRUE(TestFixture::near(out_pz, TestFixture::z));
-    EXPECT_TRUE(TestFixture::near(out_pw, TestFixture::w));
-    EXPECT_TRUE(TestFixture::near(out_dx, TestFixture::dx));
-    EXPECT_TRUE(TestFixture::near(out_dy, TestFixture::dy));
-    EXPECT_TRUE(TestFixture::near(out_dz, TestFixture::dz));
-    EXPECT_TRUE(TestFixture::near(out_dw, TestFixture::dw));
+    typename TypeParam::Scalar initial_px{}, initial_py{}, initial_pz{}, initial_pw{};
+    typename TypeParam::Scalar initial_dx{}, initial_dy{}, initial_dz{}, initial_dw{};
+    TypeParam::extract_line(initial_line, initial_px, initial_py, initial_pz, initial_pw,
+                            initial_dx, initial_dy, initial_dz, initial_dw);
+
+    const auto second_line{TypeParam::make_line(initial_px, initial_py, initial_pz, initial_pw,
+                                                initial_dx, initial_dy, initial_dz, initial_dw)};
+    ASSERT_TRUE(TypeParam::is_line(second_line));
+
+    EXPECT_TRUE(AreScaled<typename TypeParam::Algebra>(initial_line, second_line));
   }
 }
 
