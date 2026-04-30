@@ -206,29 +206,6 @@ class CgaGeometryType final {
   [[nodiscard]] static constexpr auto gamma23() noexcept { return gamma2() * gamma3(); }
 
   /**
-   * Compute the join via the outer product. In CGA the outer product of two null point
-   * vectors produces the line through them (grade-2 in the conformal sense), and the outer
-   * product of three points produces the circle or plane through them. This is the same
-   * approach as in PGA with points as grade-1 multivectors. This reflects the conformal
-   * embedding's structural similarity to projective geometry at the level of the outer product.
-   */
-  [[nodiscard]] static constexpr auto join(IsMultivectorLike<G> auto&& a,
-                                           IsMultivectorLike<G> auto&& b) noexcept {
-    return a.outer(b);
-  }
-
-  /**
-   * Compute the meet via the regressive product. In CGA the regressive product recovers
-   * the intersection of two elements — the intersection of two spheres is a circle, the
-   * intersection of a sphere and a plane is a circle, and so on. The regressive product
-   * serves as meet in CGA for the same structural reason as in PGA with grade-1 points.
-   */
-  [[nodiscard]] static constexpr auto meet(IsMultivectorLike<G> auto&& a,
-                                           IsMultivectorLike<G> auto&& b) noexcept {
-    return a.regress(b);
-  }
-
-  /**
    * Construct a rotor around the origin of the plane. Note that this is only meaningful with two
    * physical dimensions.
    */
@@ -456,18 +433,70 @@ class CgaGeometryType final {
     return (bivector * e_orig()).template is_grade<1>();
   }
 
-  [[nodiscard]] [[nodiscard]] static constexpr auto join() noexcept {
+  /**
+   * The join is the operation that determines the smallest common subspace containing two
+   * or more geometric entities. Its algebraic implementation depends entirely on the representation
+   * of the geometry: the Outer Product Null Space (OPNS) or the Inner Product Null Space
+   * (IPNS). In OPNS, the join of two disjoint objects is their outer product,
+   * which builds higher-grade blades from lower-grade ones. Conversely, in IPNS, where objects are
+   * represented by their duals (the "normal" or "null" space they exclude), the join is performed
+   * via the regressive product. While the outer product expands the "span," the regressive
+   * product effectively performs a "dual-meet," allowing the algebra to resolve the union of
+   * constraints.
+   *
+   * In the OPNS framework, an object is defined by the points it contains. Here, the identity
+   * element for the join is the scalar 1, representing the "empty set" or a vacuous lack of
+   * constraint. Joining three points in OPNS creates a circle (a round), as the wedge product
+   * captures the unique 3-blade defining that circular path. To create a "flat" such as a
+   * plane, one would join three points with the point at infinity (e_inf). In this mode,
+   * the join is constructive and grade-increasing: it takes the "nothingness" of the scalar
+   * identity and adds dimensions of containment.
+   *
+   * In the IPNS framework, the logic is inverted: an object is defined by its relationship to
+   * the vectors normal to it. Here, the identity element for the join is the pseudoscalar
+   * (I), representing the "total space." In IPNS, the join is a grade-decreasing operation
+   * (using the regressive product) that removes constraints. While an OPNS join adds "what is
+   * there," an IPNS join removes the "limitations" of what is not. This distinction is vital; the
+   * scalar 1 is the "nothing" from which we build (Join in OPNS), while the pseudoscalar I is the
+   * "everything" from which we carve (Meet in OPNS).
+   *
+   * This dual nature allows the join to function as the operation of an algebraic monoid
+   * structure. (A monoid can be thought of as a group without inverse elements.) By treating the
+   * join as a formal mapping within the Grassmannian, the algebra distinguishes between the linear
+   * span (the flat or round extent) and the metric properties (distance and angle). The choice
+   * between an outer product join and a regressive product join determines whether the join
+   * aggregates points into a body (OPNS) or merges the bounding constraints of two separate
+   * manifolds (IPNS).
+   */
+  [[nodiscard]] static constexpr auto join() noexcept {
+    // Note this result is for an OPNS model. An IPNS model would return the pseudoscalar.
     return Multivector{Scalar{1}};
   }
 
   template <IsMultivectorLike<G> First, IsMultivectorLike<G>... Rest>
   [[nodiscard]] static constexpr auto join(First&& first, Rest&&... rest) noexcept {
     if constexpr (sizeof...(rest) == 0) {
-      // Optimization: return immediately if only one argument exists.
       return std::forward<First>(first);
     } else {
-      // Standard left-fold: ((first ^ r1) ^ r2) ...
+      // The join in OPNS is the outer product. The ^ operator is overloaded on the Multivector
+      // class to perform the outer product.
       return (std::forward<First>(first) ^ ... ^ std::forward<Rest>(rest));
+    }
+  }
+
+  [[nodiscard]] static constexpr auto meet() noexcept {
+    // Note this result is for an OPNS model. An IPNS model would return the scalar 1.
+    return Multivector::pseudoscalar();
+  }
+
+  template <IsMultivectorLike<G> First, IsMultivectorLike<G>... Rest>
+  [[nodiscard]] static constexpr auto meet(First&& first, Rest&&... rest) noexcept {
+    if constexpr (sizeof...(rest) == 0) {
+      return std::forward<First>(first);
+    } else {
+      // The meet in OPNS is the regressive product. The & operator is overloaded on the Multivector
+      // class to perform the regressive product.
+      return (std::forward<First>(first) & ... & std::forward<Rest>(rest));
     }
   }
 

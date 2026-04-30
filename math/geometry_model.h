@@ -83,9 +83,19 @@ concept GeometryModel =  //
       typename G::Scalar;
       { G::NUM_PHYSICAL_DIMENSIONS } -> std::convertible_to<size_t>;
     } &&  //
-    requires(const G::Multivector& a, const G::Multivector& b) {
-      { G::meet(a, b) } -> std::same_as<typename G::Multivector>;
-      { G::join(a, b) } -> std::same_as<typename G::Multivector>;
+    requires(const G::Multivector& a) {
+      // An empty meet or join is a valid operation. It represents the identity element of the
+      // operation.
+      { G::meet() } -> std::same_as<typename G::Multivector>;
+      { G::join() } -> std::same_as<typename G::Multivector>;
+      // We expect the meet() and join() functions to be variadic, but regardless of implementation,
+      // the single argument forms should exist.
+      { G::meet(a) } -> std::same_as<typename G::Multivector>;
+      { G::join(a) } -> std::same_as<typename G::Multivector>;
+      { G::meet(a, a) } -> std::same_as<typename G::Multivector>;
+      { G::join(a, a) } -> std::same_as<typename G::Multivector>;
+      { G::meet(a, a, a) } -> std::same_as<typename G::Multivector>;
+      { G::join(a, a, a) } -> std::same_as<typename G::Multivector>;
     } &&  //
     true;
 
