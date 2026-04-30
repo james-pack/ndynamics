@@ -466,8 +466,8 @@ concept ProjectiveGeometryModel =  //
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
      requires {
-       { G::t() } -> IsMultivectorLike<G>;
-       { G::get_t() } -> ScalarLike<G>;
+       { G::w() } -> IsMultivectorLike<G>;
+       { G::get_w() } -> ScalarLike<G>;
      }) &&
 
     // Basis bivector factory methods for physical dimensions.
@@ -482,9 +482,9 @@ concept ProjectiveGeometryModel =  //
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
      requires {
-       { G::xt() } -> IsMultivectorLike<G>;
-       { G::yt() } -> IsMultivectorLike<G>;
-       { G::zt() } -> IsMultivectorLike<G>;
+       { G::xw() } -> IsMultivectorLike<G>;
+       { G::yw() } -> IsMultivectorLike<G>;
+       { G::zw() } -> IsMultivectorLike<G>;
      }) &&  //
 
     // Geometric primitives.
