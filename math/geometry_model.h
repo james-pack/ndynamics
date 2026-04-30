@@ -6,74 +6,117 @@
 namespace ndyn::math {
 
 /**
+ * Helper concepts to assert that the given type is a form of the Multivector type on the geometry
+ * G.
+ */
+/**
+ * Checks if a type can be treated as a Multivector of Algebra G.
+ * This is the most permissive; it allows anything where a G::Multivector can be created from that
+ * type, including an implicit constructor, conversion operators, or a type cast.
+ *
+ * We use this concept most often to allow for flexibility in refactoring and optimizations.
+ */
+template <typename T, typename G>
+concept IsMultivectorLike = std::convertible_to<T, typename G::Multivector>;
+
+/**
+ * Checks if the underlying type is the geometry's Multivector, ignoring qualifiers.
+ */
+template <typename T, typename G>
+concept IsMultivector =
+    std::is_same_v<std::remove_cvref_t<T>, typename std::remove_cvref_t<G>::Multivector>;
+
+/**
+ * Checks for an absolute type match including storage qualifiers (no refs, no const).
+ */
+template <typename T, typename G>
+concept MultivectorExact = std::is_same_v<T, typename std::remove_cvref_t<G>::Multivector>;
+
+/**
+ * Similar concepts as above but for the Scalar type.
+ */
+template <typename T, typename G>
+concept ScalarLike = std::convertible_to<T, typename G::Scalar>;
+
+template <typename T, typename G>
+concept IsScalar = std::is_same_v<std::remove_cvref_t<T>, typename std::remove_cvref_t<G>::Scalar>;
+
+template <typename T, typename G>
+concept ScalarExact = std::is_same_v<T, typename std::remove_cvref_t<G>::Scalar>;
+
+template <typename G>
+concept HasGenericBases =
+    // Basis vector factory methods for physical dimensions. These are the generic names. Specific
+    // geometries may include names tied more directly to particular uses, but these should always
+    // be available.
+    (G::NUM_PHYSICAL_DIMENSIONS < 1 ||
+     requires(const G::Multivector& a) {
+       { G::e1() } -> std::same_as<typename G::Multivector>;
+       { G::get_e1(a) } -> std::same_as<typename G::Scalar>;
+     }) &&  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
+     requires(const G::Multivector& a) {
+       { G::e2() } -> std::same_as<typename G::Multivector>;
+       { G::get_e2(a) } -> std::same_as<typename G::Scalar>;
+     }) &&  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
+     requires(const G::Multivector& a) {
+       { G::e3() } -> std::same_as<typename G::Multivector>;
+       { G::get_e3(a) } -> std::same_as<typename G::Scalar>;
+     }) &&  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
+     requires(const G::Multivector& a) {
+       { G::e4() } -> std::same_as<typename G::Multivector>;
+       { G::get_e4(a) } -> std::same_as<typename G::Scalar>;
+     }) &&  //
+    true;
+
+/**
  * Base concept required by all geometry implementations.
  */
 template <typename G>
-concept GeometryModel =
+concept GeometryModel =  //
+    HasGenericBases<G> &&
     requires {
       typename G::Algebra;
       typename G::Multivector;
       typename G::Scalar;
       { G::NUM_PHYSICAL_DIMENSIONS } -> std::convertible_to<size_t>;
     } &&  //
-    requires(typename G::Multivector const& a, typename G::Multivector const& b) {
+    requires(const G::Multivector& a, const G::Multivector& b) {
       { G::meet(a, b) } -> std::same_as<typename G::Multivector>;
       { G::join(a, b) } -> std::same_as<typename G::Multivector>;
     } &&  //
-
-    // Basis vector factory methods for physical dimensions. These are the generic names. Specific
-    // geometries may include names tied more directly to particular uses, but these should always
-    // be available.
-    (G::NUM_PHYSICAL_DIMENSIONS < 1 ||
-     requires(typename G::Multivector const& a) {
-       { G::e1() } -> std::same_as<typename G::Multivector>;
-       { G::get_e1(a) } -> std::same_as<typename G::Scalar>;
-     }) &&  //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires(typename G::Multivector const& a) {
-       { G::e2() } -> std::same_as<typename G::Multivector>;
-       { G::get_e2(a) } -> std::same_as<typename G::Scalar>;
-     }) &&  //
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(typename G::Multivector const& a) {
-       { G::e3() } -> std::same_as<typename G::Multivector>;
-       { G::get_e3(a) } -> std::same_as<typename G::Scalar>;
-     }) &&  //
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(typename G::Multivector const& a) {
-       { G::e4() } -> std::same_as<typename G::Multivector>;
-       { G::get_e4(a) } -> std::same_as<typename G::Scalar>;
-     }) &&  //
     true;
 
 template <typename G>
 concept HasPoint =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out,
-             size_t count, typename G::Scalar* values) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out, size_t count,
+             typename G::Scalar* values) {
       { G::origin() } -> std::same_as<typename G::Multivector>;
       { G::make_point(count, values) } -> std::same_as<typename G::Multivector>;
       { G::is_point(m) } -> std::same_as<bool>;
       { G::is_normalized_point(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS != 1 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point(x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point(m, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point(x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point(m, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point(x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point(m, out, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point(x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point(m, out, out, out, out) } -> std::same_as<void>;
      });
@@ -82,27 +125,27 @@ template <typename G>
 concept HasDirection =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_direction(m) } -> std::same_as<typename G::Multivector>;
       { G::is_direction(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS < 1 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_direction(x) } -> std::same_as<typename G::Multivector>;
        { G::extract_direction(m, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_direction(x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_direction(m, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_direction(x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_direction(m, out, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_direction(x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_direction(m, out, out, out, out) } -> std::same_as<void>;
      });
@@ -111,28 +154,28 @@ template <typename G>
 concept HasPointPair =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(typename G::Multivector const& m, typename G::Multivector& out) {
+    requires(const G::Multivector& m, typename G::Multivector& out) {
       { G::make_point_pair(m, m) } -> std::same_as<typename G::Multivector>;
       { G::is_point_pair(m) } -> std::same_as<bool>;
       { G::extract_point_pair(m, out, out) } -> std::same_as<void>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS != 1 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point_pair(x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point_pair(m, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point_pair(x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point_pair(m, out, out, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point_pair(x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point_pair(m, out, out, out, out, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_point_pair(x, x, x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_point_pair(m, out, out, out, out, out, out, out, out) } -> std::same_as<void>;
      });
@@ -141,22 +184,22 @@ template <typename G>
 concept HasLine =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_line(m, m) } -> std::same_as<typename G::Multivector>;
       { G::is_line(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_line(x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_line(m, out, out, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_line(x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_line(m, out, out, out, out, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_line(x, x, x, x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_line(m, out, out, out, out, out, out, out, out) } -> std::same_as<void>;
      });
@@ -165,18 +208,18 @@ template <typename G>
 concept HasPlane =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_plane(x, x, x) } -> std::same_as<typename G::Multivector>;
       { G::extract_plane(m, out, out, out) } -> std::same_as<void>;
       { G::is_plane(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_plane(x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_plane(m, out, out, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_plane(x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_plane(m, out, out, out, out, out) } -> std::same_as<void>;
      });
@@ -185,27 +228,24 @@ template <typename G>
 concept HasCircle =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_circle(x, x, x) } -> std::same_as<typename G::Multivector>;
-      { G::extract_circle(m, out, out, out) } -> std::same_as<void>;
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Multivector& out,
+             typename G::Scalar& out_scalar) {
+      { G::make_circle(m, m, m) } -> std::same_as<typename G::Multivector>;
       { G::is_circle(m) } -> std::same_as<bool>;
+      { G::extract_circle(m, out, out, out_scalar) } -> std::same_as<void>;
+      { G::extract_circle(m, out, out, out) } -> std::same_as<void>;
     } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_circle(x, x, x, x) } -> std::same_as<typename G::Multivector>;
-       { G::extract_circle(m, out, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_circle(x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
-       { G::extract_circle(m, out, out, out, out, out) } -> std::same_as<void>;
+    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
+       { G::make_circle(x, x, x) } -> std::same_as<typename G::Multivector>;
+       { G::extract_circle(m, out, out, out) } -> std::same_as<void>;
      });
 
 template <typename G>
 concept HasSphere =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 3; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_sphere(x, x, x, x) } -> std::same_as<typename G::Multivector>;
       { G::extract_sphere(m, out, out, out, out) } -> std::same_as<void>;
       { G::is_sphere(m) } -> std::same_as<bool>;
@@ -215,13 +255,13 @@ template <typename G>
 concept HasHyperplane =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 3; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_hyperplane(x, x, x, x) } -> std::same_as<typename G::Multivector>;
       { G::extract_hyperplane(m, out, out, out, out) } -> std::same_as<void>;
       { G::is_hyperplane(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_hyperplane(x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_hyperplane(m, out, out, out, out, out) } -> std::same_as<void>;
      });
@@ -230,7 +270,7 @@ template <typename G>
 concept HasHypersphere =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 4; } &&
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_hypersphere(x, x, x, x, x) } -> std::same_as<typename G::Multivector>;
       { G::extract_hypersphere(m, out, out, out, out, out) } -> std::same_as<void>;
       { G::is_hypersphere(m) } -> std::same_as<bool>;
@@ -264,18 +304,18 @@ concept HasHypersphere =
 template <typename G>
 concept HasRotor =
     GeometryModel<G> &&  //
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_rotor(m, x) } -> std::same_as<typename G::Multivector>;
       { G::is_rotor(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
      // In 2D, the geometry should support construction of a rotor from an angle.
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        { G::make_rotor(x) } -> std::same_as<typename G::Multivector>;
        { G::extract_rotor(m, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
        // In 3D, the geometry should support construction of a rotor from an axis through the origin
        // and an angle.
        { G::make_rotor(x, x, x, x) } -> std::same_as<typename G::Multivector>;
@@ -305,39 +345,38 @@ template <typename G>
 concept HasTranslator =
     GeometryModel<G> &&  //
     requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(typename G::Multivector const& m, typename G::Multivector const& dir,
-             typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, const G::Multivector& dir, typename G::Scalar x,
+             typename G::Scalar& out) {
       { G::make_translator(x) } -> std::same_as<typename G::Multivector>;
       { G::make_translator(dir, x) } -> std::same_as<typename G::Multivector>;
       { G::extract_translator(m, out) } -> std::same_as<void>;
       { G::is_translator(m) } -> std::same_as<bool>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires(typename G::Multivector const& m, typename G::Multivector const& dir,
-              typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, const G::Multivector& dir, typename G::Scalar x,
+              typename G::Scalar& out) {
        { G::make_translator(x, x) } -> std::same_as<typename G::Multivector>;
        { G::make_translator(dir, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_translator(m, out, out) } -> std::same_as<void>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(typename G::Multivector const& m, typename G::Multivector const& dir,
-              typename G::Scalar x, typename G::Scalar& out) {
+     requires(const G::Multivector& m, const G::Multivector& dir, typename G::Scalar x,
+              typename G::Scalar& out) {
        { G::make_translator(x, x, x) } -> std::same_as<typename G::Multivector>;
        { G::make_translator(dir, x) } -> std::same_as<typename G::Multivector>;
        { G::extract_translator(m, out, out, out) } -> std::same_as<void>;
      }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(typename G::Multivector const& m, typename G::Multivector const& dir,
-              typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_translator(x, x, x, x) } -> std::same_as<typename G::Multivector>;
-       { G::make_translator(dir, x) } -> std::same_as<typename G::Multivector>;
-       { G::extract_translator(m, out, out, out, out) } -> std::same_as<void>;
-     });
+    (G::NUM_PHYSICAL_DIMENSIONS < 4 || requires(const G::Multivector& m, const G::Multivector& dir,
+                                                typename G::Scalar x, typename G::Scalar& out) {
+      { G::make_translator(x, x, x, x) } -> std::same_as<typename G::Multivector>;
+      { G::make_translator(dir, x) } -> std::same_as<typename G::Multivector>;
+      { G::extract_translator(m, out, out, out, out) } -> std::same_as<void>;
+    });
 
 template <typename G>
 concept HasDilator =
     GeometryModel<G> &&  //
-    requires(typename G::Multivector const& m, typename G::Scalar x, typename G::Scalar& out) {
+    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
       { G::make_dilator(x) } -> std::same_as<typename G::Multivector>;
       { G::extract_dilator(m, out) } -> std::same_as<void>;
       { G::is_dilator(m) } -> std::same_as<bool>;
@@ -452,22 +491,22 @@ concept HasConformalBases =  //
     GeometryModel<G> &&      //
 
     // Basis vector factory methods for physical dimensions.
-    requires(typename G::Multivector const& a) {
+    requires(const G::Multivector& a) {
       { G::gamma0() } -> std::same_as<typename G::Multivector>;
       { G::get_gamma0(a) } -> std::same_as<typename G::Scalar>;
     } &&
     (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires(typename G::Multivector const& a) {
+     requires(const G::Multivector& a) {
        { G::gamma1() } -> std::same_as<typename G::Multivector>;
        { G::get_gamma1(a) } -> std::same_as<typename G::Scalar>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(typename G::Multivector const& a) {
+     requires(const G::Multivector& a) {
        { G::gamma2() } -> std::same_as<typename G::Multivector>;
        { G::get_gamma2(a) } -> std::same_as<typename G::Scalar>;
      }) &&
     (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(typename G::Multivector const& a) {
+     requires(const G::Multivector& a) {
        { G::gamma3() } -> std::same_as<typename G::Multivector>;
        { G::get_gamma3(a) } -> std::same_as<typename G::Scalar>;
      }) &&
@@ -501,6 +540,33 @@ concept ConformalGeometryModel =  //
     GeometryModel<G> &&           //
     HasConformalBases<G> &&       //
 
+    // General conformal primitives as the combination (usually, join) of multiple points.
+    requires(const G::Multivector& point) {
+      // Make an ideal point from a point. This can be considered a point on the boundary of the
+      // conformal manifold.
+      { G::make_flat(point) } -> std::same_as<typename G::Multivector>;
+      // Make a line from two points.
+      { G::make_flat(point, point) } -> std::same_as<typename G::Multivector>;
+      // Make a plane from three points.
+      { G::make_flat(point, point, point) } -> std::same_as<typename G::Multivector>;
+      // Make a 3D hyperplane from four points.
+      { G::make_flat(point, point, point, point) } -> std::same_as<typename G::Multivector>;
+      // Make a 4D hyperplane from five points.
+      { G::make_flat(point, point, point, point, point) } -> std::same_as<typename G::Multivector>;
+
+      // Make a point from a point. Kind of stupid, but we are expecting a variadic implementation,
+      // so this method should exist.
+      { G::make_round(point) } -> std::same_as<typename G::Multivector>;
+      // Make a point pair from two points.
+      { G::make_round(point, point) } -> std::same_as<typename G::Multivector>;
+      // Make a circle from three points.
+      { G::make_round(point, point, point) } -> std::same_as<typename G::Multivector>;
+      // Make a sphere from four points.
+      { G::make_round(point, point, point, point) } -> std::same_as<typename G::Multivector>;
+      // Make a hypersphere from five points.
+      { G::make_round(point, point, point, point, point) } -> std::same_as<typename G::Multivector>;
+    } &&
+
     // Geometric primitives.
     HasPoint<G> &&      //
     HasPointPair<G> &&  //
@@ -508,7 +574,7 @@ concept ConformalGeometryModel =  //
     (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&  //
     //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&        //
     //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&   //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&       //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&  //
     //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasSphere<G>) &&       //
     //(G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) &&  //
 
