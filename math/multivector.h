@@ -656,6 +656,13 @@ class Multivector final {
     return result;
   }
 
+  static constexpr Multivector inverse_pseudoscalar() {
+    Multivector result{};
+    const auto& cayley_entry{cayley_table_.entry(NUM_BASIS_BLADES - 1, NUM_BASIS_BLADES - 1)};
+    result.coefficients_[NUM_BASIS_BLADES - 1] = cayley_entry.structure_constant;
+    return result;
+  }
+
   // Generate a Multivector of a single vector (grade 1) basis. These can be combined to generate
   // any Multivector. See the tests for examples.
   template <size_t N>
