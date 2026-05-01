@@ -32,6 +32,8 @@ class Complex final {
   constexpr Complex& operator=(const Complex& rhs) = default;
   constexpr Complex& operator=(Complex&& rhs) = default;
 
+  [[nodiscard]] constexpr auto operator-() const noexcept { return Complex(-real, -imag); }
+
   [[nodiscard]] constexpr auto operator+(const Complex& rhs) const noexcept {
     return Complex(real + rhs.real, imag + rhs.imag);
   }
