@@ -200,9 +200,9 @@ template <size_t NUM_ROWS, size_t NUM_COLUMNS, typename Scalar>
    * ensures that the primary components of the matrix are captured in the first few
    * indices, which is a requirement for numerical rank estimation and data compression.
    */
-  LOG(INFO) << ", u_final: " << to_string(u_final)        //
-            << ", s_vals: " << to_string(s_vals) << "\n"  //
-            << ", v_final: " << to_string(v_final);
+  DLOG(INFO) << ", u_final: " << to_string(u_final)        //
+             << ", s_vals: " << to_string(s_vals) << "\n"  //
+             << ", v_final: " << to_string(v_final);
   for (size_t i = 0; i < NUM_ROWS; ++i) {
     size_t max_idx{i};
     for (size_t j = i + 1; j < NUM_ROWS; ++j) {
@@ -212,7 +212,7 @@ template <size_t NUM_ROWS, size_t NUM_COLUMNS, typename Scalar>
     }
 
     if (max_idx != i) {
-      LOG(INFO) << "Swapping i: " << i << " and max_idx: " << max_idx;
+      DLOG(INFO) << "Swapping i: " << i << " and max_idx: " << max_idx;
       // Swap singular values
       std::swap(s_vals[i], s_vals[max_idx]);
 
@@ -226,9 +226,9 @@ template <size_t NUM_ROWS, size_t NUM_COLUMNS, typename Scalar>
         std::swap(v_final[i][k], v_final[max_idx][k]);
       }
 
-      LOG(INFO) << ", u_final: " << to_string(u_final)        //
-                << ", s_vals: " << to_string(s_vals) << "\n"  //
-                << ", v_final: " << to_string(v_final);
+      DLOG(INFO) << ", u_final: " << to_string(u_final)        //
+                 << ", s_vals: " << to_string(s_vals) << "\n"  //
+                 << ", v_final: " << to_string(v_final);
     }
   }
 
