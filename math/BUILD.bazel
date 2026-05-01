@@ -48,6 +48,7 @@ cc_library(
         "integrators_test_utils.h",
         "multivector_test_utils.h",
         "state_test_utils.h",
+        "svd_test.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -202,6 +203,16 @@ cc_test(
 cc_test(
     name = "svd_test",
     srcs = ["svd_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "complex_svd_test",
+    srcs = ["complex_svd_test.cc"],
     deps = [
         ":math",
         ":testing",

@@ -40,7 +40,7 @@ template <size_t N, size_t M, typename S>
 std::string to_string(const Matrix<N, M, S>& m) {
   using std::to_string;
   std::string result{};
-  result.append("\n[\n");
+  result.append("\n[");
   for (size_t i = 0; i < N; ++i) {
     if (i > 0) {
       result.append("\n ");
@@ -218,11 +218,11 @@ template <size_t NUM_ROWS, size_t NUM_COLUMNS, typename Scalar>
 
       // Swap columns in U. Swap the columns in the transposed V, which is like swapping the rows in
       // V.
-      for (size_t k = i; k < NUM_ROWS; ++k) {
+      for (size_t k = 0; k < NUM_ROWS; ++k) {
         std::swap(u_final[k][i], u_final[k][max_idx]);
       }
 
-      for (size_t k = i; k < NUM_COLUMNS; ++k) {
+      for (size_t k = 0; k < NUM_COLUMNS; ++k) {
         std::swap(v_final[i][k], v_final[max_idx][k]);
       }
 
