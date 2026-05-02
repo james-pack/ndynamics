@@ -10,7 +10,7 @@
  * Big shout out to Jason Turner of C++ Weekly.
  * This idea is stolen directly from his video https://youtu.be/ABg4_EV5L3w and is heavily
  * influenced by his talk with Ben Deane titled "constexpr ALL the things!" .
- * Thanks Jason!
+ * Thanks, Jason!
  */
 #pragma once
 
@@ -19,6 +19,8 @@
 #include <iterator>
 #include <string>
 #include <string_view>
+
+#include "string/string_utils.h"
 
 namespace ndyn::string {
 
@@ -62,33 +64,18 @@ template <auto Data>
 }
 
 template <auto s1, auto s2>
-  requires std::constructible_from<std::string, decltype(s1)> and
-           std::constructible_from<std::string, decltype(s2)>
+  requires StringLike<decltype(s1)> and StringLike<decltype(s2)>
 [[nodiscard]] consteval std::string_view concat() noexcept {
   constexpr auto concatenate{[]() { return std::string(s1) + std::string(s2); }};
   return to_static_string(concatenate);
 }
 
 template <auto s1, auto s2>
-  requires std::constructible_from<std::string, decltype(s1)> and  //
-           std::integral<decltype(s2)>
+  requires StringLike<decltype(s1)> and std::integral<decltype(s2)>
 [[nodiscard]] consteval std::string_view concat() noexcept {
   constexpr auto concatenate{[]() {
     std::string result{s1};
-    {
-      std::string temp{};
-      auto n{s2};
-      if (n < 0) {
-        temp += static_cast<char>('-');
-        n = -n;
-      }
-      while (n > 0) {
-        temp += static_cast<char>('0' + (n % 10));
-        n /= 10;
-      }
-      std::reverse(temp.begin(), temp.end());
-      result += temp;
-    }
+    result += as_string(s2);
     return result;
   }};
   return to_static_string(concatenate);
@@ -98,38 +85,7 @@ template <auto s1, auto s2>
   requires std::integral<decltype(s1)> and  //
            std::integral<decltype(s2)>
 [[nodiscard]] consteval std::string_view concat() noexcept {
-  constexpr auto concatenate{[]() {
-    std::string result{};
-    {
-      std::string temp{};
-      auto n{s1};
-      if (n < 0) {
-        temp += static_cast<char>('-');
-        n = -n;
-      }
-      while (n > 0) {
-        temp += static_cast<char>('0' + (n % 10));
-        n /= 10;
-      }
-      std::reverse(temp.begin(), temp.end());
-      result += temp;
-    }
-    {
-      std::string temp{};
-      auto n{s2};
-      if (n < 0) {
-        temp += static_cast<char>('-');
-        n = -n;
-      }
-      while (n > 0) {
-        temp += static_cast<char>('0' + (n % 10));
-        n /= 10;
-      }
-      std::reverse(temp.begin(), temp.end());
-      result += temp;
-    }
-    return result;
-  }};
+  constexpr auto concatenate = []() { return as_string(s1) + as_string(s2); };
   return to_static_string(concatenate);
 }
 

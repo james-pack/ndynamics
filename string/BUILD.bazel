@@ -4,6 +4,7 @@ cc_library(
     ],
     hdrs = [
         "static_string.h",
+        "string_utils.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -14,6 +15,18 @@ cc_test(
     name = "static_string_test",
     srcs = [
         "static_string_test.cc",
+    ],
+    deps = [
+        ":string",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "string_utils_test",
+    srcs = [
+        "string_utils_test.cc",
     ],
     deps = [
         ":string",
