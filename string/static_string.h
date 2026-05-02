@@ -56,9 +56,81 @@ template <auto Data>
 
 }  // namespace
 
-consteval std::string_view to_static_string(auto generator) {
+[[nodiscard]] consteval std::string_view to_static_string(auto generator) {
   constexpr auto& static_data{make_static<to_array(generator)>()};
   return std::string_view{static_data.begin(), static_data.size()};
+}
+
+template <auto s1, auto s2>
+  requires std::constructible_from<std::string, decltype(s1)> and
+           std::constructible_from<std::string, decltype(s2)>
+[[nodiscard]] consteval std::string_view concat() noexcept {
+  constexpr auto concatenate{[]() { return std::string(s1) + std::string(s2); }};
+  return to_static_string(concatenate);
+}
+
+template <auto s1, auto s2>
+  requires std::constructible_from<std::string, decltype(s1)> and  //
+           std::integral<decltype(s2)>
+[[nodiscard]] consteval std::string_view concat() noexcept {
+  constexpr auto concatenate{[]() {
+    std::string result{s1};
+    {
+      std::string temp{};
+      auto n{s2};
+      if (n < 0) {
+        temp += static_cast<char>('-');
+        n = -n;
+      }
+      while (n > 0) {
+        temp += static_cast<char>('0' + (n % 10));
+        n /= 10;
+      }
+      std::reverse(temp.begin(), temp.end());
+      result += temp;
+    }
+    return result;
+  }};
+  return to_static_string(concatenate);
+}
+
+template <auto s1, auto s2>
+  requires std::integral<decltype(s1)> and  //
+           std::integral<decltype(s2)>
+[[nodiscard]] consteval std::string_view concat() noexcept {
+  constexpr auto concatenate{[]() {
+    std::string result{};
+    {
+      std::string temp{};
+      auto n{s1};
+      if (n < 0) {
+        temp += static_cast<char>('-');
+        n = -n;
+      }
+      while (n > 0) {
+        temp += static_cast<char>('0' + (n % 10));
+        n /= 10;
+      }
+      std::reverse(temp.begin(), temp.end());
+      result += temp;
+    }
+    {
+      std::string temp{};
+      auto n{s2};
+      if (n < 0) {
+        temp += static_cast<char>('-');
+        n = -n;
+      }
+      while (n > 0) {
+        temp += static_cast<char>('0' + (n % 10));
+        n /= 10;
+      }
+      std::reverse(temp.begin(), temp.end());
+      result += temp;
+    }
+    return result;
+  }};
+  return to_static_string(concatenate);
 }
 
 }  // namespace ndyn::string
