@@ -81,6 +81,11 @@ struct SVDResult {
   Matrix<NUM_ROWS, NUM_COLUMNS, Scalar> v{};
 };
 
+[[nodiscard]] inline constexpr auto square(float v) noexcept { return v * v; }
+[[nodiscard]] inline constexpr auto square(double v) noexcept { return v * v; }
+[[nodiscard]] inline constexpr auto conjugate(float v) noexcept { return v; }
+[[nodiscard]] inline constexpr auto conjugate(double v) noexcept { return v; }
+
 /**
  * Performs a Singular Value Decomposition (SVD) on a matrix using the one-sided Jacobi (Hestenes)
  * method.
@@ -122,9 +127,9 @@ template <size_t NUM_ROWS, size_t NUM_COLUMNS, typename Scalar>
         auto c{Scalar{0}};
 
         for (size_t k = 0; k < NUM_COLUMNS; ++k) {
-          a += A[i][k] * A[i][k];
-          b += A[j][k] * A[j][k];
-          c += A[i][k] * A[j][k];
+          a += square(A[i][k]);
+          b += square(A[j][k]);
+          c += A[i][k] * conjugate(A[j][k]);
         }
 
         // If these two rows are already orthogonal, skip the rotation.
@@ -134,25 +139,25 @@ template <size_t NUM_ROWS, size_t NUM_COLUMNS, typename Scalar>
         converged = false;
 
         // Compute the Jacobi rotation parameters (t, cos, sin)
-        const auto tau{(b - a) / (Scalar{2} * c)};
+        const auto tau{(b - a) / (Scalar{2} * abs(c))};
         const auto t{copysign(Scalar{1} / (abs(tau) + abs(sqrt(Scalar{1} + tau * tau))), tau)};
         const auto cos_theta{Scalar{1} / sqrt(Scalar{1} + t * t)};
-        const auto sin_theta{t * cos_theta};
+        const auto sin_theta{c / abs(c) * t * cos_theta};
 
         // Apply rotation to the rows of the working matrix A
         for (size_t k = 0; k < NUM_COLUMNS; ++k) {
           const auto tmp_i{A[i][k]};
           const auto tmp_j{A[j][k]};
           A[i][k] = cos_theta * tmp_i - sin_theta * tmp_j;
-          A[j][k] = sin_theta * tmp_i + cos_theta * tmp_j;
+          A[j][k] = conjugate(sin_theta) * tmp_i + cos_theta * tmp_j;
         }
 
         // Apply the same rotation to the accumulator to track left singular vectors
-        for (size_t k{0}; k < NUM_ROWS; ++k) {
+        for (size_t k = 0; k < NUM_ROWS; ++k) {
           auto tmp_ui{rotation_accumulator[i][k]};
           auto tmp_uj{rotation_accumulator[j][k]};
           rotation_accumulator[i][k] = cos_theta * tmp_ui - sin_theta * tmp_uj;
-          rotation_accumulator[j][k] = sin_theta * tmp_ui + cos_theta * tmp_uj;
+          rotation_accumulator[j][k] = conjugate(sin_theta) * tmp_ui + cos_theta * tmp_uj;
         }
       }
     }
@@ -170,7 +175,7 @@ template <size_t NUM_ROWS, size_t NUM_COLUMNS, typename Scalar>
   for (size_t i = 0; i < NUM_ROWS; ++i) {
     auto norm_sq{Scalar{0}};
     for (size_t k = 0; k < NUM_COLUMNS; ++k) {
-      norm_sq += A[i][k] * A[i][k];
+      norm_sq += square(A[i][k]);
     }
     s_vals[i] = sqrt(norm_sq);
 
