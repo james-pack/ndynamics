@@ -1,0 +1,23 @@
+cc_library(
+    name = "string",
+    srcs = [
+    ],
+    hdrs = [
+        "static_string.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+    ],
+)
+
+cc_test(
+    name = "static_string_test",
+    srcs = [
+        "static_string_test.cc",
+    ],
+    deps = [
+        ":string",
+        "//third_party/glog",
+        "//third_party/gtest",
+    ],
+)
