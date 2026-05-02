@@ -42,6 +42,10 @@ class Complex final {
     return Complex(real - rhs.real, imag - rhs.imag);
   }
 
+  [[nodiscard]] constexpr auto operator*(const Scalar& scalar) const noexcept {
+    return Complex{scalar * real, scalar * imag};
+  }
+
   [[nodiscard]] constexpr auto operator*(const Complex& rhs) const noexcept {
     return Complex(real * rhs.real - imag * rhs.imag, real * rhs.imag + imag * rhs.real);
   }
@@ -54,24 +58,23 @@ class Complex final {
     return (*this) * Complex{rhs.real, -rhs.imag} / (rhs.real * rhs.real + rhs.imag * rhs.imag);
   }
 
-  [[nodiscard]] constexpr std::strong_ordering operator<=>(const Complex& rhs) const noexcept {
+  [[nodiscard]] constexpr auto conj() const noexcept { return Complex{real, -imag}; }
+
+  [[nodiscard]] constexpr std::weak_ordering operator<=>(const Complex& rhs) const noexcept {
     using std::hypot;
     const auto l_value{hypot(real, imag)};
     const auto r_value{hypot(rhs.real, rhs.imag)};
     if (l_value < r_value) {
-      return std::strong_ordering::less;
+      return std::weak_ordering::less;
     } else if (l_value > r_value) {
-      return std::strong_ordering::greater;
+      return std::weak_ordering::greater;
     } else {
-      return std::strong_ordering::equal;
+      return std::weak_ordering::equivalent;
     }
   }
 
   [[nodiscard]] constexpr bool operator==(const Complex& rhs) const noexcept {
-    using std::hypot;
-    const auto l_value{hypot(real, imag)};
-    const auto r_value{hypot(rhs.real, rhs.imag)};
-    return l_value == r_value;
+    return real == rhs.real and imag == rhs.imag;
   }
 
   [[nodiscard]] constexpr auto operator+=(const Complex& rhs) noexcept {
@@ -142,6 +145,16 @@ template <typename Scalar>
     }
   }();
   return Complex<Scalar>(r, i);
+}
+
+template <typename Scalar>
+[[nodiscard]] constexpr auto square(const Complex<Scalar>& c) noexcept {
+  return c * c.conj();
+}
+
+template <typename Scalar>
+[[nodiscard]] constexpr auto conjugate(const Complex<Scalar>& c) noexcept {
+  return c.conj();
 }
 
 /**
