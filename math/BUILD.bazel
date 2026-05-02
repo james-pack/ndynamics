@@ -219,3 +219,13 @@ cc_test(
         "//third_party/gtest",
     ],
 )
+
+cc_test(
+    name = "complex_test",
+    srcs = ["complex_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
