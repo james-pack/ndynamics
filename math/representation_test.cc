@@ -1,0 +1,80 @@
+#include "math/representation.h"
+
+#include <string_view>
+#include <utility>
+
+#include "gtest/gtest.h"
+#include "math/algebra.h"
+#include "string/static_string.h"
+#include "string/string_utils.h"
+
+namespace ndyn::math {
+
+template <typename T, size_t size>
+auto print_array(const std::array<T, size>& arr) {
+  std::string result{"["};
+  for (size_t i = 0; i < arr.size(); ++i) {
+    if (i > 0) {
+      result.append(", ");
+    }
+    result.append(string::as_string(arr[i]));
+  }
+  result.append("]");
+  return result;
+}
+
+TEST(RepresentationTest, CanGenerateSingleBasisBladeNameOutsideOfConstexpr) {
+  static constexpr std::string_view BASIS_PREFIX{"e"};
+  static constexpr size_t BASIS_NAME_OFFSET = 0;
+  static constexpr size_t basis_blade_index{1};
+  auto build_name = []() {
+    return generate_basis_blade_name(BASIS_PREFIX, BASIS_NAME_OFFSET, basis_blade_index);
+  };
+
+  const auto basis_name = build_name();
+
+  static constexpr std::string_view EXPECTED{"e0"};
+  EXPECT_EQ(basis_name, EXPECTED);
+}
+
+TEST(RepresentationTest, CanGenerateSingleBasisBladeName) {
+  static constexpr std::string_view BASIS_PREFIX{"e"};
+  static constexpr size_t BASIS_NAME_OFFSET = 0;
+  static constexpr size_t basis_blade_index{1};
+  static constexpr auto build_name = []() {
+    return generate_basis_blade_name(BASIS_PREFIX, BASIS_NAME_OFFSET, basis_blade_index);
+  };
+
+  static constexpr auto basis_name = string::to_static_string(build_name);
+
+  static constexpr std::string_view EXPECTED{"e0"};
+  static_assert(basis_name == EXPECTED);
+  EXPECT_EQ(basis_name, EXPECTED);
+}
+
+TEST(RepresentationTest, CanGenerateMultipleBasisBladeNames) {
+  static constexpr char BASIS_PREFIX[] = "e";
+  static constexpr size_t BASIS_NAME_OFFSET{0};
+  static constexpr size_t NUMBER_NAMES{4};
+
+  static constexpr std::array<std::string_view, NUMBER_NAMES> basis_names =
+      generate_basis_blade_names<BASIS_PREFIX, BASIS_NAME_OFFSET, NUMBER_NAMES>();
+
+  static constexpr std::string_view EXPECTED{"e0"};
+
+  static_assert(basis_names[1] == EXPECTED);
+  EXPECT_EQ(basis_names[1], EXPECTED) << print_array(basis_names);
+}
+
+TEST(RepresentationTest, CanCompile) {
+  static constexpr char BASIS_PREFIX[] = "e";
+  constexpr auto bases = generate_representation<Vga2d<>, BASIS_PREFIX, 1>();
+
+  ASSERT_EQ(4, bases.size()) << print_array(bases);
+
+  static constexpr std::string_view EXPECTED{"e1"};
+
+  EXPECT_EQ(bases[1].name, EXPECTED) << print_array(bases);
+}
+
+}  // namespace ndyn::math
