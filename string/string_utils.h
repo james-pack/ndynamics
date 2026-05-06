@@ -9,6 +9,11 @@ namespace ndyn::string {
 template <typename T>
 concept StringLike = std::constructible_from<std::string, T>;
 
+template <typename T>
+concept Stringable = requires(const T& t) {
+  { to_string(t) } -> std::same_as<std::string>;
+};
+
 [[nodiscard]] constexpr std::string as_string(StringLike auto&& result) {
   // If it's already a string, move it or copy it normally.
   using T = std::decay_t<decltype(result)>;
@@ -19,6 +24,8 @@ concept StringLike = std::constructible_from<std::string, T>;
     return std::string(result);
   }
 }
+
+[[nodiscard]] constexpr std::string as_string(Stringable auto&& v) { return to_string(v); }
 
 [[nodiscard]] constexpr std::string as_string(std::integral auto n) {
   std::string result{};
