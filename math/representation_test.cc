@@ -1,5 +1,6 @@
 #include "math/representation.h"
 
+#include <array>
 #include <string_view>
 #include <utility>
 
