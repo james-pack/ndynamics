@@ -62,12 +62,15 @@ std::string to_string(const Basis<Algebra>& basis) {
 template <typename Algebra, auto BASIS_PREFIX, size_t BASIS_NAME_OFFSET, size_t BASIS_BLADE>
   requires string::StringLike<decltype(BASIS_PREFIX)>
 consteval Basis<Algebra> generate_blade_representation() {
-  return {.name = string::to_static_string([]() {
-            return generate_basis_blade_name(BASIS_PREFIX, BASIS_NAME_OFFSET, BASIS_BLADE);
-          })};
+  using Multivector = Algebra::VectorType;
+  return {
+      .name = string::to_static_string(
+          []() { return generate_basis_blade_name(BASIS_PREFIX, BASIS_NAME_OFFSET, BASIS_BLADE); }),
+      .basis = Multivector::template blade<BASIS_BLADE>(),
+  };
 }
 
-template <typename Algebra, auto BASIS_PREFIX, size_t BASIS_NAME_OFFSET>
+template <typename Algebra, auto BASIS_PREFIX, size_t BASIS_NAME_OFFSET=0>
   requires string::StringLike<decltype(BASIS_PREFIX)>
 consteval std::array<Basis<Algebra>, Algebra::NUM_BASIS_BLADES> generate_representation() {
   constexpr auto indices{std::make_index_sequence<Algebra::NUM_BASIS_BLADES>()};

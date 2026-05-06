@@ -37,8 +37,23 @@ TEST(RepresentationTest, CanGenerateSingleBasisBladeNameOutsideOfConstexpr) {
   EXPECT_EQ(basis_name, EXPECTED);
 }
 
-TEST(RepresentationTest, CanGenerateSingleBasisBladeName) {
+TEST(RepresentationTest, CanGenerateShortSingleBasisBladeName) {
   static constexpr std::string_view BASIS_PREFIX{"e"};
+  static constexpr size_t BASIS_NAME_OFFSET = 1;
+  static constexpr size_t basis_blade_index{1};
+  static constexpr auto build_name = []() {
+    return generate_basis_blade_name(BASIS_PREFIX, BASIS_NAME_OFFSET, basis_blade_index);
+  };
+
+  static constexpr auto basis_name = string::to_static_string(build_name);
+
+  static constexpr std::string_view EXPECTED{"e1"};
+  static_assert(basis_name == EXPECTED);
+  EXPECT_EQ(basis_name, EXPECTED);
+}
+
+TEST(RepresentationTest, CanGenerateSingleBasisBladeName) {
+  static constexpr std::string_view BASIS_PREFIX{"gamma"};
   static constexpr size_t BASIS_NAME_OFFSET = 0;
   static constexpr size_t basis_blade_index{1};
   static constexpr auto build_name = []() {
@@ -47,7 +62,7 @@ TEST(RepresentationTest, CanGenerateSingleBasisBladeName) {
 
   static constexpr auto basis_name = string::to_static_string(build_name);
 
-  static constexpr std::string_view EXPECTED{"e0"};
+  static constexpr std::string_view EXPECTED{"gamma0"};
   static_assert(basis_name == EXPECTED);
   EXPECT_EQ(basis_name, EXPECTED);
 }
@@ -66,15 +81,46 @@ TEST(RepresentationTest, CanGenerateMultipleBasisBladeNames) {
   EXPECT_EQ(basis_names[1], EXPECTED) << print_array(basis_names);
 }
 
-TEST(RepresentationTest, CanCompile) {
+TEST(RepresentationTest, CanBuildSmallBasisArray) {
+  using Algebra = Csta<>;
+  using Multivector = Algebra::VectorType;
+  using Scalar = Algebra::ScalarType;
+
   static constexpr char BASIS_PREFIX[] = "e";
-  constexpr auto bases = generate_representation<Vga2d<>, BASIS_PREFIX, 1>();
+  constexpr auto bases = generate_representation<Algebra, BASIS_PREFIX, 1>();
 
-  ASSERT_EQ(4, bases.size()) << print_array(bases);
+  ASSERT_EQ(Algebra::NUM_BASIS_BLADES, bases.size()) << print_array(bases);
 
-  static constexpr std::string_view EXPECTED{"e1"};
+  static constexpr Multivector EXPECTED_SCALAR_BASIS{Scalar{1}};
+  static_assert(bases[0].basis == EXPECTED_SCALAR_BASIS);
 
-  EXPECT_EQ(bases[1].name, EXPECTED) << print_array(bases);
+  static constexpr std::string_view EXPECTED_NAME{"e1"};
+  static constexpr Multivector EXPECTED_VECTOR_BASIS{Multivector::template e<0>()};
+  static_assert(bases[1].name == EXPECTED_NAME);
+  static_assert(bases[1].basis == EXPECTED_VECTOR_BASIS);
+
+  EXPECT_EQ(bases[1].name, EXPECTED_NAME) << print_array(bases);
+}
+
+TEST(RepresentationTest, CanBuildBasisArray) {
+  using Algebra = Csta<>;
+  using Multivector = Algebra::VectorType;
+  using Scalar = Algebra::ScalarType;
+
+  static constexpr char BASIS_PREFIX[] = "gamma";
+  constexpr auto bases = generate_representation<Algebra, BASIS_PREFIX>();
+
+  ASSERT_EQ(Algebra::NUM_BASIS_BLADES, bases.size()) << print_array(bases);
+
+  static constexpr Multivector EXPECTED_SCALAR_BASIS{Scalar{1}};
+  static_assert(bases[0].basis == EXPECTED_SCALAR_BASIS);
+
+  static constexpr std::string_view EXPECTED_NAME{"gamma0"};
+  static constexpr Multivector EXPECTED_VECTOR_BASIS{Multivector::template e<0>()};
+  static_assert(bases[1].name == EXPECTED_NAME);
+  static_assert(bases[1].basis == EXPECTED_VECTOR_BASIS);
+
+  EXPECT_EQ(bases[1].name, EXPECTED_NAME) << print_array(bases);
 }
 
 }  // namespace ndyn::math
