@@ -685,7 +685,7 @@ class Multivector final {
   }
 
   /*************************************************************************************************
-   * These accessors rely on the notion of a "bit index". A bit index is a particular ordering of
+   * These functions rely on the notion of a "bit index". A bit index is a particular ordering of
    * the bases in a multivector so that the basis vectors are indexed by powers of 2. In
    * particular, the basis vector e0 is at index 1; the basis vector e1 is at index 2; the basis
    * vector e2 is at index 4; etc. This particular indexing strategy allows for easy calculation of
@@ -713,6 +713,16 @@ class Multivector final {
 
   constexpr const ScalarType& coefficient(size_t n) const { return coefficients_.at(n); }
   constexpr void set_coefficient(size_t n, const ScalarType& v) { coefficients_.at(n) = v; }
+
+  template <size_t N>
+  static constexpr Multivector blade() {
+    static_assert(N < NUM_BASIS_BLADES,
+                  "Template parameter to blade factory method is out of range of the number of "
+                  "blades. Template parameter must be less than the NUM_BASIS_BLADES.");
+    Multivector result{};
+    result.coefficients_.at(N) = ScalarType{1};
+    return result;
+  }
 };
 
 // Operator overloads where the multivector is not on the left side.
