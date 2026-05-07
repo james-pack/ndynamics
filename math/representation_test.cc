@@ -124,4 +124,62 @@ TEST(RepresentationTest, CanBuildBasisArray) {
   EXPECT_EQ(bases[1].name, EXPECTED_NAME) << print_array(bases);
 }
 
+TEST(GenericRepresentationTest, CanPrintBasisVectors) {
+  using Algebra = Vga<>;
+  using Multivector = Algebra::VectorType;
+
+  EXPECT_TRUE(to_string(Multivector{1}).starts_with("1.00")) << to_string(Multivector{1});
+  EXPECT_TRUE(to_string(Multivector{1}).ends_with("00")) << to_string(Multivector{1});
+
+  EXPECT_TRUE(to_string(Multivector::template e<0>()).starts_with("1.00"))
+      << to_string(Multivector::template e<0>());
+  EXPECT_TRUE(to_string(Multivector::template e<0>()).ends_with("e1"))
+      << to_string(Multivector::template e<0>());
+
+  EXPECT_TRUE(to_string(Multivector::template e<1>()).starts_with("1.00"))
+      << to_string(Multivector::template e<1>());
+  EXPECT_TRUE(to_string(Multivector::template e<1>()).ends_with("e2"))
+      << to_string(Multivector::template e<1>());
+
+  EXPECT_TRUE(to_string(Multivector::template e<2>()).starts_with("1.00"))
+      << to_string(Multivector::template e<2>());
+  EXPECT_TRUE(to_string(Multivector::template e<2>()).ends_with("e3"))
+      << to_string(Multivector::template e<2>());
+}
+
+TEST(GenericRepresentationTest, CanPrintBasisBlades) {
+  using Algebra = Vga<>;
+  using Multivector = Algebra::VectorType;
+
+  ASSERT_EQ(Multivector::template blade<0>(), Multivector{1});
+
+  EXPECT_TRUE(to_string(Multivector{1}).starts_with("1.00")) << to_string(Multivector{1});
+  EXPECT_TRUE(to_string(Multivector{1}).ends_with("00")) << to_string(Multivector{1});
+
+  EXPECT_TRUE(to_string(Multivector::template blade<0>()).starts_with("1.00"))
+      << to_string(Multivector::template blade<0>());
+  EXPECT_TRUE(to_string(Multivector::template blade<0>()).ends_with("00"))
+      << to_string(Multivector::template blade<0>());
+
+  EXPECT_TRUE(to_string(Multivector::template blade<1>()).starts_with("1.00"))
+      << to_string(Multivector::template blade<1>());
+  EXPECT_TRUE(to_string(Multivector::template blade<1>()).ends_with("e1"))
+      << to_string(Multivector::template blade<1>());
+
+  EXPECT_TRUE(to_string(Multivector::template blade<2>()).starts_with("1.00"))
+      << to_string(Multivector::template blade<2>());
+  EXPECT_TRUE(to_string(Multivector::template blade<2>()).ends_with("e2"))
+      << to_string(Multivector::template blade<2>());
+
+  EXPECT_TRUE(to_string(Multivector::template blade<3>()).starts_with("1.00"))
+      << to_string(Multivector::template blade<3>());
+  EXPECT_TRUE(to_string(Multivector::template blade<3>()).ends_with("e12"))
+      << to_string(Multivector::template blade<3>());
+
+  EXPECT_TRUE(to_string(Multivector::template blade<7>()).starts_with("1.00"))
+      << to_string(Multivector::template blade<7>());
+  EXPECT_TRUE(to_string(Multivector::template blade<7>()).ends_with("e123"))
+      << to_string(Multivector::template blade<7>());
+}
+
 }  // namespace ndyn::math
