@@ -125,7 +125,7 @@ class AlgebraRepresentation final {
     return result;
   }
 
-  [[nodiscard]] static constexpr const Multivector* from_string(
+  [[nodiscard]] static constexpr const Multivector* lookup_basis(
       std::string_view representation) noexcept {
     for (const auto& basis : bases_) {
       if (representation == basis.name) {
@@ -151,6 +151,12 @@ template <typename Algebra>
     const Multivector<Algebra>& v,
     typename Algebra::ScalarType threshold = Algebra::EPSILON) noexcept {
   return GenericRepresentation<Algebra>::to_string(v, threshold);
+}
+
+template <typename Algebra>
+std::ostream& operator<<(std::ostream& os, const Multivector<Algebra>& v) {
+  os << to_string(v);
+  return os;
 }
 
 }  // namespace ndyn::math

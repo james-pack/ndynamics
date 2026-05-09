@@ -182,4 +182,39 @@ TEST(GenericRepresentationTest, CanPrintBasisBlades) {
       << to_string(Multivector::template blade<7>());
 }
 
+TEST(GenericRepresentationTest, CanHydrateBasisBlades) {
+  using Algebra = Vga<>;
+  using Multivector = Algebra::VectorType;
+
+  {
+    const auto* found{GenericRepresentation<Algebra>::lookup_basis("e1")};
+    const auto EXPECTED{Multivector::template e<0>()};
+    ASSERT_NE(nullptr, found);
+    EXPECT_EQ(EXPECTED, *found) << (*found);
+  }
+
+  {
+    const auto* found{GenericRepresentation<Algebra>::lookup_basis("e2")};
+    const auto EXPECTED{Multivector::template e<1>()};
+    ASSERT_NE(nullptr, found);
+    EXPECT_EQ(EXPECTED, *found) << (*found);
+  }
+
+  {
+    const auto* found{GenericRepresentation<Algebra>::lookup_basis("e12")};
+    const auto EXPECTED{Multivector::template e<0>() * Multivector::template e<1>()};
+    ASSERT_NE(nullptr, found);
+    EXPECT_EQ(EXPECTED, *found) << (*found);
+  }
+
+  {
+    const auto* found{GenericRepresentation<Algebra>::lookup_basis("e123")};
+    const auto EXPECTED{Multivector::template e<0>() *  //
+                        Multivector::template e<1>() *  //
+                        Multivector::template e<2>()};
+    ASSERT_NE(nullptr, found);
+    EXPECT_EQ(EXPECTED, *found) << (*found);
+  }
+}
+
 }  // namespace ndyn::math
