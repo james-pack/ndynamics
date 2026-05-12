@@ -49,46 +49,66 @@ concept BoolLike = std::convertible_to<T, bool>;
 
 template <typename G>
 concept HasGenericBases =
-    // Basis vector factory methods for physical dimensions. These are the generic names. Specific
-    // geometries may include names tied more directly to particular uses, but these should always
-    // be available.
+    // Basis vector factory methods. These are the generic names and mirror
+    // the factory methods on Multivectors. Specific geometries may include names tied more directly
+    // to particular uses, but these should always be available.
     (G::NUM_PHYSICAL_DIMENSIONS < 1 ||
+     requires(const G::Multivector& a) {
+       { G::e0() } -> IsMultivectorLike<G>;
+       { G::get_e0(a) } -> ScalarLike<G>;
+     }) and  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
      requires(const G::Multivector& a) {
        { G::e1() } -> IsMultivectorLike<G>;
        { G::get_e1(a) } -> ScalarLike<G>;
-     }) &&  //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
+     }) and  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
      requires(const G::Multivector& a) {
        { G::e2() } -> IsMultivectorLike<G>;
-       { G::get_e2(a) } -> ScalarLike<G>;
-     }) &&  //
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
+       //{ G::get_e2(a) } -> ScalarLike<G>;
+     }) and  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
      requires(const G::Multivector& a) {
        { G::e3() } -> IsMultivectorLike<G>;
        { G::get_e3(a) } -> ScalarLike<G>;
-     }) &&  //
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
+     }) and  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 5 ||
      requires(const G::Multivector& a) {
        { G::e4() } -> IsMultivectorLike<G>;
        { G::get_e4(a) } -> ScalarLike<G>;
-     }) &&  //
+     }) and  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 6 ||
+     requires(const G::Multivector& a) {
+       { G::e5() } -> IsMultivectorLike<G>;
+       { G::get_e5(a) } -> ScalarLike<G>;
+     }) and  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 7 ||
+     requires(const G::Multivector& a) {
+       { G::e6() } -> IsMultivectorLike<G>;
+       { G::get_e6(a) } -> ScalarLike<G>;
+     }) and  //
+    (G::NUM_PHYSICAL_DIMENSIONS < 8 ||
+     requires(const G::Multivector& a) {
+       { G::e7() } -> IsMultivectorLike<G>;
+       { G::get_e7(a) } -> ScalarLike<G>;
+     }) and  //
     true;
 
 /**
  * Base concept required by all geometry implementations.
  */
 template <typename G>
-concept GeometryModel =  //
-    HasGenericBases<G> &&
+concept GeometryModel =     //
+    HasGenericBases<G> and  //
     requires {
       typename G::Algebra;
       typename G::Multivector;
       typename G::Scalar;
       { G::NUM_PHYSICAL_DIMENSIONS } -> std::convertible_to<size_t>;
-    } &&  //
+    } and  //
     requires(const G::Multivector& a) {
-      // An empty meet or join is a valid operation. It represents the identity element of the
-      // operation.
+      // An empty meet or join is a valid operation. Its result represents the identity element of
+      // the operation.
       { G::meet() } -> IsMultivectorLike<G>;
       { G::join() } -> IsMultivectorLike<G>;
       // We expect the meet() and join() functions to be variadic, but regardless of implementation,
@@ -99,502 +119,147 @@ concept GeometryModel =  //
       { G::join(a, a) } -> IsMultivectorLike<G>;
       { G::meet(a, a, a) } -> IsMultivectorLike<G>;
       { G::join(a, a, a) } -> IsMultivectorLike<G>;
-    } &&  //
+
+      // Factor a multivector into a number of points. Note that this function will only give
+      // meaningful results if a was the join of one or more points.
+      //{ G::factor(a) } -> std::same_as<std::vector<typename G::Multivector>>;
+    } and  //
+    true;
+
+/**
+ * Every non-vector space geometry must express what manifold it embeds. The main purpose of
+ * expressing this embedding is to bridge construction and deconstruction primitives and operators
+ * in conformal and projective GAs. This embedded manifold defines how the API for primitives and
+ * operators should bridge from an intuitive vector space GA to a conformal or projective
+ * representation.
+ *
+ * The embedded manifold itself is just another geometry, in the sense of GeometryModel, meaning
+ * that this definition is potentially recursive. In most cases, the embedded manifold will be a
+ * Euclidean vector space or potentially a Minkowski vector space.
+ *
+ * The scalar type of the embedded manifold must be the same as the scalar type of the geometry.
+ * This restriction simplifies implementation and seems reasonable at this time. The restriction
+ * could be lifted if necessary, but it would require specifying a mapping from one scalar type to
+ * another.
+ */
+template <typename G>
+concept HasEmbeddedManifold =                                                                   //
+    requires { typename G::EmbeddedManifold; } and                                              //
+    GeometryModel<typename G::EmbeddedManifold> and                                             //
+    requires { std::is_same_v<typename G::Scalar, typename G::EmbeddedManifold::Scalar>; } and  //
+    requires(const G::Multivector& g, const typename G::EmbeddedManifold::Multivector& embed) {
+      { G::lower(g) } -> IsMultivectorLike<typename G::EmbeddedManifold>;
+      { G::lift(embed) } -> IsMultivectorLike<G>;
+    } and  //
+    true;
+
+/**
+ * Expresses how a geometry models points in terms of the embedded manifold.
+ *
+ * The overall pattern is to construct a point on the embedded manifold and then use the
+ * make_point() method to transform it into a point in this geometry. Vector space geometries have a
+ * simple method for creating points from scalars, much like the API you might expect for a normal
+ * vector in the style of vector analysis from Gibbs and Heaviside.
+ */
+template <typename G>
+concept HasPoint =        //
+    GeometryModel<G> and  //
+    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } and
+    requires(const G::Multivector& m) {
+      { G::origin() } -> IsMultivectorLike<G>;
+      { G::is_point(m) } -> BoolLike;
+    } and  //
     true;
 
 template <typename G>
-concept HasPoint =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out, size_t count,
-             typename G::Scalar* values) {
-      { G::origin() } -> IsMultivectorLike<G>;
-      { G::make_point(count, values) } -> IsMultivectorLike<G>;
-      { G::is_point(m) } -> BoolLike;
-      { G::is_normalized_point(m) } -> BoolLike;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 1 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point(x) } -> IsMultivectorLike<G>;
-       { G::extract_point(m, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point(x, x) } -> IsMultivectorLike<G>;
-       { G::extract_point(m, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point(x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_point(m, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point(x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_point(m, out, out, out, out) } -> std::same_as<void>;
-     });
-
-template <typename G>
-concept HasDirection =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_direction(m) } -> IsMultivectorLike<G>;
-      { G::is_direction(m) } -> BoolLike;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 1 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_direction(x) } -> IsMultivectorLike<G>;
-       { G::extract_direction(m, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_direction(x, x) } -> IsMultivectorLike<G>;
-       { G::extract_direction(m, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_direction(x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_direction(m, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_direction(x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_direction(m, out, out, out, out) } -> std::same_as<void>;
-     });
-
-template <typename G>
-concept HasPointPair =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(const G::Multivector& m, typename G::Multivector& out) {
-      { G::make_point_pair(m, m) } -> IsMultivectorLike<G>;
-      { G::is_point_pair(m) } -> BoolLike;
-      { G::extract_point_pair(m, out, out) } -> std::same_as<void>;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 1 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point_pair(x, x) } -> IsMultivectorLike<G>;
-       { G::extract_point_pair(m, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point_pair(x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_point_pair(m, out, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point_pair(x, x, x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_point_pair(m, out, out, out, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_point_pair(x, x, x, x, x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_point_pair(m, out, out, out, out, out, out, out, out) } -> std::same_as<void>;
-     });
-
-template <typename G>
-concept HasLine =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_line(m, m) } -> IsMultivectorLike<G>;
-      { G::is_line(m) } -> BoolLike;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_line(x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_line(m, out, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_line(x, x, x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_line(m, out, out, out, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_line(x, x, x, x, x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_line(m, out, out, out, out, out, out, out, out) } -> std::same_as<void>;
-     });
-
-template <typename G>
-concept HasPlane =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_plane(x, x, x) } -> IsMultivectorLike<G>;
-      { G::extract_plane(m, out, out, out) } -> std::same_as<void>;
-      { G::is_plane(m) } -> BoolLike;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_plane(x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_plane(m, out, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_plane(x, x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_plane(m, out, out, out, out, out) } -> std::same_as<void>;
-     });
-
-template <typename G>
-concept HasCircle =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Multivector& out,
-             typename G::Scalar& out_scalar) {
-      { G::make_circle(m, m, m) } -> IsMultivectorLike<G>;
-      { G::is_circle(m) } -> BoolLike;
-      { G::extract_circle(m, out, out, out_scalar) } -> std::same_as<void>;
-      { G::extract_circle(m, out, out, out) } -> std::same_as<void>;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_circle(x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_circle(m, out, out, out) } -> std::same_as<void>;
-     });
-
-template <typename G>
-concept HasSphere =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 3; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_sphere(x, x, x, x) } -> IsMultivectorLike<G>;
-      { G::extract_sphere(m, out, out, out, out) } -> std::same_as<void>;
-      { G::is_sphere(m) } -> BoolLike;
-    };
-
-template <typename G>
-concept HasHyperplane =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 3; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_hyperplane(x, x, x, x) } -> IsMultivectorLike<G>;
-      { G::extract_hyperplane(m, out, out, out, out) } -> std::same_as<void>;
-      { G::is_hyperplane(m) } -> BoolLike;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_hyperplane(x, x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_hyperplane(m, out, out, out, out, out) } -> std::same_as<void>;
-     });
-
-template <typename G>
-concept HasHypersphere =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 4; } &&
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_hypersphere(x, x, x, x, x) } -> IsMultivectorLike<G>;
-      { G::extract_hypersphere(m, out, out, out, out, out) } -> std::same_as<void>;
-      { G::is_hypersphere(m) } -> BoolLike;
-    };
-
-/**
- * Rotation in a plane about the origin.
- *
- * A rotor is a unit even-grade multivector encoding a rotation in the plane
- * defined by a bivector, by a specified angle, about the origin. It is applied
- * via the sandwich product X -> R X R~. In any dimension, the plane of
- * rotation is specified as a unit bivector multivector paired with an angle.
- *
- * In 3D, an additional overload accepts an axis vector and angle as scalars,
- * since in 3D the plane of rotation is uniquely identified by its normal.
- * This overload is not meaningful in other dimensions: in 2D there is only
- * one plane of rotation, and in 4D and above a plane is not uniquely
- * identified by a normal vector.
- *
- * In 2D, an additional overload accepts a single angle scalar, since the
- * plane of rotation is the space itself and no further specification is needed.
- *
- * The angle parameter represents the full Euclidean angle of rotation in
- * radians. The implementation is responsible for the half-angle adjustment
- * required by the sandwich product convention.
- *
- * Extraction of scalar parameters is supported in 2D (angle only) and 3D
- * (axis and angle). In higher dimensions there is no meaningful Euclidean
- * parameterization to extract into, so no extraction overload is required.
- */
-template <typename G>
-concept HasRotor =
-    GeometryModel<G> &&  //
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_rotor(m, x) } -> IsMultivectorLike<G>;
-      { G::is_rotor(m) } -> BoolLike;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
-     // In 2D, the geometry should support construction of a rotor from an angle.
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       { G::make_rotor(x) } -> IsMultivectorLike<G>;
-       { G::extract_rotor(m, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
-     requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-       // In 3D, the geometry should support construction of a rotor from an axis through the origin
-       // and an angle.
-       { G::make_rotor(x, x, x, x) } -> IsMultivectorLike<G>;
-       { G::extract_rotor(m, out, out, out, out) } -> std::same_as<void>;
-     });
-
-/**
- * Rigid displacement by a Euclidean vector.
- *
- * A translator is a versor that displaces geometric objects by a fixed vector
- * when applied via the sandwich product X -> M X M~. The displacement is
- * specified either as scalar components or as a direction multivector and a
- * scalar distance. Both forms produce the same displacement; the direction
- * multivector form is provided as a convenience when a direction is already
- * available in multivector form.
- *
- * The displacement parameters represent the full Euclidean displacement
- * applied to positions. The implementation is responsible for any internal
- * adjustment of parameters required by the algebra, such as the factor of
- * one half that appears in the standard translator construction.
- *
- * Extraction retrieves scalar displacement components only. There is no
- * extraction overload for the direction multivector form, as the scalar
- * components are the more fundamental Euclidean representation.
- */
-template <typename G>
-concept HasTranslator =
-    GeometryModel<G> &&  //
-    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } &&
-    requires(const G::Multivector& m, const G::Multivector& dir, typename G::Scalar x,
-             typename G::Scalar& out) {
-      { G::make_translator(x) } -> IsMultivectorLike<G>;
-      { G::make_translator(dir, x) } -> IsMultivectorLike<G>;
-      { G::extract_translator(m, out) } -> std::same_as<void>;
-      { G::is_translator(m) } -> BoolLike;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires(const G::Multivector& m, const G::Multivector& dir, typename G::Scalar x,
-              typename G::Scalar& out) {
-       { G::make_translator(x, x) } -> IsMultivectorLike<G>;
-       { G::make_translator(dir, x) } -> IsMultivectorLike<G>;
-       { G::extract_translator(m, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(const G::Multivector& m, const G::Multivector& dir, typename G::Scalar x,
-              typename G::Scalar& out) {
-       { G::make_translator(x, x, x) } -> IsMultivectorLike<G>;
-       { G::make_translator(dir, x) } -> IsMultivectorLike<G>;
-       { G::extract_translator(m, out, out, out) } -> std::same_as<void>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 || requires(const G::Multivector& m, const G::Multivector& dir,
-                                                typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_translator(x, x, x, x) } -> IsMultivectorLike<G>;
-      { G::make_translator(dir, x) } -> IsMultivectorLike<G>;
-      { G::extract_translator(m, out, out, out, out) } -> std::same_as<void>;
-    });
-
-template <typename G>
-concept HasDilator =
-    GeometryModel<G> &&  //
-    requires(const G::Multivector& m, typename G::Scalar x, typename G::Scalar& out) {
-      { G::make_dilator(x) } -> IsMultivectorLike<G>;
-      { G::extract_dilator(m, out) } -> std::same_as<void>;
-      { G::is_dilator(m) } -> BoolLike;
-    };
-
-template <typename G>
-concept VectorspaceGeometryModel =  //
-    GeometryModel<G> &&             //
+concept VectorSpaceGeometryModel =  //
+    GeometryModel<G> and            //
 
     // Geometric primitives.
-    HasPoint<G> &&      //
-    HasDirection<G> &&  //
+    HasPoint<G> and  //
+
+    requires(typename G::Scalar* begin_iter, typename G::Scalar* end_iter) {
+      { G::make_point(begin_iter, end_iter) } -> IsMultivectorLike<G>;
+    } and  //
+
+    (G::NUM_PHYSICAL_DIMENSIONS != 1 ||
+     requires(const G::Scalar& x) {
+       { G::make_point(x) } -> IsMultivectorLike<G>;
+     }) and  //
+
+    (G::NUM_PHYSICAL_DIMENSIONS != 2 ||
+     requires(const G::Scalar& x) {
+       { G::make_point(x, x) } -> IsMultivectorLike<G>;
+     }) and  //
+
+    (G::NUM_PHYSICAL_DIMENSIONS != 3 ||
+     requires(const G::Scalar& x) {
+       { G::make_point(x, x, x) } -> IsMultivectorLike<G>;
+     }) and  //
+
+    (G::NUM_PHYSICAL_DIMENSIONS != 4 ||
+     requires(const G::Scalar& x) {
+       { G::make_point(x, x, x, x) } -> IsMultivectorLike<G>;
+     }) and  //
 
     // Fundamental operations.
-    HasRotor<G> &&  //
+    // HasRotor<G> and  //
 
-    // Basis vector factory methods for physical dimensions.
-    requires {
-      { G::x() } -> IsMultivectorLike<G>;
-      { G::get_x() } -> ScalarLike<G>;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires {
-       { G::y() } -> IsMultivectorLike<G>;
-       { G::get_y() } -> ScalarLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires {
-       { G::z() } -> IsMultivectorLike<G>;
-       { G::get_z() } -> ScalarLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires {
-       { G::t() } -> IsMultivectorLike<G>;
-       { G::get_t() } -> ScalarLike<G>;
-     }) &&
-
-    // Basis bivector factory methods for physical dimensions.
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires {
-       { G::xy() } -> IsMultivectorLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires {
-       { G::xz() } -> IsMultivectorLike<G>;
-       { G::yz() } -> IsMultivectorLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires {
-       { G::xt() } -> IsMultivectorLike<G>;
-       { G::yt() } -> IsMultivectorLike<G>;
-       { G::zt() } -> IsMultivectorLike<G>;
-     }) &&  //
     true;
+
+template <typename G>
+concept HasProjectiveBases =  //
+    requires {
+      { G::e_inf() } -> IsMultivectorLike<G>;
+    };
 
 template <typename G>
 concept ProjectiveGeometryModel =  //
-    GeometryModel<G> &&            //
-
-    // Basis vector factory methods for physical dimensions.
-    requires {
-      { G::x() } -> IsMultivectorLike<G>;
-      { G::get_x() } -> ScalarLike<G>;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires {
-       { G::y() } -> IsMultivectorLike<G>;
-       { G::get_y() } -> ScalarLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires {
-       { G::z() } -> IsMultivectorLike<G>;
-       { G::get_z() } -> ScalarLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires {
-       { G::w() } -> IsMultivectorLike<G>;
-       { G::get_w() } -> ScalarLike<G>;
-     }) &&
-
-    // Basis bivector factory methods for physical dimensions.
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires {
-       { G::xy() } -> IsMultivectorLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires {
-       { G::xz() } -> IsMultivectorLike<G>;
-       { G::yz() } -> IsMultivectorLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires {
-       { G::xw() } -> IsMultivectorLike<G>;
-       { G::yw() } -> IsMultivectorLike<G>;
-       { G::zw() } -> IsMultivectorLike<G>;
-     }) &&  //
+    GeometryModel<G> and           //
+    HasProjectiveBases<G> and      //
+    HasEmbeddedManifold<G> and     //
 
     // Geometric primitives.
-    HasPoint<G> &&                                           //
-    HasDirection<G> &&                                       //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&        //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&       //
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&  //
-
+    HasPoint<G> and  //
+    // HasLine<G> and   //
+    // HasPlane<G> and  //
     // Fundamental operations.
-    HasRotor<G> &&       //
-    HasTranslator<G> &&  //
+    // HasRotor<G> and       //
+    // HasTranslator<G> and  //
+
     true;
 
 template <typename G>
 concept HasConformalBases =  //
-    GeometryModel<G> &&      //
-
-    // Basis vector factory methods for physical dimensions.
-    requires(const G::Multivector& a) {
-      { G::gamma0() } -> IsMultivectorLike<G>;
-      { G::get_gamma0(a) } -> ScalarLike<G>;
-    } &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires(const G::Multivector& a) {
-       { G::gamma1() } -> IsMultivectorLike<G>;
-       { G::get_gamma1(a) } -> ScalarLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires(const G::Multivector& a) {
-       { G::gamma2() } -> IsMultivectorLike<G>;
-       { G::get_gamma2(a) } -> ScalarLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires(const G::Multivector& a) {
-       { G::gamma3() } -> IsMultivectorLike<G>;
-       { G::get_gamma3(a) } -> ScalarLike<G>;
-     }) &&
-
-    // Conformal basis vector factory methods.
     requires {
       { G::e_inf() } -> IsMultivectorLike<G>;
       { G::e_orig() } -> IsMultivectorLike<G>;
-    } &&
 
-    // Basis bivector factory methods for physical dimensions.
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 ||
-     requires {
-       { G::gamma01() } -> IsMultivectorLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 3 ||
-     requires {
-       { G::gamma02() } -> IsMultivectorLike<G>;
-       { G::gamma12() } -> IsMultivectorLike<G>;
-     }) &&
-    (G::NUM_PHYSICAL_DIMENSIONS < 4 ||
-     requires {
-       { G::gamma03() } -> IsMultivectorLike<G>;
-       { G::gamma13() } -> IsMultivectorLike<G>;
-       { G::gamma23() } -> IsMultivectorLike<G>;
-     }) &&  //
-    true;
+      { G::e_plus() } -> IsMultivectorLike<G>;
+      { G::e_minus() } -> IsMultivectorLike<G>;
+    };
 
 template <typename G>
 concept ConformalGeometryModel =  //
-    GeometryModel<G> &&           //
-    HasConformalBases<G> &&       //
-
-    // General conformal primitives as the combination (usually, join) of multiple points.
-    requires(const G::Multivector& point) {
-      // Make an ideal point from a point. This can be considered a point on the boundary of the
-      // conformal manifold.
-      { G::make_flat(point) } -> IsMultivectorLike<G>;
-      // Make a line from two points.
-      { G::make_flat(point, point) } -> IsMultivectorLike<G>;
-      // Make a plane from three points.
-      { G::make_flat(point, point, point) } -> IsMultivectorLike<G>;
-      // Make a 3D hyperplane from four points.
-      { G::make_flat(point, point, point, point) } -> IsMultivectorLike<G>;
-      // Make a 4D hyperplane from five points.
-      { G::make_flat(point, point, point, point, point) } -> IsMultivectorLike<G>;
-
-      // Make a point from a point. Kind of stupid, but we are expecting a variadic implementation,
-      // so this method should exist.
-      { G::make_round(point) } -> IsMultivectorLike<G>;
-      // Make a point pair from two points.
-      { G::make_round(point, point) } -> IsMultivectorLike<G>;
-      // Make a circle from three points.
-      { G::make_round(point, point, point) } -> IsMultivectorLike<G>;
-      // Make a sphere from four points.
-      { G::make_round(point, point, point, point) } -> IsMultivectorLike<G>;
-      // Make a hypersphere from five points.
-      { G::make_round(point, point, point, point, point) } -> IsMultivectorLike<G>;
-    } &&
+    GeometryModel<G> and          //
+    HasConformalBases<G> and      //
+    HasEmbeddedManifold<G> and    //
 
     // Geometric primitives.
-    HasPoint<G> &&      //
-    HasPointPair<G> &&  //
-    // HasDirection<G> &&                                        //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) &&  //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) &&        //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) &&   //
-    (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) &&  //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 3 || HasSphere<G>) &&       //
-    //(G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) &&  //
+    HasPoint<G> and
+    // HasPointPair<G> and //
+    // HasDirection<G> and                                        //
+    // (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) and  //
+    // (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) and        //
+    // (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) and   //
+    // (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasCircle<G>) and  //
+    // (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasSphere<G>) and       //
+    // (G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) and  //
 
     // Fundamental operations.
-    HasRotor<G> &&       //
-    HasDilator<G> &&     //
-    HasTranslator<G> &&  //
+    // HasRotor<G> and       //
+    // HasDilator<G> and     //
+    // HasTranslator<G> and  //
     true;
 
 }  // namespace ndyn::math
