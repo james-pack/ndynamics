@@ -2,12 +2,14 @@
 
 #include <cmath>
 #include <limits>
+#include <vector>
 
 #include "glog/logging.h"
 #include "math/abs.h"
 #include "math/algebra.h"
 #include "math/canonical_basis_representation.h"
 #include "math/geometry_model.h"
+#include "math/matrix.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {
@@ -43,14 +45,24 @@ template <size_t NUM_PHYSICAL_DIMENSIONS_VALUE, typename T = DefaultScalarType>
 class CgaGeometryType final {
  public:
   static constexpr size_t NUM_PHYSICAL_DIMENSIONS{NUM_PHYSICAL_DIMENSIONS_VALUE};
+
   using G = CgaGeometryType<NUM_PHYSICAL_DIMENSIONS, T>;
+  // using MAXIMAL_MANIFOLD = VgaGeometryType<NUM_PHYSICAL_DIMENSIONS, T>;
   using Algebra = math::Algebra<T, NUM_PHYSICAL_DIMENSIONS + 1, 1, 0>;
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
+  static constexpr size_t NUM_BASIS_VECTORS{Algebra::NUM_BASIS_VECTORS};
+  static constexpr size_t NUM_BASIS_BLADES{Algebra::NUM_BASIS_BLADES};
+
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
  private:
+  [[nodiscard]] static constexpr auto mask_conformal_bases(IsMultivectorLike<G> auto&& mv) {
+    return mv.template mask_bases<NUM_PHYSICAL_DIMENSIONS, NUM_PHYSICAL_DIMENSIONS + 1>();
+  }
+
+ public:
   // The null basis vectors e0 and e_inf are the conformal origin and infinity respectively.
   // They are not basis vectors of the algebra directly but are linear combinations of e_plus
   // and e_minus. These helpers keep the construction readable throughout the implementation.
@@ -61,11 +73,6 @@ class CgaGeometryType final {
   static_assert((e_plus() * e_plus()).scalar() == Scalar{1});
   static_assert((e_minus() * e_minus()).scalar() == Scalar{-1});
 
-  [[nodiscard]] static constexpr auto mask_conformal_bases(IsMultivectorLike<G> auto&& mv) {
-    return mv.template mask_bases<NUM_PHYSICAL_DIMENSIONS, NUM_PHYSICAL_DIMENSIONS + 1>();
-  }
-
- public:
   /**
    * Standard weight calculation.
    * The weight is a measure of the scale of the space.
@@ -106,332 +113,339 @@ class CgaGeometryType final {
   [[nodiscard]] static constexpr auto origin() noexcept { return e_orig(); }
 
   // Factory methods for basis vectors under the generic names.
-  [[nodiscard]] static constexpr auto e1() noexcept
+  [[nodiscard]] static constexpr auto e0() noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 1)
   {
     return Multivector::template e<0>();
   }
-  [[nodiscard]] static constexpr auto e2() noexcept
+  [[nodiscard]] static constexpr auto e1() noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 2)
   {
     return Multivector::template e<1>();
   }
-  [[nodiscard]] static constexpr auto e3() noexcept
+  [[nodiscard]] static constexpr auto e2() noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 3)
   {
     return Multivector::template e<2>();
   }
-  [[nodiscard]] static constexpr auto e4() noexcept
+  [[nodiscard]] static constexpr auto e3() noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 4)
   {
     return Multivector::template e<3>();
   }
 
   // Getters for the coefficients of the basis vectors under the generic names.
-  [[nodiscard]] static constexpr auto get_e1(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e0(IsMultivectorLike<G> auto&& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 1)
   {
     return mv.template coefficient<1UL << 0>();
   }
-  [[nodiscard]] static constexpr auto get_e2(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e1(IsMultivectorLike<G> auto&& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 2)
   {
     return mv.template coefficient<1UL << 1>();
   }
-  [[nodiscard]] static constexpr auto get_e3(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e2(IsMultivectorLike<G> auto&& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 3)
   {
     return mv.template coefficient<1UL << 2>();
   }
-  [[nodiscard]] static constexpr auto get_e4(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e3(IsMultivectorLike<G> auto&& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 4)
   {
     return mv.template coefficient<1UL << 3>();
   }
 
-  // Factory methods for physical basis vectors using names more specific to conformal geometry.
-  [[nodiscard]] static constexpr auto gamma0() noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 1)
-  {
-    static_assert((e1() * e1()).scalar() == Scalar{1});
-    return e1();
-  }
-  [[nodiscard]] static constexpr auto gamma1() noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 2)
-  {
-    static_assert((e2() * e2()).scalar() == Scalar{1});
-    return e2();
-  }
-  [[nodiscard]] static constexpr auto gamma2() noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
-  {
-    static_assert((e3() * e3()).scalar() == Scalar{1});
-    return e3();
-  }
-  [[nodiscard]] static constexpr auto gamma3() noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 4)
-  {
-    static_assert((e4() * e4()).scalar() == Scalar{1});
-    return e4();
-  }
+  // // Factory methods for physical basis vectors using names more specific to conformal geometry.
+  // [[nodiscard]] static constexpr auto e0() noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 1)
+  // {
+  //   static_assert((e0() * e0()).scalar() == Scalar{1});
+  //   return e0();
+  // }
+  // [[nodiscard]] static constexpr auto e1() noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 2)
+  // {
+  //   static_assert((e2() * e2()).scalar() == Scalar{1});
+  //   return e2();
+  // }
+  // [[nodiscard]] static constexpr auto e2() noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 3)
+  // {
+  //   static_assert((e3() * e3()).scalar() == Scalar{1});
+  //   return e3();
+  // }
+  // [[nodiscard]] static constexpr auto e3() noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 4)
+  // {
+  //   static_assert((e4() * e4()).scalar() == Scalar{1});
+  //   return e4();
+  // }
 
-  // Getters for the coefficients of the basis vectors under the generic names.
-  [[nodiscard]] static constexpr auto get_gamma0(IsMultivectorLike<G> auto&& mv) noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 1)
-  {
-    return get_e1(mv);
-  }
-  [[nodiscard]] static constexpr auto get_gamma1(IsMultivectorLike<G> auto&& mv) noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 2)
-  {
-    return get_e2(mv);
-  }
-  [[nodiscard]] static constexpr auto get_gamma2(IsMultivectorLike<G> auto&& mv) noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
-  {
-    return get_e3(mv);
-  }
-  [[nodiscard]] static constexpr auto get_gamma3(IsMultivectorLike<G> auto&& mv) noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 4)
-  {
-    return get_e4(mv);
-  }
+  // // Getters for the coefficients of the basis vectors under the generic names.
+  // [[nodiscard]] static constexpr auto get_e0(IsMultivectorLike<G> auto&& mv) noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 1)
+  // {
+  //   return get_e0(mv);
+  // }
+  // [[nodiscard]] static constexpr auto get_e1(IsMultivectorLike<G> auto&& mv) noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 2)
+  // {
+  //   return get_e2(mv);
+  // }
+  // [[nodiscard]] static constexpr auto get_e2(IsMultivectorLike<G> auto&& mv) noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 3)
+  // {
+  //   return get_e3(mv);
+  // }
+  // [[nodiscard]] static constexpr auto get_e3(IsMultivectorLike<G> auto&& mv) noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 4)
+  // {
+  //   return get_e4(mv);
+  // }
 
-  // Factory methods for basis bivectors.
-  [[nodiscard]] static constexpr auto gamma01() noexcept { return gamma0() * gamma1(); }
-  [[nodiscard]] static constexpr auto gamma02() noexcept { return gamma0() * gamma2(); }
-  [[nodiscard]] static constexpr auto gamma03() noexcept { return gamma0() * gamma3(); }
-  [[nodiscard]] static constexpr auto gamma12() noexcept { return gamma1() * gamma2(); }
-  [[nodiscard]] static constexpr auto gamma13() noexcept { return gamma1() * gamma3(); }
-  [[nodiscard]] static constexpr auto gamma23() noexcept { return gamma2() * gamma3(); }
+  // // Factory methods for basis bivectors.
+  [[nodiscard]] static constexpr auto e01() noexcept { return e0() * e1(); }
+  [[nodiscard]] static constexpr auto e02() noexcept { return e0() * e2(); }
+  [[nodiscard]] static constexpr auto e03() noexcept { return e0() * e3(); }
+  [[nodiscard]] static constexpr auto e12() noexcept { return e1() * e2(); }
+  [[nodiscard]] static constexpr auto e13() noexcept { return e1() * e3(); }
+  [[nodiscard]] static constexpr auto e23() noexcept { return e2() * e3(); }
 
-  /**
-   * Construct a rotor around the origin of the plane. Note that this is only meaningful with two
-   * physical dimensions.
-   */
-  [[nodiscard]] static auto make_rotor(ScalarLike<G> auto&& angle) noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS == 2)
-  {
-    using std::cos, std::sin;
+  // /**
+  //  * Construct a rotor around the origin of the plane. Note that this is only meaningful with two
+  //  * physical dimensions.
+  //  */
+  // [[nodiscard]] static auto make_rotor(ScalarLike<G> auto&& angle) noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS == 2)
+  // {
+  //   using std::cos, std::sin;
 
-    const auto half_angle{angle / Scalar{2}};
-    static constexpr const auto rotation_plane{gamma01()};
-    return cos(half_angle) - sin(half_angle) * rotation_plane;
-  }
+  //   const auto half_angle{angle / Scalar{2}};
+  //   static constexpr const auto rotation_plane{e01()};
+  //   return cos(half_angle) - sin(half_angle) * rotation_plane;
+  // }
 
-  /**
-   * Construct a rotor around an axis through the origin. Note that this is only meaningful with
-   * three physical dimensions. In higher dimensions, a single axis does not uniquely determine a
-   * rotation.
-   */
-  [[nodiscard]] static auto make_rotor(ScalarLike<G> auto&& nx, ScalarLike<G> auto&& ny,
-                                       ScalarLike<G> auto&& nz, ScalarLike<G> auto&& angle)
-    requires(NUM_PHYSICAL_DIMENSIONS == 3)
-  {
-    using std::cos, std::sin;
+  // /**
+  //  * Construct a rotor around an axis through the origin. Note that this is only meaningful with
+  //  * three physical dimensions. In higher dimensions, a single axis does not uniquely determine a
+  //  * rotation.
+  //  */
+  // [[nodiscard]] static auto make_rotor(ScalarLike<G> auto&& nx, ScalarLike<G> auto&& ny,
+  //                                      ScalarLike<G> auto&& nz, ScalarLike<G> auto&& angle)
+  //   requires(NUM_PHYSICAL_DIMENSIONS == 3)
+  // {
+  //   using std::cos, std::sin;
 
-    const auto norm{hypot(nx, ny, nz)};
-    if (norm < Algebra::EPSILON) {
-      except<std::domain_error>("Degenerate axis: cannot construct rotor from a null axis.");
-    }
+  //   const auto norm{hypot(nx, ny, nz)};
+  //   if (norm < Algebra::EPSILON) {
+  //     except<std::domain_error>("Degenerate axis: cannot construct rotor from a null axis.");
+  //   }
 
-    const auto half_angle{angle / Scalar{2}};
-    const auto rotation_plane{nx / norm * gamma12() - ny / norm * gamma02() +
-                              nz / norm * gamma01()};
-    return cos(half_angle) - sin(half_angle) * rotation_plane;
-  }
+  //   const auto half_angle{angle / Scalar{2}};
+  //   const auto rotation_plane{nx / norm * e12() - ny / norm * e02() +
+  //                             nz / norm * e01()};
+  //   return cos(half_angle) - sin(half_angle) * rotation_plane;
+  // }
 
-  /**
-   * Construct a CGA rotor in the given plane to rotate by angle radians. The plane of rotation is
-   * given by its normal.
-   */
-  [[nodiscard]] static auto make_rotor(IsMultivectorLike<G> auto&& rotation_plane,
-                                       ScalarLike<G> auto&& angle) noexcept {
-    if (!rotation_plane.is_grade(2)) {
-      except<std::invalid_argument>(
-          "In all geometric algebras, versors, such as rotors, should be bivectors.");
-    }
+  // /**
+  //  * Construct a CGA rotor in the given plane to rotate by angle radians. The plane of rotation
+  //  is
+  //  * given by its normal.
+  //  */
+  // [[nodiscard]] static auto make_rotor(IsMultivectorLike<G> auto&& rotation_plane,
+  //                                      ScalarLike<G> auto&& angle) noexcept {
+  //   if (!rotation_plane.is_grade(2)) {
+  //     except<std::invalid_argument>(
+  //         "In all geometric algebras, versors, such as rotors, should be bivectors.");
+  //   }
 
-    using std::cos, std::sin;
+  //   using std::cos, std::sin;
 
-    const auto half_angle{angle / Scalar{2}};
-    return cos(half_angle) - sin(half_angle) * rotation_plane.normalize();
-  }
+  //   const auto half_angle{angle / Scalar{2}};
+  //   return cos(half_angle) - sin(half_angle) * rotation_plane.normalize();
+  // }
 
-  static void extract_rotor(IsMultivectorLike<G> auto&& mv, ScalarLike<G> auto&& angle) noexcept {
-    using std::acos;
+  // static void extract_rotor(IsMultivectorLike<G> auto&& mv, ScalarLike<G> auto&& angle) noexcept
+  // {
+  //   using std::acos;
 
-    angle = Scalar{2} * acos(mv.scalar());
-  }
+  //   angle = Scalar{2} * acos(mv.scalar());
+  // }
 
-  static void extract_rotor(IsMultivectorLike<G> auto&& mv, ScalarLike<G> auto&& nx,
-                            ScalarLike<G> auto&& ny, ScalarLike<G> auto&& nz,
-                            ScalarLike<G> auto&& angle) noexcept
-    requires(NUM_PHYSICAL_DIMENSIONS >= 3)
-  {
-    using std::acos, std::sin;
-    // A normalized rotor has the form R = cos(θ/2) - sin(θ/2)(nx e01 + ny e02 + nz e12).
-    // The scalar part is cos(θ/2) and the bivector part has magnitude sin(θ/2).
-    // Recover the full rotation angle from the scalar component.
-    const auto half_angle = acos(mv.scalar());
-    angle = half_angle * Scalar{2};
+  // static void extract_rotor(IsMultivectorLike<G> auto&& mv, ScalarLike<G> auto&& nx,
+  //                           ScalarLike<G> auto&& ny, ScalarLike<G> auto&& nz,
+  //                           ScalarLike<G> auto&& angle) noexcept
+  //   requires(NUM_PHYSICAL_DIMENSIONS >= 3)
+  // {
+  //   using std::acos, std::sin;
+  //   // A normalized rotor has the form R = cos(θ/2) - sin(θ/2)(nx e01 + ny e02 + nz e02).
+  //   // The scalar part is cos(θ/2) and the bivector part has magnitude sin(θ/2).
+  //   // Recover the full rotation angle from the scalar component.
+  //   const auto half_angle = acos(mv.scalar());
+  //   angle = half_angle * Scalar{2};
 
-    // sin(θ/2) is the magnitude of the bivector part. If it is zero the rotor
-    // is the identity and the axis is undefined; return a canonical axis.
-    const auto sin_half_angle = sin(half_angle);
-    if (sin_half_angle == Scalar{0}) {
-      nx = Scalar{0};
-      ny = Scalar{0};
-      nz = Scalar{1};
-    } else {
-      // Extract the axis by dividing out sin(θ/2) from each bivector component.
-      // The sign convention matches make_rotor(): R = cos(θ/2) - sin(θ/2)(n * B).
-      const auto inv_sin = Scalar{1} / sin_half_angle;
-      nx = -get_gamma01(mv) * inv_sin;
-      ny = -get_gamma02(mv) * inv_sin;
-      nz = -get_gamma12(mv) * inv_sin;
-    }
-  }
+  //   // sin(θ/2) is the magnitude of the bivector part. If it is zero the rotor
+  //   // is the identity and the axis is undefined; return a canonical axis.
+  //   const auto sin_half_angle = sin(half_angle);
+  //   if (sin_half_angle == Scalar{0}) {
+  //     nx = Scalar{0};
+  //     ny = Scalar{0};
+  //     nz = Scalar{1};
+  //   } else {
+  //     // Extract the axis by dividing out sin(θ/2) from each bivector component.
+  //     // The sign convention matches make_rotor(): R = cos(θ/2) - sin(θ/2)(n * B).
+  //     const auto inv_sin = Scalar{1} / sin_half_angle;
+  //     nx = -get_e01(mv) * inv_sin;
+  //     ny = -get_e02(mv) * inv_sin;
+  //     nz = -get_e12(mv) * inv_sin;
+  //   }
+  // }
 
-  [[nodiscard]] static constexpr auto is_rotor(IsMultivectorLike<G> auto&& mv) noexcept {
-    // A normalized rotor has the form R = cos(θ/2) - sin(θ/2) * rotation_plane. The scalar part is
-    // cos(θ/2) and the rotation_plane (a bivector) has magnitude sin(θ/2). For this method, we
-    // check the value of the scalar is in the range of the cos() function. We check that the
-    // multivector is in the form of a bivector plus a scalar. We verify that the square magnitude
-    // of the bivector plus the square of the scalar is one.
-    const auto scalar_value{mv.scalar()};
-    if (abs(scalar_value) - Scalar{1} > EPSILON) {
-      return false;
-    }
+  // [[nodiscard]] static constexpr auto is_rotor(IsMultivectorLike<G> auto&& mv) noexcept {
+  //   // A normalized rotor has the form R = cos(θ/2) - sin(θ/2) * rotation_plane. The scalar part
+  //   is
+  //   // cos(θ/2) and the rotation_plane (a bivector) has magnitude sin(θ/2). For this method, we
+  //   // check the value of the scalar is in the range of the cos() function. We check that the
+  //   // multivector is in the form of a bivector plus a scalar. We verify that the square
+  //   magnitude
+  //   // of the bivector plus the square of the scalar is one.
+  //   const auto scalar_value{mv.scalar()};
+  //   if (abs(scalar_value) - Scalar{1} > EPSILON) {
+  //     return false;
+  //   }
 
-    const auto bivector{mv.template grade_projection<2>()};
-    if (!mv.near_equal(bivector + scalar_value)) {
-      return false;
-    }
+  //   const auto bivector{mv.template grade_projection<2>()};
+  //   if (!mv.near_equal(bivector + scalar_value)) {
+  //     return false;
+  //   }
 
-    return abs(bivector.square_magnitude() + scalar_value * scalar_value - Scalar{1}) < EPSILON;
-  }
+  //   return abs(bivector.square_magnitude() + scalar_value * scalar_value - Scalar{1}) < EPSILON;
+  // }
 
-  /**
-   * Constructs a dilator (scaling versor) centered at the origin.
-   * A dilator scales space by the given factor.
-   */
-  [[nodiscard]] static constexpr auto make_dilator(ScalarLike<G> auto&& scale) noexcept {
-    using std::log, std::cosh, std::sinh;
+  // /**
+  //  * Constructs a dilator (scaling versor) centered at the origin.
+  //  * A dilator scales space by the given factor.
+  //  */
+  // [[nodiscard]] static constexpr auto make_dilator(ScalarLike<G> auto&& scale) noexcept {
+  //   using std::log, std::cosh, std::sinh;
 
-    if (scale <= Scalar{0}) {
-      except<std::domain_error>("Scale factor must be positive.");
-    }
+  //   if (scale <= Scalar{0}) {
+  //     except<std::domain_error>("Scale factor must be positive.");
+  //   }
 
-    // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_orig.
-    // In our basis, E = e_inf ^ e_orig() has the property E^2 = 1.
-    constexpr auto E{e_inf() ^ e_orig()};
-    static_assert(abs((E * E).scalar() - Scalar{1}) < EPSILON);
+  //   // The generator of dilation at the origin is the Minkowski plane E = e_inf ^ e_orig.
+  //   // In our basis, E = e_inf ^ e_orig() has the property E^2 = 1.
+  //   constexpr auto E{e_inf() ^ e_orig()};
+  //   static_assert(abs((E * E).scalar() - Scalar{1}) < EPSILON);
 
-    // For a scale factor k, the dilation is exp(ln(k)/2 * E).
-    // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
-    const auto phi{log(scale) / Scalar{2}};
-    return cosh(phi) + sinh(phi) * E;
-  }
+  //   // For a scale factor k, the dilation is exp(ln(k)/2 * E).
+  //   // Using the identity exp(phi * E) = cosh(phi) + E * sinh(phi) for E^2 = 1.
+  //   const auto phi{log(scale) / Scalar{2}};
+  //   return cosh(phi) + sinh(phi) * E;
+  // }
 
-  static constexpr void extract_dilator(IsMultivectorLike<G> auto&& mv,
-                                        ScalarLike<G> auto&& scale) noexcept {
-    // Transform the 'origin' and see how its weight changes.
-    // In CGA, D * e_orig * ~D = (1/scale) * e_orig, where D is a dilator.
-    const auto transformed_null_basis{mv * e_orig() * mv.reverse()};
+  // static constexpr void extract_dilator(IsMultivectorLike<G> auto&& mv,
+  //                                       ScalarLike<G> auto&& scale) noexcept {
+  //   // Transform the 'origin' and see how its weight changes.
+  //   // In CGA, D * e_orig * ~D = (1/scale) * e_orig, where D is a dilator.
+  //   const auto transformed_null_basis{mv * e_orig() * mv.reverse()};
 
-    // The scale is the inverse of the resulting e_inf coefficient.
-    scale = Scalar{1} / weight(transformed_null_basis);
-  }
+  //   // The scale is the inverse of the resulting e_inf coefficient.
+  //   scale = Scalar{1} / weight(transformed_null_basis);
+  // }
 
-  [[nodiscard]] static constexpr auto is_dilator(IsMultivectorLike<G> auto&& mv) noexcept {
-    // Transform the 'origin' and see how its weight changes.
-    // In CGA, D * e_orig * ~D = (1/scale) * e_orig, where D is a dilator.
-    const auto transformed_null_basis{mv * e_orig() * mv.reverse()};
+  // [[nodiscard]] static constexpr auto is_dilator(IsMultivectorLike<G> auto&& mv) noexcept {
+  //   // Transform the 'origin' and see how its weight changes.
+  //   // In CGA, D * e_orig * ~D = (1/scale) * e_orig, where D is a dilator.
+  //   const auto transformed_null_basis{mv * e_orig() * mv.reverse()};
 
-    // The scale factor is effectively the inverse of the weight of this transformed basis. A weight
-    // of 1 means no scaling.
-    return abs(weight(transformed_null_basis) - Scalar{1}) > EPSILON;
-  }
+  //   // The scale factor is effectively the inverse of the weight of this transformed basis. A
+  //   weight
+  //   // of 1 means no scaling.
+  //   return abs(weight(transformed_null_basis) - Scalar{1}) > EPSILON;
+  // }
 
-  /**
-   * Construct a CGA translator for a displacement (dt, dx, dy, dz). In CGA translators use
-   * e_inf: T = 1 - (1/2)(dt*gamma0 + dx*gamma1 + dy*gamma2 + dz*gamma3) * e_inf
-   *
-   * The e_inf factor ensures T * reverse(T) = 1, mirroring the PGA translator's use of e0.
-   * The sign convention follows from the CGA rotor exponential where the translation
-   * generator is -(1/2) * t * e_inf for displacement t.
-   */
-  [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt,
-                                                      ScalarLike<G> auto&& dx,
-                                                      ScalarLike<G> auto&& dy,
-                                                      ScalarLike<G> auto&& dz) noexcept {
-    const auto displacement{dt * gamma0() + dx * gamma1() + dy * gamma2() + dz * gamma3()};
-    return Scalar{1} - displacement * e_inf() / Scalar{2};
-  }
+  // /**
+  //  * Construct a CGA translator for a displacement (dt, dx, dy, dz). In CGA translators use
+  //  * e_inf: T = 1 - (1/2)(dt*e0 + dx*e1 + dy*e2 + dz*e3) * e_inf
+  //  *
+  //  * The e_inf factor ensures T * reverse(T) = 1, mirroring the PGA translator's use of e0.
+  //  * The sign convention follows from the CGA rotor exponential where the translation
+  //  * generator is -(1/2) * t * e_inf for displacement t.
+  //  */
+  // [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt,
+  //                                                     ScalarLike<G> auto&& dx,
+  //                                                     ScalarLike<G> auto&& dy,
+  //                                                     ScalarLike<G> auto&& dz) noexcept {
+  //   const auto displacement{dt * e0() + dx * e1() + dy * e2() + dz * e3()};
+  //   return Scalar{1} - displacement * e_inf() / Scalar{2};
+  // }
 
-  [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt,
-                                                      ScalarLike<G> auto&& dx,
-                                                      ScalarLike<G> auto&& dy) noexcept {
-    const auto displacement{dt * gamma0() + dx * gamma1() + dy * gamma2()};
-    return Scalar{1} - displacement * e_inf() / Scalar{2};
-  }
+  // [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt,
+  //                                                     ScalarLike<G> auto&& dx,
+  //                                                     ScalarLike<G> auto&& dy) noexcept {
+  //   const auto displacement{dt * e0() + dx * e1() + dy * e2()};
+  //   return Scalar{1} - displacement * e_inf() / Scalar{2};
+  // }
 
-  [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt,
-                                                      ScalarLike<G> auto&& dx) noexcept {
-    const auto displacement{dt * gamma0() + dx * gamma1()};
-    return Scalar{1} - displacement * e_inf() / Scalar{2};
-  }
+  // [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt,
+  //                                                     ScalarLike<G> auto&& dx) noexcept {
+  //   const auto displacement{dt * e0() + dx * e1()};
+  //   return Scalar{1} - displacement * e_inf() / Scalar{2};
+  // }
 
-  [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt) noexcept {
-    const auto displacement{dt * gamma0()};
-    return Scalar{1} - displacement * e_inf() / Scalar{2};
-  }
+  // [[nodiscard]] static constexpr auto make_translator(ScalarLike<G> auto&& dt) noexcept {
+  //   const auto displacement{dt * e0()};
+  //   return Scalar{1} - displacement * e_inf() / Scalar{2};
+  // }
 
-  [[nodiscard]] static constexpr auto make_translator(IsMultivectorLike<G> auto&& direction,
-                                                      ScalarLike<G> auto&& dt) noexcept {
-    const auto displacement{dt * direction};
-    return Scalar{1} - displacement * e_inf() / Scalar{2};
-  }
+  // [[nodiscard]] static constexpr auto make_translator(IsMultivectorLike<G> auto&& direction,
+  //                                                     ScalarLike<G> auto&& dt) noexcept {
+  //   const auto displacement{dt * direction};
+  //   return Scalar{1} - displacement * e_inf() / Scalar{2};
+  // }
 
-  static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt, Scalar& dx,
-                                           Scalar& dy, Scalar& dz) noexcept {
-    dt = get_gamm0_e_minus(mv);
-    dx = get_gamm1_e_minus(mv);
-    dy = get_gamm2_e_minus(mv);
-    dz = get_gamm3_e_minus(mv);
-  }
+  // static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt, Scalar&
+  // dx,
+  //                                          Scalar& dy, Scalar& dz) noexcept {
+  //   dt = get_gamm0_e_minus(mv);
+  //   dx = get_gamm1_e_minus(mv);
+  //   dy = get_gamm2_e_minus(mv);
+  //   dz = get_gamm3_e_minus(mv);
+  // }
 
-  static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt, Scalar& dx,
-                                           Scalar& dy) noexcept {
-    dt = get_gamm0_e_minus(mv);
-    dx = get_gamm1_e_minus(mv);
-    dy = get_gamm2_e_minus(mv);
-  }
+  // static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt, Scalar&
+  // dx,
+  //                                          Scalar& dy) noexcept {
+  //   dt = get_gamm0_e_minus(mv);
+  //   dx = get_gamm1_e_minus(mv);
+  //   dy = get_gamm2_e_minus(mv);
+  // }
 
-  static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt,
-                                           Scalar& dx) noexcept {
-    dt = get_gamm0_e_minus(mv);
-    dx = get_gamm1_e_minus(mv);
-  }
+  // static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt,
+  //                                          Scalar& dx) noexcept {
+  //   dt = get_gamm0_e_minus(mv);
+  //   dx = get_gamm1_e_minus(mv);
+  // }
 
-  static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt) noexcept {
-    dt = get_gamm0_e_minus(mv);
-  }
+  // static constexpr void extract_translator(IsMultivectorLike<G> auto&& mv, Scalar& dt) noexcept {
+  //   dt = get_gamm0_e_minus(mv);
+  // }
 
-  [[nodiscard]] static constexpr auto is_translator(IsMultivectorLike<G> auto&& mv) noexcept {
-    const auto scalar_value{mv.scalar()};
-    if (abs(scalar_value - Scalar{1}) > EPSILON) {
-      return false;
-    }
+  // [[nodiscard]] static constexpr auto is_translator(IsMultivectorLike<G> auto&& mv) noexcept {
+  //   const auto scalar_value{mv.scalar()};
+  //   if (abs(scalar_value - Scalar{1}) > EPSILON) {
+  //     return false;
+  //   }
 
-    const auto bivector{mv.template grade_projection<2>()};
-    if (!bivector.near_equal(mv - scalar_value)) {
-      return false;
-    }
+  //   const auto bivector{mv.template grade_projection<2>()};
+  //   if (!bivector.near_equal(mv - scalar_value)) {
+  //     return false;
+  //   }
 
-    return (bivector * e_orig()).template is_grade<1>();
-  }
+  //   return (bivector * e_orig()).template is_grade<1>();
+  // }
 
   /**
    * The join is the operation that determines the smallest common subspace containing two
@@ -500,19 +514,19 @@ class CgaGeometryType final {
     }
   }
 
-  template <IsMultivectorLike<G>... Points>
-  [[nodiscard]] static constexpr auto make_round(Points&&... points) noexcept {
-    return join(std::forward<Points>(points)...);
-  }
+  // template <IsMultivectorLike<G>... Points>
+  // [[nodiscard]] static constexpr auto make_round(Points&&... points) noexcept {
+  //   return join(std::forward<Points>(points)...);
+  // }
 
-  template <IsMultivectorLike<G>... Points>
-  [[nodiscard]] static constexpr auto make_flat(Points&&... points) noexcept {
-    return join(e_inf(), std::forward<Points>(points)...);
-  }
+  // template <IsMultivectorLike<G>... Points>
+  // [[nodiscard]] static constexpr auto make_flat(Points&&... points) noexcept {
+  //   return join(e_inf(), std::forward<Points>(points)...);
+  // }
 
   /**
    * Embed a Euclidean point as a CGA null vector using standard normalization:
-   *   X = e_orig + px*e1 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
+   *   X = e_orig + px*e0 + py*e2 + pz*e3 + (1/2)(px^2 + py^2 + pz^2)*e_inf
    *
    * The result satisfies X * ~X = 0. The weight is 1 under this normalization,
    * which is what allows extract_point to recover coordinates by simple division. Under
@@ -528,21 +542,20 @@ class CgaGeometryType final {
    */
   [[nodiscard]] static constexpr auto make_point(ScalarLike<G> auto&& t) noexcept {
     const auto half_norm_sq{(t * t) / Scalar{2}};
-    return t * gamma0() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+    return t * e0() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
            (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
   [[nodiscard]] static constexpr auto make_point(ScalarLike<G> auto&& t, ScalarLike<G> auto&& x) {
     const auto half_norm_sq{(t * t + x * x) / Scalar{2}};
-    return t * gamma0() + x * gamma1() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+    return t * e0() + x * e1() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
            (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
   [[nodiscard]] static constexpr auto make_point(ScalarLike<G> auto&& t, ScalarLike<G> auto&& x,
                                                  ScalarLike<G> auto&& y) {
     const auto half_norm_sq{(t * t + x * x + y * y) / Scalar{2}};
-    return t * gamma0() + x * gamma1() + y * gamma2() +
-           (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
+    return t * e0() + x * e1() + y * e2() + (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
            (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
 
@@ -550,7 +563,7 @@ class CgaGeometryType final {
                                                  ScalarLike<G> auto&& y,
                                                  ScalarLike<G> auto&& z) noexcept {
     const auto half_norm_sq{(t * t + x * x + y * y + z * z) / Scalar{2}};
-    return t * gamma0() + x * gamma1() + y * gamma2() + z * gamma3() +
+    return t * e0() + x * e1() + y * e2() + z * e3() +
            (half_norm_sq - Scalar{1} / Scalar{2}) * e_plus() +
            (half_norm_sq + Scalar{1} / Scalar{2}) * e_minus();
   }
@@ -577,7 +590,7 @@ class CgaGeometryType final {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_t = get_gamma0(point) / w;
+    out_t = get_e0(point) / w;
   }
 
   static constexpr void extract_point(IsMultivectorLike<G> auto&& point, Scalar& out_t,
@@ -587,8 +600,8 @@ class CgaGeometryType final {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_t = get_gamma0(point) / w;
-    out_x = get_gamma1(point) / w;
+    out_t = get_e0(point) / w;
+    out_x = get_e1(point) / w;
   }
 
   static constexpr void extract_point(IsMultivectorLike<G> auto&& point, Scalar& out_t,
@@ -598,9 +611,9 @@ class CgaGeometryType final {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_t = get_gamma0(point) / w;
-    out_x = get_gamma1(point) / w;
-    out_y = get_gamma2(point) / w;
+    out_t = get_e0(point) / w;
+    out_x = get_e1(point) / w;
+    out_y = get_e2(point) / w;
   }
 
   static constexpr void extract_point(IsMultivectorLike<G> auto&& point, Scalar& out_t,
@@ -610,10 +623,10 @@ class CgaGeometryType final {
       except<std::domain_error>("Cannot extract coordinates from a point at infinity (w = 0).");
     }
 
-    out_t = get_gamma0(point) / w;
-    out_x = get_gamma1(point) / w;
-    out_y = get_gamma2(point) / w;
-    out_z = get_gamma3(point) / w;
+    out_t = get_e0(point) / w;
+    out_x = get_e1(point) / w;
+    out_y = get_e2(point) / w;
+    out_z = get_e3(point) / w;
   }
 
   /**
@@ -911,16 +924,16 @@ class CgaGeometryType final {
     }
 
     if (abs(first_weight) > EPSILON) {
-      pt1 = get_gamma0(first_point) / first_weight;
-      px1 = get_gamma1(first_point) / first_weight;
+      pt1 = get_e0(first_point) / first_weight;
+      px1 = get_e1(first_point) / first_weight;
     } else {
       DLOG(INFO) << "extract_line() -- No first point found.";
       pt1 = std::numeric_limits<Scalar>::max();
       px1 = std::numeric_limits<Scalar>::max();
     }
     if (abs(second_weight) > EPSILON) {
-      pt2 = get_gamma0(second_point) / second_weight;
-      px2 = get_gamma1(second_point) / second_weight;
+      pt2 = get_e0(second_point) / second_weight;
+      px2 = get_e1(second_point) / second_weight;
     } else {
       DLOG(INFO) << "extract_line() -- No second point found.";
       pt2 = std::numeric_limits<Scalar>::max();
@@ -963,9 +976,9 @@ class CgaGeometryType final {
     }
 
     if (abs(first_weight) > EPSILON) {
-      pt1 = get_gamma0(first_point) / first_weight;
-      px1 = get_gamma1(first_point) / first_weight;
-      py1 = get_gamma2(first_point) / first_weight;
+      pt1 = get_e0(first_point) / first_weight;
+      px1 = get_e1(first_point) / first_weight;
+      py1 = get_e2(first_point) / first_weight;
     } else {
       DLOG(INFO) << "extract_line() -- No first point found.";
       pt1 = std::numeric_limits<Scalar>::max();
@@ -973,9 +986,9 @@ class CgaGeometryType final {
       py1 = std::numeric_limits<Scalar>::max();
     }
     if (abs(second_weight) > EPSILON) {
-      pt2 = get_gamma0(second_point) / second_weight;
-      px2 = get_gamma1(second_point) / second_weight;
-      py2 = get_gamma2(second_point) / second_weight;
+      pt2 = get_e0(second_point) / second_weight;
+      px2 = get_e1(second_point) / second_weight;
+      py2 = get_e2(second_point) / second_weight;
     } else {
       DLOG(INFO) << "extract_line() -- No second point found.";
       pt2 = std::numeric_limits<Scalar>::max();
@@ -1020,10 +1033,10 @@ class CgaGeometryType final {
     }
 
     if (abs(first_weight) > EPSILON) {
-      pt1 = get_gamma0(first_point) / first_weight;
-      px1 = get_gamma1(first_point) / first_weight;
-      py1 = get_gamma2(first_point) / first_weight;
-      pz1 = get_gamma3(first_point) / first_weight;
+      pt1 = get_e0(first_point) / first_weight;
+      px1 = get_e1(first_point) / first_weight;
+      py1 = get_e2(first_point) / first_weight;
+      pz1 = get_e3(first_point) / first_weight;
     } else {
       DLOG(INFO) << "extract_line() -- No first point found.";
       pt1 = std::numeric_limits<Scalar>::max();
@@ -1032,10 +1045,10 @@ class CgaGeometryType final {
       pz1 = std::numeric_limits<Scalar>::max();
     }
     if (abs(second_weight) > EPSILON) {
-      pt2 = get_gamma0(second_point) / second_weight;
-      px2 = get_gamma1(second_point) / second_weight;
-      py2 = get_gamma2(second_point) / second_weight;
-      pz2 = get_gamma3(second_point) / second_weight;
+      pt2 = get_e0(second_point) / second_weight;
+      px2 = get_e1(second_point) / second_weight;
+      py2 = get_e2(second_point) / second_weight;
+      pz2 = get_e3(second_point) / second_weight;
     } else {
       DLOG(INFO) << "extract_line() -- No second point found.";
       pt2 = std::numeric_limits<Scalar>::max();
@@ -1070,8 +1083,8 @@ class CgaGeometryType final {
   /*
    * Constructs a circle as a 3-blade representing a collection of points.
    * The attitude is a 2-blade defining the circle's spatial orientation and plane.
-   * For example, in a 2D simulation, this is typically e1 ^ e2. In a 3D
-   * simulation, a circle in the XZ plane would be constructed using e1 ^ e3.
+   * For example, in a 2D simulation, this is typically e0 ^ e2. In a 3D
+   * simulation, a circle in the XZ plane would be constructed using e0 ^ e3.
    */
   [[nodiscard]] static constexpr auto make_circle(IsMultivectorLike<G> auto&& center,
                                                   IsMultivectorLike<G> auto&& attitude,
@@ -1200,13 +1213,13 @@ class CgaGeometryType final {
               << ", radius: " << radius;
 
     // Form basis vectors u and v in the plane of the circle via contraction.
-    // TODO: Update this for more dimensions. It is possible both gamma0 and gamma1 are parallel to
+    // TODO: Update this for more dimensions. It is possible both e0 and e1 are parallel to
     // B.
-    auto u = (gamma0() << B);
+    auto u = (e0() << B);
     LOG(INFO) << "u: " << u << ", u.square_magnitude(): " << u.square_magnitude();
 
     if (u.square_magnitude() < EPSILON) {
-      u = (gamma1() << B);
+      u = (e1() << B);
       LOG(INFO) << "u: " << u << ", u.square_magnitude(): " << u.square_magnitude();
     }
     u = u.normalize();
@@ -1317,7 +1330,7 @@ class CgaGeometryType final {
 
     // The 3D spatial bivector representing the orientation of the plane.
     // This is the dual of the normal vector within the 3D Euclidean subspace.
-    const auto spatial_bivector{ux * gamma12() - uy * gamma02() + uz * gamma01()};
+    const auto spatial_bivector{ux * e12() - uy * e02() + uz * e01()};
 
     const auto p{make_point(px, py, pz)};
 
@@ -1346,8 +1359,8 @@ class CgaGeometryType final {
     const auto uy = ny / norm;
     const auto uz = nz / norm;
 
-    const auto spatial_trivector{ut * (gamma12() * gamma3()) - ux * (gamma02() * gamma3()) +
-                                 uy * (gamma01() * gamma3()) - uz * (gamma01() * gamma2())};
+    const auto spatial_trivector{ut * (e12() * e3()) - ux * (e02() * e3()) + uy * (e01() * e3()) -
+                                 uz * (e01() * e2())};
 
     const auto p{make_point(pt, px, py, pz)};
 
@@ -1451,7 +1464,7 @@ class CgaGeometryType final {
     const auto angle{Scalar{2} * acos(scalar_part)};
     const auto s{sin(angle / Scalar{2})};
 
-    const auto euclidean_biv{exy * gamma12() + exz * gamma13() + eyz * gamma23()};
+    const auto euclidean_biv{exy * e12() + exz * e13() + eyz * e23()};
 
     // The translational component of the motor lives in the bivectors involving e_inf.
     const auto translation_biv{motor.template grade_projection<2>() - euclidean_biv};
@@ -1485,6 +1498,80 @@ class CgaGeometryType final {
 
     return s * bivector.template grade_projection<2>() + c;
   }
+
+  /**
+   * Generates a matrix representation of the subspace spanned by the multivector 'B'.
+   * Each row i represents the coefficients of (e_i left_contract B).
+   */
+  [[nodiscard]] static constexpr auto generate_factorization_matrix(
+      IsMultivectorLike<G> auto&& B) noexcept {
+    constexpr size_t N{Algebra::NUM_BASIS_VECTORS};
+    constexpr size_t M{Algebra::NUM_BASIS_BLADES};
+
+    Matrix<N, M, Scalar> matrix{};
+    for (size_t i = 0; i < N; ++i) {
+      // Strip one dimension off the blade B and store the resulting coefficients into the matrix.
+      matrix[i] = Multivector::e(i).left_contraction(B).coefficients();
+    }
+
+    return matrix;
+  }
+
+  /**
+   * Decomposes a blade B into its constituent points.
+   *
+   * The expected_point_count is optional. If provided, it specifies the number of points expected.
+   * If it is zero (the default), the function chooses the points above a certain threshold.
+   *
+   * Note that this function returns a vector, so it cannot be made constexpr.
+   */
+  [[nodiscard]] static auto factor(IsMultivectorLike<G> auto&& B,
+                                   size_t expected_point_count = 0) noexcept {
+    // Generate the coefficient mapping matrix.
+    auto matrix{generate_factorization_matrix(B)};
+
+    // Perform SVD.
+    // u: Left singular vectors (N x N) - These contain our point coefficients
+    // s: Singular values (N) - These tell us the "weight" of each factor
+    // v: Right singular vectors (not strictly needed for point extraction)
+    auto [u, s, v] = svd_solver(matrix);
+
+    // Determine how many points to extract.
+    size_t actual_point_count{std::min(expected_point_count, Algebra::NUM_BASIS_VECTORS)};
+    if (actual_point_count == 0) {
+      // Threshold-based detection. Find values significantly larger than noise.
+      const auto threshold{s[0] * EPSILON};
+      for (size_t i = 0; i < Algebra::NUM_BASIS_VECTORS; ++i) {
+        if (s[i] > threshold) {
+          ++actual_point_count;
+        }
+      }
+    }
+
+    std::vector<Multivector> points{};
+    points.reserve(actual_point_count);
+
+    // Translate the decomposed U matrix rows/columns into Multivectors
+    for (size_t i = 0; i < actual_point_count; ++i) {
+      // U columns represent the basis of the row-space of our contraction matrix.
+      // We map these columns of U back into basis vectors representing points.
+      Multivector point{};
+      for (size_t j = 0; j < Algebra::NUM_BASIS_VECTORS; ++j) {
+        point.set_coefficient((1UL << j), u[j][i]);
+      }
+      const auto w{weight(point)};
+      if (abs(w) > EPSILON) {
+        points.emplace_back(point / w);
+      } else {
+        // This point is likely at infinity (a scaled form of e_inf). We include it in the results
+        // since some use cases, e.g. tests for the validity of a line, might want the e_inf factor
+        // included.
+        points.emplace_back(point);
+      }
+    }
+
+    return points;
+  }
 };
 
 template <typename Scalar = DefaultScalarType>
@@ -1496,6 +1583,9 @@ using Cga3dGeometry = CgaGeometryType<3, Scalar>;
 template <typename Scalar = DefaultScalarType>
 using Cga4dGeometry = CgaGeometryType<4, Scalar>;
 
+static_assert(HasGenericBases<Cga2dGeometry<>>);
+static_assert(HasGenericBases<Cga3dGeometry<>>);
+static_assert(HasGenericBases<Cga4dGeometry<>>);
 static_assert(ConformalGeometryModel<Cga2dGeometry<>>);
 static_assert(ConformalGeometryModel<Cga3dGeometry<>>);
 static_assert(ConformalGeometryModel<Cga4dGeometry<>>);
