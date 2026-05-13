@@ -16,11 +16,11 @@ TEST(MultiplyTest, Pga2dBasisOnInvertiblePseudoscalar) {
   using Vector = typename AlgebraType::VectorType;
 
   Vector I_prime{Vector::invertible_pseudoscalar()};
+  Vector e0{Vector::e<0>()};
   Vector e1{Vector::e<1>()};
-  Vector e2{Vector::e<2>()};
 
-  EXPECT_EQ(e2, e1.multiply(I_prime));
-  EXPECT_EQ(-e1, e2.multiply(I_prime));
+  EXPECT_EQ(e1, e0.multiply(I_prime));
+  EXPECT_EQ(-e0, e1.multiply(I_prime));
 }
 
 TEST(MultiplyTest, PgaBasisOnInvertiblePseudoscalar) {
@@ -28,9 +28,9 @@ TEST(MultiplyTest, PgaBasisOnInvertiblePseudoscalar) {
   using Vector = typename AlgebraType::VectorType;
 
   Vector I_prime{Vector::invertible_pseudoscalar()};
-  Vector e1{Vector::e<1>()};
-  Vector e2{Vector::e<2>()};
-  Vector e3{Vector::e<3>()};
+  Vector e1{Vector::e<0>()};
+  Vector e2{Vector::e<1>()};
+  Vector e3{Vector::e<2>()};
 
   EXPECT_EQ(e2 * e3, e1.multiply(I_prime));
   EXPECT_EQ(-e1 * e3, e2.multiply(I_prime));
@@ -42,8 +42,8 @@ TEST(LeftContractionTest, Pga2dBasisOnInvertiblePseudoscalar) {
   using Vector = typename AlgebraType::VectorType;
 
   Vector I_prime{Vector::invertible_pseudoscalar()};
-  Vector e1{Vector::e<1>()};
-  Vector e2{Vector::e<2>()};
+  Vector e1{Vector::e<0>()};
+  Vector e2{Vector::e<1>()};
 
   EXPECT_EQ(e2, e1.left_contraction(I_prime));
   EXPECT_EQ(-e1, e2.left_contraction(I_prime));
@@ -54,9 +54,9 @@ TEST(LeftContractionTest, PgaBasisOnInvertiblePseudoscalar) {
   using Vector = typename AlgebraType::VectorType;
 
   Vector I_prime{Vector::invertible_pseudoscalar()};
-  Vector e1{Vector::e<1>()};
-  Vector e2{Vector::e<2>()};
-  Vector e3{Vector::e<3>()};
+  Vector e1{Vector::e<0>()};
+  Vector e2{Vector::e<1>()};
+  Vector e3{Vector::e<2>()};
 
   EXPECT_EQ(e2 * e3, e1.left_contraction(I_prime));
   EXPECT_EQ(-e1 * e3, e2.left_contraction(I_prime));

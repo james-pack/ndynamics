@@ -48,7 +48,7 @@ class Multivector final {
   static constexpr size_t DEGENERATE_BASIS_MASK = []() {
     size_t mask{};
     for (size_t i = 0; i < NUM_ZERO_BASES; ++i) {
-      mask = mask | (1UL << i);
+      mask = mask | (1UL << (NUM_POSITIVE_BASES + NUM_NEGATIVE_BASES + i));
     }
     return mask;
   }();

@@ -22,6 +22,31 @@ TYPED_TEST_SUITE(MultivectorTest, MultivectorTypes);
 // Construction & Representation
 //--------------------------------------------------------------------------------------------------
 
+TYPED_TEST(MultivectorTest, PositiveBasesAreFirst) {
+  static constexpr typename TypeParam::ScalarType METRIC{1};
+  static constexpr size_t START_INDEX{0};
+  for (size_t i = START_INDEX; i < START_INDEX + TypeParam::NUM_POSITIVE_BASES; ++i) {
+    EXPECT_EQ(METRIC, (TypeParam::e(i) * TypeParam::e(i)).scalar());
+  }
+}
+
+TYPED_TEST(MultivectorTest, NegativeBasesAreSecond) {
+  static constexpr typename TypeParam::ScalarType METRIC{-1};
+  static constexpr size_t START_INDEX{TypeParam::NUM_POSITIVE_BASES};
+  for (size_t i = START_INDEX; i < START_INDEX + TypeParam::NUM_NEGATIVE_BASES; ++i) {
+    EXPECT_EQ(METRIC, (TypeParam::e(i) * TypeParam::e(i)).scalar());
+  }
+}
+
+TYPED_TEST(MultivectorTest, ZeroBasesAreLast) {
+  static constexpr typename TypeParam::ScalarType METRIC{0};
+  static constexpr size_t START_INDEX{TypeParam::NUM_POSITIVE_BASES +
+                                      TypeParam::NUM_NEGATIVE_BASES};
+  for (size_t i = START_INDEX; i < START_INDEX + TypeParam::NUM_ZERO_BASES; ++i) {
+    EXPECT_EQ(METRIC, (TypeParam::e(i) * TypeParam::e(i)).scalar());
+  }
+}
+
 TYPED_TEST(MultivectorTest, DefaultConstructionYieldsZeroMultivector) {
   static constexpr TypeParam zero{};
   static constexpr typename TypeParam::ScalarType ZERO{0};
@@ -102,7 +127,7 @@ TYPED_TEST(MultivectorTest, MoveConstructionTransfersComponents) {
   EXPECT_EQ(moved, expected);
 }
 
-TYPED_TEST(MultivectorTest, GradeExtractionReturnsCorrectKVector) {
+TYPED_TEST(MultivectorTest, GradeExtractionReturnsCorrectVector) {
   static constexpr TypeParam e0{TypeParam::template e<0>()};
   static constexpr TypeParam e1{TypeParam::template e<1>()};
   static constexpr TypeParam mixed{e0.add(e0.outer(e1))};
@@ -679,7 +704,7 @@ TYPED_TEST(MultivectorTest, InvertiblePseudoscalarHasAllNonzeroBases) {
   static constexpr TypeParam I{TypeParam::invertible_pseudoscalar()};
   TypeParam expected{1};
 
-  for (size_t i = TypeParam::NUM_ZERO_BASES; i < TypeParam::NUM_BASIS_VECTORS; ++i) {
+  for (size_t i = 0; i < TypeParam::NUM_BASIS_VECTORS - TypeParam::NUM_ZERO_BASES; ++i) {
     expected = expected.outer(TypeParam::e(i));
   }
 
@@ -787,20 +812,6 @@ TYPED_TEST(MultivectorTest, ContractionWithReversePseudoscalarYieldsDualUpToSign
     EXPECT_TRUE(is_original || is_negated);
   }
 }
-
-//--------------------------------------------------------------------------------------------------
-// Exponentiation & Transcendentals
-//--------------------------------------------------------------------------------------------------
-
-// These tests require exp(), log(), and sqrt() on Multivector, which are not
-// present in the current API. See the list of unimplemented tests below.
-
-//--------------------------------------------------------------------------------------------------
-// Rotors & Versors
-//--------------------------------------------------------------------------------------------------
-
-// These tests require exp() to construct rotors from bivectors, and a sandwich
-// product helper. See the list of unimplemented tests below.
 
 //--------------------------------------------------------------------------------------------------
 // Numerical Robustness
