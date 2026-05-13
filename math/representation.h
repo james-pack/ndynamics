@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <mutex>
 #include <string>
 #include <string_view>
 
@@ -10,12 +11,6 @@
 #include "string/string_utils.h"
 
 namespace ndyn::math {
-
-template <typename Algebra>
-struct NameTable final {};
-
-template <typename Algebra>
-auto generate_name_table() {}
 
 constexpr std::string generate_basis_blade_name(string::StringLike auto&& prefix,
                                                 size_t name_offset, size_t basis_blade) {
@@ -51,8 +46,8 @@ struct Basis final {
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
-  const std::string_view name{};
-  const Multivector basis{Scalar{1}};
+  std::string_view name{};
+  Multivector basis{Scalar{1}};
 };
 
 template <typename Algebra>
@@ -91,7 +86,53 @@ class AlgebraRepresentation final {
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
  private:
-  static constexpr auto bases_{generate_representation<Algebra, BASIS_PREFIX, BASIS_NAME_OFFSET>()};
+  // We arbitrarily set a threshold for when to generate the bases at compile-time. If this value is
+  // too large, compilation times become ridiculous. This specific threshold value was chosen as it
+  // is the maximum size of a typical algebra, and it results in reasonable, usually subsecond,
+  // compile times. Note that there is very little practical reason to actually generate these bases
+  // at compile-time. This was originally done as a learning exercise.
+  static constexpr bool IS_SMALL_ALGEBRA{Algebra::NUM_BASIS_VECTORS <= 6};
+
+  static constexpr auto bases_ = []() {
+    if constexpr (IS_SMALL_ALGEBRA) {
+      return generate_representation<Algebra, BASIS_PREFIX, BASIS_NAME_OFFSET>();
+    } else {
+      // Note that bases_ should only be used when IS_SMALL_ALGEBRA is true. Any usages of bases_
+      // when it's not true are supposed to result in errors. We use a different type to hopefully
+      // cause compilation errors, rather than runtime errors.
+      return 0;
+    }
+  }();
+
+  [[nodiscard]] static const auto& get_bases_large_algebra() noexcept {
+    static_assert(!IS_SMALL_ALGEBRA);
+    static std::array<std::string, Algebra::NUM_BASIS_BLADES> names;
+    static std::array<Basis<Algebra>, Algebra::NUM_BASIS_BLADES> bases;
+    static std::once_flag initialized;
+    std::call_once(initialized, []() {
+      for (size_t i = 0; i < Algebra::NUM_BASIS_BLADES; ++i) {
+        // The small algebra form computes the names into the text of the executable and uses a
+        // string_view of that text. At runtime, we need to manually provide storage for the name.
+        names[i] = generate_basis_blade_name(BASIS_PREFIX, BASIS_NAME_OFFSET, i);
+
+        bases[i] = {
+            .name = names[i],                //
+            .basis = Multivector::blade(i),  //
+        };
+      }
+    });
+    return bases;
+  }
+
+  [[nodiscard]] static constexpr const auto& get_bases() noexcept {
+    if constexpr (IS_SMALL_ALGEBRA) {
+      return bases_;
+    } else {
+      return get_bases_large_algebra();
+    }
+  }
+
+  [[nodiscard]] static constexpr const auto& get_basis(size_t i) noexcept { return get_bases()[i]; }
 
   [[nodiscard]] static constexpr std::string basis_element_to_string(Scalar s,
                                                                      std::string_view basis_name,
@@ -114,7 +155,7 @@ class AlgebraRepresentation final {
     std::string result{basis_element_to_string(vec.scalar(), "", threshold)};
     for (size_t i = 1; i < Algebra::NUM_BASIS_BLADES; ++i) {
       std::string basis_result{
-          basis_element_to_string(vec.coefficient(i), bases_[i].name, threshold)};
+          basis_element_to_string(vec.coefficient(i), get_basis(i).name, threshold)};
       if (!basis_result.empty()) {
         if (!result.empty()) {
           result.append(" + ");
@@ -127,7 +168,8 @@ class AlgebraRepresentation final {
 
   [[nodiscard]] static constexpr const Multivector* lookup_basis(
       std::string_view representation) noexcept {
-    for (const auto& basis : bases_) {
+    for (size_t i = 1; i < Algebra::NUM_BASIS_BLADES; ++i) {
+      const auto& basis{get_basis(i)};
       if (representation == basis.name) {
         return &basis.basis;
       }
@@ -135,8 +177,8 @@ class AlgebraRepresentation final {
     return nullptr;
   }
 
-  [[nodiscard]] static constexpr auto bases_begin() noexcept { return bases_.begin(); }
-  [[nodiscard]] static constexpr auto bases_end() noexcept { return bases_.end(); }
+  [[nodiscard]] static constexpr auto bases_begin() noexcept { return get_bases().begin(); }
+  [[nodiscard]] static constexpr auto bases_end() noexcept { return get_bases().end(); }
 };
 
 static constexpr char GENERIC_BASIS_PREFIX[] = "e";
