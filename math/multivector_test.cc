@@ -4,8 +4,8 @@
 
 #include "glog/logging.h"
 #include "gtest/gtest.h"
-#include "math/canonical_basis_representation.h"
 #include "math/multivector_test_utils.h"
+#include "math/representation.h"
 
 namespace ndyn::math {
 

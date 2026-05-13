@@ -5,14 +5,13 @@
 
 #include "gtest/gtest.h"
 #include "math/abs.h"
-#include "math/basis_representation.h"
-#include "math/generic_basis_representation.h"
 #include "math/multivector.h"
+#include "math/representation.h"
 
 namespace ndyn::math {
 
 template <typename Algebra,  //
-          BasisRepresentation<Algebra> Representation = math::GenericBasisRepresentation<Algebra> >
+          typename Representation = GenericRepresentation<Algebra>>
 ::testing::AssertionResult AreNear(const typename Algebra::VectorType& lhs,  //
                                    const typename Algebra::VectorType& rhs,  //
                                    typename Algebra::ScalarType epsilon = Algebra::EPSILON) {
@@ -38,7 +37,7 @@ template <typename Algebra,  //
  * scale factor are equivalent for most purposes.
  */
 template <typename Algebra,  //
-          BasisRepresentation<Algebra> Representation = math::GenericBasisRepresentation<Algebra> >
+          typename Representation = GenericRepresentation<Algebra>>
 ::testing::AssertionResult AreScaled(const typename Algebra::VectorType& lhs,  //
                                      const typename Algebra::VectorType& rhs,  //
                                      typename Algebra::ScalarType epsilon = Algebra::EPSILON) {

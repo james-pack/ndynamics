@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "math/algebra.h"
-#include "math/canonical_basis_representation.h"
+#include "math/representation.h"
 #include "math/multivector.h"
 
 namespace ndyn::math {
