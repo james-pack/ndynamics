@@ -13,6 +13,34 @@
 
 namespace ndyn::math {
 
+template <GeometryModel EmbeddedSpaceType>
+class ConformalAtlas final {
+ public:
+  using EmbeddedSpace = EmbeddedSpaceType;
+  using Scalar = typename EmbeddedSpace::Scalar;
+
+  template <GeometryModel ContainingSpace>
+  [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedSpace> auto&& v) noexcept {
+    typename ContainingSpace::Multivector result{};
+    for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
+      result.set_coefficient(i, v.coefficient(i));
+    }
+    const auto norm_sq{v.square_magnitude()};
+    result += (norm_sq - Scalar{1}) / Scalar{2} * ContainingSpace::e_plus() +
+              (norm_sq + Scalar{1}) / Scalar{2} * ContainingSpace::e_minus();
+    return result;
+  }
+
+  template <GeometryModel ContainingSpace>
+  [[nodiscard]] static constexpr auto lower(IsMultivectorLike<ContainingSpace> auto&& v) noexcept {
+    typename EmbeddedSpace::Multivector result{};
+    for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
+      result.set_coefficient(i, v.coefficient(i));
+    }
+    return result;
+  }
+};
+
 /**
  * A GeometryModel implementation on a conformal geometric algebra.
  *
@@ -40,13 +68,16 @@ namespace ndyn::math {
  *   e<3> = e_plus
  *   e<4> = e_minus
  */
-template <GeometryModel EmbeddedSpaceType, typename T = DefaultScalarType>
+template <GeometryModel EmbeddedSpaceType, IsAtlas AtlasType, typename T = DefaultScalarType>
 class ConformalGeometryType final {
  public:
   using EmbeddedSpace = EmbeddedSpaceType;
   static constexpr size_t NUM_PHYSICAL_DIMENSIONS{EmbeddedSpace::NUM_BASIS_VECTORS};
 
-  using G = ConformalGeometryType<EmbeddedSpace, T>;
+  using G = ConformalGeometryType<EmbeddedSpace, AtlasType, T>;
+
+  using Atlas = AtlasType;
+  static_assert(std::is_same_v<typename Atlas::EmbeddedSpace, EmbeddedSpace>);
 
   using Algebra = math::Algebra<T, NUM_PHYSICAL_DIMENSIONS + 1, 1, 0>;
   using Multivector = Algebra::VectorType;
@@ -232,22 +263,11 @@ class ConformalGeometryType final {
   }
 
   [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedSpace> auto&& v) noexcept {
-    Multivector result{};
-    for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
-      result.set_coefficient(i, v.coefficient(i));
-    }
-    const auto norm_sq{v.square_magnitude()};
-    result += (norm_sq - Scalar{1}) / Scalar{2} * e_plus() +
-              (norm_sq + Scalar{1}) / Scalar{2} * e_minus();
-    return result;
+    return Atlas::template lift<G>(v);
   }
 
   [[nodiscard]] static constexpr auto lower(IsMultivectorLike<G> auto&& v) noexcept {
-    typename EmbeddedSpace::Multivector result{};
-    for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
-      result.set_coefficient(i, v.coefficient(i));
-    }
-    return result;
+    return Atlas::template lower<G>(v);
   }
 
   template <std::input_iterator Iter>
