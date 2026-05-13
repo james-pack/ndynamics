@@ -723,6 +723,12 @@ class Multivector final {
     result.coefficients_.at(N) = ScalarType{1};
     return result;
   }
+
+  static constexpr Multivector blade(size_t n) {
+    Multivector result{};
+    result.coefficients_.at(n) = ScalarType{1};
+    return result;
+  }
 };
 
 // Operator overloads where the multivector is not on the left side.
