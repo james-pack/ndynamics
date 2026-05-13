@@ -1,21 +1,21 @@
 #include "gtest/gtest.h"
 #include "math/algebra.h"
-#include "math/canonical_basis_representation.h"
 #include "math/multivector.h"
+#include "math/representation.h"
 
 namespace ndyn::math {
 
 TEST(MultivectorScalabilityTest, CanInstantiateSeveralBases) {
-  static constexpr size_t NUMBER_BASES{7};
-  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr size_t NUM_BASIS_VECTORS{7};
+  using AlgebraType = Algebra<float, NUM_BASIS_VECTORS, 0, 0>;
   static constexpr auto x{Multivector<AlgebraType>::e<0>()};
   static constexpr auto u{1.f + x};
   EXPECT_EQ(x + 1.f, u);
 }
 
 TEST(MultivectorScalabilityTest, CanInstantiateManyBases) {
-  static constexpr size_t NUMBER_BASES{20};
-  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr size_t NUM_BASIS_VECTORS{12};
+  using AlgebraType = Algebra<float, NUM_BASIS_VECTORS, 0, 0>;
   static constexpr auto x{Multivector<AlgebraType>::e<0>()};
   static constexpr auto y{Multivector<AlgebraType>::e<1>()};
   static constexpr auto z{Multivector<AlgebraType>::e<2>()};
@@ -29,22 +29,21 @@ TEST(MultivectorScalabilityTest, CanMultiplyMultivectorsOfSeveralBases) {
   // Once we start using the Cayley tables, by multiplying Multivectors or taking inner or outer
   // products, the number of bases we can use decreases without setting the
   // -fconstexpr-ops-limit compile flag.
-  static constexpr size_t NUMBER_BASES{6};
-  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr size_t NUM_BASIS_VECTORS{6};
+  using AlgebraType = Algebra<float, NUM_BASIS_VECTORS, 0, 0>;
   static constexpr auto x{Multivector<AlgebraType>::e<0>()};
   static constexpr auto a{Multivector<AlgebraType>{1.f}};
 
   EXPECT_EQ(x, a * x);
 }
 
-TEST(MultivectorScalabilityTest, CanHandleSeveralBases) {
-  // For the smallest Cayley table sizes, the number of positive, negative, and zero bases must
-  // sum to 7 or fewer.
-  // Also, with 7 bases, we run into limits on the number of constexpr operations. This
-  // limit can be raised by setting the -fconstexpr-ops-limit compile flag. To keep the testing
-  // configuration simpler, we verify the lower limit below.
-  static constexpr size_t NUMBER_BASES{6};
-  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+TEST(MultivectorScalabilityTest, CanHandleSeveralOperations) {
+  // For the smallest Cayley table sizes, the number of basis vectors must be 7 or fewer.
+  // Also, with 7 bases, we can run into limits on the number of constexpr operations. This
+  // limit can be raised by setting the -fconstexpr-ops-limit compile flag. This test pushes these
+  // limits.
+  static constexpr size_t NUM_BASIS_VECTORS{7};
+  using AlgebraType = Algebra<float, NUM_BASIS_VECTORS, 0, 0>;
   static constexpr auto x{Multivector<AlgebraType>::e<0>()};
   static constexpr auto y{Multivector<AlgebraType>::e<1>()};
   static constexpr auto z{Multivector<AlgebraType>::e<2>()};
@@ -93,8 +92,8 @@ TEST(MultivectorScalabilityTest, DISABLED_CanHandleManyBases) {
   // are run.
 
   /*
-  static constexpr size_t NUMBER_BASES{10};
-  using AlgebraType = Algebra<float, NUMBER_BASES, 0, 0>;
+  static constexpr size_t NUM_BASIS_VECTORS{10};
+  using AlgebraType = Algebra<float, NUM_BASIS_VECTORS, 0, 0>;
   static constexpr auto x{Multivector<AlgebraType>::e<0>()};
   static constexpr auto y{Multivector<AlgebraType>::e<1>()};
   static constexpr auto z{Multivector<AlgebraType>::e<2>()};
