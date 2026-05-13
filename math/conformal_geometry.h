@@ -40,13 +40,13 @@ namespace ndyn::math {
  *   e<3> = e_plus
  *   e<4> = e_minus
  */
-template <GeometryModel EmbeddedManifoldType, typename T = DefaultScalarType>
+template <GeometryModel EmbeddedSpaceType, typename T = DefaultScalarType>
 class ConformalGeometryType final {
  public:
-  using EmbeddedManifold = EmbeddedManifoldType;
-  static constexpr size_t NUM_PHYSICAL_DIMENSIONS{EmbeddedManifold::NUM_BASIS_VECTORS};
+  using EmbeddedSpace = EmbeddedSpaceType;
+  static constexpr size_t NUM_PHYSICAL_DIMENSIONS{EmbeddedSpace::NUM_BASIS_VECTORS};
 
-  using G = ConformalGeometryType<EmbeddedManifold, T>;
+  using G = ConformalGeometryType<EmbeddedSpace, T>;
 
   using Algebra = math::Algebra<T, NUM_PHYSICAL_DIMENSIONS + 1, 1, 0>;
   using Multivector = Algebra::VectorType;
@@ -171,25 +171,25 @@ class ConformalGeometryType final {
    * (IPNS). In OPNS, the join of two disjoint objects is their outer product,
    * which builds higher-grade blades from lower-grade ones. Conversely, in IPNS, where objects are
    * represented by their duals (the "normal" or "null" space they exclude), the join is performed
-   * via the regressive product. While the outer product expands the "span," the regressive
-   * product effectively performs a "dual-meet," allowing the algebra to resolve the union of
-   * constraints.
+   * via the regressive product. While the outer product expands the span of an object, the
+   * regressive product effectively performs a union of constraints.
    *
    * In the OPNS framework, an object is defined by the points it contains. Here, the identity
    * element for the join is the scalar 1, representing the "empty set" or a vacuous lack of
    * constraint. Joining three points in OPNS creates a circle (a round), as the wedge product
    * captures the unique 3-blade defining that circular path. To create a "flat" such as a
    * plane, one would join three points with the point at infinity (e_inf). In this mode,
-   * the join is constructive and grade-increasing: it takes the "nothingness" of the scalar
-   * identity and adds dimensions of containment.
+   * the join is constructive and grade-increasing. Each join increases the set of things contained
+   * by the multivector.
    *
-   * In the IPNS framework, the logic is inverted: an object is defined by its relationship to
-   * the vectors normal to it. Here, the identity element for the join is the pseudoscalar
-   * (I), representing the "total space." In IPNS, the join is a grade-decreasing operation
-   * (using the regressive product) that removes constraints. While an OPNS join adds "what is
-   * there," an IPNS join removes the "limitations" of what is not. This distinction is vital; the
-   * scalar 1 is the "nothing" from which we build (Join in OPNS), while the pseudoscalar I is the
-   * "everything" from which we carve (Meet in OPNS).
+   * In the IPNS framework, the logic is inverted: an object is defined by the things it excludes.
+   * These excluded things are the vectors normal to it. Here, the identity element for the join is
+   * the pseudoscalar (I), representing the total space. In IPNS, the join is a grade-decreasing
+   * operation (using the regressive product) that removes constraints. While an OPNS join adds to
+   * the set of allowed things, an IPNS join removes constraints of what is not. In OPNS, the scalar
+   * 1, representing an empty set, is the starting point from which we build (the join operation).
+   * While in IPNS the pseudoscalar I, representing the entire space, is the starting point from
+   * which we remove constraints via the join operation.
    *
    * This dual nature allows the join to function as the operation of an algebraic monoid
    * structure. (A monoid can be thought of as a group without inverse elements.) By treating the
@@ -231,9 +231,9 @@ class ConformalGeometryType final {
     }
   }
 
-  [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedManifold> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedSpace> auto&& v) noexcept {
     Multivector result{};
-    for (size_t i = 0; i < EmbeddedManifold::NUM_BASIS_BLADES; ++i) {
+    for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
       result.set_coefficient(i, v.coefficient(i));
     }
     const auto norm_sq{v.square_magnitude()};
@@ -243,8 +243,8 @@ class ConformalGeometryType final {
   }
 
   [[nodiscard]] static constexpr auto lower(IsMultivectorLike<G> auto&& v) noexcept {
-    typename EmbeddedManifold::Multivector result{};
-    for (size_t i = 0; i < EmbeddedManifold::NUM_BASIS_BLADES; ++i) {
+    typename EmbeddedSpace::Multivector result{};
+    for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
       result.set_coefficient(i, v.coefficient(i));
     }
     return result;

@@ -127,39 +127,39 @@ concept GeometryModel =     //
     true;
 
 /**
- * Every non-vector space geometry must express what manifold it embeds. The main purpose of
+ * Every non-vector space geometry must express what space it embeds. The main purpose of
  * expressing this embedding is to bridge construction and deconstruction primitives and operators
- * in conformal and projective GAs. This embedded manifold defines how the API for primitives and
+ * in conformal and projective GAs. This embedded space defines how the API for primitives and
  * operators should bridge from an intuitive vector space GA to a conformal or projective
  * representation.
  *
- * The embedded manifold itself is just another geometry, in the sense of GeometryModel, meaning
- * that this definition is potentially recursive. In most cases, the embedded manifold will be a
+ * The embedded space itself is just another geometry, in the sense of GeometryModel, meaning
+ * that this definition is potentially recursive. In most cases, the embedded space will be a
  * Euclidean vector space or potentially a Minkowski vector space.
  *
- * The scalar type of the embedded manifold must be the same as the scalar type of the geometry.
+ * The scalar type of the embedded space must be the same as the scalar type of the geometry.
  * This restriction simplifies implementation and seems reasonable at this time. The restriction
  * could be lifted if necessary, but it would require specifying a mapping from one scalar type to
  * another.
  */
 template <typename G>
-concept HasEmbeddedManifold =                                                                   //
-    requires { typename G::EmbeddedManifold; } and                                              //
-    GeometryModel<typename G::EmbeddedManifold> and                                             //
-    requires { std::is_same_v<typename G::Scalar, typename G::EmbeddedManifold::Scalar>; } and  //
-    requires(const G::Multivector& g, const typename G::EmbeddedManifold::Multivector& embed) {
-      { G::lower(g) } -> IsMultivectorLike<typename G::EmbeddedManifold>;
+concept HasEmbeddedSpace =                                                                   //
+    requires { typename G::EmbeddedSpace; } and                                              //
+    GeometryModel<typename G::EmbeddedSpace> and                                             //
+    requires { std::is_same_v<typename G::Scalar, typename G::EmbeddedSpace::Scalar>; } and  //
+    requires(const G::Multivector& g, const typename G::EmbeddedSpace::Multivector& embed) {
+      { G::lower(g) } -> IsMultivectorLike<typename G::EmbeddedSpace>;
       { G::lift(embed) } -> IsMultivectorLike<G>;
     } and  //
     true;
 
 /**
- * Expresses how a geometry models points in terms of the embedded manifold.
+ * Expresses how a geometry models points in terms of the embedded space.
  *
- * The overall pattern is to construct a point on the embedded manifold and then use the
- * make_point() method to transform it into a point in this geometry. Vector space geometries have a
- * simple method for creating points from scalars, much like the API you might expect for a normal
- * vector in the style of vector analysis from Gibbs and Heaviside.
+ * The overall pattern is to construct a point in the embedded space and then use the
+ * lift() method from the HasEmbeddedSpace concept to transform it into a point in this geometry.
+ * Vector space geometries have a simple method for creating points from scalars, much like the API
+ * you might expect for a normal vector in the style of vector analysis from Gibbs and Heaviside.
  */
 template <typename G>
 concept HasPoint =        //
@@ -217,7 +217,7 @@ template <typename G>
 concept ProjectiveGeometryModel =  //
     GeometryModel<G> and           //
     HasProjectiveBases<G> and      //
-    HasEmbeddedManifold<G> and     //
+    HasEmbeddedSpace<G> and        //
 
     // Geometric primitives.
     HasPoint<G> and  //
@@ -243,7 +243,7 @@ template <typename G>
 concept ConformalGeometryModel =  //
     GeometryModel<G> and          //
     HasConformalBases<G> and      //
-    HasEmbeddedManifold<G> and    //
+    HasEmbeddedSpace<G> and       //
 
     // Geometric primitives.
     HasPoint<G> and
