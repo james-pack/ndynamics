@@ -15,6 +15,7 @@ cc_library(
         "integrators.h",
         "matrix.h",
         "multivector.h",
+        "projective_geometry.h",
         "representation.h",
         "state.h",
         "unitary_ops.h",
@@ -226,6 +227,16 @@ cc_test(
 cc_test(
     name = "conformal_geometry_test",
     srcs = ["conformal_geometry_test.cc"],
+    deps = [
+        ":math",
+        ":testing",
+        "//third_party/gtest",
+    ],
+)
+
+cc_test(
+    name = "projective_geometry_test",
+    srcs = ["projective_geometry_test.cc"],
     deps = [
         ":math",
         ":testing",
