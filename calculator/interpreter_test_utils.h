@@ -7,12 +7,12 @@
 #include "calculator/parser.h"
 #include "glog/logging.h"
 #include "gtest/gtest.h"
-#include "math/generic_basis_representation.h"
 #include "math/multivector_test_utils.h"
+#include "math/representation.h"
 
 namespace ndyn::ui {
 
-template <typename Algebra, typename Representation = math::GenericBasisRepresentation<Algebra>>
+template <typename Algebra, typename Representation = math::GenericRepresentation<Algebra>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename Algebra::VectorType& expected,
                                         bool do_ast_print = false) {
@@ -51,7 +51,7 @@ template <typename Algebra, typename Representation = math::GenericBasisRepresen
          << ", expected: " << Representation::to_string(expected);
 }
 
-template <typename AlgebraT, typename RepresentationT = math::GenericBasisRepresentation<AlgebraT>>
+template <typename AlgebraT, typename RepresentationT = math::GenericRepresentation<AlgebraT>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
                                         const typename AlgebraT::ScalarType& expected,
                                         bool do_ast_print = false) {

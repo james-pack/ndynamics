@@ -7,8 +7,7 @@
 #include "calculator/interpreter_test_utils.h"
 #include "calculator/parser.h"
 #include "gtest/gtest.h"
-#include "math/canonical_basis_representation.h"
-#include "math/generic_basis_representation.h"
+#include "math/representation.h"
 
 namespace ndyn::ui {
 
@@ -53,7 +52,7 @@ template <typename AlgebraT>
 class InterpreterFixture : public ::testing::Test {
  protected:
   using Algebra = AlgebraT;
-  using Representation = math::GenericBasisRepresentation<AlgebraT>;
+  using Representation = math::GenericRepresentation<AlgebraT>;
   using Vector = typename AlgebraT::VectorType;
   using Scalar = typename AlgebraT::ScalarType;
 
@@ -97,17 +96,7 @@ TYPED_TEST_SUITE(BaseInterpreterBehavior, ZeroBasisVectors);
 
 TYPED_TEST(BaseInterpreterBehavior, BasisBladesInSymbolTableAfterConstruction) {
   using A = typename TestFixture::Algebra;
-  if constexpr (A::NUM_BASIS_BLADES > 1) {
-    // Testing the exact number of symbols is not a good idea. The symbols are determined by the
-    // basis representation, so testing the exact number would really be testing whatever
-    // implementation is providing those representations. Testing if it is non-empty also relies on
-    // the basis representation, but here we want to assert that the interpreter is using the
-    // representation.
-    EXPECT_FALSE(this->interpreter.symbols.empty());
-  } else {
-    // The real numbers (aka, the scalar algebra) will have no basis blades in the symbol table.
-    EXPECT_TRUE(this->interpreter.symbols.empty());
-  }
+  EXPECT_EQ(A::NUM_BASIS_BLADES, this->interpreter.symbols.size());
 }
 
 TYPED_TEST(BaseInterpreterBehavior, InterpretingExpressionAddsUnderscoreToTheSymbolTable) {
@@ -335,7 +324,7 @@ TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, DISABLED_DivisionAssocia
 
 TYPED_TEST(ScalarHandlingAndGeneralInterpreterBehavior, AssignAndRecallScalar) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::GenericBasisRepresentation<A>;
+  using Rep = math::GenericRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> interp{};
 
@@ -521,7 +510,7 @@ TYPED_TEST(Interpreting2dAlgebras, SubscriptedIdentifier) {
 
 TYPED_TEST(Interpreting2dAlgebras, OuterProductAndIdentifierFormAreEqual) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::GenericBasisRepresentation<A>;
+  using Rep = math::GenericRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> op_interp{};
   Interpreter<A, Rep> id_interp{};
@@ -632,7 +621,7 @@ TYPED_TEST(Interpreting3dAlgebras, OuterProductE1E2E3ViaIdentifier) {
 
 TYPED_TEST(Interpreting3dAlgebras, TrivectorIdentifierAndOperatorFormAreEqual) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::GenericBasisRepresentation<A>;
+  using Rep = math::GenericRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> op_interp{};
   Interpreter<A, Rep> id_interp{};
@@ -695,7 +684,7 @@ TYPED_TEST(Interpreting3dAlgebras, RightContractionE12OnE1) {
 
 TYPED_TEST(Interpreting3dAlgebras, ParenthesesChangeOuterProductGrouping) {
   using A = typename TestFixture::Algebra;
-  using Rep = math::GenericBasisRepresentation<A>;
+  using Rep = math::GenericRepresentation<A>;
   Parser parser{};
   Interpreter<A, Rep> left_grouped{};
   Interpreter<A, Rep> right_grouped{};

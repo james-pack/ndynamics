@@ -6,11 +6,11 @@
 
 #include "base/except.h"
 #include "calculator/parser.h"
-#include "math/basis_representation.h"
+#include "math/representation.h"
 
 namespace ndyn::ui {
 
-template <typename AlgebraType, math::BasisRepresentation Representation>
+template <typename AlgebraType, typename Representation>
 class Interpreter final : public Visitor {
   using VectorType = typename AlgebraType::VectorType;
   using ScalarType = typename AlgebraType::ScalarType;
@@ -18,7 +18,7 @@ class Interpreter final : public Visitor {
  public:
   Interpreter() {
     for (auto iter = Representation::bases_begin(); iter != Representation::bases_end(); ++iter) {
-      symbols.insert({iter->name, iter->basis});
+      symbols.insert({std::string{iter->name}, iter->basis});
     }
   }
 

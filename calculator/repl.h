@@ -3,17 +3,17 @@
 #include <iostream>
 #include <string>
 
-#include "gflags/gflags.h"
-#include "math/basis_representation.h"
 #include "calculator/ast_printer.h"
 #include "calculator/interpreter.h"
 #include "calculator/parser.h"
+#include "gflags/gflags.h"
+#include "math/representation.h"
 
 DECLARE_bool(show_ast);
 
 namespace ndyn::ui {
 
-template <typename AlgebraT, math::BasisRepresentation<AlgebraT> RepresentationT>
+template <typename AlgebraT, typename RepresentationT>
 class Repl final {
  public:
   using AlgebraType = AlgebraT;

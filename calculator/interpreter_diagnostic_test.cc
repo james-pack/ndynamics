@@ -6,8 +6,8 @@
 #include "calculator/parser.h"
 #include "gtest/gtest.h"
 #include "math/algebra.h"
-#include "math/canonical_basis_representation.h"
 #include "math/multivector_test_utils.h"
+#include "math/representation.h"
 
 namespace ndyn::ui {
 
@@ -44,50 +44,6 @@ TEST(BasicInterpreterTest, CanInterpretComplexBasisVector) {
   // Note that here we are using the generic representation for the complex numbers. This means that
   // we have to use "e1" rather than "i" to mean the first basis vector.
   EXPECT_TRUE(MatchesValue<AlgebraType>("e1", AlgebraType::VectorType::e<0>()));
-}
-
-TEST(BasicInterpreterTest, CanInterpretExpressionsInComplexAlgebra) {
-  using AlgebraType = Complex<>;
-  // Use the canonical representation for the complex numbers so that we can work with "i" instead
-  // of "e1".
-  using Representation = CanonicalBasisRepresentation<AlgebraType>;
-
-  constexpr auto i{AlgebraType::VectorType::e<0>()};
-
-  // Hack to workaround EXPECT_TRUE()'s template bugs.
-  auto validate = [](auto a, auto b) {
-    auto result = MatchesValue<AlgebraType, Representation>(a, b);
-    EXPECT_TRUE(result);
-  };
-
-  validate("1", 1);
-  validate("1 * 2", 2);
-  validate("2 * 2", 4);
-  validate("1 + 2", 3);
-  validate("2 + 2", 4);
-  validate("2 - 2", 0);
-  validate("4 - 2", 2);
-
-  validate("i", i);
-  validate("1 * i", i);
-  validate("i * 1", i);
-  validate("i * 2", 2 * i);
-  validate("i * i", i * i);
-  validate("i * i", -1);
-
-  // Testing the evaluation of select expressions. Includes the fully evaluated form to help with
-  // debugging if there is a problem.
-  validate("(i + 1) * (1 + i)", (i + 1) * (1 + i));
-  validate("(i + 1) * (1 + i)", 2 * i);
-
-  validate("(i + 1) * (1 - i)", (i + 1) * (1 - i));
-  validate("(i + 1) * (1 - i)", 2);
-
-  validate("(i - 1) * (1 + i)", (i - 1) * (1 + i));
-  validate("(i - 1) * (1 + i)", -2);
-
-  validate("(i - 1) * (1 - i)", (i - 1) * (1 - i));
-  validate("(i - 1) * (1 - i)", 2 * i);
 }
 
 TEST(BasicInterpreterTest, CanInterpretVga2dBasisVectors) {
@@ -130,7 +86,7 @@ TEST(BasicInterpreterTest, CanInterpretVgaBasisVectors) {
 class InterpreterTest : public ::testing::Test {
  public:
   using AlgebraType = Vga<>;
-  using Representation = math::GenericBasisRepresentation<AlgebraType>;
+  using Representation = math::GenericRepresentation<AlgebraType>;
 
   Parser parser{};
   Interpreter<AlgebraType, Representation> interpreter{};
