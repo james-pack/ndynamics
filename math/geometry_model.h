@@ -141,6 +141,9 @@ concept GeometryModel =     //
  * This restriction simplifies implementation and seems reasonable at this time. The restriction
  * could be lifted if necessary, but it would require specifying a mapping from one scalar type to
  * another.
+ *
+ * See the IsAtlas concept below as the typical way to provide the functionality in this concept is
+ * to use an Atlas.
  */
 template <typename G>
 concept HasEmbeddedSpace =                                                                   //
@@ -150,6 +153,43 @@ concept HasEmbeddedSpace =                                                      
     requires(const G::Multivector& g, const typename G::EmbeddedSpace::Multivector& embed) {
       { G::lower(g) } -> IsMultivectorLike<typename G::EmbeddedSpace>;
       { G::lift(embed) } -> IsMultivectorLike<G>;
+    } and  //
+    true;
+
+/**
+ * An Atlas provides a map for multivectors between a containing space and an embedded space. Note
+ * that there is no expectation that this map is consistent. In general, lower(lift(p)) != p, but in
+ * practice, each atlas should provide some guarantee of consistency.
+ *
+ * Note on terminology: the term Atlas comes from differential geometry. The idea is that a manifold
+ * is usually embedded in a higher dimensional space. For any point on the manifold, there exists at
+ * least one mapping function, called a chart, that maps a point on the manifold to a lower
+ * dimensional space. The set of all of these charts is called an atlas.
+ *
+ * We extend this notion of mapping points to mapping multivectors. All of the geometries modelled
+ * here can express a point as a single multivector. But, multivectors can express more than points.
+ * Each Atlas must achieve a useful consistency for the purpose at hand.
+ */
+template <typename Atlas>
+concept IsAtlas =                                     //
+    requires { typename Atlas::EmbeddedSpace; } and   //
+    GeometryModel<typename Atlas::EmbeddedSpace> and  //
+    requires {
+      []<typename ContainingSpace>(const typename ContainingSpace::Multivector& contained,
+                                   const typename Atlas::EmbeddedSpace::Multivector& embed)
+        requires requires {
+          {
+            // lower() takes a Multivector in the ContainingSpace and maps it to a Multivector in
+            // the EmbeddedSpace.
+            Atlas::template lower<ContainingSpace>(contained)
+          } -> IsMultivectorLike<ContainingSpace>;
+          {
+            // lift() takes a Multivector in the EmbeddedSpace and maps it to a Multivector in
+            // the ContainingSpace.
+            Atlas::template lift<ContainingSpace>(embed)
+          } -> IsMultivectorLike<ContainingSpace>;
+        }
+      {};
     } and  //
     true;
 
