@@ -12,7 +12,7 @@ DECLARE_string(convention);
 DECLARE_string(interpretation);
 DECLARE_int32(dims);
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 enum class Model {
   Vga,
@@ -70,4 +70,4 @@ enum class GeometricInterpretation {
 
 [[nodiscard]] inline int get_dims_flag() { return FLAGS_dims; }
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

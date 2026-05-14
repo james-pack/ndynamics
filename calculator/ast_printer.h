@@ -2,9 +2,9 @@
 
 #include "calculator/parser.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 // Function to print the AST starting with a LineAst node.
 void print_ast(LineAst& line, int starting_indent = 0);
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

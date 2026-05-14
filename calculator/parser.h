@@ -5,7 +5,7 @@
 
 #include "peglib.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 struct Visitor;
 
@@ -195,4 +195,4 @@ class Parser final {
   }
 };
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

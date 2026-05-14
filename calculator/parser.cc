@@ -11,7 +11,7 @@
 #include "peglib.h"
 #include "utf8proc.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 const char grammar_definition[] = R"GRAMMAR(
 Line <- _ Command _ / _ Statement _ / _
@@ -673,4 +673,4 @@ void BinaryAst::ingest_terms(std::shared_ptr<ExpressionAst> lhs, std::shared_ptr
   }
 }
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

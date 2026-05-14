@@ -11,7 +11,7 @@
 
 DECLARE_bool(show_ast);
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 template <typename AlgebraT, typename RepresentationT>
 class Repl final {
@@ -67,4 +67,4 @@ class Repl final {
   }
 };
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

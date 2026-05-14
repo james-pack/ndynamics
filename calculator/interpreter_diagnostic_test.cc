@@ -9,7 +9,7 @@
 #include "math/multivector_test_utils.h"
 #include "math/representation.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 using namespace ndyn::math;
 
@@ -125,4 +125,4 @@ TEST_F(InterpreterTest, MiscUnicodeStatement) {
   EXPECT_TRUE(parse("r₊ = (G*M + (G²*M² - a²*c²)^(1/2)) / c²"));
 }
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

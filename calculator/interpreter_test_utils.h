@@ -10,7 +10,7 @@
 #include "math/multivector_test_utils.h"
 #include "math/representation.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 template <typename Algebra, typename Representation = math::GenericRepresentation<Algebra>>
 ::testing::AssertionResult MatchesValue(const std::string_view line,
@@ -59,4 +59,4 @@ template <typename AlgebraT, typename RepresentationT = math::GenericRepresentat
                                                  do_ast_print);
 }
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

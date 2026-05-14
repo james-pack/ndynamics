@@ -9,7 +9,7 @@
 #include "gflags/gflags.h"
 #include "glog/logging.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 struct OptionDescriptor {
   const char* const name;
@@ -165,26 +165,26 @@ template <size_t N>
   return false;
 }
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator
 
-DEFINE_string(model, "cga", ndyn::ui::MODEL_HELP.data());
+DEFINE_string(model, "cga", ndyn::calculator::MODEL_HELP.data());
 DEFINE_validator(model, [](const char* fn, const std::string& v) {
-  return ndyn::ui::validate_option(fn, v, ndyn::ui::MODEL_OPTIONS);
+  return ndyn::calculator::validate_option(fn, v, ndyn::calculator::MODEL_OPTIONS);
 });
 
-DEFINE_string(metric, "euclidean", ndyn::ui::METRIC_HELP.data());
+DEFINE_string(metric, "euclidean", ndyn::calculator::METRIC_HELP.data());
 DEFINE_validator(metric, [](const char* fn, const std::string& v) {
-  return ndyn::ui::validate_option(fn, v, ndyn::ui::METRIC_OPTIONS);
+  return ndyn::calculator::validate_option(fn, v, ndyn::calculator::METRIC_OPTIONS);
 });
 
-DEFINE_string(convention, "west_coast", ndyn::ui::CONVENTION_HELP.data());
+DEFINE_string(convention, "west_coast", ndyn::calculator::CONVENTION_HELP.data());
 DEFINE_validator(convention, [](const char* fn, const std::string& v) {
-  return ndyn::ui::validate_option(fn, v, ndyn::ui::CONVENTION_OPTIONS);
+  return ndyn::calculator::validate_option(fn, v, ndyn::calculator::CONVENTION_OPTIONS);
 });
 
-DEFINE_string(interpretation, "opns", ndyn::ui::INTERPRET_HELP.data());
+DEFINE_string(interpretation, "opns", ndyn::calculator::INTERPRET_HELP.data());
 DEFINE_validator(interpretation, [](const char* fn, const std::string& v) {
-  return ndyn::ui::validate_option(fn, v, ndyn::ui::INTERPRET_OPTIONS);
+  return ndyn::calculator::validate_option(fn, v, ndyn::calculator::INTERPRET_OPTIONS);
 });
 
 DEFINE_int32(dims, 3, "Number of physical/spatial dimensions.");

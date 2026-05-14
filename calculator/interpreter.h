@@ -8,7 +8,7 @@
 #include "calculator/parser.h"
 #include "math/representation.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 template <typename AlgebraType, typename Representation>
 class Interpreter final : public Visitor {
@@ -176,4 +176,4 @@ class Interpreter final : public Visitor {
   }
 };
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator

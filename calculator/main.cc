@@ -5,7 +5,7 @@
 #include "math/geometries.h"
 #include "math/representation.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 /**
  * Primary entry point for the specialized algebra logic.
@@ -161,12 +161,12 @@ class GeometryDispatcher {
   }
 };
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator
 
 int main(int argc, char* argv[]) {
   ndyn::initialize(&argc, &argv);
 
-  ndyn::ui::GeometryDispatcher::dispatch();
+  ndyn::calculator::GeometryDispatcher::dispatch();
 
   return 0;
 }

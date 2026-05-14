@@ -9,7 +9,7 @@
 #include "gtest/gtest.h"
 #include "math/representation.h"
 
-namespace ndyn::ui {
+namespace ndyn::calculator {
 
 /**
  * Types of algebras organized according to the number of basis vectors available in each.
@@ -703,4 +703,4 @@ TYPED_TEST(Interpreting3dAlgebras, ParenthesesChangeOuterProductGrouping) {
   EXPECT_TRUE(math::AreNear<A>(left_grouped.current_value, right_grouped.current_value));
 }
 
-}  // namespace ndyn::ui
+}  // namespace ndyn::calculator
