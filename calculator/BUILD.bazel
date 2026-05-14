@@ -1,15 +1,15 @@
 cc_library(
     name = "calculator",
     srcs = [
-        "algebra_options.cc",
         "ast_printer.cc",
+        "options.cc",
         "parser.cc",
         "repl.cc",
     ],
     hdrs = [
-        "algebra_options.h",
         "ast_printer.h",
         "interpreter.h",
+        "options.h",
         "parser.h",
         "repl.h",
     ],
