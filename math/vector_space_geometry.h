@@ -26,6 +26,10 @@ class VectorSpaceGeometryType final {
   static constexpr size_t NUM_BASIS_VECTORS{Algebra::NUM_BASIS_VECTORS};
   static constexpr size_t NUM_BASIS_BLADES{Algebra::NUM_BASIS_BLADES};
 
+  static constexpr size_t NUM_POSITIVE_BASES{Algebra::NUM_POSITIVE_BASES};
+  static constexpr size_t NUM_NEGATIVE_BASES{Algebra::NUM_NEGATIVE_BASES};
+  static constexpr size_t NUM_ZERO_BASES{Algebra::NUM_ZERO_BASES};
+
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
  public:

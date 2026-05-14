@@ -105,6 +105,9 @@ concept GeometryModel =     //
       typename G::Multivector;
       typename G::Scalar;
       { G::NUM_PHYSICAL_DIMENSIONS } -> std::convertible_to<size_t>;
+      { G::NUM_POSITIVE_BASES } -> std::convertible_to<size_t>;
+      { G::NUM_NEGATIVE_BASES } -> std::convertible_to<size_t>;
+      { G::NUM_ZERO_BASES } -> std::convertible_to<size_t>;
     } and  //
     requires(const G::Multivector& a) {
       // An empty meet or join is a valid operation. Its result represents the identity element of

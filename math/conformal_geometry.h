@@ -79,12 +79,18 @@ class ConformalGeometryType final {
   using Atlas = AtlasType;
   static_assert(std::is_same_v<typename Atlas::EmbeddedSpace, EmbeddedSpace>);
 
-  using Algebra = math::Algebra<T, NUM_PHYSICAL_DIMENSIONS + 1, 1, 0>;
+  using Algebra =
+      math::Algebra<T, EmbeddedSpace::NUM_POSITIVE_BASES + 1, EmbeddedSpace::NUM_NEGATIVE_BASES + 1,
+                    EmbeddedSpace::NUM_ZERO_BASES>;
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
   static constexpr size_t NUM_BASIS_VECTORS{Algebra::NUM_BASIS_VECTORS};
   static constexpr size_t NUM_BASIS_BLADES{Algebra::NUM_BASIS_BLADES};
+
+  static constexpr size_t NUM_POSITIVE_BASES{Algebra::NUM_POSITIVE_BASES};
+  static constexpr size_t NUM_NEGATIVE_BASES{Algebra::NUM_NEGATIVE_BASES};
+  static constexpr size_t NUM_ZERO_BASES{Algebra::NUM_ZERO_BASES};
 
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
@@ -195,41 +201,6 @@ class ConformalGeometryType final {
   [[nodiscard]] static constexpr auto e13() noexcept { return e1() * e3(); }
   [[nodiscard]] static constexpr auto e23() noexcept { return e2() * e3(); }
 
-  /**
-   * The join is the operation that determines the smallest common subspace containing two
-   * or more geometric entities. Its algebraic implementation depends entirely on the representation
-   * of the geometry: the Outer Product Null Space (OPNS) or the Inner Product Null Space
-   * (IPNS). In OPNS, the join of two disjoint objects is their outer product,
-   * which builds higher-grade blades from lower-grade ones. Conversely, in IPNS, where objects are
-   * represented by their duals (the "normal" or "null" space they exclude), the join is performed
-   * via the regressive product. While the outer product expands the span of an object, the
-   * regressive product effectively performs a union of constraints.
-   *
-   * In the OPNS framework, an object is defined by the points it contains. Here, the identity
-   * element for the join is the scalar 1, representing the "empty set" or a vacuous lack of
-   * constraint. Joining three points in OPNS creates a circle (a round), as the wedge product
-   * captures the unique 3-blade defining that circular path. To create a "flat" such as a
-   * plane, one would join three points with the point at infinity (e_inf). In this mode,
-   * the join is constructive and grade-increasing. Each join increases the set of things contained
-   * by the multivector.
-   *
-   * In the IPNS framework, the logic is inverted: an object is defined by the things it excludes.
-   * These excluded things are the vectors normal to it. Here, the identity element for the join is
-   * the pseudoscalar (I), representing the total space. In IPNS, the join is a grade-decreasing
-   * operation (using the regressive product) that removes constraints. While an OPNS join adds to
-   * the set of allowed things, an IPNS join removes constraints of what is not. In OPNS, the scalar
-   * 1, representing an empty set, is the starting point from which we build (the join operation).
-   * While in IPNS the pseudoscalar I, representing the entire space, is the starting point from
-   * which we remove constraints via the join operation.
-   *
-   * This dual nature allows the join to function as the operation of an algebraic monoid
-   * structure. (A monoid can be thought of as a group without inverse elements.) By treating the
-   * join as a formal mapping within the Grassmannian, the algebra distinguishes between the linear
-   * span (the flat or round extent) and the metric properties (distance and angle). The choice
-   * between an outer product join and a regressive product join determines whether the join
-   * aggregates points into a body (OPNS) or merges the bounding constraints of two separate
-   * manifolds (IPNS).
-   */
   [[nodiscard]] static constexpr auto join() noexcept {
     // Note this result is for an OPNS model. An IPNS model would return the pseudoscalar.
     return Multivector{Scalar{1}};

@@ -49,12 +49,18 @@ class ProjectiveGeometryType final {
   using Atlas = AtlasType;
   static_assert(std::is_same_v<typename Atlas::EmbeddedSpace, EmbeddedSpace>);
 
-  using Algebra = math::Algebra<T, NUM_PHYSICAL_DIMENSIONS, 0, 1>;
+  using Algebra =
+      math::Algebra<T, EmbeddedSpace::NUM_POSITIVE_BASES, EmbeddedSpace::NUM_NEGATIVE_BASES,
+                    EmbeddedSpace::NUM_ZERO_BASES + 1>;
   using Multivector = Algebra::VectorType;
   using Scalar = Algebra::ScalarType;
 
   static constexpr size_t NUM_BASIS_VECTORS{Algebra::NUM_BASIS_VECTORS};
   static constexpr size_t NUM_BASIS_BLADES{Algebra::NUM_BASIS_BLADES};
+
+  static constexpr size_t NUM_POSITIVE_BASES{Algebra::NUM_POSITIVE_BASES};
+  static constexpr size_t NUM_NEGATIVE_BASES{Algebra::NUM_NEGATIVE_BASES};
+  static constexpr size_t NUM_ZERO_BASES{Algebra::NUM_ZERO_BASES};
 
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
