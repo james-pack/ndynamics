@@ -286,12 +286,12 @@ class ConformalGeometryType final {
     const auto w_orig{weight_origin(mv)};
     const auto conformal_mag{Scalar{2} * w_inf * w_orig};
 
-    const auto ratio{physical_mag > EPSILON ? conformal_mag / physical_mag : Scalar{1}};
+    const auto ratio{abs(physical_mag) > EPSILON ? conformal_mag / physical_mag : Scalar{1}};
     // const bool is_null{(physical_mag > EPSILON) ? (abs(ratio - Scalar{1}) < EPSILON)
     //                                             : (abs(conformal_mag) < EPSILON)};
     bool is_null;
 
-    if (physical_mag > EPSILON) {
+    if (abs(physical_mag) > EPSILON) {
       // TODO(james): Fix the numeric instability and remove the multiple of the acceptable
       // inaccuracy.
       is_null = abs(ratio - Scalar{1}) < 100 * EPSILON;
