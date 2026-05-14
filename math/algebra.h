@@ -27,7 +27,7 @@ class Algebra final {
                                             NUM_ZERO_BASES};
   static constexpr size_t NUM_BASIS_BLADES{1UL << NUM_BASIS_VECTORS};
 
-  static constexpr ScalarType EPSILON{1e-6};
+  static constexpr ScalarType EPSILON{static_cast<ScalarType>(1e-6)};
 };
 
 using DefaultScalarType = float;

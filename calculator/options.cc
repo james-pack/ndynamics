@@ -42,6 +42,14 @@ static constexpr std::array INTERPRET_OPTIONS{
     OptionDescriptor{"ipns", as_int(GeometricInterpretation::Ipns)},
 };
 
+static constexpr std::array SCALAR_OPTIONS{
+    OptionDescriptor{"short", as_int(Scalar::Short)},
+    OptionDescriptor{"int", as_int(Scalar::Int)},
+    OptionDescriptor{"long", as_int(Scalar::Long)},
+    OptionDescriptor{"float", as_int(Scalar::Float)},
+    OptionDescriptor{"double", as_int(Scalar::Double)},
+};
+
 /**
  * Internal helper to find a string name from an enum value using OptionDescriptors.
  */
@@ -99,6 +107,12 @@ std::optional<GeometricInterpretation> interpretation_from_string(std::string_vi
   return from_string_impl<GeometricInterpretation>(s, INTERPRET_OPTIONS);
 }
 
+std::string_view scalar_to_string(Scalar scalar) { return to_string_impl(scalar, SCALAR_OPTIONS); }
+
+std::optional<Scalar> scalar_from_string(std::string_view s) {
+  return from_string_impl<Scalar>(s, SCALAR_OPTIONS);
+}
+
 /**
  * Generates a comma-separated list of valid values at compile-time.
  */
@@ -150,6 +164,7 @@ static constexpr auto CONVENTION_HELP =
     generate_help_text("Minkowski sign convention", CONVENTION_OPTIONS);
 static constexpr auto INTERPRET_HELP =
     generate_help_text("Null-space mapping interpretation", INTERPRET_OPTIONS);
+static constexpr auto SCALAR_HELP = generate_help_text("Scalar type", SCALAR_OPTIONS);
 
 template <size_t N>
 [[nodiscard]] bool validate_option(const char* flagname, const std::string& value,
@@ -185,6 +200,11 @@ DEFINE_validator(convention, [](const char* fn, const std::string& v) {
 DEFINE_string(interpretation, "opns", ndyn::calculator::INTERPRET_HELP.data());
 DEFINE_validator(interpretation, [](const char* fn, const std::string& v) {
   return ndyn::calculator::validate_option(fn, v, ndyn::calculator::INTERPRET_OPTIONS);
+});
+
+DEFINE_string(scalar, "float", ndyn::calculator::SCALAR_HELP.data());
+DEFINE_validator(scalar, [](const char* fn, const std::string& v) {
+  return ndyn::calculator::validate_option(fn, v, ndyn::calculator::SCALAR_OPTIONS);
 });
 
 DEFINE_int32(dims, 3, "Number of physical/spatial dimensions.");

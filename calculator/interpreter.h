@@ -60,7 +60,9 @@ class Interpreter final : public Visitor {
     symbols[node.name->name] = current_value;
   }
 
-  void visit(ScalarAst& node) override { current_value = VectorType{node.value}; }
+  void visit(ScalarAst& node) override {
+    current_value = VectorType{static_cast<ScalarType>(node.value)};
+  }
 
   void visit(IdentifierAst& node) override {
     DLOG(INFO) << "Identifier -- node->name: " << node.name;

@@ -42,9 +42,9 @@ struct ExpressionAst : Ast {
 };
 
 struct ScalarAst final : ExpressionAst {
-  float value;
+  double value;
 
-  explicit ScalarAst(float value) : value(value) {}
+  explicit ScalarAst(double value) : value(value) {}
 
   void visit(Visitor& v) override;
 };

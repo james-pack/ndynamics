@@ -5,11 +5,11 @@
 
 #include "gflags/gflags.h"
 
-// Declare the new "Stage 1" flags
 DECLARE_string(model);
 DECLARE_string(metric);
 DECLARE_string(convention);
 DECLARE_string(interpretation);
+DECLARE_string(scalar);
 DECLARE_int32(dims);
 
 namespace ndyn::calculator {
@@ -44,6 +44,14 @@ enum class GeometricInterpretation {
   Ipns,
 };
 
+enum class Scalar {
+  Short,
+  Int,
+  Long,
+  Float,
+  Double,
+};
+
 [[nodiscard]] std::string_view model_to_string(Model model);
 [[nodiscard]] std::optional<Model> model_from_string(std::string_view s);
 
@@ -56,6 +64,9 @@ enum class GeometricInterpretation {
 [[nodiscard]] std::string_view interpretation_to_string(GeometricInterpretation interpretation);
 [[nodiscard]] std::optional<GeometricInterpretation> interpretation_from_string(std::string_view s);
 
+[[nodiscard]] std::string_view scalar_to_string(Scalar scalar);
+[[nodiscard]] std::optional<Scalar> scalar_from_string(std::string_view s);
+
 [[nodiscard]] inline Model get_model_flag() { return model_from_string(FLAGS_model).value(); }
 
 [[nodiscard]] inline Metric get_metric_flag() { return metric_from_string(FLAGS_metric).value(); }
@@ -67,6 +78,8 @@ enum class GeometricInterpretation {
 [[nodiscard]] inline GeometricInterpretation get_interpretation_flag() {
   return interpretation_from_string(FLAGS_interpretation).value();
 }
+
+[[nodiscard]] inline Scalar get_scalar_flag() { return scalar_from_string(FLAGS_scalar).value(); }
 
 [[nodiscard]] inline int get_dims_flag() { return FLAGS_dims; }
 
