@@ -33,12 +33,12 @@ struct Calculator<Model::Cga, Metric::Euclidean, Conv, GeometricInterpretation::
 };
 
 template <MinkowskiConvention Conv, typename Scalar, int Dims>
-struct Calculator<Model::Pga, Metric::Euclidean, Conv, GeometricInterpretation::Opns, Scalar, Dims>
+struct Calculator<Model::Hga, Metric::Euclidean, Conv, GeometricInterpretation::Opns, Scalar, Dims>
     final {
   static void run() {
     using EmbeddedGeometry = math::VectorSpaceGeometryType<Dims, Scalar>;
-    using Atlas = math::ProjectiveAtlas<EmbeddedGeometry>;
-    using Geometry = math::ProjectiveGeometryType<EmbeddedGeometry, Atlas>;
+    using Atlas = math::HomogeneousAtlas<EmbeddedGeometry>;
+    using Geometry = math::HomogeneousGeometryType<EmbeddedGeometry, Atlas>;
     using Algebra = Geometry::Algebra;
     Repl<Algebra, math::GenericRepresentation<Algebra>> repl{};
     repl.loop();
@@ -87,8 +87,8 @@ class GeometryDispatcher {
       case Model::Vga:
         dispatch_metric<Model::Vga>(met, c, i, scalar, d);
         break;
-      case Model::Pga:
-        dispatch_metric<Model::Pga>(met, c, i, scalar, d);
+      case Model::Hga:
+        dispatch_metric<Model::Hga>(met, c, i, scalar, d);
         break;
       case Model::Cga:
         dispatch_metric<Model::Cga>(met, c, i, scalar, d);

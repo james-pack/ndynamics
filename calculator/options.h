@@ -16,7 +16,7 @@ namespace ndyn::calculator {
 
 enum class Model {
   Vga,
-  Pga,
+  Hga,
   Cga,
 };
 

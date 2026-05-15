@@ -23,7 +23,7 @@ template <typename EnumType>
 
 static constexpr std::array MODEL_OPTIONS{
     OptionDescriptor{"vga", as_int(Model::Vga)},
-    OptionDescriptor{"pga", as_int(Model::Pga)},
+    OptionDescriptor{"hga", as_int(Model::Hga)},
     OptionDescriptor{"cga", as_int(Model::Cga)},
 };
 

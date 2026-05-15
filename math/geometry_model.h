@@ -132,8 +132,8 @@ concept GeometryModel =     //
 /**
  * Every non-vector space geometry must express what space it embeds. The main purpose of
  * expressing this embedding is to bridge construction and deconstruction primitives and operators
- * in conformal and projective GAs. This embedded space defines how the API for primitives and
- * operators should bridge from an intuitive vector space GA to a conformal or projective
+ * in conformal and homogeneous GAs. This embedded space defines how the API for primitives and
+ * operators should bridge from an intuitive vector space GA to a conformal or homogeneous
  * representation.
  *
  * The embedded space itself is just another geometry, in the sense of GeometryModel, meaning
@@ -251,16 +251,21 @@ concept VectorSpaceGeometryModel =  //
     true;
 
 template <typename G>
-concept HasProjectiveBases =  //
+concept HasHomogeneousBases =  //
     requires {
+      // Note that this homogeneous basis vector is often called e0, but that convention clashes
+      // with the names of our generic bases, usually for the embedded vector space. We could start
+      // the names of those vectors at one -- e1, e2, e3, etc. -- but that would likely lead to
+      // off-by-one errors, since the basis vector name would not match its index in the
+      // multivector.
       { G::e_inf() } -> IsMultivectorLike<G>;
     };
 
 template <typename G>
-concept ProjectiveGeometryModel =  //
-    GeometryModel<G> and           //
-    HasProjectiveBases<G> and      //
-    HasEmbeddedSpace<G> and        //
+concept HomogeneousGeometryModel =  //
+    GeometryModel<G> and            //
+    HasHomogeneousBases<G> and      //
+    HasEmbeddedSpace<G> and         //
 
     // Geometric primitives.
     HasPoint<G> and  //

@@ -14,7 +14,7 @@
 namespace ndyn::math {
 
 template <GeometryModel EmbeddedSpaceType>
-class ProjectiveAtlas final {
+class HomogeneousAtlas final {
  public:
   using EmbeddedSpace = EmbeddedSpaceType;
   using Scalar = typename EmbeddedSpace::Scalar;
@@ -39,12 +39,12 @@ class ProjectiveAtlas final {
 };
 
 template <GeometryModel EmbeddedSpaceType, IsAtlas AtlasType, typename T = DefaultScalarType>
-class ProjectiveGeometryType final {
+class HomogeneousGeometryType final {
  public:
   using EmbeddedSpace = EmbeddedSpaceType;
   static constexpr size_t NUM_PHYSICAL_DIMENSIONS{EmbeddedSpace::NUM_BASIS_VECTORS};
 
-  using G = ProjectiveGeometryType<EmbeddedSpace, AtlasType, T>;
+  using G = HomogeneousGeometryType<EmbeddedSpace, AtlasType, T>;
 
   using Atlas = AtlasType;
   static_assert(std::is_same_v<typename Atlas::EmbeddedSpace, EmbeddedSpace>);
@@ -65,7 +65,7 @@ class ProjectiveGeometryType final {
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
  private:
-  [[nodiscard]] static constexpr auto mask_projective_bases(IsMultivectorLike<G> auto&& mv) {
+  [[nodiscard]] static constexpr auto mask_homogeneous_bases(IsMultivectorLike<G> auto&& mv) {
     return mv.template mask_bases<NUM_PHYSICAL_DIMENSIONS, NUM_PHYSICAL_DIMENSIONS>();
   }
 
