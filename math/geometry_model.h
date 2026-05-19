@@ -215,12 +215,61 @@ concept HasPoint =        //
     true;
 
 template <typename G>
+concept HasDirection =    //
+    GeometryModel<G> and  //
+    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 1; } and
+    requires(const G::Multivector& m) {
+      { G::is_direction(m) } -> BoolLike;
+    } and
+    // Requires that a direction be constructible from a number of points, though the number is
+    // different in different geometric models.
+    requires(typename G::Scalar* begin_iter, typename G::Scalar* end_iter) {
+      { G::make_direction(begin_iter, end_iter) } -> IsMultivectorLike<G>;
+    } and  //
+    true;
+
+template <typename G>
+concept HasVersor =       //
+    GeometryModel<G> and  //
+    requires(const G::Multivector& m) {
+      { G::is_versor(m) } -> BoolLike;
+    } and true;
+
+template <typename G>
+concept HasRotor =                                              //
+    GeometryModel<G> and                                        //
+    HasVersor<G> and                                            //
+    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } and  //
+    // Requires that a geometry be able to build a rotor from two directions.
+    requires(const G::Multivector& m) {
+      { G::make_rotor(m, m) } -> IsMultivectorLike<G>;
+    } and  //
+    true;
+
+template <typename G>
+concept HasCircle =       //
+    GeometryModel<G> and  //
+    requires { requires G::NUM_PHYSICAL_DIMENSIONS >= 2; } and
+    requires(const G::Multivector& m) {
+      { G::is_circle(m) } -> BoolLike;
+    } and
+    // Requires that a circle be constructible from a number of points, though the number is
+    // different in different geometric models.
+    requires(typename G::Multivector* begin_iter, typename G::Multivector* end_iter) {
+      { G::make_circle(begin_iter, end_iter) } -> IsMultivectorLike<G>;
+    } and  //
+    true;
+
+template <typename G>
 concept VectorSpaceGeometryModel =  //
     GeometryModel<G> and            //
 
     // Geometric primitives.
-    HasPoint<G> and  //
+    HasPoint<G> and      //
+    HasDirection<G> and  //
 
+    // Additional accessors for making points and extracting their constituent values. These only
+    // make sense in a vector space geometry.
     requires(typename G::Scalar* begin_iter, typename G::Scalar* end_iter) {
       { G::make_point(begin_iter, end_iter) } -> IsMultivectorLike<G>;
     } and  //
@@ -246,7 +295,8 @@ concept VectorSpaceGeometryModel =  //
      }) and  //
 
     // Fundamental operations.
-    // HasRotor<G> and  //
+    HasVersor<G> and  //
+    HasRotor<G> and   //
 
     true;
 
