@@ -20,7 +20,8 @@ class HomogeneousAtlas final {
   using Scalar = typename EmbeddedSpace::Scalar;
 
   template <GeometryModel ContainingSpace>
-  [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedSpace> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lift(
+      const IsMultivectorLike<EmbeddedSpace> auto& v) noexcept {
     typename ContainingSpace::Multivector result{ContainingSpace::e_inf()};
     for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
       result.set_coefficient(i, v.coefficient(i));
@@ -29,7 +30,8 @@ class HomogeneousAtlas final {
   }
 
   template <GeometryModel ContainingSpace>
-  [[nodiscard]] static constexpr auto lower(IsMultivectorLike<ContainingSpace> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lower(
+      const IsMultivectorLike<ContainingSpace> auto& v) noexcept {
     typename EmbeddedSpace::Multivector result{};
     for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
       result.set_coefficient(i, v.coefficient(i));
@@ -65,7 +67,7 @@ class HomogeneousGeometryType final {
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
  private:
-  [[nodiscard]] static constexpr auto mask_homogeneous_bases(IsMultivectorLike<G> auto&& mv) {
+  [[nodiscard]] static constexpr auto mask_homogeneous_bases(const IsMultivectorLike<G> auto& mv) {
     return mv.template mask_bases<NUM_PHYSICAL_DIMENSIONS, NUM_PHYSICAL_DIMENSIONS>();
   }
 
@@ -73,7 +75,7 @@ class HomogeneousGeometryType final {
    * Standard weight calculation.
    * The weight is a measure of the scale of the space.
    */
-  [[nodiscard]] static constexpr auto weight(IsMultivectorLike<G> auto&& mv) noexcept {
+  [[nodiscard]] static constexpr auto weight(const IsMultivectorLike<G> auto& mv) noexcept {
     return mv.template coefficient<1UL << NUM_PHYSICAL_DIMENSIONS>();
   }
 
@@ -107,22 +109,22 @@ class HomogeneousGeometryType final {
   }
 
   // Getters for the coefficients of the basis vectors under the generic names.
-  [[nodiscard]] static constexpr auto get_e0(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e0(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 1)
   {
     return mv.template coefficient<1UL << 0>();
   }
-  [[nodiscard]] static constexpr auto get_e1(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e1(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 2)
   {
     return mv.template coefficient<1UL << 1>();
   }
-  [[nodiscard]] static constexpr auto get_e2(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e2(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 3)
   {
     return mv.template coefficient<1UL << 2>();
   }
-  [[nodiscard]] static constexpr auto get_e3(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e3(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 4)
   {
     return mv.template coefficient<1UL << 3>();
@@ -142,13 +144,13 @@ class HomogeneousGeometryType final {
   }
 
   template <IsMultivectorLike<G> First, IsMultivectorLike<G>... Rest>
-  [[nodiscard]] static constexpr auto join(First&& first, Rest&&... rest) noexcept {
+  [[nodiscard]] static constexpr auto join(const First& first, const Rest&... rest) noexcept {
     if constexpr (sizeof...(rest) == 0) {
-      return std::forward<First>(first);
+      return first;
     } else {
       // The join in OPNS is the outer product. The ^ operator is overloaded on the Multivector
       // class to perform the outer product.
-      return (std::forward<First>(first) ^ ... ^ std::forward<Rest>(rest));
+      return (first ^ ... ^ rest);
     }
   }
 
@@ -158,21 +160,22 @@ class HomogeneousGeometryType final {
   }
 
   template <IsMultivectorLike<G> First, IsMultivectorLike<G>... Rest>
-  [[nodiscard]] static constexpr auto meet(First&& first, Rest&&... rest) noexcept {
+  [[nodiscard]] static constexpr auto meet(const First& first, const Rest&... rest) noexcept {
     if constexpr (sizeof...(rest) == 0) {
-      return std::forward<First>(first);
+      return first;
     } else {
       // The meet in OPNS is the regressive product. The & operator is overloaded on the Multivector
       // class to perform the regressive product.
-      return (std::forward<First>(first) & ... & std::forward<Rest>(rest));
+      return (first & ... & rest);
     }
   }
 
-  [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedSpace> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lift(
+      const IsMultivectorLike<EmbeddedSpace> auto& v) noexcept {
     return Atlas::template lift<G>(v);
   }
 
-  [[nodiscard]] static constexpr auto lower(IsMultivectorLike<G> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lower(const IsMultivectorLike<G> auto& v) noexcept {
     return Atlas::template lower<G>(v);
   }
 
@@ -181,13 +184,12 @@ class HomogeneousGeometryType final {
     Multivector result{e_inf()};
     size_t i{};
     for (Iter iter = begin; iter != end; ++iter, ++i) {
-      const auto v{static_cast<Scalar>(*iter)};
-      result += v * Multivector::e(i);
+      result += static_cast<Scalar>(*iter) * Multivector::e(i);
     }
     return result;
   }
 
-  [[nodiscard]] static auto is_point(IsMultivectorLike<G> auto&& mv) noexcept {
+  [[nodiscard]] static auto is_point(const IsMultivectorLike<G> auto& mv) noexcept {
     const bool is_grade_1{mv.template is_grade<1>()};
     const bool has_nonzero_weight{abs(weight(mv)) > EPSILON};
     return is_grade_1 and has_nonzero_weight;

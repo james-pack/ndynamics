@@ -20,7 +20,8 @@ class ConformalAtlas final {
   using Scalar = typename EmbeddedSpace::Scalar;
 
   template <GeometryModel ContainingSpace>
-  [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedSpace> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lift(
+      const IsMultivectorLike<EmbeddedSpace> auto& v) noexcept {
     typename ContainingSpace::Multivector result{};
     for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
       result.set_coefficient(i, v.coefficient(i));
@@ -32,7 +33,8 @@ class ConformalAtlas final {
   }
 
   template <GeometryModel ContainingSpace>
-  [[nodiscard]] static constexpr auto lower(IsMultivectorLike<ContainingSpace> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lower(
+      const IsMultivectorLike<ContainingSpace> auto& v) noexcept {
     typename EmbeddedSpace::Multivector result{};
     for (size_t i = 0; i < EmbeddedSpace::NUM_BASIS_BLADES; ++i) {
       result.set_coefficient(i, v.coefficient(i));
@@ -95,7 +97,7 @@ class ConformalGeometryType final {
   static constexpr Scalar EPSILON{Algebra::EPSILON};
 
  private:
-  [[nodiscard]] static constexpr auto mask_conformal_bases(IsMultivectorLike<G> auto&& mv) {
+  [[nodiscard]] static constexpr auto mask_conformal_bases(const IsMultivectorLike<G> auto& mv) {
     return mv.template mask_bases<NUM_PHYSICAL_DIMENSIONS, NUM_PHYSICAL_DIMENSIONS + 1>();
   }
 
@@ -108,7 +110,7 @@ class ConformalGeometryType final {
    *
    * But we use an equivalent calculation based on the coefficients of e_plus and e_minus.
    */
-  [[nodiscard]] static constexpr auto weight(IsMultivectorLike<G> auto&& mv) noexcept {
+  [[nodiscard]] static constexpr auto weight(const IsMultivectorLike<G> auto& mv) noexcept {
     return mv.template coefficient<1UL << (NUM_PHYSICAL_DIMENSIONS + 1)>() -
            mv.template coefficient<1UL << NUM_PHYSICAL_DIMENSIONS>();
   }
@@ -121,7 +123,7 @@ class ConformalGeometryType final {
    *
    * But we use an equivalent calculation based on the coefficients of e_plus and e_minus.
    */
-  [[nodiscard]] static constexpr auto weight_origin(IsMultivectorLike<G> auto&& mv) noexcept {
+  [[nodiscard]] static constexpr auto weight_origin(const IsMultivectorLike<G> auto& mv) noexcept {
     return (mv.template coefficient<1UL << (NUM_PHYSICAL_DIMENSIONS + 1)>() +
             mv.template coefficient<1UL << NUM_PHYSICAL_DIMENSIONS>()) /
            Scalar{2};
@@ -172,22 +174,22 @@ class ConformalGeometryType final {
   }
 
   // Getters for the coefficients of the basis vectors under the generic names.
-  [[nodiscard]] static constexpr auto get_e0(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e0(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 1)
   {
     return mv.template coefficient<1UL << 0>();
   }
-  [[nodiscard]] static constexpr auto get_e1(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e1(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 2)
   {
     return mv.template coefficient<1UL << 1>();
   }
-  [[nodiscard]] static constexpr auto get_e2(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e2(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 3)
   {
     return mv.template coefficient<1UL << 2>();
   }
-  [[nodiscard]] static constexpr auto get_e3(IsMultivectorLike<G> auto&& mv) noexcept
+  [[nodiscard]] static constexpr auto get_e3(const IsMultivectorLike<G> auto& mv) noexcept
     requires(NUM_PHYSICAL_DIMENSIONS >= 4)
   {
     return mv.template coefficient<1UL << 3>();
@@ -207,13 +209,13 @@ class ConformalGeometryType final {
   }
 
   template <IsMultivectorLike<G> First, IsMultivectorLike<G>... Rest>
-  [[nodiscard]] static constexpr auto join(First&& first, Rest&&... rest) noexcept {
+  [[nodiscard]] static constexpr auto join(const First& first, const Rest&... rest) noexcept {
     if constexpr (sizeof...(rest) == 0) {
-      return std::forward<First>(first);
+      return first;
     } else {
       // The join in OPNS is the outer product. The ^ operator is overloaded on the Multivector
       // class to perform the outer product.
-      return (std::forward<First>(first) ^ ... ^ std::forward<Rest>(rest));
+      return (first ^ ... ^ rest);
     }
   }
 
@@ -223,21 +225,22 @@ class ConformalGeometryType final {
   }
 
   template <IsMultivectorLike<G> First, IsMultivectorLike<G>... Rest>
-  [[nodiscard]] static constexpr auto meet(First&& first, Rest&&... rest) noexcept {
+  [[nodiscard]] static constexpr auto meet(const First& first, const Rest&... rest) noexcept {
     if constexpr (sizeof...(rest) == 0) {
-      return std::forward<First>(first);
+      return first;
     } else {
       // The meet in OPNS is the regressive product. The & operator is overloaded on the Multivector
       // class to perform the regressive product.
-      return (std::forward<First>(first) & ... & std::forward<Rest>(rest));
+      return (first & ... & rest);
     }
   }
 
-  [[nodiscard]] static constexpr auto lift(IsMultivectorLike<EmbeddedSpace> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lift(
+      const IsMultivectorLike<EmbeddedSpace> auto& v) noexcept {
     return Atlas::template lift<G>(v);
   }
 
-  [[nodiscard]] static constexpr auto lower(IsMultivectorLike<G> auto&& v) noexcept {
+  [[nodiscard]] static constexpr auto lower(const IsMultivectorLike<G> auto& v) noexcept {
     return Atlas::template lower<G>(v);
   }
 
@@ -262,7 +265,7 @@ class ConformalGeometryType final {
    * points from general grade-1 elements such as spheres (which are non-null). A point
    * at infinity has a zero weight and is excluded by the weight check.
    */
-  [[nodiscard]] static auto is_point(IsMultivectorLike<G> auto&& mv) noexcept {
+  [[nodiscard]] static auto is_point(const IsMultivectorLike<G> auto& mv) noexcept {
     if (!mv.template is_grade<1>()) {
       return false;
     }
