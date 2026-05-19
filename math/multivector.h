@@ -536,12 +536,13 @@ class Multivector final {
 
     // X * ~X must be a nonzero pure scalar for the versor inverse formula to be valid.
     const Multivector product{multiply(reverse())};
-    for (size_t blade = 1; blade < NUM_BASIS_BLADES; ++blade) {
+    bool result{abs(product.coefficients_[0]) > tolerance};
+    for (size_t blade = 1; result and blade < NUM_BASIS_BLADES; ++blade) {
       if (abs(product.coefficients_[blade]) > tolerance) {
-        return false;
+        result = false;
       }
     }
-    return abs(product.coefficients_[0]) > tolerance;
+    return result;
   }
 
   // Operator overloads.
@@ -578,6 +579,27 @@ class Multivector final {
       }
     }
     return true;
+  }
+
+  constexpr bool is_scalar(const ScalarType tolerance = EPSILON) const {
+    // Check the coefficients for the non-scalar basis blades. The value of the scalar coefficient
+    // is irrelevant. The zero multivector is considered a scalar.
+    for (size_t i = 1 /* Skip the scalar coefficient in checks */; i < NUM_BASIS_BLADES; ++i) {
+      if (abs(coefficients_[i]) > tolerance) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  constexpr bool near_one(const ScalarType tolerance = EPSILON) const {
+    bool result{abs(coefficients_[0] - ScalarType{1}) < tolerance};
+    for (size_t i = 1; result and i < NUM_BASIS_BLADES; ++i) {
+      if (abs(coefficients_[i]) > tolerance) {
+        result = false;
+      }
+    }
+    return result;
   }
 
   constexpr bool near_zero(const ScalarType tolerance = EPSILON) const {
