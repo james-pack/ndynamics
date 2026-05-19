@@ -46,8 +46,11 @@ cc_library(
     testonly = True,
     hdrs = [
         "complex.h",
-        "has_point_test_utils.h",
+        "has_direction_test_utils.h",
         "has_embedded_space_test_utils.h",
+        "has_point_test_utils.h",
+        "has_rotor_test_utils.h",
+        "has_versor_test_utils.h",
         "integrators_test_utils.h",
         "multivector_test_utils.h",
         "scalar_test_utils.h",
