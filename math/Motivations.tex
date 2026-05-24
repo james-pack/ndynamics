@@ -1,0 +1,130 @@
+\documentclass[8pt]{article}
+
+% --- Essential Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage{amsmath, amsfonts, amssymb, amsthm, mathtools}
+\usepackage{fancyhdr} % Professional headers and footers
+\usepackage{enumitem} % For structured problem numbering
+\usepackage{tikz} % For integrated graphics and annotations [cite: 7, 34]
+
+% --- Custom MIT-Style Header Setup ---
+\pagestyle{fancy} \fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt} % Thin line under header
+\lhead{Geometric Algebra Notes}
+\rhead{Motivation}
+\lfoot{Page \thepage} \rfoot{\today}
+
+% --- Problem Environment Styling ---
+\newlist{problems}{enumerate}{2} \setlist[problems]{label=\textbf{Problem
+    \arabic*.}, widest=Problem 10, leftmargin=*}
+
+% --- Title Section ---
+\title{Motivation by Similarities between Complex, Duals, and Quaternions}
+\author{James Pack}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy} % Ensures header appears on the first page
+
+\section{Fundamental Motivations of the Clifford Algebra}
+The Clifford Algebras are the natural generalization of complex numbers, quaternions, dual numbers, and split-complex numbers. When looking at these number systems, several structural similarities stand out. They each are based on the real numbers, but they include one or more other numbers that are defined solely based on the value of their quadratic form. They all form real vector spaces. They also include a definition for multiplication, though it is not always commutative. This section highlights the similarities between these number systems to provide an intuitive motivation for why the Clifford Algebras were invented.
+
+Complex numbers are formed by adding a number $i$ to the real numbers.
+
+\[
+  \mathbb{C} \coloneqq \mathbb{R}[i] = \{a + bi \mid a, b \in \mathbb{R}, i \notin \mathbb{R} \} \quad \text{where} \quad i^2 = -1
+\]
+
+This notation defines the complex numbers as a polynomial ring based on the real numbers with an additional number $i$. Complex numbers are ubiquitous at this point, and their usefulness well-established.
+
+The dual numbers are formed in a similar manner.
+
+\[
+  \mathbb{D} \coloneqq \mathbb{R}[\epsilon] = \{a + b \epsilon \mid a, b \in \mathbb{R}, \epsilon \notin \mathbb{R} \} \quad \text{where} \quad \epsilon^2 = 0
+\]
+
+Here we add an element to the reals that squares to zero. These are known as the dual numbers. The dual numbers can be used to calculate the derivative of a function. As a simple example,
+
+\begin{equation}
+  \begin{aligned}
+f(x) &= a x^2 + b x + c \\
+f(x + \epsilon ) &= a (x + \epsilon )^2 + b(x + \epsilon ) + c \\
+f(x + \epsilon ) &= a (x^2 + 2x \epsilon + \epsilon ^2) + b(x + \epsilon ) + c \\
+f(x + \epsilon ) &= a x^2 + bx + c + 2x \epsilon + b \epsilon + \epsilon ^ 2 \\
+f(x + \epsilon ) &= a x^2 + bx + c + 2x \epsilon + b \epsilon + 0 \\
+f(x + \epsilon ) &= a x^2 + bx + c + (2x + b) \epsilon \\
+\end{aligned}
+\end{equation}
+
+The derivative of the function is simply the coefficient of the $\epsilon$ term. Computer software makes extensive use of this structure, calling it \emph{automatic differentiation}. In languages such as C++ and Julia, due to their advanced syntax rules, the writer of a math library gets the calculation of the derivative without doing any extra work. Automatic differentiation, and dual numbers, are core to the ML framework TensorFlow. In many ways, TensorFlow is just a math package based around the dual numbers.
+
+Extending the symmetry further, we have the quaternions. The quaternions are similar to the complex numbers, but with three additional numbers added to the reals, rather than just one.
+
+\[
+  \mathbb{H} \coloneqq \mathbb{R}\langle i,j,k \rangle = \{a + bi + cj + dk \mid a, b, c, d \in \mathbb{R}, i,j,k \notin \mathbb{R} \} \quad \text{where} \quad i^2 = j^2 = k^2 = ijk = -1
+\]
+
+The quaternions are used extensively in control systems and computer graphics. They solve the problem of ``gimble lock''. Gimble lock is a degenerate state in Euler angles where one degree of rotational freedom gets lost at certain angles. In practical terms, gimble lock makes Euler angles difficult, or impossible, to use in any system requiring rotational calculations. Quaternions do not exhibit the same degeneracies. \emph{Unit quaternions}, which are the quaternions with a normalization condition, are used in most software packages to represent rotations. Examples include animation software like Blender to software for planning orthopedic surgeries. Note that the quaternions are not commutative with respect to multiplication.
+
+We can also create a number system where the ``extra number'' squares to $1$. These are the split-complex numbers.
+
+\[
+  \mathbb{R}[j] = \{a + ji \mid a, b \in \mathbb{R}, j \notin \mathbb{R} \} \quad \text{where} \quad j^2 = 1
+\]
+
+These numbers can be thought of as the hyperbolic form of the complex numbers. Where multiplying by $exp(a + bi)$, the exponential of a complex number, results in a circular rotation, multiplying by $exp(a + bj)$ results in a hyperbolic rotation. Indeed, combining the complex and split-complex numbers give a mechanism to express a position on a cone, with the complex numbers giving the position around a circular section, and the split-complex numbers giving the position around a hyperbolic section. This combination of numbers is precisely the Lorentz vector of special relativity.
+
+Looking at the structures for these numbers, the symmetries are ripe for generalization. They each start with the real numbers. They add one or more extra numbers, that are not real numbers, but whose value squares to either $-1$, $0$, or $1$. The Clifford Algebras are just a basic abstraction of this structure. A general form that steps towards Clifford numbers might look like
+
+\[
+  \mathbb{R}\langle e_1,...,e_n \rangle = \{ a_0 + \sum\limits_{i = 1}^{n} a_i e_i \mid a_i \in \mathbb{R}, e_i \notin \mathbb{R} \} \quad \text{where} \quad e_i^2 = {-1, 0, 1} \quad \text{\emph{Incomplete definition}}
+\]
+
+But this form is missing several key elements. In the complex numbers, dual numbers, and split-complex numbers, with only one extra number, we did not need to specify how those extra numbers interact with each other. In the quaternions, we had to describe how the $i,j,k$ values multiply. The constraint $ijk = -1$ was sufficient to describe the interaction of all of these bases:
+
+\begin{equation}
+  \begin{aligned}
+    ijk &= -1 \\
+    (ijk)k &= -k \\
+    ij(k \cdot k) & = -k \\
+    -ij &= -k \\
+    ij &= k \\
+  \end{aligned}
+\end{equation}
+
+Similar arguments can be constructed for $jk$ and $ki$.
+
+To arrive at a general form, we need to specify how these bases multiply with each other. The standard approach is to define a commutator relation:
+
+\[
+  e_i e_j + e_j e_i = 2\eta_{ij}
+\]
+
+where $\eta$ is a \emph{diagonal matrix} giving the ``signature'' of the algebra. When $i=j$, the $\eta$ entries follow
+
+\begin{equation}
+  \begin{aligned}
+    e_i e_i + e_i e_i &= 2 \eta_{ii} \\
+    2 e_i^2 &= 2 \eta_{ii} \\
+    e_i^2 &= \eta_{ii} \\
+  \end{aligned}
+\end{equation}
+
+And when $i \neq j$, $\eta_{ij} = 0$ as $\eta$ is a diagonal matrix, and we get the following commutator relation
+
+\begin{equation}
+  \begin{aligned}
+    e_i e_j + e_j e_i &= 2 \eta_{ij} \\
+    e_i e_j + e_j e_i &= 0 \\
+    e_i e_j &= - e_j e_i \\
+  \end{aligned}
+\end{equation}
+
+That is, $\eta$ also defines the meaning of commutating the multiplication of the basis elements.
+
+For the curious, if $\eta$ was \emph{not} a diagonal matrix, the resulting algebra would not introduce any new structure, just more difficult calculations. The $\eta$ matrix can always be diagonalized and normalized such that its elements are $\{-1,0,1\}$ without any loss of generality. That is, any two algebras with $\eta$ matrices that can be transformed into each other are the same. If the $\eta$ matrices are isomorphic, so are the algebras. A non-diagonal $\eta$ matrix is akin to selecting non-orthonormal basis vectors to represent a vector space.
+
+\end{document}
