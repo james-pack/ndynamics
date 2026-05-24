@@ -1,0 +1,118 @@
+\documentclass[8pt]{article}
+
+% --- Essential Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage{amsmath, amsfonts, amssymb, amsthm, mathtools}
+\usepackage{fancyhdr} % Professional headers and footers
+\usepackage{enumitem} % For structured problem numbering
+\usepackage{tikz} % For integrated graphics and annotations [cite: 7, 34]
+
+% --- Custom MIT-Style Header Setup ---
+\pagestyle{fancy} \fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt} % Thin line under header
+\lhead{Geometric Algebra Notes}
+\rhead{Definitions}
+\lfoot{Page \thepage} \rfoot{\today}
+
+% --- Problem Environment Styling ---
+\newlist{problems}{enumerate}{2} \setlist[problems]{label=\textbf{Problem
+    \arabic*.}, widest=Problem 10, leftmargin=*}
+
+% --- Title Section ---
+\title{Definitions}
+\author{James Pack}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy} % Ensures header appears on the first page
+
+\section{Overview}
+This document gives a brief overview of the elements and operations in geometric algebra. It does not do so rigorously. The goal is to develop some intuition and connections \emph{before} reading about these ideas in a \emph{real} text. Do not read this paper and assume that you \emph{know} geometric algebra. It is not complete. But it hopefully will give you a map that can help you see the relationships between the more concrete explanations.
+
+\section{Elements}
+
+\begin{enumerate}
+
+  \item \textbf{Scalar}
+        We build a geometric algebra over a field of scalars. This field is usually the real numbers or the complex numbers with standard addition and multiplication along with the standard identities and inverses for those operations, but any field will give the same results.
+
+  \item \textbf{Vector}
+        A geometric algebra also consists of objects called vectors that form an n-dimensional vector space over the field of scalars. These are just like standard Gibbs vectors.
+
+  \item \textbf{Quadratic Form}
+        The vector space gets augmented by including a ``quadratic form''. This concept can be thought of as a $n \times n$ diagonal matrix $\eta$ which defines distances in the direction of each basis vector. For any basis vector $e_i$, $e_i \eta e_i^T = \eta_{ii}$ where $\eta_{ij} \in \{-1,0,1\}$. Again, $\eta$ is a diagonal matrix, so $\eta_{ij} = 0$ when $i \neq j$.
+
+        Note on the notation: typically, a matrix is given as a capital letter. Unfortunately, a capital $\eta$ looks exactly like $H$, a capital $h$. $H$ is used for many things, like the Hamiltonian, the Hubble constant, or the quaternions. As very few people know that an $H$ and a capital $\eta$ are rendered identically, and due to the likelihood of confusion, we use a \emph{lowercase} $\eta$ for a matrix in this particular situation.
+
+  \item \textbf{Bivector}
+        A bivector is the first major deviation from standard vector spaces and Gibbs-style vectors. In geometric algebra, we define what is meant by the multiplication of two vectors. Except that geometric algebra actually defines several ``multiplication'' operations. This situation is very similar to the ``dot product'' and ``cross product'', or of the ``div'', ``grad'', and ``curl''. Each of these multiplication operations is useful in its own right, but the first one, known as the geometric product, is essentially a generalization of the quadratic form.
+
+        For vectors, the geometric product can be defined as
+
+        \[
+        e_i e_j = e_i \eta e_j + e_{ij}
+        \]
+
+        where $e_{ij}$ is an element of a new vector space whose elements are called the \emph{bivectors}. Note that this notation also implies a meaning to adding a scalar to a bivector. The basis vectors of the bivector vector space are the result of ``multiplying'' basis vectors of the vector vector space using a second form of multiplication called the ``outer product''. As $\eta$ is a diagonal matrix, for basis vectors, a basis bivector is the outer product of two basis vectors. It is also the geometric product of two basis vectors, as the scalar term, the quadratic form, is zero. Notationally, for basis vectors only, we have
+
+        \[
+        e_{ij} = e_i e_j = e_i \wedge e_j
+        \]
+
+        This is crazy on several levels. One, we are defining multiplication of vectors. Two, we are allowing the addition of a scalar to elements of a vector space, the bivectors. Three, we are building two operations that bridge a scalar field and two separate vector spaces. Four, there is third operation hiding behind the quadratic form calculation that will be a form of inner product. These operations will be fleshed out more in the next section.
+
+  \item \textbf{k-vectors}
+        Having built bivectors from vectors, we extend the idea to k-vectors. The vectors are also known as 1-vectors. Bivectors are also known as 2-vectors. And using the same outer product, we can build up 3-vectors (also known as trivectors), 4-vectors, etc. We can also refer to the scalars as the 0-vectors, but that construct usually only arises from some generic notation using an index.
+
+  \item \textbf{Blades}
+        The term ``blade'' is used to describe any k-vector that is the outer product of $k$ linearly independent vectors. That is, a blade can be ``factored'' into basis vectors. Usually, a blade looks like
+
+        \[
+        \alpha e_{i..n} = \alpha e_i \wedge ... \wedge e_n
+        \]
+
+        A blade can also be built out of other linearly independent vectors, not just the basis vectors in a particular coordinate system.
+
+        \[
+        B = v_1 \times v_2 \times ... \times v_n
+        \]
+
+        Here $B$ is a blade iff all of the $v_i$ are orthogonal to each other. Orthogonal vectors are those whose inner product is zero.
+
+  \item \textbf{Multivector}
+        The multivector is the general form of all of these things. It is the sum of any number of k-vectors, for any $k \leq n$ where $n$ is the dimension of the vector space. Multivectors are strongly related to tensors. In general, geometric algebra can be considered a constrained tensor algebra, where the constraint is the quadratic form.
+
+\end{enumerate}
+
+\section{Operations}
+
+\begin{enumerate}
+  \item \textbf{Addition}
+
+  \item \textbf{Geometric Product}
+
+  \item \textbf{Inner Product}
+
+  \item \textbf{Wedge Product}
+
+  \item \textbf{Regressive Product}
+
+  \item \textbf{Left Contraction}
+
+\end{enumerate}
+
+\section{More Sophisticated Elements}
+
+\begin{enumerate}
+
+  \item \textbf{Pseudoscalar}
+        The pseudoscalar is the result of multiplying all of the basis vectors together. If the quadratic form is definite (no zero entries), the square of the pseudoscalar is $-1$.
+
+  \item \textbf{Versors}
+
+\end{enumerate}
+
+\end{document}
