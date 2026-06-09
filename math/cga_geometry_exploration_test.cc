@@ -1,51 +1,38 @@
+#include <initializer_list>
+#include <iterator>
+
 #include "glog/logging.h"
 #include "gtest/gtest.h"
-#include "math/canonical_basis_representation.h"
-#include "math/cga_geometry.h"
+#include "math/conformal_geometry.h"
+#include "math/geometries.h"
+#include "math/representation.h"
 
 namespace ndyn::math {
 
-TEST(CgaExploration, CircleWedgeEInfGivesPlane) {
+template <typename G>
+auto make_test_point(std::initializer_list<typename G::Scalar> values) {
+  return G::make_point(
+      values.begin(),
+      std::next(values.begin(), std::min(G::NUM_PHYSICAL_DIMENSIONS, values.size())));
+}
+
+TEST(CgaExploration, ThreePointsMakeCircle) {
   auto run = []<typename G>() {
-    LOG(INFO) << "G::NUM_PHYSICAL_DIMENSIONS: " << G::NUM_PHYSICAL_DIMENSIONS;
-    typename G::Multivector circle;
-    if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 2) {
-      // In two dimensions, a circle can be distinguished by its center and radius.
-      circle = G::make_circle(0, 0, 1);
-    } else if constexpr (G::NUM_PHYSICAL_DIMENSIONS == 3) {
-      // In three or more dimensions, determining a specific circle requires a center and
-      // identification of the plane where the circle resides, as well as the radius.
-      circle = G::make_circle(0, 0, 0, 0, 0, 1, 1);
-    }
-    LOG(INFO) << "circle: " << circle;
-    ASSERT_TRUE(G::is_circle(circle))
-        << "circle: " << circle << ", G::NUM_PHYSICAL_DIMENSIONS: " << G::NUM_PHYSICAL_DIMENSIONS;
-
-    const auto pi{circle ^ G::e_inf()};
-    LOG(INFO) << "pi: " << pi;
-
-    EXPECT_TRUE(pi.template is_grade<4>())
-        << "is_grade<4>: " << pi.template is_grade<4>() << ", pi: " << pi;
+    using Embed = typename G::EmbeddedSpace;
+    const auto ep1{make_test_point<Embed>({0, 1, 2, 3, 4, 5})};
+    const auto ep2{make_test_point<Embed>({1, 2, 3, 4, 5})};
+    const auto p1{G::lift(ep1)};
+    const auto p2{G::lift(ep2)};
+    EXPECT_TRUE(G::is_point(p1)) << "p1: " << p1;
+    EXPECT_TRUE(G::is_point(p1)) << "p2: " << p2;
+    const auto line{G::join(p1, p2, G::e_inf())};
+    EXPECT_FALSE(G::is_line(p1)) << "p1: " << p1;
+    EXPECT_TRUE(G::is_line(line)) << "line: " << line;
   };
 
   run.template operator()<Cga2dGeometry<>>();
   run.template operator()<Cga3dGeometry<>>();
-}
-
-TEST(CgaExploration, ProjectedCircleGives) {
-  using G = Cga3dGeometry<>;
-  LOG(INFO) << "G::NUM_PHYSICAL_DIMENSIONS: " << G::NUM_PHYSICAL_DIMENSIONS;
-  const auto circle{G::make_circle(0, 0, 0, 0, 0, 1, 1)};
-  LOG(INFO) << "circle: " << circle;
-  ASSERT_TRUE(G::is_circle(circle))
-      << "circle: " << circle << ", G::NUM_PHYSICAL_DIMENSIONS: " << G::NUM_PHYSICAL_DIMENSIONS;
-
-  const auto plane{G::make_plane(0, 0, 1, 0, 0, 0)};
-
-  const auto result{plane << circle};
-
-  EXPECT_TRUE(G::is_circle(result))
-      << "result: " << result << ", circle: " << circle << ", plane: " << plane;
+  run.template operator()<Cga4dGeometry<>>();
 }
 
 }  // namespace ndyn::math

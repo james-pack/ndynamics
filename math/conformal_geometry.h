@@ -259,6 +259,20 @@ class ConformalGeometryType final {
     return result;
   }
 
+  template <size_t GRADE>
+  [[nodiscard]] static constexpr bool is_grade(const IsMultivectorLike<G> auto& v) noexcept {
+    return v.template is_grade<GRADE>();
+  }
+
+  [[nodiscard]] static constexpr bool is_blade(const IsMultivectorLike<G> auto& v) noexcept {
+    // TODO(james): Implement using SVD.
+    return true;
+  }
+
+  [[nodiscard]] static constexpr bool is_flat(const IsMultivectorLike<G> auto& v) noexcept {
+    return (v ^ e_inf()).near_zero();
+  }
+
   /**
    * In CGA a finite point is a null vector (X * ~X = 0) at grade-1 that has a nonzero inner
    * product with e_inf (nonzero homogeneous weight). The null condition distinguishes
@@ -314,6 +328,15 @@ class ConformalGeometryType final {
                << ", w_orig: " << w_orig << ", is_null: " << is_null
                << ", has_weight: " << has_weight;
     return is_null && has_weight;
+  }
+
+  /**
+   * In CGA a line is a flat, grade-3 blade.
+   */
+  [[nodiscard]] static auto is_line(const IsMultivectorLike<G> auto& mv) noexcept {
+    const bool is_grade_3{mv.template is_grade<3>()};
+
+    return is_grade_3 and is_blade(mv) and is_flat(mv);
   }
 };
 
