@@ -266,7 +266,7 @@ concept VectorSpaceGeometryModel =  //
 
     // Geometric primitives.
     HasPoint<G> and      //
-    HasDirection<G> and  //
+    // HasDirection<G> and  //
 
     // Additional accessors for making points and extracting their constituent values. These only
     // make sense in a vector space geometry.
@@ -295,8 +295,8 @@ concept VectorSpaceGeometryModel =  //
      }) and  //
 
     // Fundamental operations.
-    HasVersor<G> and  //
-    HasRotor<G> and   //
+    // HasVersor<G> and  //
+    // HasRotor<G> and   //
 
     true;
 
@@ -318,11 +318,14 @@ concept HomogeneousGeometryModel =  //
     HasEmbeddedSpace<G> and         //
 
     // Geometric primitives.
-    HasPoint<G> and  //
+    HasPoint<G> and      //
+    // HasDirection<G> and  //
     // HasLine<G> and   //
     // HasPlane<G> and  //
+
     // Fundamental operations.
-    // HasRotor<G> and       //
+    // HasVersor<G> and  //
+    // HasRotor<G> and   //
     // HasTranslator<G> and  //
 
     true;
@@ -346,7 +349,7 @@ concept ConformalGeometryModel =  //
     // Geometric primitives.
     HasPoint<G> and
     // HasPointPair<G> and //
-    // HasDirection<G> and                                        //
+    // HasDirection<G> and  //
     // (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasLine<G>) and  //
     // (G::NUM_PHYSICAL_DIMENSIONS < 2 || HasPlane<G>) and        //
     // (G::NUM_PHYSICAL_DIMENSIONS < 3 || HasHyperplane<G>) and   //
@@ -355,9 +358,11 @@ concept ConformalGeometryModel =  //
     // (G::NUM_PHYSICAL_DIMENSIONS < 4 || HasHypersphere<G>) and  //
 
     // Fundamental operations.
-    // HasRotor<G> and       //
+    // HasVersor<G> and  //
+    // HasRotor<G> and   //
     // HasDilator<G> and     //
     // HasTranslator<G> and  //
+
     true;
 
 }  // namespace ndyn::math
